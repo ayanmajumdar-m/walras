@@ -154,7 +154,7 @@ const sendWelcomeEmail = async (to, name, emailOtp) => {
     const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.subject = 'Welcome to IOOGN - Please Verify Your Email via OTP';
     sendSmtpEmail.htmlContent = createWelcomeEmailTemplate(name, emailOtp);
-    sendSmtpEmail.sender = { name: "IOOGN", email: '09shlok1999ae1@gmail.com' };
+    sendSmtpEmail.sender = { name: "IOOGN", email: 'no-reply@superflare.io' };
     sendSmtpEmail.to = [{ email: to }];
 
     try {
@@ -177,7 +177,7 @@ const sendForgotPasswordEmail = async (to, name, resetLink) => {
     const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.subject = "Password Reset Request";
     sendSmtpEmail.htmlContent = createPasswordResetTemplate(name, resetLink);
-    sendSmtpEmail.sender = { name: "IOOGN", email: '09shlok1999ae1@gmail.com' };
+    sendSmtpEmail.sender = { name: "IOOGN", email: 'no-reply@superflare.io' };
     sendSmtpEmail.to = [{ email: to }];
 
     try {
@@ -199,7 +199,7 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
     const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.subject = "Domain Purchase Confirmation";
     sendSmtpEmail.htmlContent = createDomainPurchaseTemplate(name, domainName, purchaseDate);
-    sendSmtpEmail.sender = { name: "IOOGN", email: '09shlok1999ae1@gmail.com' };
+    sendSmtpEmail.sender = { name: "IOOGN", email: 'no-reply@superflare.io' };
     sendSmtpEmail.to = [{ email: to }];
 
     try {
