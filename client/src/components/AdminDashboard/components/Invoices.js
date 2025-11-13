@@ -19,7 +19,7 @@ const Invoices = ({
       default: return '#9ca3af';
     }
   };
-    const API_URL='http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io' || 'http://localhost:3001';
+    const API_URL='https://superflare.io' || '${API_URL}';
 
 
   const fetchInvoices = async () => {
@@ -151,7 +151,7 @@ const Invoices = ({
                         className="btn btn-primary"
                         onClick={async () => {
                           try {
-                            const res = await fetch("http://localhost:3001/api/admin/generate-monthly-invoices", {
+                            const res = await fetch(`${API_URL}/api/admin/generate-monthly-invoices`, {
                               method: "POST",
                               headers: { 
                                 'Authorization': `Bearer ${token}`,
@@ -225,7 +225,7 @@ const Invoices = ({
                             className="btn btn-success btn-sm"
                             onClick={async () => {
                               try {
-                                const res = await fetch(`http://localhost:3001/api/admin/monthly-invoices/${invoice.id}/mark-paid`, {
+                                const res = await fetch(`${API_URL}/api/admin/monthly-invoices/${invoice.id}/mark-paid`, {
                                   method: 'PUT',
                                   headers: {
                                     'Authorization': `Bearer ${token}`,
@@ -253,7 +253,7 @@ const Invoices = ({
                           className="btn btn-primary btn-sm"
                           onClick={async () => {
                             try {
-                              const res = await fetch(`http://localhost:3001/api/admin/monthly-invoices/${invoice.id}/download`, {
+                              const res = await fetch(`${API_URL}/api/admin/monthly-invoices/${invoice.id}/download`, {
                                 headers: {
                                   'Authorization': `Bearer ${token}`,
                                   'Cache-Control': 'no-cache',

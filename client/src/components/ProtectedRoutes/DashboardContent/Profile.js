@@ -6,7 +6,7 @@ const Profile = () => {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: "", type: "" });
-  const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+  const API_URL = `https://superflare.io`
 
   // Password Modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);

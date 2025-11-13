@@ -64,7 +64,7 @@ const Signup = () => {
       setLoading(false);
       return;
     }
-    const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+    const API_URL = `https://superflare.io`
     try {
       const res = await fetch(`${API_URL}/api/users/register`, {
         method: "POST",

@@ -5,7 +5,7 @@ import "./Auth.css";
 
 // SITE KEY
 const SITE_KEY = "6LeJZAssAAAAALenQc9ski_qxBzEpAj0xNQJugn7";
-const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+const API_URL = `https://superflare.io`
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const CreatePromoForm = ({ onSuccess, onCancel }) => {
-  const API_URL='http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io' || 'http://localhost:3001';
+  const API_URL='https://superflare.io' || 'http://localhost:3001';
   const [formData, setFormData] = useState({
     code: '',
     description: '',

@@ -167,7 +167,7 @@ function Domain() {
     }
   }
 
-  const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+  const API_URL = `https://superflare.io`
   const handleRazorpayPayment = async (orderData) => {
     const options = {
       key: orderData.key,

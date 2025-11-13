@@ -13,7 +13,7 @@ const Cart = () => {
     state: '', country: 'India', postalCode: '', gender: 'm'
   });
 
-  const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+  const API_URL = `https://superflare.io`
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('cart') || '[]');

@@ -17,6 +17,7 @@ const PromoCodes = ({
     is_active: true,
     expires_at: ''
   });
+  const API_URL='https://superflare.io' || 'http://localhost:3001';
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
   const [editSuccess, setEditSuccess] = useState(false);
@@ -77,7 +78,7 @@ const PromoCodes = ({
         expires_at: editForm.expires_at || null
       };
 
-      const response = await fetch(`http://localhost:3001/api/admin/promo-codes/${editingPromo}`, {
+      const response = await fetch(`${API_URL}/api/admin/promo-codes/${editingPromo}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

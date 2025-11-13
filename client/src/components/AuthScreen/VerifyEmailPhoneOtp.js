@@ -9,7 +9,7 @@ const VerifyEmailPhoneOtp = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+    const API_URL = `https://superflare.io`
 
     // Get tempEmail from localStorage
     const tempEmail = localStorage.getItem("tempEmail") || "";

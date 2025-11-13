@@ -9,7 +9,7 @@ const Logs = () => {
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+  const API_URL = `https://superflare.io`
   
   const token = localStorage.getItem("token");
   const logsEndRef = useRef(null);
@@ -28,7 +28,7 @@ const Logs = () => {
   const fetchWallet = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:3001/api/wallet", {
+      const res = await fetch(`${API_URL}/api/wallet`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -53,13 +53,13 @@ const Logs = () => {
     try {
       // Fetch billing history and wallet transactions in parallel
       const [billingRes, transactionsRes] = await Promise.all([
-        fetch("http://localhost:3001/api/users/wallet/billing-history", {
+        fetch(`${API_URL}/api/users/wallet/billing-history`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }),
-        fetch("http://localhost:3001/api/wallet/transactions", {
+        fetch("${API_URL}/api/wallet/transactions", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

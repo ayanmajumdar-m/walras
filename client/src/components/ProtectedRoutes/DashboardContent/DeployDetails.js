@@ -19,7 +19,7 @@ const DeployDetails = () => {
   const [showLowBalancePopup, setShowLowBalancePopup] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploymentProgress, setDeploymentProgress] = useState(0);
-  const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+  const API_URL = `https://superflare.io`
 
   useEffect(() => {
     const fetchWalletBalance = async () => {
@@ -114,7 +114,7 @@ const DeployDetails = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setDeploymentProgress(steps[i]);
       }
-      const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+      const API_URL = `https://superflare.io`
       // Call actual deployment API
       const response = await fetch(`${API_URL}/api/servers/deploy`, {
         method: "POST",

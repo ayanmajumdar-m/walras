@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./AuthScreen/Auth.css";
 
 const ResetPassword = () => {
-  const API_URL = `http://y0koc4ok88sk0cww0cwssco4.172.236.189.24.sslip.io`
+  const API_URL = `https://superflare.io`
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState({ success: "", error: "" });
