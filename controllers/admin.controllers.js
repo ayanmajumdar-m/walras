@@ -114,6 +114,16 @@ const AdminController = {
             res.json(result[0]);
         });
     },
+
+    getAllDomains: (req, res) => {
+    Admin.getAllDomains((err, results) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json(results); // Send all results, not just results[0]
+    });
+},
+
     getTotalBillingLogs: (req, res) => {
         Admin.getTotalBillingLogs((err, result) => {
             if (err) {

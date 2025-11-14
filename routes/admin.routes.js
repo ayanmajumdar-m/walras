@@ -34,6 +34,9 @@ router.get('/getUserBillingLogs/:id', requireBillingAccess, AdminController.getU
 router.get('/getAllServers', requireOwnerAccess, AdminController.getAllServers);
 router.get('/getUserServers/:id', requireOwnerAccess, AdminController.getUserServers);
 
+//Get all domains bought
+router.get('/getAllDomains', AdminController.getAllDomains);
+
 // Session and IP management (owner only)
 router.get('/getActiveSessions', requireOwnerAccess, AdminController.getActiveSessions);
 router.get('/getUniqueIPs', requireOwnerAccess, AdminController.getUniqueIPs);

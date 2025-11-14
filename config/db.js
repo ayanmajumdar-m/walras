@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 )
 `;
 
+
 const createTransactionsTable = `
 CREATE TABLE IF NOT EXISTS transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -193,6 +194,33 @@ CREATE TABLE IF NOT EXISTS transactions (
 )
 `;
 
+const createDomainTransactionsTable = `
+CREATE TABLE IF NOT EXISTS domain_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    domain_name VARCHAR(255) NOT NULL,
+    domain_extension VARCHAR(10) NOT NULL,
+    full_domain VARCHAR(255) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(10) DEFAULT 'USD',
+    registration_period INT DEFAULT 1, -- in years
+    payment_method VARCHAR(50),
+    payment_reference VARCHAR(255),
+    openprovider_domain_id VARCHAR(255),
+    status ENUM('pending', 'processing', 'registered', 'failed', 'expired') DEFAULT 'pending',
+    error_message TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    registration_date DATETIME,
+    expiration_date DATETIME,
+    auth_code VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status),
+    INDEX idx_full_domain (full_domain),
+    INDEX idx_created_at (created_at)
+)
+`;
 connection.connect((err) => {
     if (err) {
         throw err;
@@ -249,6 +277,10 @@ connection.connect((err) => {
         connection.query(createMonthlyInvoicesTable, (err, result)=>{
             if (err) throw err;
             console.log("Monthly invoices table ensured")
+        })
+        connection.query(createDomainTransactionsTable, (err, result)=>{
+            if (err) throw err;
+            console.log("Domain transactions table ensured")
         })
     }
 })

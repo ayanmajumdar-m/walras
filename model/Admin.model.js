@@ -1,4 +1,5 @@
 const connection = require('../config/db');
+const { getTotalDomains } = require('../controllers/admin.controllers');
 
 const Admin = {
     findByUsername: (username, callback) => {
@@ -7,7 +8,7 @@ const Admin = {
     },
     create: (adminData, callback) => {
         const { username, password } = adminData;
-        const query = 'INSERT INTO admins (username, password) VALUES (?, ?)';
+        const query = 'INSERT INTO admins (username, password, access) VALUES (?, ?, "owner")';
         connection.query(query, [username, password], callback);
     },
     getAllUsers: (callback) => {
@@ -29,6 +30,22 @@ const Admin = {
     getTotalServers: (callback) => {
         const query = 'SELECT COUNT(*) as total FROM servers';
         connection.query(query, callback);
+    },
+
+    getAllDomains: (callback) => {
+        try {
+            const query = 'SELECT * FROM domain_transactions ORDER BY registration_date DESC';
+            connection.query(query, (err, results) => {
+                if (err) {
+                    console.error('Database error:', err);
+                    return callback(err, null);
+                }
+                callback(null, results);
+            });
+        } catch (error) {
+            console.error('Error fetching domains:', error);
+            callback(error, null);
+        }
     },
     getTotalBillingLogs: (callback) => {
         const query = 'SELECT COUNT(*) as total FROM billing_logs';
