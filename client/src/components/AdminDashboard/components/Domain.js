@@ -16,6 +16,8 @@ const Domain = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('adminToken'));
+
 
   // Fetch domains from backend
   const fetchDomains = async (showRefreshing = false) => {
@@ -30,10 +32,10 @@ const Domain = () => {
       const res = await fetch("https://superflare.io/api/admin/getAllDomains", {
         method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          // Add any required auth headers if using tokens
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
 
       console.log('Response status:', res.status);
@@ -92,7 +94,7 @@ const Domain = () => {
     if (!amount && amount !== 0) return "-";
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) return "-";
-    
+
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',
@@ -125,12 +127,12 @@ const Domain = () => {
   };
 
   const filteredDomains = domains.filter((domain) => {
-    const matchesSearch = 
+    const matchesSearch =
       domain.full_domain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       domain.user_id?.toString().includes(searchTerm) ||
       domain.domain_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = 
+    const matchesStatus =
       filterStatus === "all" || domain.status === filterStatus;
 
     return matchesSearch && matchesStatus;
@@ -147,7 +149,7 @@ const Domain = () => {
       //   method: 'DELETE',
       //   credentials: 'include'
       // });
-      
+
       // For now, just remove from UI
       setDomains(domains.filter(domain => domain.id !== id));
     } catch (err) {
@@ -183,7 +185,7 @@ const Domain = () => {
     <div className="domain-section">
       <div className="section-header">
         <h2>Domain Registry</h2>
-        <button 
+        <button
           onClick={handleRefresh}
           disabled={refreshing}
           className="btn btn-secondary btn-sm"
@@ -299,7 +301,7 @@ const Domain = () => {
                       </div>
                     )}
                   </td>
-                  
+
                   <td className="user-id">{domain.user_id || "-"}</td>
 
                   <td>
@@ -326,7 +328,7 @@ const Domain = () => {
 
                   <td>
                     <div className="action-buttons">
-                      <button 
+                      <button
                         className="btn btn-secondary btn-sm"
                         title="View Details"
                       >
