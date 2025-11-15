@@ -62,8 +62,8 @@ function App() {
         <Route path="/domains/buy" element={<PublicLayout><Domain /></PublicLayout>} />
 
         {/* Admin routes */}
-        <Route path="/admin" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/super-admin-2025" element={<AdminLogin />} />
+        <Route path="/super-admin-2025/dashboard" element={<AdminDashboard />} />
       </Routes>
     </Router>
   );
