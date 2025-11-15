@@ -414,7 +414,7 @@ const AdminDashboard = () => {
           <div className="sidebar-footer">
             <button 
               className="nav-item logout-btn"
-              onClick={() => window.location.href = '/admin'}
+              onClick={() => window.location.href = '/super-admin-2025'}
             >
               <LogOut className="nav-icon" size={20} />
               Logout
@@ -438,7 +438,7 @@ const AdminDashboard = () => {
             <div className="header-actions">
               <button 
                 className="btn btn-secondary"
-                onClick={() => window.location.href = '/admin'}
+                onClick={() => window.location.href = '/super-admin-2025'}
               >
                 Logout
               </button>
