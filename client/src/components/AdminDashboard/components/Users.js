@@ -1,82 +1,227 @@
-import React from 'react';
-import { CheckCircle, AlertTriangle, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle, AlertTriangle, Eye, X, Mail, Building, User, Server, DollarSign } from 'lucide-react';
+import './Users.css';
 
-const Users = ({ users, handleUserSelect, formatCurrency }) => {
-  // Ensure users is always an array
+const Users = ({ users, handleUserSelect, formatCurrency, onDeleteUser, onVerifyUser }) => {
   const safeUsers = Array.isArray(users) ? users : [];
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleViewClick = (user) => {
+    setSelectedUser(user);
+    setShowModal(true);
+    handleUserSelect(user);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedUser(null);
+  };
+
+  const handleDelete = () => {
+    if (selectedUser && onDeleteUser) {
+      onDeleteUser(selectedUser.id);
+      handleCloseModal();
+    }
+  };
+
+  const handleVerify = () => {
+    if (selectedUser && onVerifyUser) {
+      onVerifyUser(selectedUser.id);
+      handleCloseModal();
+    }
+  };
+
   return (
-    <div className="users-management">
-      <div className="section-header">
-        <h3>User Management</h3>
-        <div className="users-stats">
-          <span>Total: {safeUsers.length}</span>
+    <div className="users">
+      <div className="users-header">
+        <h2>User Management</h2>
+        <div className="users-count">
+          <span>Total Users: {safeUsers.length}</span>
         </div>
       </div>
-      
-      <div className="users-list-header">
-        <div className="list-header-info">
-          <h4>User Management</h4>
-          <p>Manage and view all registered users</p>
-        </div>
-        <div className="list-header-stats">
-          <div className="stat-item">
-            <span className="stat-label">Total Users</span>
-            <span className="stat-value">{safeUsers.length}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Verified</span>
-            <span className="stat-value">{safeUsers.filter(u => u.isVerified).length}</span>
-          </div>
-        </div>
+
+      <div className="table-container">
+        <table className="users-table">
+          <thead>
+            <tr>
+              <th className="col-user">User</th>
+              <th className="col-email">Email</th>
+              <th className="col-company">Company</th>
+              <th className="col-role">Role</th>
+              <th className="col-servers">Servers</th>
+              <th className="col-spent">Total Spent</th>
+              <th className="col-status">Status</th>
+              <th className="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {safeUsers.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="no-data">
+                  No users found
+                </td>
+              </tr>
+            ) : (
+              safeUsers.map((user) => (
+                <tr key={user.id} className="user-row">
+                  <td className="col-user">
+                    <div className="user-cell">
+                      <div className="avatar">
+                        {user.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                      <span className="name">{user.name || "Unknown User"}</span>
+                    </div>
+                  </td>
+                  <td className="col-email">
+                    <span className="email">{user.email}</span>
+                  </td>
+                  <td className="col-company">
+                    <span className="company">{user.company || "No company"}</span>
+                  </td>
+                  <td className="col-role">
+                    <span className="role">{user.role || "No role"}</span>
+                  </td>
+                  <td className="col-servers">
+                    <span className="servers">{user.server_count || 0}</span>
+                  </td>
+                  <td className="col-spent">
+                    <span className="spent">{formatCurrency(user.total_spent || 0)}</span>
+                  </td>
+                  <td className="col-status">
+                    <div className={`status ${user.isVerified ? 'verified' : 'unverified'}`}>
+                      {user.isVerified ? (
+                        <>
+                          <CheckCircle size={16} />
+                          <span>Verified</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle size={16} />
+                          <span>Unverified</span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="col-actions">
+                    <button 
+                      className="view-btn"
+                      onClick={() => handleViewClick(user)}
+                    >
+                      <Eye size={16} />
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-      
-      <div className="users-table">
-        <div className="table-body">
-          {safeUsers.map((user) => (
-            <div key={user.id} className="table-row">
-              <div className="table-cell">
-                <div className="user-info">
-                  <div className="user-avatar">
-                    {user.name?.charAt(0).toUpperCase() || "U"}
-                  </div>
-                  <div>
-                    <strong>{user.name || "Unknown User"}</strong>
+
+      {/* User Details Modal */}
+      {showModal && selectedUser && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>User Details</h3>
+              <button className="close-btn" onClick={handleCloseModal}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="modal-content">
+              <div className="user-profile">
+                <div className="profile-avatar">
+                  {selectedUser.name?.charAt(0).toUpperCase() || "U"}
+                </div>
+                <div className="profile-info">
+                  <h2>{selectedUser.name || "Unknown User"}</h2>
+                  <div className={`profile-status ${selectedUser.isVerified ? 'verified' : 'unverified'}`}>
+                    {selectedUser.isVerified ? 'Verified User' : 'Unverified User'}
                   </div>
                 </div>
               </div>
-              <div className="table-cell">
-                <span>{user.email}</span>
-              </div>
-              <div className="table-cell">
-                <span>{user.company || "No company"}</span>
-              </div>
-              <div className="table-cell">
-                <span>{user.role || "No role"}</span>
-              </div>
-              <div className="table-cell">
-                <span>{user.server_count || 0}</span>
-              </div>
-              <div className="table-cell">
-                <span>{formatCurrency(user.total_spent || 0)}</span>
-              </div>
-              <div className="table-cell">
-                <span className={`status ${user.isVerified ? 'verified' : 'unverified'}`}>
-                  {user.isVerified ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-                </span>
-              </div>
-              <div className="table-cell">
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => handleUserSelect(user)}
-                >
-                  <Eye size={16} />
-                  View
-                </button>
+
+              <div className="user-details-grid">
+                <div className="detail-item">
+                  <div className="detail-icon">
+                    <Mail size={16} />
+                  </div>
+                  <div className="detail-content">
+                    <label>Email</label>
+                    <span>{selectedUser.email}</span>
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-icon">
+                    <Building size={16} />
+                  </div>
+                  <div className="detail-content">
+                    <label>Company</label>
+                    <span>{selectedUser.company || "No company"}</span>
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-icon">
+                    <User size={16} />
+                  </div>
+                  <div className="detail-content">
+                    <label>Role</label>
+                    <span>{selectedUser.role || "No role"}</span>
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-icon">
+                    <Server size={16} />
+                  </div>
+                  <div className="detail-content">
+                    <label>Servers</label>
+                    <span>{selectedUser.server_count || 0}</span>
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-icon">
+                    <DollarSign size={16} />
+                  </div>
+                  <div className="detail-content">
+                    <label>Total Spent</label>
+                    <span>{formatCurrency(selectedUser.total_spent || 0)}</span>
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-icon">
+                    <CheckCircle size={16} />
+                  </div>
+                  <div className="detail-content">
+                    <label>Verification Status</label>
+                    <span className={`status-text ${selectedUser.isVerified ? 'verified' : 'unverified'}`}>
+                      {selectedUser.isVerified ? 'Verified' : 'Unverified'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+
+            <div className="modal-actions">
+              {!selectedUser.isVerified && (
+                <button className="verify-btn" onClick={handleVerify}>
+                  <CheckCircle size={16} />
+                  Verify User
+                </button>
+              )}
+              <button className="delete-btn" onClick={handleDelete}>
+                Delete User
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

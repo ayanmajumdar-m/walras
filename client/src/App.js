@@ -23,6 +23,7 @@ import Privacy from './components/Privacy';
 import Refund from './components/Refund';
 import Terms from './components/Terms';
 import BareMetal from './components/BareMetal';
+import FlareMail from './components/FlareMail';
 
 function PublicLayout({ children }) {
   return (
@@ -60,6 +61,7 @@ function App() {
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
         <Route path='/deploy-details' element={<DeployDetails />} />
         <Route path="/domains/buy" element={<PublicLayout><Domain /></PublicLayout>} />
+        <Route path='/flare-mail' element={<PublicLayout><FlareMail /></PublicLayout>} />
 
         {/* Admin routes */}
         <Route path="/super-admin-2025" element={<AdminLogin />} />

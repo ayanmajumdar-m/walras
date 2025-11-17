@@ -307,6 +307,16 @@ const AdminController = {
         });
     },
 
+    verifyUser: (req, res) => {
+        const { userId } = req.body;
+        const query = 'UPDATE users SET isVerified = 1 WHERE id = ?';
+        connection.query(query, [userId], (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+            res.json({ message: 'User verified successfully' });
+        });
+    },
 
     // 🟢 GET all promo codes
     getAllPromoCodes: async (req, res) => {

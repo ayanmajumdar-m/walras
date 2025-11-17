@@ -46,6 +46,7 @@ router.post('/forceLogout', requireOwnerAccess, AdminController.forceLogout);
 
 // Activity monitoring (owner only)
 router.get('/getRecentActivity', requireOwnerAccess, AdminController.getRecentActivity);
+router.put('/verifyUser', requireOwnerAccess, AdminController.verifyUser);
 
 
 // Promo code management (owner only)

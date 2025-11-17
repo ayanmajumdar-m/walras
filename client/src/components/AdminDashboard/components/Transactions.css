@@ -1,0 +1,200 @@
+.transactions {
+  padding: 20px;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #1a1a1a;
+  border-radius: 8px;
+}
+
+.transactions-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #ffffff;
+}
+
+.transactions-count {
+  background: #2a2a2a;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.table-container {
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Column width definitions */
+.col-user { width: 200px; }
+.col-type { width: 120px; }
+.col-amount { width: 120px; }
+.col-description { width: 250px; }
+.col-payment { width: 180px; }
+.col-date { width: 150px; }
+.col-status { width: 120px; }
+
+.transactions-table th {
+  background: #2a2a2a;
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #ffffff;
+  border-bottom: 2px solid #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transactions-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #333;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transaction-row:hover {
+  background-color: #2a2a2a;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.user-info .name {
+  font-weight: 500;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-info .email {
+  color: #cccccc;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.type {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.type.credit {
+  background: #1a3a1a;
+  color: #4ade80;
+}
+
+.type.debit {
+  background: #3a1a1a;
+  color: #f87171;
+}
+
+.type.refund {
+  background: #3a2a1a;
+  color: #fbbf24;
+}
+
+.amount {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.description {
+  color: #cccccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.payment-id {
+  color: #cccccc;
+  font-family: monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.date {
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status.completed {
+  background: #1a3a1a;
+  color: #4ade80;
+}
+
+.status.pending {
+  background: #3a2a1a;
+  color: #fbbf24;
+}
+
+.status.failed {
+  background: #3a1a1a;
+  color: #f87171;
+}
+
+.status.refunded {
+  background: #1a2a3a;
+  color: #60a5fa;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .transactions-table {
+    min-width: 900px;
+    table-layout: auto;
+  }
+  
+  .transactions-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+}

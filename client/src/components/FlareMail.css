@@ -1,0 +1,506 @@
+.flare-mail {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Header */
+.flare-header {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  padding: 60px 0;
+  text-align: center;
+  border-bottom: 1px solid #333;
+}
+
+.header-content h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-content p {
+  font-size: 20px;
+  color: #cccccc;
+}
+
+/* Pricing Intro */
+.pricing-intro {
+  padding: 80px 0;
+  background: #0a0a0a;
+  text-align: center;
+}
+
+.intro-content h2 {
+  font-size: 36px;
+  margin-bottom: 24px;
+  color: #ffffff;
+}
+
+.intro-content p {
+  font-size: 18px;
+  color: #cccccc;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto 32px;
+}
+
+.intro-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+}
+
+.btn-secondary:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Pay-as-you-go Pricing */
+.payg-pricing {
+  padding: 60px 0;
+  background: #1a1a1a;
+}
+
+.pricing-card {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.pricing-header h3 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.price-display {
+  margin-bottom: 16px;
+}
+
+.price {
+  font-size: 48px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.period {
+  font-size: 18px;
+  color: #cccccc;
+  margin-left: 8px;
+}
+
+.credit-info {
+  color: #cccccc;
+  font-size: 16px;
+}
+
+.pricing-features {
+  margin: 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #cccccc;
+  justify-content: center;
+}
+
+.feature-item svg {
+  color: #3b82f6;
+}
+
+.example-section {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 24px;
+}
+
+.example-section h4 {
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.example-section p {
+  color: #cccccc;
+  margin-bottom: 8px;
+}
+
+.note {
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
+}
+
+/* Cost Calculator */
+.cost-calculator {
+  padding: 60px 0;
+  background: #0a0a0a;
+}
+
+.calculator-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.calculator-header h3 {
+  font-size: 24px;
+  color: #ffffff;
+}
+
+.calculator-content {
+  background: #1a1a1a;
+  padding: 32px;
+  border-radius: 12px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.email-input {
+  margin-bottom: 24px;
+}
+
+.email-input label {
+  display: block;
+  margin-bottom: 12px;
+  color: #cccccc;
+  font-weight: 500;
+}
+
+.email-input input {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.email-display {
+  text-align: center;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.cost-result {
+  text-align: center;
+  padding: 20px;
+  background: #0a0a0a;
+  border-radius: 8px;
+}
+
+.cost-amount {
+  font-size: 36px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 8px;
+}
+
+.cost-description {
+  color: #cccccc;
+}
+
+.tax-note, .email-note {
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+/* Features Grid */
+.features-grid-section {
+  padding: 60px 0;
+  background: #1a1a1a;
+}
+
+.features-grid-section h3 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 32px;
+  color: #ffffff;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.features-grid .feature-item {
+  justify-content: flex-start;
+  padding: 12px;
+  background: #0a0a0a;
+  border-radius: 6px;
+  border: 1px solid #333;
+}
+
+/* Free Credit */
+.free-credit {
+  padding: 60px 0;
+  background: #0a0a0a;
+}
+
+.credit-card {
+  background: linear-gradient(135deg, #1a3a5f, #1e40af);
+  padding: 32px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.credit-icon {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  border-radius: 50%;
+  color: #ffffff;
+}
+
+.credit-content h4 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.credit-content p {
+  color: #e0e7ff;
+  line-height: 1.6;
+}
+
+/* Add-ons */
+.addons-section {
+  padding: 60px 0;
+  background: #1a1a1a;
+}
+
+.addons-section h3 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 32px;
+  color: #ffffff;
+}
+
+.addon-card {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.addon-icon {
+  background: #1a1a1a;
+  padding: 16px;
+  border-radius: 50%;
+  color: #3b82f6;
+  border: 1px solid #333;
+}
+
+.addon-content h4 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.addon-price {
+  font-size: 18px;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 16px;
+}
+
+.addon-content p {
+  color: #cccccc;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.addon-note {
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
+}
+
+/* Benefits */
+.benefits-section {
+  padding: 80px 0;
+  background: #0a0a0a;
+}
+
+.benefits-section h3 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 48px;
+  color: #ffffff;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.benefit-item {
+  text-align: center;
+  padding: 32px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.benefit-item svg {
+  color: #3b82f6;
+  margin-bottom: 16px;
+}
+
+.benefit-item h4 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.benefit-item p {
+  color: #cccccc;
+  line-height: 1.6;
+}
+
+.benefits-cta {
+  text-align: center;
+}
+
+/* Additional Reasons */
+.additional-reasons {
+  padding: 60px 0;
+  background: #1a1a1a;
+}
+
+.additional-reasons h3 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 48px;
+  color: #ffffff;
+}
+
+.reasons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.reason-item {
+  background: #0a0a0a;
+  padding: 32px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  text-align: center;
+}
+
+.reason-item h4 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: #ffffff;
+}
+
+.reason-item p {
+  color: #cccccc;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .flare-header {
+    padding: 40px 0;
+  }
+  
+  .header-content h1 {
+    font-size: 36px;
+  }
+  
+  .intro-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .pricing-card {
+    padding: 24px;
+  }
+  
+  .price {
+    font-size: 36px;
+  }
+  
+  .credit-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .addon-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .reasons-grid {
+    grid-template-columns: 1fr;
+  }
+}
