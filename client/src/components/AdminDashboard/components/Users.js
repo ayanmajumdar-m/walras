@@ -6,6 +6,7 @@ const Users = ({ users, handleUserSelect, formatCurrency, onDeleteUser, onVerify
   const safeUsers = Array.isArray(users) ? users : [];
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleViewClick = (user) => {
     setSelectedUser(user);
@@ -18,17 +19,67 @@ const Users = ({ users, handleUserSelect, formatCurrency, onDeleteUser, onVerify
     setSelectedUser(null);
   };
 
-  const handleDelete = () => {
-    if (selectedUser && onDeleteUser) {
+  const handleDelete = async () => {
+    if (!selectedUser || !onDeleteUser) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('https://superflare.io/api/admin/deleteUser', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: selectedUser.id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete user');
+      }
+
+      const result = await response.json();
+      console.log(result.message);
+      
+      // Call the parent callback to update the UI
       onDeleteUser(selectedUser.id);
       handleCloseModal();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert(error.message || 'Failed to delete user');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleVerify = () => {
-    if (selectedUser && onVerifyUser) {
+  const handleVerify = async () => {
+    if (!selectedUser || !onVerifyUser) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('https://superflare.io/api/admin/verifyUser', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: selectedUser.id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to verify user');
+      }
+
+      const result = await response.json();
+      console.log(result.message);
+      
+      // Call the parent callback to update the UI
       onVerifyUser(selectedUser.id);
       handleCloseModal();
+    } catch (error) {
+      console.error('Error verifying user:', error);
+      alert(error.message || 'Failed to verify user');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -210,13 +261,21 @@ const Users = ({ users, handleUserSelect, formatCurrency, onDeleteUser, onVerify
 
             <div className="modal-actions">
               {!selectedUser.isVerified && (
-                <button className="verify-btn" onClick={handleVerify}>
+                <button 
+                  className="verify-btn" 
+                  onClick={handleVerify}
+                  disabled={loading}
+                >
                   <CheckCircle size={16} />
-                  Verify User
+                  {loading ? 'Verifying...' : 'Verify User'}
                 </button>
               )}
-              <button className="delete-btn" onClick={handleDelete}>
-                Delete User
+              <button 
+                className="delete-btn" 
+                onClick={handleDelete}
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Delete User'}
               </button>
             </div>
           </div>
