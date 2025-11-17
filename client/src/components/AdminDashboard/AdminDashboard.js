@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./AdminDashboard.css";
 import AdminProtectedRoute from "./AdminPrivateRoute";
-import { 
+import {
   Home,
   Globe,
   Server,
@@ -39,7 +39,7 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [showCreatePromo, setShowCreatePromo] = useState(false);
-  const API_URL = `https://superflare.io` || 'http://localhost:3001';
+  const API_URL = 'http://localhost:3001';
   const token = localStorage.getItem("adminToken");
 
   // Fetch dashboard stats
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
   const fetchPromoCodes = async () => {
     try {
       const response = await fetch(`${API_URL}/api/admin/promo-codes?t=${Date.now()}`, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
@@ -162,7 +162,7 @@ const AdminDashboard = () => {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         setMessage({ text: "Promo code deleted successfully", type: "success" });
         fetchPromoCodes();
@@ -178,7 +178,7 @@ const AdminDashboard = () => {
   const fetchInvoices = async () => {
     try {
       const response = await fetch(`${API_URL}/api/admin/monthly-invoices?t=${Date.now()}`, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
@@ -227,6 +227,86 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+  try {
+    console.log('Starting delete process for user:', userId);
+
+    // Send ID as URL parameter instead of in body
+    const response = await fetch(`${API_URL}/api/admin/deleteUser/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      // Remove the body since we're using URL parameters
+    });
+
+    console.log('DELETE Response status:', response.status);
+    console.log('DELETE Response URL:', response.url);
+
+    const responseText = await response.text();
+    console.log('DELETE Response text length:', responseText.length);
+    console.log('DELETE Response text (first 200 chars):', responseText.substring(0, 200));
+
+    // Check if we're getting the React app HTML
+    if (responseText.includes('<!doctype') || responseText.includes('create-react-app')) {
+      console.error('Got React HTML instead of API response!');
+      throw new Error('Backend server not running or route not found');
+    }
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(result.error || result.message || `Server error: ${response.status}`);
+    }
+
+    setMessage({ text: result.message || 'User deleted successfully', type: 'success' });
+    setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+
+  } catch (error) {
+    console.error('Error in handleDeleteUser:', error);
+    setMessage({
+      text: `Delete failed: ${error.message}`,
+      type: 'error'
+    });
+  }
+};
+
+  const handleVerifyUser = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/verifyUser`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: userId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to verify user');
+      }
+
+      const result = await response.json();
+      setMessage({ text: result.message, type: 'success' });
+
+      // Update user verification status in local state
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, isVerified: true } : user
+        )
+      );
+    } catch (error) {
+      console.error('Error verifying user:', error);
+      setMessage({ text: error.message || 'Failed to verify user', type: 'error' });
+    }
+  };
   useEffect(() => {
     const adminToken = localStorage.getItem("adminToken");
     if (adminToken) {
@@ -270,26 +350,28 @@ const AdminDashboard = () => {
 
     switch (activeTab) {
       case "dashboard":
-        return <Dashboard 
+        return <Dashboard
           dashboardStats={dashboardStats}
           recentActivity={recentActivity}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
         />;
       case "users":
-        return <Users 
+        return <Users
           users={users}
           handleUserSelect={handleUserSelect}
           formatCurrency={formatCurrency}
+          onDeleteUser={handleDeleteUser}  // Add this
+          onVerifyUser={handleVerifyUser}  // Add this
         />;
       case "transactions":
-        return <Transactions 
+        return <Transactions
           transactions={transactions}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
         />;
       case "invoices":
-        return <Invoices 
+        return <Invoices
           invoices={invoices}
           loading={loading}
           adminInfo={adminInfo}
@@ -299,19 +381,19 @@ const AdminDashboard = () => {
           formatDate={formatDate}
         />;
       case "servers":
-        return <Servers 
+        return <Servers
           servers={servers}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
         />;
       case "promo-codes":
-        return <PromoCodes 
+        return <PromoCodes
           promoCodes={promoCodes}
           setShowCreatePromo={setShowCreatePromo}
           deletePromoCode={deletePromoCode}
           formatDate={formatDate}
           onPromoUpdate={(updatedPromo) => {
-            setPromoCodes(prev => prev.map(promo => 
+            setPromoCodes(prev => prev.map(promo =>
               promo.id === updatedPromo.id ? updatedPromo : promo
             ));
           }}
@@ -319,7 +401,7 @@ const AdminDashboard = () => {
       case "domain":
         return <Domain />;
       default:
-        return <Dashboard 
+        return <Dashboard
           dashboardStats={dashboardStats}
           recentActivity={recentActivity}
           formatCurrency={formatCurrency}
@@ -346,7 +428,7 @@ const AdminDashboard = () => {
                 Dashboard
               </button>
             )}
-            
+
             {/* Servers */}
             {adminInfo?.access === 'owner' && (
               <button
@@ -357,7 +439,7 @@ const AdminDashboard = () => {
                 Servers
               </button>
             )}
-            
+
             {/* Domain - Placeholder for future domain management */}
             {adminInfo?.access === 'owner' && (
               <button
@@ -368,7 +450,7 @@ const AdminDashboard = () => {
                 Domain
               </button>
             )}
-            
+
             {/* Transactions */}
             <button
               className={`nav-item ${activeTab === "transactions" ? "active" : ""}`}
@@ -377,7 +459,7 @@ const AdminDashboard = () => {
               <DollarSign className="nav-icon" size={20} />
               Transactions
             </button>
-            
+
             {/* Users */}
             {adminInfo?.access === 'owner' && (
               <button
@@ -388,7 +470,7 @@ const AdminDashboard = () => {
                 Users
               </button>
             )}
-            
+
             {/* Promo Codes */}
             {adminInfo?.access === 'owner' && (
               <button
@@ -399,7 +481,7 @@ const AdminDashboard = () => {
                 Promo Codes
               </button>
             )}
-            
+
             {/* Invoices */}
             <button
               className={`nav-item ${activeTab === "invoices" ? "active" : ""}`}
@@ -409,10 +491,10 @@ const AdminDashboard = () => {
               Invoices
             </button>
           </nav>
-          
+
           {/* Logout Button */}
           <div className="sidebar-footer">
-            <button 
+            <button
               className="nav-item logout-btn"
               onClick={() => window.location.href = '/super-admin-2025'}
             >
@@ -436,7 +518,7 @@ const AdminDashboard = () => {
               )}
             </div>
             <div className="header-actions">
-              <button 
+              <button
                 className="btn btn-secondary"
                 onClick={() => window.location.href = '/super-admin-2025'}
               >
@@ -461,7 +543,7 @@ const AdminDashboard = () => {
       </div>
 
       {showCreatePromo && (
-        <CreatePromoForm 
+        <CreatePromoForm
           onSuccess={() => {
             setShowCreatePromo(false);
             fetchPromoCodes();

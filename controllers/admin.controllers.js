@@ -55,8 +55,8 @@ const AdminController = {
             }
 
             const token = jwt.sign({ adminId: admin.id, access: admin.access }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            res.json({ 
-                token, 
+            res.json({
+                token,
                 admin: {
                     id: admin.id,
                     username: admin.username,
@@ -75,7 +75,7 @@ const AdminController = {
         });
     },
     deleteUser: (req, res) => {
-        const userId = req.params.id;
+        const userId = req.params.id; // Use body instead of params
         Admin.deleteUserById(userId, (err, result) => {
             if (err) {
                 return res.status(500).json({ error: 'Database error' });
@@ -116,13 +116,13 @@ const AdminController = {
     },
 
     getAllDomains: (req, res) => {
-    Admin.getAllDomains((err, results) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-        res.json(results); // Send all results, not just results[0]
-    });
-},
+        Admin.getAllDomains((err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+            res.json(results); // Send all results, not just results[0]
+        });
+    },
 
     getTotalBillingLogs: (req, res) => {
         Admin.getTotalBillingLogs((err, result) => {
@@ -318,6 +318,8 @@ const AdminController = {
         });
     },
 
+
+
     // 🟢 GET all promo codes
     getAllPromoCodes: async (req, res) => {
         try {
@@ -342,7 +344,7 @@ const AdminController = {
                                 console.error('Get promo codes fallback error:', fallbackErr);
                                 return res.status(500).json({ error: 'Database error' });
                             }
-                            
+
                             const formatted = fallbackResults.map(promo => ({
                                 ...promo,
                                 credit_amount: (promo.credit_amount / 100).toFixed(2),
@@ -608,7 +610,7 @@ const AdminController = {
     getUserMonthlyInvoices: async (req, res) => {
         try {
             const { userId } = req.params;
-            
+
             connection.query(`
                 SELECT mi.*, u.name as user_name, u.email as user_email
                 FROM monthly_invoices mi
@@ -667,7 +669,7 @@ const AdminController = {
                 const user = users[0];
                 const now = new Date();
                 const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                
+
                 // Generate sample invoice
                 const invoiceNumber = `INV-${lastMonth.getFullYear()}-${(lastMonth.getMonth() + 1).toString().padStart(2, '0')}-${user.id}`;
                 const sampleAmount = 500000; // ₹5000 in paise
@@ -690,7 +692,7 @@ const AdminController = {
                         return res.status(500).json({ error: 'Failed to create sample invoice' });
                     }
 
-                    res.json({ 
+                    res.json({
                         message: 'Sample invoice created successfully',
                         invoice: {
                             id: result.insertId,
@@ -755,7 +757,7 @@ const AdminController = {
     downloadMonthlyInvoice: async (req, res) => {
         try {
             const { id } = req.params;
-            
+
             // Get invoice details with user information
             const invoiceQuery = `
                 SELECT mi.*, u.name as user_name, u.email as user_email, u.company, u.address
@@ -763,31 +765,31 @@ const AdminController = {
                 LEFT JOIN users u ON mi.user_id = u.id
                 WHERE mi.id = ?
             `;
-            
+
             connection.query(invoiceQuery, [id], async (err, results) => {
                 if (err) {
                     console.error('Database error:', err);
                     return res.status(500).json({ error: 'Database error' });
                 }
-                
+
                 if (results.length === 0) {
                     return res.status(404).json({ error: 'Invoice not found' });
                 }
-                
+
                 const invoice = results[0];
-                
+
                 try {
                     // Generate PDF invoice
                     const PDFDocument = require('pdfkit');
                     const doc = new PDFDocument({ margin: 50 });
-                    
+
                     // Set response headers for PDF download
                     res.setHeader('Content-Type', 'application/pdf');
                     res.setHeader('Content-Disposition', `attachment; filename="invoice_${invoice.invoice_number}_${new Date().toISOString().split('T')[0]}.pdf"`);
-                    
+
                     // Pipe PDF to response
                     doc.pipe(res);
-                    
+
                     // Invoice Header
                     doc.fontSize(24).text('INVOICE', 50, 50);
                     doc.fontSize(12).text(`Invoice Number: ${invoice.invoice_number}`, 50, 85);
@@ -797,34 +799,34 @@ const AdminController = {
 
                     // Company Info
                     doc.text('ioogn Services', 400, 85)
-                      .text('Cloud Infrastructure Provider', 400, 100)
-                      .text('Billing Department', 400, 115)
-                      .text('contact@ioogn.com', 400, 130)
-                      .text('+91-9876543210', 400, 145);
+                        .text('Cloud Infrastructure Provider', 400, 100)
+                        .text('Billing Department', 400, 115)
+                        .text('contact@ioogn.com', 400, 130)
+                        .text('+91-9876543210', 400, 145);
 
                     // Customer Info
                     doc.text('Bill To:', 50, 180)
-                      .text(invoice.user_name || 'N/A', 50, 195)
-                      .text(invoice.company || 'N/A', 50, 210)
-                      .text(invoice.user_email || 'N/A', 50, 225)
-                      .text(invoice.address || 'N/A', 50, 240, { width: 200 });
+                        .text(invoice.user_name || 'N/A', 50, 195)
+                        .text(invoice.company || 'N/A', 50, 210)
+                        .text(invoice.user_email || 'N/A', 50, 225)
+                        .text(invoice.address || 'N/A', 50, 240, { width: 200 });
 
                     // Billing Period
                     doc.text('Billing Period:', 50, 280)
-                      .text(new Date(invoice.billing_month).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), 50, 295);
+                        .text(new Date(invoice.billing_month).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), 50, 295);
 
                     // Invoice Details
                     let yPosition = 340;
-                    
+
                     // Table Header
                     doc.fillColor('#000000')
-                       .rect(50, yPosition, 500, 25)
-                       .fill()
-                       .fillColor('#ffffff')
-                       .fontSize(10)
-                       .text('Description', 60, yPosition + 8)
-                       .text('Period', 300, yPosition + 8)
-                       .text('Amount (₹)', 450, yPosition + 8);
+                        .rect(50, yPosition, 500, 25)
+                        .fill()
+                        .fillColor('#ffffff')
+                        .fontSize(10)
+                        .text('Description', 60, yPosition + 8)
+                        .text('Period', 300, yPosition + 8)
+                        .text('Amount (₹)', 450, yPosition + 8);
 
                     yPosition += 30;
 
@@ -835,7 +837,7 @@ const AdminController = {
                         email: invoice.user_email,
                         company: invoice.company
                     };
-                    
+
                     // For invoice display, we need to calculate what the base amount was before taxes
                     // Since the stored amount might already include taxes, we'll estimate the base amount
                     const storedAmount = invoice.total_amount;
@@ -844,15 +846,15 @@ const AdminController = {
 
                     // Invoice Row
                     doc.fillColor('#ffffff')
-                       .text('Monthly Server Usage', 60, yPosition)
-                       .text(new Date(invoice.billing_month).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), 300, yPosition)
-                       .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
+                        .text('Monthly Server Usage', 60, yPosition)
+                        .text(new Date(invoice.billing_month).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), 300, yPosition)
+                        .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
 
                     yPosition += 25;
 
                     // Subtotal
                     doc.text('Subtotal', 60, yPosition)
-                       .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
+                        .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
 
                     yPosition += 20;
 
@@ -860,44 +862,44 @@ const AdminController = {
                     if (taxData.taxAmount > 0) {
                         taxData.taxBreakdown.forEach(tax => {
                             doc.text(tax.description, 60, yPosition)
-                               .text((tax.amount / 100).toFixed(2), 450, yPosition);
+                                .text((tax.amount / 100).toFixed(2), 450, yPosition);
                             yPosition += 20;
                         });
                     }
 
                     // Total
                     doc.fillColor('#f0f0f0')
-                       .rect(50, yPosition, 500, 30)
-                       .fill()
-                       .fillColor('#000000')
-                       .fontSize(12)
-                       .text('TOTAL', 60, yPosition + 8)
-                       .text((taxData.totalAmount / 100).toFixed(2), 450, yPosition + 8);
+                        .rect(50, yPosition, 500, 30)
+                        .fill()
+                        .fillColor('#000000')
+                        .fontSize(12)
+                        .text('TOTAL', 60, yPosition + 8)
+                        .text((taxData.totalAmount / 100).toFixed(2), 450, yPosition + 8);
 
                     // Payment Information
                     yPosition += 60;
                     doc.fontSize(10)
-                       .text('Payment Information:', 50, yPosition)
-                       .text('Bank: State Bank of India', 50, yPosition + 20)
-                       .text('Account: 1234567890123456', 50, yPosition + 35)
-                       .text('IFSC: SBIN0001234', 50, yPosition + 50)
-                       .text('UPI: ioogn@paytm', 50, yPosition + 65);
+                        .text('Payment Information:', 50, yPosition)
+                        .text('Bank: State Bank of India', 50, yPosition + 20)
+                        .text('Account: 1234567890123456', 50, yPosition + 35)
+                        .text('IFSC: SBIN0001234', 50, yPosition + 50)
+                        .text('UPI: ioogn@paytm', 50, yPosition + 65);
 
                     // Footer
                     yPosition += 100;
                     doc.text('Thank you for your business!', 50, yPosition)
-                       .text('For any queries, contact us at support@ioogn.com', 50, yPosition + 20)
-                       .text('This is a computer-generated invoice.', 50, yPosition + 40);
-                    
+                        .text('For any queries, contact us at support@ioogn.com', 50, yPosition + 20)
+                        .text('This is a computer-generated invoice.', 50, yPosition + 40);
+
                     // Finalize PDF
                     doc.end();
-                    
+
                 } catch (pdfError) {
                     console.error('PDF generation error:', pdfError);
                     res.status(500).json({ error: 'Failed to generate invoice PDF' });
                 }
             });
-            
+
         } catch (error) {
             console.error('Download monthly invoice error:', error);
             res.status(500).json({ error: 'Internal server error' });
@@ -909,14 +911,14 @@ const AdminController = {
         try {
             const PDFDocument = require('pdfkit');
             const doc = new PDFDocument({ margin: 50 });
-            
+
             // Set response headers for PDF download
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="sample_invoice_${new Date().toISOString().split('T')[0]}.pdf"`);
-            
+
             // Pipe PDF to response
             doc.pipe(res);
-            
+
             // Sample data for different scenarios
             const sampleScenarios = [
                 {
@@ -926,7 +928,7 @@ const AdminController = {
                     description: 'Sample West Bengal Customer - 18% GST'
                 },
                 {
-                    name: 'Maharashtra Customer', 
+                    name: 'Maharashtra Customer',
                     address: '456 Marine Drive\nMumbai\nMaharashtra\nIndia\n400001',
                     baseAmount: 10000, // ₹100.00
                     description: 'Sample Maharashtra Customer - 9% IGST + 9% SGST'
@@ -953,17 +955,17 @@ const AdminController = {
 
                 // Company Info
                 doc.text('IOOGN Services', 400, 85)
-                  .text('Cloud Infrastructure Provider', 400, 100)
-                  .text('Billing Department', 400, 115)
-                  .text('contact@ioogn.com', 400, 130)
-                  .text('+91-9876543210', 400, 145);
+                    .text('Cloud Infrastructure Provider', 400, 100)
+                    .text('Billing Department', 400, 115)
+                    .text('contact@ioogn.com', 400, 130)
+                    .text('+91-9876543210', 400, 145);
 
                 // Customer Info
                 doc.text('Bill To:', 50, 180)
-                  .text(scenario.name, 50, 195)
-                  .text('Sample Company Ltd.', 50, 210)
-                  .text('sample@email.com', 50, 225)
-                  .text(scenario.address, 50, 240, { width: 200 });
+                    .text(scenario.name, 50, 195)
+                    .text('Sample Company Ltd.', 50, 210)
+                    .text('sample@email.com', 50, 225)
+                    .text(scenario.address, 50, 240, { width: 200 });
 
                 // Calculate taxes
                 const user = {
@@ -976,75 +978,75 @@ const AdminController = {
 
                 // Billing Table
                 let yPosition = 340;
-                
+
                 // Table Header
                 doc.fillColor('#000000')
-                   .rect(50, yPosition, 500, 25)
-                   .fill()
-                   .fillColor('#ffffff')
-                   .fontSize(10)
-                   .text('Description', 60, yPosition + 8)
-                   .text('Amount (₹)', 450, yPosition + 8);
+                    .rect(50, yPosition, 500, 25)
+                    .fill()
+                    .fillColor('#ffffff')
+                    .fontSize(10)
+                    .text('Description', 60, yPosition + 8)
+                    .text('Amount (₹)', 450, yPosition + 8);
 
                 yPosition += 30;
 
                 // Service Row
                 doc.fillColor('#ffffff')
-                   .text('Monthly Server Usage', 60, yPosition)
-                   .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
+                    .text('Monthly Server Usage', 60, yPosition)
+                    .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
 
                 yPosition += 25;
 
                 // Subtotal
                 doc.fillColor('#f8f8f8')
-                   .rect(50, yPosition, 500, 20)
-                   .fill()
-                   .fillColor('#000000')
-                   .text('Subtotal', 60, yPosition + 5)
-                   .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition + 5);
+                    .rect(50, yPosition, 500, 20)
+                    .fill()
+                    .fillColor('#000000')
+                    .text('Subtotal', 60, yPosition + 5)
+                    .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition + 5);
                 yPosition += 25;
 
                 // Tax rows
                 if (taxData.taxAmount > 0) {
                     taxData.taxBreakdown.forEach(tax => {
                         doc.fillColor('#ffffff')
-                           .text(tax.description, 60, yPosition)
-                           .text((tax.amount / 100).toFixed(2), 450, yPosition);
+                            .text(tax.description, 60, yPosition)
+                            .text((tax.amount / 100).toFixed(2), 450, yPosition);
                         yPosition += 20;
                     });
                 } else {
                     doc.fillColor('#ffffff')
-                       .text('No taxes applicable', 60, yPosition)
-                       .text('0.00', 450, yPosition);
+                        .text('No taxes applicable', 60, yPosition)
+                        .text('0.00', 450, yPosition);
                     yPosition += 20;
                 }
 
                 // Total
                 doc.fillColor('#f0f0f0')
-                   .rect(50, yPosition, 500, 30)
-                   .fill()
-                   .fillColor('#000000')
-                   .fontSize(12)
-                   .text('TOTAL', 60, yPosition + 8)
-                   .text((taxData.totalAmount / 100).toFixed(2), 450, yPosition + 8);
+                    .rect(50, yPosition, 500, 30)
+                    .fill()
+                    .fillColor('#000000')
+                    .fontSize(12)
+                    .text('TOTAL', 60, yPosition + 8)
+                    .text((taxData.totalAmount / 100).toFixed(2), 450, yPosition + 8);
 
                 // Tax Information
                 yPosition += 60;
                 doc.fontSize(10)
-                   .text('Tax Information:', 50, yPosition)
-                   .text(`Country: ${taxData.country}`, 50, yPosition + 20)
-                   .text(`State: ${taxData.state}`, 50, yPosition + 35)
-                   .text(`Tax Applied: ${taxData.taxAmount > 0 ? 'Yes' : 'No'}`, 50, yPosition + 50);
+                    .text('Tax Information:', 50, yPosition)
+                    .text(`Country: ${taxData.country}`, 50, yPosition + 20)
+                    .text(`State: ${taxData.state}`, 50, yPosition + 35)
+                    .text(`Tax Applied: ${taxData.taxAmount > 0 ? 'Yes' : 'No'}`, 50, yPosition + 50);
 
                 // Footer
                 yPosition += 100;
                 doc.text('This is a sample invoice for demonstration purposes.', 50, yPosition)
-                   .text('For any queries, contact us at support@ioogn.com', 50, yPosition + 20);
+                    .text('For any queries, contact us at support@ioogn.com', 50, yPosition + 20);
             });
-            
+
             // Finalize PDF
             doc.end();
-            
+
         } catch (error) {
             console.error('Generate sample invoice error:', error);
             res.status(500).json({ error: 'Failed to generate sample invoice' });

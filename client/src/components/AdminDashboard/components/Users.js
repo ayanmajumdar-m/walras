@@ -24,28 +24,11 @@ const Users = ({ users, handleUserSelect, formatCurrency, onDeleteUser, onVerify
     
     setLoading(true);
     try {
-      const response = await fetch('https://superflare.io/api/admin/deleteUser', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: selectedUser.id }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete user');
-      }
-
-      const result = await response.json();
-      console.log(result.message);
-      
-      // Call the parent callback to update the UI
-      onDeleteUser(selectedUser.id);
+      await onDeleteUser(selectedUser.id);
       handleCloseModal();
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert(error.message || 'Failed to delete user');
+      // Error is already handled in the parent component
     } finally {
       setLoading(false);
     }
@@ -56,28 +39,11 @@ const Users = ({ users, handleUserSelect, formatCurrency, onDeleteUser, onVerify
     
     setLoading(true);
     try {
-      const response = await fetch('https://superflare.io/api/admin/verifyUser', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: selectedUser.id }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to verify user');
-      }
-
-      const result = await response.json();
-      console.log(result.message);
-      
-      // Call the parent callback to update the UI
-      onVerifyUser(selectedUser.id);
+      await onVerifyUser(selectedUser.id);
       handleCloseModal();
     } catch (error) {
       console.error('Error verifying user:', error);
-      alert(error.message || 'Failed to verify user');
+      // Error is already handled in the parent component
     } finally {
       setLoading(false);
     }
