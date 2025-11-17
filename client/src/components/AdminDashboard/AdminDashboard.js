@@ -39,7 +39,7 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [showCreatePromo, setShowCreatePromo] = useState(false);
-  const API_URL = 'http://localhost:3001';
+  const API_URL = 'https://superflare.io';
   const token = localStorage.getItem("adminToken");
 
   // Fetch dashboard stats
