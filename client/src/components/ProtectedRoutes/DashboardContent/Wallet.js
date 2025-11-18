@@ -9,6 +9,7 @@ const Wallet = () => {
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [loading, setLoading] = useState(false);
   const [promoCode, setPromoCode] = useState("");
+  const [userData, setUserData] = useState(null);
   const API_URL = `https://superflare.io`
 
   const [promoLoading, setPromoLoading] = useState(false);
@@ -17,7 +18,49 @@ const Wallet = () => {
 
   useEffect(() => {
     fetchWallet();
+    fetchUserData();
   }, []);
+
+  // ✅ Get user ID from JWT token
+  const getUserIdFromToken = () => {
+    if (!token) return null;
+    try {
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(atob(payload));
+      return decoded.userId;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  };
+
+  // ✅ Fetch user data
+  const fetchUserData = async () => {
+    if (!token) return console.error("No auth token found");
+    
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      console.error("No user ID found in token");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/user/profile/${userId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUserData(data);
+      } else {
+        console.error("User data fetch failed:", data);
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+    }
+  };
 
   // ✅ Fetch wallet data
   const fetchWallet = async () => {
@@ -26,7 +69,7 @@ const Wallet = () => {
       const res = await fetch(`${API_URL}/api/wallet`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // send token here
+          Authorization: `Bearer ${token}`,
         },
       });
       const data = await res.json();
@@ -42,7 +85,6 @@ const Wallet = () => {
     }
   };
 
-
   // ✅ Add money handler with Razorpay flow
   const handleAddFunds = async () => {
     const amt = parseFloat(amount);
@@ -56,7 +98,7 @@ const Wallet = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // send token here too
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ amount: amt }),
       });
@@ -68,12 +110,12 @@ const Wallet = () => {
         return;
       }
 
-      // Step 2: Open Razorpay checkout
+      // Step 2: Open Razorpay checkout with real user data
       const options = {
         key: data.key,
         amount: data.amount,
         currency: data.currency,
-        name: "Kepler Wallet",
+        name: "Superflare Wallet",
         description: "Add funds to wallet",
         order_id: data.orderId,
         handler: async (response) => {
@@ -82,7 +124,7 @@ const Wallet = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // send token here
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               ...response,
@@ -99,9 +141,9 @@ const Wallet = () => {
           }
         },
         prefill: {
-          name: "Shlok Ranjan",
-          email: "user@example.com",
-          contact: "9999999999",
+          name: userData?.name || "Customer",
+          email: userData?.email || "",
+          contact: userData?.phone || "",
         },
         theme: { color: "#111" },
       };
@@ -156,6 +198,9 @@ const Wallet = () => {
       {/* Header */}
       <div className="wallet-header">
         <h1>My Wallet</h1>
+        {userData && (
+          <p className="welcome-message">Welcome back, {userData.name}!</p>
+        )}
       </div>
 
       {/* Wallet Summary */}
