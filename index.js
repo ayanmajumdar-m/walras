@@ -13,7 +13,7 @@ console.log("💰 Billing service initialized");
 // ✅ Step 1: Proper CORS setup (for frontend on localhost:3000)
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://dujdidnis.superflare.io", "https://superflare.io", "https://www.superflare.io"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
