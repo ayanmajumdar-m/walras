@@ -355,7 +355,7 @@ const DeployDetails = () => {
         <div className="summary-section-do">
           <div className="summary-card-do dark-card">
             <div className="summary-header-do dark-summary-header">
-              <h3>Droplet Summary</h3>
+              <h3>Server Summary</h3>
             </div>
 
             {/* Selected Plan */}
@@ -392,7 +392,7 @@ const DeployDetails = () => {
               <h4>Cost Breakdown</h4>
               <div className="cost-rows-do">
                 <div className="cost-row-do dark-cost-row">
-                  <span>Droplet</span>
+                  <span>Server</span>
                   <span>{currency === "INR" ? "₹" : "$"}{calculateHourlyCost().toFixed(2)}/hour</span>
                 </div>
                 <div className="cost-row-do dark-cost-row">
@@ -436,10 +436,10 @@ const DeployDetails = () => {
                 {isDeploying ? (
                   <>
                     <div className="button-spinner-do"></div>
-                    Creating Droplet... {deploymentProgress}%
+                    Creating Server... {deploymentProgress}%
                   </>
                 ) : (
-                  `Create Droplet - ${currency === "INR" ? "₹" : "$"}${calculateHourlyCost().toFixed(2)}/hr`
+                  `Create Server - ${currency === "INR" ? "₹" : "$"}${calculateHourlyCost().toFixed(2)}/hr`
                 )}
               </button>
 
@@ -460,7 +460,7 @@ const DeployDetails = () => {
               )}
 
               <div className="deploy-note-do dark-note">
-                <p>You'll be billed hourly. Droplets are created in 55 seconds.</p>
+                <p>You'll be billed hourly. Servers are created in 55 seconds.</p>
               </div>
             </div>
           </div>
@@ -475,7 +475,7 @@ const DeployDetails = () => {
               <h3>Insufficient Balance</h3>
             </div>
             <div className="popup-content-do dark-popup-content">
-              <p>You need at least <strong>₹500</strong> in your wallet to deploy a droplet.</p>
+              <p>You need at least <strong>₹500</strong> in your wallet to deploy a Server.</p>
               <p>Current balance: <strong>₹{walletBalance.toFixed(2)}</strong></p>
             </div>
             <div className="popup-actions-do">

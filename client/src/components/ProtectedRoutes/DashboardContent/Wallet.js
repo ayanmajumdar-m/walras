@@ -27,7 +27,7 @@ const Wallet = () => {
     try {
       const payload = token.split('.')[1];
       const decoded = JSON.parse(atob(payload));
-      return decoded.id;
+      return decoded.userId;
     } catch (error) {
       console.error('Error decoding token:', error);
       return null;
