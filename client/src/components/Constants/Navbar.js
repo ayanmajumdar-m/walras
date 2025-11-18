@@ -28,11 +28,11 @@ const Navbar = () => {
       href: "/bare-metal",
       type: "link"
     },
-    {
-      name: "Flare Mail",
-      href: "/flare-mail",
-      type: "link"
-    },
+    // {
+    //   name: "Flare Mail",
+    //   href: "/flare-mail",
+    //   type: "link"
+    // },
     { 
       name: "Pages", 
       type: "dropdown",
