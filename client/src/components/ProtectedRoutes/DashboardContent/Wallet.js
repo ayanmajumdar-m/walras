@@ -358,12 +358,12 @@ const Wallet = () => {
 
         <div className="wallet-payment-method">
           <label>Payment Method:</label>
-          <select style={{color: 'black'}}
+          <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
-            <option value="razorpay">Razorpay (UPI, Cards, Net Banking)</option>
-            <option value="paypal">PayPal (International)</option>
+            <option style={{color: 'black'}} value="razorpay">Razorpay (UPI, Cards, Net Banking)</option>
+            <option style={{color: 'black'}} value="paypal">PayPal (International)</option>
           </select>
         </div>
 
