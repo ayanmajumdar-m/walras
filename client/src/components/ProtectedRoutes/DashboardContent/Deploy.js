@@ -8,64 +8,76 @@ const Deploy = () => {
 
   // Current conversion rate (1 USD = ~83 INR)
   const USD_TO_INR_RATE = 83;
+  const HOURS_PER_MONTH = 720; // 24 hours × 30 days
+
+  const calculateUSDPrice = (inrPrice) => {
+    return Math.round((inrPrice / USD_TO_INR_RATE) * 100) / 100;
+  };
+
+  const calculateHourlyPrice = (monthlyPrice, isUSD = false) => {
+    if (isUSD) {
+      const hourly = monthlyPrice / HOURS_PER_MONTH;
+      return Math.round(hourly * 1000) / 1000; // 3 decimal places for USD
+    }
+    return Math.round((monthlyPrice / HOURS_PER_MONTH) * 100) / 100; // 2 decimal places for INR
+  };
 
   const plans = [
     {
       id: 1,
       name: "SFC-4GB",
       inr: 900,
-      usd: Math.round((900 / USD_TO_INR_RATE) * 100) / 100, // ~10.84
+      usd: calculateUSDPrice(900),
       ram: "4GB DDR4 RAM",
       vcpu: 2,
       storage: "60GB SSD",
       bandwidth: "2TB @10 Gbps",
       ip: "1 IPv4 Address",
-      hourly_inr: Math.round((900 / (24 * 30)) * 100) / 100, // ~1.25
-      hourly_usd: Math.round((900 / (24 * 30 * USD_TO_INR_RATE)) * 10000) / 100 // ~0.015
+      hourly_inr: calculateHourlyPrice(900),
+      hourly_usd: calculateHourlyPrice(calculateUSDPrice(900), true)
     },
     {
       id: 2,
       name: "SFC-8GB",
       inr: 1800,
-      usd: Math.round((1800 / USD_TO_INR_RATE) * 100) / 100, // ~21.69
+      usd: calculateUSDPrice(1800),
       ram: "8GB DDR4 RAM",
       vcpu: 4,
       storage: "120GB SSD",
       bandwidth: "4TB @10 Gbps",
       ip: "1 IPv4 Address",
-      hourly_inr: Math.round((1800 / (24 * 30)) * 100) / 100, // ~2.50
-      hourly_usd: Math.round((1800 / (24 * 30 * USD_TO_INR_RATE)) * 10000) / 100 // ~0.030
+      hourly_inr: calculateHourlyPrice(1800),
+      hourly_usd: calculateHourlyPrice(calculateUSDPrice(1800), true)
     },
     {
       id: 3,
       name: "SFC-16GB",
       inr: 3600,
-      usd: Math.round((3600 / USD_TO_INR_RATE) * 100) / 100, // ~43.37
+      usd: calculateUSDPrice(3600),
       ram: "16GB DDR4 RAM",
       vcpu: 6,
       storage: "240GB SSD",
       bandwidth: "6TB @10 Gbps",
       ip: "1 IPv4 Address",
-      hourly_inr: Math.round((3600 / (24 * 30)) * 100) / 100, // ~5.00
-      hourly_usd: Math.round((3600 / (24 * 30 * USD_TO_INR_RATE)) * 10000) / 100 // ~0.060
+      hourly_inr: calculateHourlyPrice(3600),
+      hourly_usd: calculateHourlyPrice(calculateUSDPrice(3600), true)
     },
     {
       id: 4,
       name: "SFC-32GB",
       inr: 5400,
-      usd: Math.round((5400 / USD_TO_INR_RATE) * 100) / 100, // ~65.06
+      usd: calculateUSDPrice(5400),
       ram: "32GB DDR4 RAM",
       vcpu: 10,
       storage: "480GB SSD",
       bandwidth: "10TB @10 Gbps",
       ip: "1 IPv4 Address",
-      hourly_inr: Math.round((5400 / (24 * 30)) * 100) / 100, // ~7.50
-      hourly_usd: Math.round((5400 / (24 * 30 * USD_TO_INR_RATE)) * 10000) / 100 // ~0.090
+      hourly_inr: calculateHourlyPrice(5400),
+      hourly_usd: calculateHourlyPrice(calculateUSDPrice(5400), true)
     }
   ];
 
   const handleDeployClick = (plan) => {
-    // Navigate to deploy details page with plan data
     navigate('/deploy-details', { 
       state: { 
         selectedPlan: plan,
@@ -167,7 +179,7 @@ const Deploy = () => {
       <div className="currency-note">
         <p>
           💡 Currency Conversion: 1 USD ≈ ₹{USD_TO_INR_RATE} | 
-          Prices are calculated based on 720 hours per month (24 hours × 30 days)
+          Prices are calculated based on {HOURS_PER_MONTH} hours per month (24 hours × 30 days)
         </p>
       </div>
     </div>
