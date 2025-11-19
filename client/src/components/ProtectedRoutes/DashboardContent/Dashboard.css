@@ -2428,3 +2428,30 @@
   max-width: 300px;
   margin: 0 auto;
 }
+
+.currency-note {
+  margin-top: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  border: 1px solid #e9ecef;
+}
+
+.currency-note p {
+  margin: 0;
+}
+
+.hourly-price {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.monthly-price {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+}

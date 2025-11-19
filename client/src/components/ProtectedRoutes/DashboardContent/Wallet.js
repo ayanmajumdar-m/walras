@@ -358,7 +358,7 @@ const Wallet = () => {
 
         <div className="wallet-payment-method">
           <label>Payment Method:</label>
-          <select
+          <select style={{color: 'black'}}
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
