@@ -2409,3 +2409,22 @@
     flex-direction: column;
   }
 }
+.paypal-container {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.currency-note {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+#paypal-button-container {
+  max-width: 300px;
+  margin: 0 auto;
+}

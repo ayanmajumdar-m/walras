@@ -6,7 +6,7 @@ const Wallet = () => {
   const [unbilled, setUnbilled] = useState(0);
   const [nextInvoiceDate, setNextInvoiceDate] = useState("");
   const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [loading, setLoading] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [userData, setUserData] = useState(null);
@@ -85,14 +85,25 @@ const Wallet = () => {
     }
   };
 
-  // ✅ Add money handler with Razorpay flow
-  const handleAddFunds = async () => {
-    const amt = parseFloat(amount);
-    if (isNaN(amt) || amt <= 0) return alert("Enter a valid amount (INR)");
-    if (!token) return alert("Authentication token missing");
-
+  // ✅ Convert INR to USD for PayPal
+  const convertINRtoUSD = async (inrAmount) => {
     try {
-      setLoading(true);
+      // You can use a currency conversion API or fixed rate
+      // For now, using a fixed rate - replace with actual API call
+      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/INR`);
+      const data = await response.json();
+      const rate = data.rates.USD;
+      return (inrAmount * rate).toFixed(2);
+    } catch (error) {
+      console.error("Error converting currency:", error);
+      // Fallback rate
+      return (inrAmount * 0.012).toFixed(2);
+    }
+  };
+
+  // ✅ Razorpay payment handler
+  const handleRazorpayPayment = async (amt) => {
+    try {
       // Step 1: Create order
       const res = await fetch(`${API_URL}/api/wallet/create-order`, {
         method: "POST",
@@ -110,7 +121,7 @@ const Wallet = () => {
         return;
       }
 
-      // Step 2: Open Razorpay checkout with real user data
+      // Step 2: Open Razorpay checkout
       const options = {
         key: data.key,
         amount: data.amount,
@@ -134,7 +145,7 @@ const Wallet = () => {
           const verifyData = await verifyRes.json();
           if (verifyRes.ok) {
             alert("✅ Payment successful! Wallet credited ₹" + verifyData.amount);
-            fetchWallet(); // refresh wallet
+            fetchWallet();
             setAmount("");
           } else {
             alert("❌ Verification failed: " + verifyData.error);
@@ -150,10 +161,108 @@ const Wallet = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-      setLoading(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to start payment");
+      alert("Failed to start Razorpay payment");
+      throw err;
+    }
+  };
+
+  // ✅ PayPal payment handler
+  const handlePayPalPayment = async (amt) => {
+    try {
+      // Convert INR to USD
+      const usdAmount = await convertINRtoUSD(amt);
+      
+      // Create PayPal order
+      const res = await fetch(`${API_URL}/api/wallet/create-paypal-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          amount: usdAmount,
+          currency: "USD"
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.orderID) {
+        alert(data.error || "Failed to create PayPal order");
+        setLoading(false);
+        return;
+      }
+
+      // Open PayPal checkout
+      const paypal = window.paypal;
+      if (!paypal) {
+        alert("PayPal SDK not loaded");
+        return;
+      }
+
+      paypal.Buttons({
+        createOrder: function(data, actions) {
+          return data.orderID;
+        },
+        onApprove: async function(data, actions) {
+          try {
+            const verifyRes = await fetch(`${API_URL}/api/wallet/verify-paypal`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                orderID: data.orderID,
+                amount: amt, // Original INR amount for wallet credit
+                usdAmount: usdAmount
+              }),
+            });
+            
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              alert(`✅ Payment successful! Wallet credited ₹${amt}`);
+              fetchWallet();
+              setAmount("");
+            } else {
+              alert("❌ Payment verification failed: " + verifyData.error);
+            }
+          } catch (error) {
+            console.error("PayPal verification error:", error);
+            alert("Payment verification failed");
+          }
+        },
+        onError: function(err) {
+          console.error("PayPal error:", err);
+          alert("PayPal payment failed");
+        }
+      }).render('#paypal-button-container');
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to start PayPal payment");
+      throw err;
+    }
+  };
+
+  // ✅ Main payment handler
+  const handleAddFunds = async () => {
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) return alert("Enter a valid amount (INR)");
+    if (!token) return alert("Authentication token missing");
+
+    try {
+      setLoading(true);
+
+      if (paymentMethod === "razorpay") {
+        await handleRazorpayPayment(amt);
+      } else if (paymentMethod === "paypal") {
+        await handlePayPalPayment(amt);
+      }
+
+      setLoading(false);
+    } catch (err) {
       setLoading(false);
     }
   };
@@ -253,10 +362,8 @@ const Wallet = () => {
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
-            <option value="UPI">UPI</option>
-            <option value="Credit Card">Credit Card</option>
-            <option value="Debit Card">Debit Card</option>
-            <option value="Net Banking">Net Banking</option>
+            <option value="razorpay">Razorpay (UPI, Cards, Net Banking)</option>
+            <option value="paypal">PayPal (International)</option>
           </select>
         </div>
 
@@ -276,6 +383,16 @@ const Wallet = () => {
             {loading ? "Processing..." : "Add Funds"}
           </button>
         </div>
+
+        {/* PayPal Button Container */}
+        {paymentMethod === "paypal" && (
+          <div className="paypal-container">
+            <p className="currency-note">
+              💡 Amount will be converted to USD during payment
+            </p>
+            <div id="paypal-button-container"></div>
+          </div>
+        )}
       </div>
     </div>
   );

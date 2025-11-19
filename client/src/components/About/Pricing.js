@@ -83,7 +83,7 @@ const Pricing = () => {
               <h3>Important Notice</h3>
               <p>
                 Our India-based servers are currently at full capacity and are not available for new deployments.
-                We are working on expanding our capacity. All new deployments will be on our Singapore servers.
+                We are working on expanding our capacity. All new deployments will be on our UK servers.
               </p>
             </div>
           </div>
