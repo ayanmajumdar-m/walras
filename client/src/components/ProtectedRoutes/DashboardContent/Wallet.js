@@ -147,6 +147,11 @@ const Wallet = () => {
             alert("✅ Payment successful! Wallet credited ₹" + verifyData.amount);
             fetchWallet();
             setAmount("");
+            // If user had entered BLACKFRIDAY promo and topped up ₹5000 or more, apply promo now
+            if (promoCode.trim().toUpperCase() === 'BLACKFRIDAY' && parseFloat(amt) >= 5000) {
+              // apply promo after top-up
+              applyPromoAfterTopup('BLACKFRIDAY');
+            }
           } else {
             alert("❌ Verification failed: " + verifyData.error);
           }
@@ -225,6 +230,10 @@ const Wallet = () => {
               alert(`✅ Payment successful! Wallet credited ₹${amt}`);
               fetchWallet();
               setAmount("");
+              // If user had entered BLACKFRIDAY promo and topped up ₹5000 or more, apply promo now
+              if (promoCode.trim().toUpperCase() === 'BLACKFRIDAY' && parseFloat(amt) >= 5000) {
+                applyPromoAfterTopup('BLACKFRIDAY');
+              }
             } else {
               alert("❌ Payment verification failed: " + verifyData.error);
             }
@@ -274,6 +283,18 @@ const Wallet = () => {
       return;
     }
 
+    // Special frontend-only rule: BLACKFRIDAY must be applied only when user is adding ₹5000
+    if (promoCode.trim().toUpperCase() === 'BLACKFRIDAY') {
+      const amt = parseFloat(amount);
+      if (isNaN(amt) || amt < 5000) {
+        alert("The BLACKFRIDAY promo requires you to add ₹5000 in the Add Funds section. Enter ₹5000 and complete the payment — the promo will be applied automatically after a successful top-up.");
+        return;
+      }
+      // If amount is >= 5000, do not apply promo immediately here; it will be applied after successful payment.
+      alert("You have a BLACKFRIDAY promo and are adding ₹" + amt + ". The promo will be applied automatically after successful payment.");
+      return;
+    }
+
     try {
       setPromoLoading(true);
       const response = await fetch(`${API_URL}/api/wallet/apply-promo`, {
@@ -299,6 +320,31 @@ const Wallet = () => {
       alert("Failed to apply promo code");
     } finally {
       setPromoLoading(false);
+    }
+  };
+
+  // Helper: apply promo after successful top-up (frontend-triggered)
+  const applyPromoAfterTopup = async (appliedPromoCode) => {
+    if (!appliedPromoCode) return;
+    try {
+      const response = await fetch(`${API_URL}/api/wallet/apply-promo`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ promoCode: appliedPromoCode.trim().toUpperCase() })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert(`✅ Promo applied: ${data.message}\nCredit: ₹${data.creditAmount}`);
+        setPromoCode("");
+        fetchWallet();
+      } else {
+        console.warn('Promo apply failed after topup:', data);
+      }
+    } catch (err) {
+      console.error('Error applying promo after topup:', err);
     }
   };
 
