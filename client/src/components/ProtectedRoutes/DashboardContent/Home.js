@@ -33,7 +33,18 @@ const Home = () => {
       });
 
       const data = await response.json();
-      
+
+      // Handle auth errors (expired/invalid token)
+      if (response.status === 401 || (data && /token|expired|invalid/i.test(data.error || ''))) {
+        // Clear session and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.setItem('sessionExpiredMessage', data.error || 'Session expired. Please login again.');
+        setMessage({ text: data.error || 'Session expired. Redirecting to login...', type: 'error' });
+        setTimeout(() => navigate('/login'), 1400);
+        return;
+      }
+
       if (response.ok) {
         setServers(data.servers || []);
       } else {
@@ -57,7 +68,17 @@ const Home = () => {
       });
 
       const data = await response.json();
-      
+
+      // Handle auth errors (expired/invalid token)
+      if (response.status === 401 || (data && /token|expired|invalid/i.test(data.error || ''))) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.setItem('sessionExpiredMessage', data.error || 'Session expired. Please login again.');
+        setMessage({ text: data.error || 'Session expired. Redirecting to login...', type: 'error' });
+        setTimeout(() => navigate('/login'), 1400);
+        return;
+      }
+
       if (response.ok) {
         setDomains(data.domains || []);
       } else {

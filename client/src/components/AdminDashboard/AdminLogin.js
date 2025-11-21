@@ -8,6 +8,16 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const expiredFlag = localStorage.getItem('sessionExpired');
+    const expiredMessage = localStorage.getItem('sessionExpiredMessage');
+    if (expiredFlag || expiredMessage) {
+      setError(expiredMessage || 'Your admin session has expired. Please login again.');
+      localStorage.removeItem('sessionExpired');
+      localStorage.removeItem('sessionExpiredMessage');
+    }
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError("");
