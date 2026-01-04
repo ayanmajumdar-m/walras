@@ -56,7 +56,7 @@ const Navbar = () => {
     { name: "Terms of Service", href: "/terms" },
     // Utility links
     { name: "Cart", href: "/cart" },
-    { name: "Support", href: "/support" },
+    { name: "Support", href: "/contact" },
   ];
 
   return (
@@ -64,7 +64,7 @@ const Navbar = () => {
       {/* Top Navigation Bar */}
       <nav className="top-nav">
         <div className="top-nav-left">
-          <a href="/" className="logo-container">
+          <a href="/contact" className="logo-container">
             <img src={Logo} width={150} alt="Superflare Logo" className="logo-image" />
           </a>
         </div>
@@ -73,7 +73,7 @@ const Navbar = () => {
           <div className="nav-links">
             {mainSections.map((section) => 
               section.type === "link" ? (
-                <a key={section.href} href={section.href} className="nav-link">
+                <a key={section.href} href={"/contact"} className="nav-link">
                   {section.name}
                 </a>
               ) : (
@@ -84,7 +84,7 @@ const Navbar = () => {
                   </button>
                   <div className="dropdown-content">
                     {section.submenu.map((item) => (
-                      <a key={item.href} href={item.href}>
+                      <a key={item.href} href={"/contact"}>
                         {item.name}
                       </a>
                     ))}
@@ -99,19 +99,19 @@ const Navbar = () => {
           {/* <a href="/cart" className="icon-button">
             <ShoppingCart size={24} />
           </a> */}
-          <a href="/support" className="icon-button">
+          <a href="/contact" className="icon-button">
             <HeadphonesIcon size={24} />
             <span>Support</span>
           </a>
           {user ? (
-            <a href="/dashboard" className="icon-button">
+            <a href="/contact" className="icon-button">
               <User size={24} />
               <span>Dashboard</span>
             </a>
           ) : (
             <button
               className="login-btn"
-              onClick={() => (window.location.href = "/login")}
+              onClick={() => (window.location.href = "/contact")}
             >
               Login
             </button>
@@ -157,7 +157,7 @@ const Navbar = () => {
           {mobileLinks.map((link) => (
             <a 
               key={link.href} 
-              href={link.href} 
+              href={'/contact'} 
               className="mobile-link"
               onClick={closeMenu}
             >
@@ -169,7 +169,7 @@ const Navbar = () => {
         {/* Mobile Menu Footer */}
         <div className="mobile-menu-footer">
           {user ? (
-            <a href="/dashboard" className="mobile-dashboard-btn" onClick={closeMenu}>
+            <a href="/contact" className="mobile-dashboard-btn" onClick={closeMenu}>
               <User size={20} />
               <span>Dashboard</span>
             </a>
@@ -178,7 +178,7 @@ const Navbar = () => {
               className="mobile-login-btn"
               onClick={() => {
                 closeMenu();
-                window.location.href = "/login";
+                window.location.href = "/contact";
               }}
             >
               Login to Account
