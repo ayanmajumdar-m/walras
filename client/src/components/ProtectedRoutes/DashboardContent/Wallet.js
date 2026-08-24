@@ -126,7 +126,7 @@ const Wallet = () => {
         key: data.key,
         amount: data.amount,
         currency: data.currency,
-        name: "Superflare Wallet",
+        name: "Buttr Cloud Wallet",
         description: "Add funds to wallet",
         order_id: data.orderId,
         handler: async (response) => {

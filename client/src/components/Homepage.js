@@ -108,7 +108,7 @@ const Homepage = () => {
             <AnimatedSection delay={600}>
               <p className="hero-subtitle">
                 Tired of using AWS, DigitalOcean, or Akamai Cloud? Looking for a Desi alternative?
-                Switch to Superflare and make the shift today!
+                Switch to Buttr Cloud and make the shift today!
               </p>
             </AnimatedSection>
 
@@ -161,7 +161,7 @@ const Homepage = () => {
         <section className="commitments">
           <div className="container">
             <div className="section-header-compact">
-              <div className="badge pulse-glow">Guaranteed by Superflare</div>
+              <div className="badge pulse-glow">Guaranteed by Buttr Cloud</div>
               <h2 className="section-title">Our Commitments!</h2>
               <p className="section-subtitle">Three promises that power every product we ship.</p>
             </div>
@@ -172,7 +172,7 @@ const Homepage = () => {
                 <h3 className="commitment-title">Uptime Promise</h3>
                 <div className="commitment-value">99.9%</div>
                 <p className="commitment-description">
-                  We guarantee 99.9% uptime for your servers, that's the Superflare promise.
+                  We guarantee 99.9% uptime for your servers, that's the Buttr Cloud promise.
                 </p>
               </div>
 
@@ -279,7 +279,7 @@ const Homepage = () => {
         <section className="features-compact">
           <div className="container">
             <div className="section-header-compact">
-              <h2 className="section-title">Why Choose Superflare Cloud?</h2>
+              <h2 className="section-title">Why Choose Buttr Cloud?</h2>
               <p className="section-subtitle">Enterprise-grade infrastructure with Indian roots</p>
             </div>
             <div className="features-grid-compact">
@@ -366,7 +366,7 @@ const Homepage = () => {
             <div className="cta-content-compact">
               <h2 className="cta-title-compact">Ready to Get Started?</h2>
               <p className="cta-subtitle-compact">
-                Join thousands of developers and businesses who trust Superflare.
+                Join thousands of developers and businesses who trust Buttr Cloud.
               </p>
               <div className="cta-actions-compact">
                 <button className="cta-btn-compact primary btn-glow">Get Started</button>

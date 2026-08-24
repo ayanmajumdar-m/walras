@@ -65,7 +65,7 @@ const Navbar = () => {
       <nav className="top-nav">
         <div className="top-nav-left">
           <a href="/contact" className="logo-container">
-            <img src={Logo} width={150} alt="Superflare Logo" className="logo-image" />
+            <img src={Logo} width={150} alt="Buttr Cloud Logo" className="logo-image" />
           </a>
         </div>
 
@@ -134,7 +134,7 @@ const Navbar = () => {
         <div className="mobile-menu-header">
           <div className="mobile-logo">
             <div className="logo-box">SF</div>
-            <span className="logo-text">Superflare</span>
+            <span className="logo-text">Buttr Cloud</span>
           </div>
           <button className="mobile-close" onClick={closeMenu} aria-label="Close menu">
             <X size={24} />

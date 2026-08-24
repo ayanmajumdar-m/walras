@@ -8,9 +8,9 @@ const Footer = () => {
       <div className="footer-container">
         <div className="footer-main">
           <div className="footer-brand">
-            <h3 className="footer-title">Superflare</h3>
+            <h3 className="footer-title">Buttr Cloud</h3>
             <p className="footer-description">
-              From India for India and the world, Superflare delivers enterprise-grade cloud with local pricing, built just for you :)
+              From India for India and the world, Buttr Cloud delivers enterprise-grade cloud with local pricing, built just for you :)
             </p>
           </div>
           

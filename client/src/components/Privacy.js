@@ -16,7 +16,7 @@ KYC information, if required for legal compliance or identity verification`
     {
       icon: <UserCheck className="section-icon" />,
       title: "KYC and Identity Verification",
-      content: `To comply with Indian laws, Superflare may require users to complete a Know Your Customer (KYC) process. This may include government-issued ID, proof of address, or other necessary documentation. Your KYC information is used solely for verification, fraud prevention, and legal compliance. All KYC data is securely stored and accessed only by authorized personnel. Users may request access to, correction of, or deletion of their KYC information, subject to legal obligations.`
+      content: `To comply with Indian laws, Buttr Cloud may require users to complete a Know Your Customer (KYC) process. This may include government-issued ID, proof of address, or other necessary documentation. Your KYC information is used solely for verification, fraud prevention, and legal compliance. All KYC data is securely stored and accessed only by authorized personnel. Users may request access to, correction of, or deletion of their KYC information, subject to legal obligations.`
     },
     {
       icon: <Eye className="section-icon" />,
@@ -29,7 +29,7 @@ To comply with legal requirements and enforce our terms of service`
     {
       icon: <Shield className="section-icon" />,
       title: "Legal Compliance in India",
-      content: `Superflare operates in accordance with Indian laws, including the Information Technology Act, 2000 (as amended) and related regulations. We follow reasonable security practices to protect sensitive personal information and ensure data is stored and processed in compliance with Indian legal standards.`
+      content: `Buttr Cloud operates in accordance with Indian laws, including the Information Technology Act, 2000 (as amended) and related regulations. We follow reasonable security practices to protect sensitive personal information and ensure data is stored and processed in compliance with Indian legal standards.`
     },
     {
       icon: <Lock className="section-icon" />,
@@ -75,7 +75,7 @@ Withdraw consent for data processing, where applicable`
             <Shield className="hero-icon" />
             <h1 className="privacy-title">Privacy Policy</h1>
             <p className="privacy-subtitle">
-              This Privacy Policy explains how Superflare, operated by IOOGN TECHNOLOGIES (OPC) PVT LTD, 
+              This Privacy Policy explains how Buttr Cloud, operated by IOOGN TECHNOLOGIES (OPC) PVT LTD, 
               collects, uses, stores, and protects your personal information in accordance with Indian laws and regulations.
             </p>
           </div>

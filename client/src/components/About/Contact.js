@@ -159,7 +159,7 @@ const Contact = () => {
           <div className="cta-content">
             <h2 className="cta-title">Ready to Get Started?</h2>
             <p className="cta-subtitle">
-              Join thousands of satisfied customers using Superflare Cloud
+              Join thousands of satisfied customers using Buttr Cloud
             </p>
             <div className="cta-actions">
               <a href="/about/pricing" className="btn primary">Deploy Your Server</a>
