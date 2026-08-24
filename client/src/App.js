@@ -36,6 +36,19 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public routes with Navbar */}
+        <Route path="/" element={<PublicLayout><Homepage /></PublicLayout>} />
+        <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+        <Route path="/about/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
+        <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
+        <Route path="/domains/" element={<PublicLayout><DomainCheck /></PublicLayout>} />
+        <Route path="/domains/buy" element={<PublicLayout><Domain /></PublicLayout>} />
+        <Route path='/privacy' element={<PublicLayout><Privacy /></PublicLayout>} />
+        <Route path='/refund' element={<PublicLayout><Refund /></PublicLayout>} />
+        <Route path='/terms' element={<PublicLayout><Terms /></PublicLayout>} />
+        <Route path='/bare-metal' element={<PublicLayout><BareMetal /></PublicLayout>} />
+        <Route path='/flare-mail' element={<PublicLayout><FlareMail /></PublicLayout>} />
+
         {/* Sign-in is delegated to BUTTR ID. /login only offers the handoff;
             /auth/callback is where the backend drops the session token. */}
         <Route path="/login" element={<PublicLayout><SignIn /></PublicLayout>} />
@@ -48,9 +61,18 @@ function App() {
         <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
         <Route path="/reset-password/:token" element={<Navigate to="/login" replace />} />
 
-        {/* Only expose contact page; redirect everything else to /contact */}
-        <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-        <Route path="*" element={<Navigate to="/contact" replace />} />
+        {/* User Dashboard routes without Navbar */}
+        <Route path="/dashboard/*" element={<DashboardLayout />} />
+        {/* Cart route - protected */}
+        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path='/deploy-details' element={<DeployDetails />} />
+
+        {/* Admin routes */}
+        <Route path="/super-admin-2025" element={<AdminLogin />} />
+        <Route path="/super-admin-2025/dashboard" element={<AdminDashboard />} />
+
+        {/* Anything genuinely unknown goes home, not to /contact. */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
