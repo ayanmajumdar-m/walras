@@ -230,65 +230,74 @@ CREATE TABLE IF NOT EXISTS domain_transactions (
     INDEX idx_created_at (created_at)
 )
 `;
+// A database that is unreachable at boot used to throw out of this callback and
+// take the process down, so a wrong MYSQL_DB_HOST looked like a crash-loop. The
+// server now starts either way and says so; requests that need the database
+// fail individually instead.
+connection.on('error', (err) => {
+    console.error('MySQL connection error:', err.code || err.message);
+});
+
 connection.connect((err) => {
     if (err) {
-        throw err;
+        console.error('❌ MySQL connection failed:', err.message);
+        console.error('   The server will start, but nothing that touches the database will work.');
     }
     else {
         console.log('Connected to MySQL Database');
         connection.query(createTableUsers, (err, result) => {
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log('Users table ensured');
         });
         connection.query(createAdminsTable, (err, result) => {
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log('Admins table ensured');
         });
 
         connection.query(createWalletTable, (err, result) => {
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Wallet table ensured")
         });
 
         connection.query(createWalletTransactionTable, (err, result) => {
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Wallet transaction table ensured")
         });
 
         connection.query(createBillingLogsTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Billings transaction table ensured")
         });
         connection.query(createInvoicesTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Invoices table ensured")
         });
         connection.query(createServerTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Server table ensured")
         })
         connection.query(createUserSessionsTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("User sessions table ensured")
         })
         connection.query(createTransactionsTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Transactions table ensured")
         })
         connection.query(createPromoCodesTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Promo codes table ensured")
         })
         connection.query(createPromoUsageTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Promo usage table ensured")
         })
         connection.query(createMonthlyInvoicesTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Monthly invoices table ensured")
         })
         connection.query(createDomainTransactionsTable, (err, result)=>{
-            if (err) throw err;
+            if (err) return console.error('Table setup failed:', err.message);
             console.log("Domain transactions table ensured")
         })
     }

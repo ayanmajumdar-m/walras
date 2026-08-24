@@ -4,21 +4,24 @@ const dotenv = require('dotenv');
 // Ensure environment variables are loaded
 dotenv.config();
 
-if (!process.env.EMAIL_API_KEY) {
-    console.error('EMAIL_API_KEY is not set in environment variables');
-    process.exit(1);
-}
+// Missing mail credentials used to call process.exit(1) here, at import time,
+// which killed the whole server before Express ever bound a port — a deploy
+// with no Brevo account looked like a crash-loop with no explanation.
+//
+// Now it degrades: the site boots, everything else works, and only the mail
+// calls no-op with a warning.
+const emailConfigured = Boolean(process.env.EMAIL_API_KEY && process.env.SMTPLogin);
 
-if (!process.env.SMTPLogin) {
-    console.error('SMTPLogin is not set in environment variables');
-    process.exit(1);
+if (!emailConfigured) {
+    console.warn('⚠️  EMAIL_API_KEY / SMTPLogin not set — transactional email is disabled.');
 }
 
 const apiInstance = new TransactionalEmailsApi();
 
-// Configure API key
-const apiKey = apiInstance.authentications['apiKey'];
-apiKey.apiKey = process.env.EMAIL_API_KEY;
+if (emailConfigured) {
+    const apiKey = apiInstance.authentications['apiKey'];
+    apiKey.apiKey = process.env.EMAIL_API_KEY;
+}
 
 
 const createDomainPurchaseTemplate = (name, domainName, purchaseDate) => {
@@ -63,6 +66,11 @@ const createDomainPurchaseTemplate = (name, domainName, purchaseDate) => {
 // system. BUTTR ID sends its own verification and recovery mail.
 
 const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
+    if (!emailConfigured) {
+        console.warn(`Email disabled — not sending domain purchase confirmation to ${to}`);
+        return;
+    }
+
     const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.subject = "Domain Purchase Confirmation";
     sendSmtpEmail.htmlContent = createDomainPurchaseTemplate(name, domainName, purchaseDate);

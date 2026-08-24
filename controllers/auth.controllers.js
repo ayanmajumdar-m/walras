@@ -14,7 +14,11 @@ const User = require('../model/User.model');
 const buttrId = require('../services/buttrIdService');
 
 dotenv.config();
-const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
+const { JWT_SECRET } = process.env;
+
+// jsonwebtoken rejects `expiresIn: undefined` outright, so an unset variable
+// used to throw on every sign-in rather than falling back to a default.
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 const generateToken = (userId) => jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
