@@ -64,7 +64,7 @@ const Navbar = () => {
       {/* Top Navigation Bar */}
       <nav className="top-nav">
         <div className="top-nav-left">
-          <a href="/contact" className="logo-container">
+          <a href="/" className="logo-container">
             <img src={Logo} width={150} alt="Buttr Cloud Logo" className="logo-image" />
           </a>
         </div>
@@ -73,7 +73,7 @@ const Navbar = () => {
           <div className="nav-links">
             {mainSections.map((section) => 
               section.type === "link" ? (
-                <a key={section.href} href={"/contact"} className="nav-link">
+                <a key={section.href} href={section.href} className="nav-link">
                   {section.name}
                 </a>
               ) : (
@@ -84,7 +84,7 @@ const Navbar = () => {
                   </button>
                   <div className="dropdown-content">
                     {section.submenu.map((item) => (
-                      <a key={item.href} href={"/contact"}>
+                      <a key={item.href} href={item.href}>
                         {item.name}
                       </a>
                     ))}
@@ -104,14 +104,14 @@ const Navbar = () => {
             <span>Support</span>
           </a>
           {user ? (
-            <a href="/contact" className="icon-button">
+            <a href="/dashboard" className="icon-button">
               <User size={24} />
               <span>Dashboard</span>
             </a>
           ) : (
             <button
               className="login-btn"
-              onClick={() => (window.location.href = "/contact")}
+              onClick={() => (window.location.href = "/login")}
             >
               Login
             </button>
@@ -157,7 +157,7 @@ const Navbar = () => {
           {mobileLinks.map((link) => (
             <a 
               key={link.href} 
-              href={'/contact'} 
+              href={link.href} 
               className="mobile-link"
               onClick={closeMenu}
             >
@@ -169,7 +169,7 @@ const Navbar = () => {
         {/* Mobile Menu Footer */}
         <div className="mobile-menu-footer">
           {user ? (
-            <a href="/contact" className="mobile-dashboard-btn" onClick={closeMenu}>
+            <a href="/dashboard" className="mobile-dashboard-btn" onClick={closeMenu}>
               <User size={20} />
               <span>Dashboard</span>
             </a>
@@ -178,7 +178,7 @@ const Navbar = () => {
               className="mobile-login-btn"
               onClick={() => {
                 closeMenu();
-                window.location.href = "/contact";
+                window.location.href = "/login";
               }}
             >
               Login to Account
