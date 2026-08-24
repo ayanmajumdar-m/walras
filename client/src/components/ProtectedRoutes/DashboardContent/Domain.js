@@ -167,7 +167,7 @@ function Domain() {
     }
   }
 
-  const API_URL = `https://superflare.io`
+  const API_URL = `https://buttr.cloud`
   const handleRazorpayPayment = async (orderData) => {
     const options = {
       key: orderData.key,

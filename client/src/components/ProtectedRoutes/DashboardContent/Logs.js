@@ -9,7 +9,7 @@ const Logs = () => {
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const API_URL = `https://superflare.io`
+  const API_URL = `https://buttr.cloud`
   
   const token = localStorage.getItem("token");
   const logsEndRef = useRef(null);

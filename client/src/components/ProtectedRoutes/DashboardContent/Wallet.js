@@ -10,7 +10,7 @@ const Wallet = () => {
   const [loading, setLoading] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [userData, setUserData] = useState(null);
-  const API_URL = `https://superflare.io`
+  const API_URL = `https://buttr.cloud`
 
   const [promoLoading, setPromoLoading] = useState(false);
 

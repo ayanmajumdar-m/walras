@@ -21,7 +21,7 @@ const Home = () => {
     fetchServers();
     fetchDomains();
   }, []);
-  const API_URL = `https://superflare.io`
+  const API_URL = `https://buttr.cloud`
 
   const fetchServers = async () => {
     try {

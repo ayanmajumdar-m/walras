@@ -29,7 +29,7 @@ const Domain = () => {
       }
       setError("");
 
-      const res = await fetch("https://superflare.io/api/admin/getAllDomains", {
+      const res = await fetch("https://buttr.cloud/api/admin/getAllDomains", {
         method: "GET",
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import "./Auth.css";
 
-const API_URL = `https://superflare.io`;
+const API_URL = `https://buttr.cloud`;
 
 /**
  * Buttr Cloud has no sign-in form. Identity belongs to BUTTR ID, so this page

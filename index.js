@@ -13,7 +13,7 @@ console.log("💰 Billing service initialized");
 // ✅ Step 1: Proper CORS setup (for frontend on localhost:3000)
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://dujdidnis.superflare.io", "https://superflare.io", "https://www.superflare.io"],
+    origin: ["http://localhost:3000", "https://dujdidnis.buttr.cloud", "https://buttr.cloud", "https://www.buttr.cloud"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [

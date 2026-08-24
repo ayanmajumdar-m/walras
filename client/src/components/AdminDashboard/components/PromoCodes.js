@@ -17,7 +17,7 @@ const PromoCodes = ({
     is_active: true,
     expires_at: ''
   });
-  const API_URL='https://superflare.io' || 'http://localhost:3001';
+  const API_URL='https://buttr.cloud' || 'http://localhost:3001';
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
   const [editSuccess, setEditSuccess] = useState(false);

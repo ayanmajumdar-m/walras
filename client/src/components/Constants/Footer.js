@@ -19,8 +19,8 @@ const Footer = () => {
             <ul className="footer-links">
               <li><Link to="/domains">Domains</Link></li>
               <li><Link to="/about/pricing">Pricing</Link></li>
-              <li><a href='https://status.superflare.io'>Status</a></li>
-              <li><a href='https://help.superflare.io'>Documentation</a></li>
+              <li><a href='https://status.buttr.cloud'>Status</a></li>
+              <li><a href='https://help.buttr.cloud'>Documentation</a></li>
             </ul>
           </div>
           

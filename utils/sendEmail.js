@@ -66,7 +66,7 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
     const sendSmtpEmail = new SendSmtpEmail();
     sendSmtpEmail.subject = "Domain Purchase Confirmation";
     sendSmtpEmail.htmlContent = createDomainPurchaseTemplate(name, domainName, purchaseDate);
-    sendSmtpEmail.sender = { name: "Buttr Cloud", email: 'no-reply@superflare.io' };
+    sendSmtpEmail.sender = { name: "Buttr Cloud", email: 'no-reply@buttr.cloud' };
     sendSmtpEmail.to = [{ email: to }];
 
     try {

@@ -19,7 +19,7 @@ const Invoices = ({
       default: return '#9ca3af';
     }
   };
-    const API_URL='https://superflare.io' || '${API_URL}';
+    const API_URL='https://buttr.cloud' || '${API_URL}';
 
 
   const fetchInvoices = async () => {

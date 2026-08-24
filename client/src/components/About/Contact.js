@@ -8,8 +8,8 @@ const Contact = () => {
       icon: <Mail className="contact-icon" />,
       title: "Email Support",
       description: "24/7 Available",
-      details: "support@superflare.io",
-      link: "mailto:support@superflare.io",
+      details: "support@buttr.cloud",
+      link: "mailto:support@buttr.cloud",
       color: "#3b82f6"
     },
     {
@@ -163,7 +163,7 @@ const Contact = () => {
             </p>
             <div className="cta-actions">
               <a href="/about/pricing" className="btn primary">Deploy Your Server</a>
-              <a href="https://help.superflare.io" className="btn secondary">View Documentation</a>
+              <a href="https://help.buttr.cloud" className="btn secondary">View Documentation</a>
             </div>
           </div>
         </div>

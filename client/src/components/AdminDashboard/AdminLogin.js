@@ -23,7 +23,7 @@ const AdminLogin = () => {
     setError("");
   };
 
-  const API_URL = `https://superflare.io`
+  const API_URL = `https://buttr.cloud`
 
   const handleSubmit = async (e) => {
     e.preventDefault();

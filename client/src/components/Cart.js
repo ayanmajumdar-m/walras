@@ -13,7 +13,7 @@ const Cart = () => {
     state: '', country: 'India', postalCode: '', gender: 'm'
   });
 
-  const API_URL = `https://superflare.io`
+  const API_URL = `https://buttr.cloud`
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('cart') || '[]');

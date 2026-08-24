@@ -6,7 +6,7 @@ const Profile = () => {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: "", type: "" });
-  const API_URL = `https://superflare.io`
+  const API_URL = `https://buttr.cloud`
 
   // Where to send someone who wants to change their name, email, password or
   // sign-in methods — all of that lives in BUTTR ID, not here.

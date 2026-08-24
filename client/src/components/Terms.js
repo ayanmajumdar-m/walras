@@ -95,7 +95,7 @@ Buttr Cloud is not liable for data loss, corruption, or unauthorized access.`
     {
       icon: <Mail className="section-icon" />,
       title: "15. Contact",
-      content: "Questions or notices regarding these Terms may be sent to support@superflare.io."
+      content: "Questions or notices regarding these Terms may be sent to support@buttr.cloud."
     }
   ];
 

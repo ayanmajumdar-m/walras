@@ -370,7 +370,7 @@ const Homepage = () => {
               </p>
               <div className="cta-actions-compact">
                 <button className="cta-btn-compact primary btn-glow">Get Started</button>
-                <button onClick={() => window.location.href = "https://help.superflare.io"} className="cta-btn-compact outline btn-float">View Documentation</button>
+                <button onClick={() => window.location.href = "https://help.buttr.cloud"} className="cta-btn-compact outline btn-float">View Documentation</button>
               </div>
             </div>
           </div>
