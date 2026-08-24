@@ -7,12 +7,9 @@ const WalletController = require('../controllers/wallet.controllers')
 const authenticateToken = require('../utils/auth.middleware');
 
 // Public routes
-userRouter.post('/register', UserController.register);
-userRouter.post('/login', UserController.login);
-userRouter.post('/verify-email-otp', UserController.verifyEmailOtp);
-userRouter.post('/verify-phone-otp', UserController.verifyPhoneOtp);
-userRouter.post('/forgot-password', UserController.forgotPassword);
-userRouter.post('/reset-password', UserController.resetPassword);
+//
+// Registration, login, OTP verification and password reset are gone: they live
+// in BUTTR ID now, behind /api/auth/buttr/start. See routes/auth.routes.js.
 userRouter.post('/create-ticket', UserController.createTicket);
 userRouter.get('/tickets/', UserController.getTickets);
 

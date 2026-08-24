@@ -1,80 +1,47 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import ReCAPTCHA from "react-google-recaptcha";
+import React, { useEffect, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import "./Auth.css";
 
-// SITE KEY
-const SITE_KEY = "6LeJZAssAAAAALenQc9ski_qxBzEpAj0xNQJugn7";
-const API_URL = `https://superflare.io`
+const API_URL = `https://superflare.io`;
 
-const Login = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [captchaToken, setCaptchaToken] = useState(""); // ✅ store captcha
+/**
+ * Buttr Cloud has no sign-in form. Identity belongs to BUTTR ID, so this page
+ * does one thing: hand the browser to the identity provider. Nothing here ever
+ * sees a password, which is the entire point of a central BUTTR ID.
+ */
+const SignIn = () => {
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [redirecting, setRedirecting] = useState(false);
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
-  // If redirected due to expired session, show message
-  React.useEffect(() => {
-    const expiredFlag = localStorage.getItem('sessionExpired');
-    const expiredMessage = localStorage.getItem('sessionExpiredMessage');
-    if (expiredFlag || expiredMessage) {
-      setError(expiredMessage || 'Your session has expired. Please login again.');
-      localStorage.removeItem('sessionExpired');
-      localStorage.removeItem('sessionExpiredMessage');
-    }
-  }, []);
+  // Where to land after signing in — the page a ProtectedRoute bounced us
+  // away from, or the dashboard.
+  const returnTo = location.state?.from?.pathname || "/dashboard";
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError("");
-  };
-
-  const handleCaptcha = (token) => {
-    setCaptchaToken(token);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    if (!captchaToken) {
-      setError("Please verify the captcha");
-      setLoading(false);
+  useEffect(() => {
+    // The backend redirects back here with ?error= when a sign-in fails or is
+    // cancelled at BUTTR ID.
+    const failure = searchParams.get("error");
+    if (failure) {
+      setError(failure);
       return;
     }
 
-    try {
-      const res = await fetch(`${API_URL}/api/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, captchaToken }), // ✅ send captcha
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (data.needsVerification) {
-          setError("Please verify your email before logging in.");
-        } else {
-          setError(data.error || "Login failed");
-        }
-        return;
-      }
-
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("userId", data.userId);
-
-  // If redirected here by ProtectedRoute, go back to the original page
-  const origin = location.state?.from?.pathname || "/dashboard";
-  navigate(origin, { replace: true });
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+    const expiredFlag = localStorage.getItem("sessionExpired");
+    const expiredMessage = localStorage.getItem("sessionExpiredMessage");
+    if (expiredFlag || expiredMessage) {
+      setError(expiredMessage || "Your session has expired. Please sign in again.");
+      localStorage.removeItem("sessionExpired");
+      localStorage.removeItem("sessionExpiredMessage");
     }
+  }, [searchParams]);
+
+  const signIn = () => {
+    setRedirecting(true);
+    // A full page navigation, not fetch: the user has to actually visit BUTTR
+    // ID to authenticate, and the authorization code comes back as a redirect.
+    window.location.href = `${API_URL}/api/auth/buttr/start?returnTo=${encodeURIComponent(returnTo)}`;
   };
 
   return (
@@ -83,53 +50,25 @@ const Login = () => {
         <h2 className="auth-title">
           <span className="gradient-text">Welcome Back</span>
         </h2>
-        <p className="auth-subtitle">Login to continue to your dashboard</p>
+        <p className="auth-subtitle">Sign in with your BUTTR ID to continue</p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        <button type="button" className="auth-btn" onClick={signIn} disabled={redirecting}>
+          {redirecting ? "Taking you to BUTTR ID..." : "Sign in with BUTTR ID"}
+        </button>
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          {/* ✅ reCAPTCHA */}
-          <div className="form-group captcha-box">
-            <ReCAPTCHA sitekey={SITE_KEY} onChange={handleCaptcha} />
-          </div>
-
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+        <p className="auth-subtitle" style={{ marginTop: "1.25rem", fontSize: "0.85rem" }}>
+          One BUTTR ID works across every BUTTR service. Buttr Cloud never sees
+          your password.
+        </p>
 
         <div className="auth-links">
-          <a href="/forgot-password">Forgot password?</a>
-          <span> | </span>
-          <a href="/register">Sign Up</a>
+          <span>No BUTTR ID yet? You can create one on the next screen.</span>
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default SignIn;

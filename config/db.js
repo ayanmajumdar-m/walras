@@ -11,27 +11,36 @@ const connection = mysql.createConnection({
 });
 
 
+// Authentication happens in BUTTR ID, so this table holds no password and no
+// verification codes. buttr_sub is the account key: the pairwise subject
+// identifier BUTTR ID issues for this client. email and phone are a local copy
+// of what BUTTR ID shared, kept for billing and for reaching the customer —
+// neither is the identity, and an account created with only a mobile number
+// arrives with no email at all.
+//
+// This shape only applies to a database that has never held a pre-BUTTR user.
 const createTableUsers = `CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    buttr_sub VARCHAR(255) NOT NULL UNIQUE,
+    buttr_handle VARCHAR(100),
     name VARCHAR(100) NOT NULL,
     company VARCHAR(100),
     role VARCHAR(50),
     address VARCHAR(255),
-    phone VARCHAR(20) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) UNIQUE,
+    email VARCHAR(255) UNIQUE,
     isVerified BOOLEAN DEFAULT FALSE,
-    emailOtp VARCHAR(255),
-    phoneOtp VARCHAR(255),
     isEmailVerified BOOLEAN DEFAULT FALSE,
     isPhoneVerified BOOLEAN DEFAULT FALSE,
-    resetPasswordToken VARCHAR(255),
-    resetPasswordExpires DATETIME,
     lastLoginAt DATETIME,
     lastLoginIP VARCHAR(45),
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 )`;
+
+// There is no migration from the pre-BUTTR schema. Every account is created by
+// a BUTTR ID sign-in, so a database carrying old password-authenticated rows is
+// wiped rather than upgraded — run `node reset-accounts.js` once, deliberately.
 
 const createAdminsTable = `CREATE TABLE IF NOT EXISTS admins (
     id INT AUTO_INCREMENT PRIMARY KEY,

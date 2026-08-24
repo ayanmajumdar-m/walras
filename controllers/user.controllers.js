@@ -1,67 +1,13 @@
 const User = require('../model/User.model');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
-const requestIp = require('request-ip')
-const unirest = require('unirest');
 const axios = require('axios');
 const { getTickets, createTicket } = require('../bolddesktest');
-const { sendWelcomeEmail, sendForgotPasswordEmail, sendDomainPurchaseEmail } = require('../utils/sendEmail');
+const { sendDomainPurchaseEmail } = require('../utils/sendEmail');
 dotenv.config();
-const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
-const { validateEmail, validatePassword, validateName, validatePhone } = require('../utils/validation');
-const otpGenerator = require('otp-generator');
-const { route } = require('../routes/user.route');
-const { verifyRecaptcha } = require('../utils/captchaUtil');
-const hashPassword = async (password) => {
-    const saltRounds = 10;
-    return await bcrypt.hash(password, saltRounds);
-};
+const { validatePhone } = require('../utils/validation');
 
-const generateToken = (userId) => {
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-};
-
-const emailOtp = otpGenerator.generate(6, {
-    digits: true,
-    lowerCaseAlphabets: false,
-    upperCaseAlphabets: false,
-    specialChars: false
-});
-
-const phoneOtp = otpGenerator.generate(6, {
-    digits: true,
-    lowerCaseAlphabets: false,
-    upperCaseAlphabets: false,
-    specialChars: false
-});
-
-const sendOtpToPhone = (phone, otp) => {
-    const api_key = process.env.FAST2SMS_API_KEY;
-    const message = `Your OTP for phone verification is ${otp}. It is valid for 10 minutes.`;
-    const phoneNumber = phone;
-    const smsData = {
-        sender_id: 'FSTSMS',
-        message: message,
-        language: 'english',
-        route: 'p',
-        numbers: phoneNumber
-    }
-
-    axios.post('https://www.fast2sms.com/dev/bulkV2', smsData, {
-        headers: {
-            'authorization': api_key,
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => {
-            console.log('SMS sent successfully:', response.data);
-        })
-        .catch(error => {
-            console.error('Error sending SMS:', error);
-        });
-};
-
+// Passwords, OTP generation and SMS delivery all left with the local auth
+// system. BUTTR ID owns those now — see controllers/auth.controllers.js.
 
 // Helper function to handle wallet payment for domain purchase
 async function handleWalletPayment(userId, amountPaise, domainTransactionId, domainName,
@@ -385,251 +331,8 @@ async function proceedWithDomainRegistration(domainTransactionId, domainName,
 }
 
 const UserController = {
-    register: async (req, res) => {
-        try {
-            const {
-                name,
-                email,
-                password,
-                phone,
-                company,
-                role,
-                addressLine1,
-                addressLine2,
-                country,
-                state,
-                city,
-                pincode,
-                captchaToken
-            } = req.body;
-
-            // Validate all fields first
-            if (!name || !email || !password || !phone || !company || !role || !addressLine1 || !country || !state || !city || !pincode || !captchaToken) {
-                return res.status(400).json({ error: 'All fields are required' });
-            }
-
-            // Verify reCAPTCHA
-            const isCaptchaValid = await verifyRecaptcha(captchaToken);
-            if (!isCaptchaValid) {
-                return res.status(400).json({ error: 'Captcha verification failed' });
-            }
-
-            // Field validations
-            if (!validateName(name)) return res.status(400).json({ error: 'Invalid name' });
-            if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
-            if (!validatePassword(password)) return res.status(400).json({ error: 'Invalid password format' });
-            if (!validatePhone(phone)) return res.status(400).json({ error: 'Invalid phone number' });
-
-            // ✅ Combine address into one string
-            const address = [
-                addressLine1,
-                addressLine2,
-                city,
-                state,
-                country,
-                pincode
-            ].filter(Boolean).join("\n");
-
-            // Hash password & generate OTPs
-            const hashedPassword = await hashPassword(password);
-            const emailOtp = Math.floor(100000 + Math.random() * 900000);
-            const phoneOtp = Math.floor(100000 + Math.random() * 900000);
-
-            const userData = {
-                name,
-                email,
-                phone,
-                company,
-                role,
-                address,   // ✅ final string
-                password: hashedPassword,
-                emailOtp,
-                phoneOtp
-            };
-
-            // Create user
-            User.create(userData, async (err, result) => {
-                if (err) {
-                    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Email already exists' });
-                    return res.status(500).json({ error: 'Failed to register user', details: err });
-                }
-
-                const token = generateToken(result.insertId);
-
-                // Send OTPs (don’t block registration if OTP sending fails)
-                try {
-                    await sendWelcomeEmail(email, name, emailOtp);
-                    await sendOtpToPhone(phone, phoneOtp);
-                } catch (error) {
-                    console.error('Error sending OTPs:', error);
-                }
-
-                res.status(201).json({ message: 'User registered successfully', token, userId: result.insertId });
-            });
-        } catch (error) {
-            console.error('Register error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    verifyEmailOtp: async (req, res) => {
-        try {
-            const { email, emailOtp } = req.body;
-            if (!email || !emailOtp) {
-                return res.status(400).json({ error: 'Email and OTP are required' });
-            }
-            if (!validateEmail(email)) {
-                return res.status(400).json({ error: 'Invalid email format' });
-            }
-            // Find user by email
-            User.findByEmail(email, (err, results) => {
-                if (err) {
-                    console.error('Verification error:', err);
-                    return res.status(500).json({ error: 'Database error' });
-                }
-                if (results.length === 0) {
-                    return res.status(404).json({ error: 'User not found' });
-                }
-                const user = results[0];
-                if (user.isVerified) {
-                    return res.status(400).json({ error: 'Email is already verified' });
-                }
-                if (user.emailOtp !== emailOtp) {
-                    return res.status(400).json({ error: 'Invalid OTP' });
-                }
-                // Update user's verification status
-                User.verifyEmailOtp(user.id, (verifyErr) => {
-                    if (verifyErr) {
-                        console.error('Verification update error:', verifyErr);
-                        return res.status(500).json({ error: 'Failed to verify email' });
-                    }
-                    res.json({ message: 'Email verified successfully' });
-                }
-                );
-            });
-        } catch (error) {
-            console.error('Verification error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    verifyPhoneOtp: async (req, res) => {
-        try {
-            const { phone, phoneOtp } = req.body;
-            if (!phone || !phoneOtp) {
-                return res.status(400).json({ error: 'Phone and OTP are required' });
-            }
-
-            User.findByPhone(phone, (err, results) => {
-                if (err) return res.status(500).json({ error: 'Database error' });
-                if (results.length === 0) return res.status(404).json({ error: 'User not found' });
-
-                const user = results[0];
-                if (user.isPhoneVerified) return res.status(400).json({ error: 'Phone already verified' });
-                if (user.phoneOtp !== phoneOtp) return res.status(400).json({ error: 'Invalid OTP' });
-
-                User.verifyPhoneOtp(user.id, (verifyErr) => {
-                    if (verifyErr) return res.status(500).json({ error: 'Failed to verify phone' });
-
-                    return res.json({
-                        message: 'Phone verified successfully',
-                        isVerified: user.isEmailVerified ? true : false
-                    });
-                });
-            });
-        } catch (error) {
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    login: async (req, res) => {
-        try {
-            const { email, password, captchaToken } = req.body;
-
-            // Validation
-            if (!email || !password || !captchaToken) {
-                return res.status(400).json({ error: 'Email, password, and captcha token are required' });
-            }
-
-            if (!validateEmail(email)) {
-                return res.status(400).json({ error: 'Invalid email format' });
-            }
-
-            // Find user and verify credentials
-            User.findByEmail(email, async (err, results) => {
-                if (err) {
-                    console.error('Database error:', err);
-                    return res.status(500).json({ error: 'Database error' });
-                }
-
-                if (results.length === 0) {
-                    return res.status(404).json({ error: 'User not found' });
-                }
-
-                const user = results[0];
-
-                // Check if email is verified
-                if (!user.isVerified) {
-                    return res.status(403).json({
-                        error: 'Please verify your email before logging in',
-                        needsVerification: true
-                    });
-                }
-                console.log('Stored password:', user.password);
-                console.log('Provided password:', password);
-
-                try {
-                    const isPasswordValid = await bcrypt.compare(password, user.password);
-                    console.log('Password comparison result:', isPasswordValid);
-
-                    if (!isPasswordValid) {
-                        // Check if it's a plaintext password (for old accounts)
-                        if (password === user.password) {
-                            // Update to hashed password
-                            const hashedPassword = await hashPassword(password);
-                            User.updatePassword(user.id, hashedPassword, (updateErr) => {
-                                if (updateErr) {
-                                    console.error('Error updating password:', updateErr);
-                                }
-                            });
-                        } else {
-                            return res.status(401).json({ error: 'Invalid password' });
-                        }
-                    }
-
-                    // Get client IP address
-                    const clientIP = requestIp.getClientIp(req);
-                    const userAgent = req.headers['user-agent'] || 'Unknown';
-                    // const location = requestIp.getLocation(clientIP);
-                    // Update user login info
-                    User.updateLoginInfo(user.id, clientIP, (err) => {
-                        if (err) {
-                            console.error('Error updating login info:', err);
-                        }
-                    });
-
-                    // Create login session
-                    User.createLoginSession(user.id, clientIP, userAgent, 'Unknown', (err) => {
-                        if (err) {
-                            console.error('Error creating login session:', err);
-                        }
-                    });
-
-                    // Generate JWT token
-                    const token = generateToken(user.id);
-                    res.status(200).json({
-                        message: 'Login successful',
-                        token,
-                        userId: user.id
-                    });
-                } catch (bcryptError) {
-                    console.error('Bcrypt comparison error:', bcryptError);
-                    return res.status(500).json({ error: 'Error verifying password' });
-                }
-            });
-        } catch (error) {
-            console.error('Login error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-
+    // register / login / verifyEmailOtp / verifyPhoneOtp used to live here.
+    // Authentication is BUTTR ID's job now — see controllers/auth.controllers.js.
     viewProfile: async (req, res) => {
         try {
             const userId = req.params.id;
@@ -647,11 +350,7 @@ const UserController = {
                     return res.status(404).json({ error: 'User not found' });
                 }
 
-                // Remove sensitive data before sending
-                const user = results[0];
-                delete user.password;
-
-                res.status(200).json(user);
+                res.status(200).json(results[0]);
             });
         } catch (error) {
             console.error('View profile error:', error);
@@ -662,47 +361,27 @@ const UserController = {
     updateProfile: async (req, res) => {
         try {
             const userId = req.params.id;
-            const { name, email, phone, company, role, address, currentPassword } = req.body;
+            const { phone, company, role, address } = req.body;
 
             if (userId != req.user.userId) {
                 return res.status(403).json({ error: 'Unauthorized access' });
             }
 
-            // Require current password
-            if (!currentPassword) {
-                return res.status(400).json({ error: 'Current password is required to update profile' });
+            // Re-authenticating with a password used to guard this endpoint.
+            // There is no Buttr Cloud password any more, and the bearer token
+            // was minted minutes ago by BUTTR ID, so the token is the proof.
+            //
+            // Name and email are not accepted here either: they belong to the
+            // BUTTR ID account and are refreshed from it on every sign-in.
+            if (phone && !validatePhone(phone)) {
+                return res.status(400).json({ error: 'Invalid phone number' });
             }
 
-            // Find user by ID
-            User.viewData(userId, async (err, results) => {
+            User.viewData(userId, (err, results) => {
                 if (err) return res.status(500).json({ error: 'Database error' });
                 if (!results || results.length === 0) return res.status(404).json({ error: 'User not found' });
 
-                const user = results[0];
-
-                if (!user.password) {
-                    return res.status(500).json({ error: 'Stored password missing. Cannot verify current password.' });
-                }
-
-                let isPasswordValid = false;
-                try {
-                    isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-                } catch (bcryptError) {
-                    console.error('Bcrypt error:', bcryptError);
-                    return res.status(500).json({ error: 'Error verifying password' });
-                }
-
-                if (!isPasswordValid) {
-                    return res.status(401).json({ error: 'Invalid current password' });
-                }
-
-                // Validate inputs
-                if (!validateName(name) || !validateEmail(email) || !validatePhone(phone)) {
-                    return res.status(400).json({ error: 'Invalid input' });
-                }
-
-                // Update profile
-                User.updateData(userId, { name, email, phone, company, role, address }, (updateErr) => {
+                User.updateData(userId, { phone, company, role, address }, (updateErr) => {
                     if (updateErr) return res.status(500).json({ error: 'Database error' });
 
                     res.status(200).json({ message: 'Profile updated successfully' });
@@ -714,110 +393,8 @@ const UserController = {
         }
     },
 
-    forgotPassword: async (req, res) => {
-        try {
-            const { email } = req.body;
-
-            if (!email) {
-                return res.status(400).json({ error: 'Email is required' });
-            }
-
-            if (!validateEmail(email)) {
-                return res.status(400).json({ error: 'Invalid email format' });
-            }
-
-            // Generate reset token
-            const resetToken = require('crypto').randomBytes(32).toString('hex');
-            const expires = new Date(Date.now() + 3600000); // Token expires in 1 hour
-
-            // Find user and set reset token
-            User.findByEmail(email, async (err, result) => {
-                if (err) {
-                    console.error('Database error:', err);
-                    return res.status(500).json({ error: 'Database error' });
-                }
-
-                if (!result || result.length === 0) {
-                    return res.status(404).json({ error: 'No account found with that email' });
-                }
-
-                const user = result[0];
-
-                // Set reset token in database
-                User.setResetToken(email, resetToken, expires, async (tokenErr) => {
-                    if (tokenErr) {
-                        console.error('Error setting reset token:', tokenErr);
-                        return res.status(500).json({ error: 'Error setting reset token' });
-                    }
-                    try {
-                        // Send password reset email
-                        const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-                        await sendForgotPasswordEmail(user.email, user.name, resetLink);
-                        res.json({ message: 'Password reset email sent' });
-                    } catch (emailError) {
-                        console.error('Error sending reset email:', emailError);
-                        res.status(500).json({ error: 'Error sending reset email' });
-                    }
-                });
-            });
-        } catch (error) {
-            console.error('Forgot password error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    resetPassword: async (req, res) => {
-        try {
-            const { token, newPassword } = req.body;
-
-            if (!token || !newPassword) {
-                return res.status(400).json({ error: 'Token and new password are required' });
-            }
-
-            if (!validatePassword(newPassword)) {
-                return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character' });
-            }
-
-            // Find user by reset token
-            User.findByResetToken(token, async (err, result) => {
-                if (err) {
-                    console.error('Database error:', err);
-                    return res.status(500).json({ error: 'Database error' });
-                }
-
-                if (!result || result.length === 0) {
-                    return res.status(400).json({ error: 'Invalid or expired reset token' });
-                }
-
-                const user = result[0];
-
-                try {
-                    // Hash new password
-                    const hashedPassword = await hashPassword(newPassword);
-
-                    // Update password and clear reset token
-                    User.updatePassword(user.id, hashedPassword, (updateErr) => {
-                        if (updateErr) {
-                            console.error('Error updating password:', updateErr);
-                            return res.status(500).json({ error: 'Error updating password' });
-                        }
-
-                        User.clearResetToken(user.id, (clearErr) => {
-                            if (clearErr) {
-                                console.error('Error clearing reset token:', clearErr);
-                            }
-                            res.json({ message: 'Password reset successful' });
-                        });
-                    });
-                } catch (hashError) {
-                    console.error('Error hashing password:', hashError);
-                    res.status(500).json({ error: 'Error resetting password' });
-                }
-            });
-        } catch (error) {
-            console.error('Reset password error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
+    // forgotPassword / resetPassword used to live here. There is no Buttr Cloud
+    // password to reset — recovery happens at the BUTTR ID account page.
     createTicket: async (req, res) => {
         try {
             const { subject, description, priorityId, brandId, name, email } = req.body;

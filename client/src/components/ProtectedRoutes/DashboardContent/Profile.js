@@ -8,9 +8,9 @@ const Profile = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const API_URL = `https://superflare.io`
 
-  // Password Modal state
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
+  // Where to send someone who wants to change their name, email, password or
+  // sign-in methods — all of that lives in BUTTR ID, not here.
+  const [buttrAccountUrl, setButtrAccountUrl] = useState("");
 
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
@@ -66,7 +66,15 @@ const Profile = () => {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  // Submit after password is entered
+  useEffect(() => {
+    fetch(`${API_URL}/api/auth/config`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setButtrAccountUrl(data.accountUrl))
+      .catch(() => {});
+  }, [API_URL]);
+
+  // Re-entering a password used to gate this. There is no Buttr Cloud password
+  // now — the bearer token came from BUTTR ID, and that is the proof.
   const submitProfileUpdate = async () => {
     try {
       // Format address before submission
@@ -80,19 +88,16 @@ const Profile = () => {
       };
       
       const formattedAddress = formatAddress(addressData);
-      const updatedForm = { 
-        ...form, 
-        address: formattedAddress,
-        currentPassword 
+
+      // Only the fields Buttr Cloud owns. name and email come from BUTTR ID
+      // and are refreshed from it on every sign-in, so sending them would be
+      // silently discarded.
+      const updatedForm = {
+        phone: form.phone || '',
+        company: form.company || '',
+        role: form.role || '',
+        address: formattedAddress
       };
-      
-      // Remove individual address fields from submission
-      delete updatedForm.addressLine1;
-      delete updatedForm.addressLine2;
-      delete updatedForm.city;
-      delete updatedForm.state;
-      delete updatedForm.country;
-      delete updatedForm.zipCode;
 
 
       const res = await fetch(`${API_URL}/api/users/profile/${userId}`, {
@@ -107,15 +112,12 @@ const Profile = () => {
       const result = await res.json();
       if (res.ok) {
         setMessage({ text: "Profile updated successfully ✅", type: "success" });
-        setUser(updatedForm);
+        setUser({ ...user, ...updatedForm });
       } else {
         setMessage({ text: result.error || "Update failed", type: "error" });
       }
     } catch {
       setMessage({ text: "Error updating profile", type: "error" });
-    } finally {
-      setShowPasswordModal(false);
-      setCurrentPassword("");
     }
   };
 
@@ -144,29 +146,21 @@ const Profile = () => {
           <form className="profile-form" onSubmit={(e) => e.preventDefault()}>
             <div className="form-grid">
               <div className="form-group">
-                <label htmlFor="name">Full Name *</label>
-                <input
-                  id="name"
-                  type="text"
-                  name="name"
-                  placeholder="Enter your full name"
-                  value={form.name || ""}
-                  onChange={handleChange}
-                  required
-                />
+                <label htmlFor="name">Full Name</label>
+                <input id="name" type="text" value={form.name || ""} readOnly disabled />
+                <small>Managed by your BUTTR ID</small>
               </div>
 
               <div className="form-group">
-                <label htmlFor="email">Email Address *</label>
+                <label htmlFor="email">Email Address</label>
                 <input
                   id="email"
                   type="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  value={form.email || ""}
-                  onChange={handleChange}
-                  required
+                  value={form.email || "Not shared by your BUTTR ID"}
+                  readOnly
+                  disabled
                 />
+                <small>Managed by your BUTTR ID</small>
               </div>
 
               <div className="form-group">
@@ -287,7 +281,7 @@ const Profile = () => {
               <button
                 type="button"
                 className="auth-btn update-btn"
-                onClick={() => setShowPasswordModal(true)}
+                onClick={submitProfileUpdate}
               >
                 Update Profile
               </button>
@@ -296,37 +290,20 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>Confirm Your Identity</h3>
-              <p>Please enter your current password to update your profile</p>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label htmlFor="currentPassword">Current Password</label>
-                <input
-                  id="currentPassword"
-                  type="password"
-                  placeholder="Enter your current password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowPasswordModal(false)}>
-                Cancel
-              </button>
-              <button className="btn-primary" onClick={submitProfileUpdate}>
-                Update Profile
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="profile-card">
+        <h2 className="section-title">Your BUTTR ID</h2>
+        <p>
+          Your name, email address, password and sign-in methods are managed by
+          BUTTR ID{form.buttr_handle ? ` (${form.buttr_handle})` : ""}. Buttr
+          Cloud never sees your password.
+        </p>
+        {buttrAccountUrl && (
+          <a className="auth-btn update-btn" href={buttrAccountUrl} target="_blank" rel="noreferrer">
+            Manage your BUTTR ID
+          </a>
+        )}
+      </div>
+
     </div>
   );
 };

@@ -1,4 +1,4 @@
-# Codebase Overview - Superflare AuthSystem
+# Codebase Overview - Buttr Cloud AuthSystem
 
 ## 🏗️ Architecture Overview
 
@@ -30,7 +30,7 @@ This is a **full-stack cloud hosting and domain management platform** built with
 │   ├── components/
 │   │   ├── About/              # About, Pricing, Contact pages
 │   │   ├── AdminDashboard/     # Admin panel components
-│   │   ├── AuthScreen/         # Login, Signup, OTP verification
+│   │   ├── AuthScreen/         # BUTTR ID sign-in handoff + callback
 │   │   ├── Constants/          # Navbar, Footer
 │   │   ├── ProtectedRoutes/    # User dashboard and protected pages
 │   │   │   └── DashboardContent/ # Deploy, Domains, Invoices, etc.
@@ -45,11 +45,14 @@ This is a **full-stack cloud hosting and domain management platform** built with
 ## 🎯 Core Features
 
 ### 1. **User Authentication & Management**
-- Email and phone OTP verification
-- JWT-based authentication
-- Password reset via email
+- Sign-in delegated to **BUTTR ID** (OpenID Connect, authorization code + PKCE)
+- No local passwords, OTPs or password-reset flow
+- Accounts keyed on the pairwise `sub` BUTTR ID issues for this client
+- Short-lived JWT session token minted after a verified BUTTR ID sign-in
 - Session management with IP tracking
 - Multi-currency support (USD/INR)
+
+See **BUTTR_ID_INTEGRATION.md** for the flow, configuration and migration notes.
 
 ### 2. **Wallet & Payment System**
 - Wallet balance management
@@ -102,8 +105,9 @@ This is a **full-stack cloud hosting and domain management platform** built with
 ### Backend Dependencies
 - **Express.js** (v5.1.0) - Web framework
 - **MySQL** (mysql2 v3.15.3) - Database
-- **JWT** (jsonwebtoken v9.0.2) - Authentication
-- **bcrypt** (v6.0.0) - Password hashing
+- **JWT** (jsonwebtoken v9.0.2) - Session tokens
+- **BUTTR ID** - OpenID Connect identity provider (user authentication)
+- **bcrypt** (v6.0.0) - Admin password hashing
 - **Razorpay** (v2.9.6) - Payment gateway
 - **node-cron** (v4.2.1) - Scheduled tasks
 - **PDFKit** (v0.17.2) - Invoice generation
@@ -114,7 +118,6 @@ This is a **full-stack cloud hosting and domain management platform** built with
 - **React** (v18.3.1) - UI library
 - **React Router DOM** (v7.9.2) - Routing
 - **Lucide React** - Icons
-- **Google reCAPTCHA** - Bot protection
 
 ---
 
@@ -143,8 +146,11 @@ This is a **full-stack cloud hosting and domain management platform** built with
 ## 🔐 Security Features
 
 1. **Authentication**
-   - JWT tokens with configurable expiration
-   - Password hashing with bcrypt (10 salt rounds)
+   - User identity proved by BUTTR ID; ID tokens verified against its JWKS
+     (RS256 signature, issuer, audience, expiry, nonce)
+   - PKCE (S256) and `state` on every authorization request
+   - JWT session tokens with configurable expiration
+   - Admin passwords hashed with bcrypt (10 salt rounds)
    - Session token management
 
 2. **Authorization**
@@ -153,8 +159,8 @@ This is a **full-stack cloud hosting and domain management platform** built with
    - Token validation on all protected endpoints
 
 3. **Validation**
-   - Email, phone, password validation
-   - reCAPTCHA integration
+   - Email and phone validation
+   - Password rules and CAPTCHA are BUTTR ID's responsibility
    - Input sanitization
 
 4. **Security Headers**

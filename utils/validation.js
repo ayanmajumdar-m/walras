@@ -14,33 +14,11 @@ const validateEmail = (email) => {
     return emailRegex.test(email);
 };
 
-const validatePassword = (password) => {
-// At least 8 characters, 1 uppercase atleast, 1 digit and 1 spec character
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return passwordRegex.test(password);
-};
-
-const validateResetPassword = (data) => {
-    const { newPassword } = data;
-    
-    if (!validatePassword(newPassword)) {
-        return { 
-            error: { 
-                details: [{ 
-                    message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character' 
-                }] 
-            } 
-        };
-    }
-    
-    return { error: null };
-};
-
+// Password rules live in BUTTR ID, which is the only thing that ever sees a
+// password now.
 
 module.exports = {
     validateName,
     validateEmail,
-    validatePassword,
-    validatePhone,
-    validateResetPassword
+    validatePhone
 };

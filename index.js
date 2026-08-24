@@ -35,9 +35,11 @@ const userRouter = require("./routes/user.route");
 const adminRouter = require("./routes/admin.routes");
 const walletRouter = require("./routes/wallet.routes");
 const serverRouter = require("./routes/server.routes");
+const authRouter = require("./routes/auth.routes");
 const bolddesktest = require("./bolddesktest");
 
 // ✅ Step 4: Use routes
+app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);
