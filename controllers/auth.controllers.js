@@ -161,7 +161,7 @@ const AuthController = {
     logout: (req, res) => {
         res.json({
             message: 'Signed out',
-            buttrAccountUrl: `${buttrId.ISSUER}/account`
+            buttrAccountUrl: buttrId.ACCOUNT_URL
         });
     },
 
@@ -172,7 +172,7 @@ const AuthController = {
     config: (req, res) => {
         res.json({
             issuer: buttrId.ISSUER,
-            accountUrl: `${buttrId.ISSUER}/account`,
+            accountUrl: buttrId.ACCOUNT_URL,
             scopes: buttrId.SCOPES
         });
     }

@@ -20,6 +20,14 @@ const CLIENT_SECRET = process.env.BUTTR_CLIENT_SECRET;
 const REDIRECT_URI = process.env.BUTTR_REDIRECT_URI;
 const SCOPES = process.env.BUTTR_SCOPES || 'openid profile email';
 
+// BUTTR ID is two deployments, not one: the Go issuer that serves /oauth2/*
+// and the Next.js app that serves the pages people actually look at —
+// /signin, /consent and /account. The account page is on the second one, so
+// linking to `${ISSUER}/account` reaches a backend with no such route.
+// This mirrors BUTTR_PUBLIC_WEB on the identity side.
+const WEB_URL = (process.env.BUTTR_WEB_URL || ISSUER).replace(/\/+$/, '');
+const ACCOUNT_URL = `${WEB_URL}/account`;
+
 // How long a started sign-in may sit unfinished before its PKCE verifier is
 // discarded. Long enough to read a verification code, short enough that a
 // leaked state value is worthless by the time anyone tries to use it.
@@ -229,6 +237,8 @@ const fetchUserInfo = async (accessToken) => {
 
 module.exports = {
     ISSUER,
+    WEB_URL,
+    ACCOUNT_URL,
     SCOPES,
     assertConfigured,
     buildAuthorizationUrl,
