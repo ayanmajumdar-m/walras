@@ -92,7 +92,7 @@
 
 .nav-item:hover {
   background: linear-gradient(90deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.02) 100%);
-  border-left-color: #b8b8c0;
+  border-left-color: #64646f;
   color: #0a0a0c;
   transform: translateX(4px);
   text-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
@@ -159,18 +159,27 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.logout-btn {
-  background: #4d1a1a !important;
-  color: #1f1f24 !important;
-  border: 1px solid #ef4444;
+/*
+  Scoped to the admin shell. CRA bundles every imported stylesheet into one
+  file, so this unscoped selector — with !important on top — was also styling
+  the *customer* dashboard's logout button, which has its own rule in
+  ProtectedRoutes/Dashboard.css and never got to use it.
+
+  !important is unnecessary now that the selector is specific, so it is gone.
+*/
+.admin-dashboard .logout-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
   margin: 0;
   width: 100%;
 }
 
-.logout-btn:hover {
-  background: #5d2a2a !important;
+.admin-dashboard .logout-btn:hover {
+  background: #fecaca;
+  border-color: #ef4444;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 /* Placeholder sections */
@@ -310,15 +319,15 @@
 }
 
 .admin-message.success {
-  background: linear-gradient(135deg, #1a4d1a 0%, #0f3f0f 100%);
-  color: #4ade80;
+  background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 100%);
+  color: #15803d;
   border: 1px solid #22c55e;
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
 }
 
 .admin-message.error {
-  background: linear-gradient(135deg, #4d1a1a 0%, #3f0f0f 100%);
-  color: #f87171;
+  background: linear-gradient(135deg, #fee2e2 0%, #fee2e2 100%);
+  color: #b91c1c;
   border: 1px solid #ef4444;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
@@ -554,7 +563,7 @@
 }
 
 .user-card:hover {
-  border-color: #b8b8c0;
+  border-color: #64646f;
   transform: translateY(-4px) scale(1.02);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
   background: linear-gradient(135deg, #f7f7f8 0%, #ffffff 100%);
@@ -990,14 +999,14 @@
 }
 
 .transaction-type.credit {
-  background: linear-gradient(135deg, #1a4d1a 0%, #0f3f0f 100%);
-  color: #4ade80;
+  background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 100%);
+  color: #15803d;
   border: 1px solid #22c55e;
 }
 
 .transaction-type.debit {
-  background: linear-gradient(135deg, #4d1a1a 0%, #3f0f0f 100%);
-  color: #f87171;
+  background: linear-gradient(135deg, #fee2e2 0%, #fee2e2 100%);
+  color: #b91c1c;
   border: 1px solid #ef4444;
 }
 
@@ -1007,11 +1016,11 @@
 }
 
 .amount.credit {
-  color: #059669;
+  color: #047857;
 }
 
 .amount.debit {
-  color: #f87171;
+  color: #b91c1c;
 }
 
 .ip-address {
@@ -1065,7 +1074,7 @@
 
 .download-invoice-btn:hover {
   background: linear-gradient(135deg, #d9d9de 0%, #f7f7f8 100%);
-  border-color: #b8b8c0;
+  border-color: #64646f;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
@@ -1086,7 +1095,7 @@
 
 .download-invoice-btn:disabled:hover {
   background: linear-gradient(135deg, #f7f7f8 0%, #ffffff 100%);
-  border-color: #d9d9de;
+  border-color: #64646f;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
@@ -1134,7 +1143,7 @@
 }
 
 .server-card:hover {
-  border-color: #b8b8c0;
+  border-color: #64646f;
   transform: translateY(-4px) scale(1.02);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
   background: linear-gradient(135deg, #f7f7f8 0%, #ffffff 100%);
@@ -1163,14 +1172,14 @@
 }
 
 .server-status.active {
-  background: linear-gradient(135deg, #1a4d1a 0%, #0f3f0f 100%);
-  color: #4ade80;
+  background: linear-gradient(135deg, #dcfce7 0%, #dcfce7 100%);
+  color: #15803d;
   border: 1px solid #22c55e;
 }
 
 .server-status.stopped {
-  background: linear-gradient(135deg, #4d1a1a 0%, #3f0f0f 100%);
-  color: #f87171;
+  background: linear-gradient(135deg, #fee2e2 0%, #fee2e2 100%);
+  color: #b91c1c;
   border: 1px solid #ef4444;
 }
 
@@ -1227,7 +1236,7 @@
 .btn-danger {
   background: rgba(248, 113, 113, 0.1);
   border-color: rgba(248, 113, 113, 0.3);
-  color: #f87171;
+  color: #b91c1c;
 }
 
 .btn-info {
@@ -1239,7 +1248,7 @@
 .btn-success {
   background: rgba(52, 211, 153, 0.1);
   border-color: rgba(52, 211, 153, 0.3);
-  color: #059669;
+  color: #047857;
 }
 
 /* User info in tables */
@@ -1398,7 +1407,7 @@
 }
 
 .status.verified {
-  color: #059669;
+  color: #047857;
 }
 
 .status.unverified {
@@ -1406,7 +1415,7 @@
 }
 
 .status.active {
-  color: #059669;
+  color: #047857;
 }
 
 .status.inactive {
@@ -2283,7 +2292,7 @@
 
 .price {
   font-weight: 600;
-  color: #059669;
+  color: #047857;
 }
 
 .category {
@@ -2316,7 +2325,7 @@
 }
 
 .auto-renew.enabled {
-  color: #059669;
+  color: #047857;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -2342,7 +2351,7 @@
 
 .status.active {
   background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  color: #047857;
 }
 
 .status.inactive {
@@ -2352,7 +2361,7 @@
 
 .status.registered {
   background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  color: #047857;
 }
 
 .status.expired {
@@ -2604,7 +2613,7 @@
 
 .amount {
   font-weight: 600;
-  color: #059669;
+  color: #047857;
 }
 
 .usage {
@@ -2619,7 +2628,7 @@
 }
 
 .status.active {
-  color: #059669;
+  color: #047857;
 }
 
 .status.inactive {
@@ -2627,7 +2636,7 @@
 }
 
 .status.paid {
-  color: #059669;
+  color: #047857;
 }
 
 .status.pending {
@@ -2658,7 +2667,7 @@
 
 .amount {
   font-weight: 600;
-  color: #059669;
+  color: #047857;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

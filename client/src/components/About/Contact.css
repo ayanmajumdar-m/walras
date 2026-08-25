@@ -259,7 +259,7 @@
 }
 
 .time {
-  color: #059669;
+  color: #047857;
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -286,7 +286,7 @@
   content: '✓';
   position: absolute;
   left: 0;
-  color: #059669;
+  color: #047857;
   font-weight: bold;
 }
 

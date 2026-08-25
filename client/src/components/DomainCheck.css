@@ -433,7 +433,7 @@
 }
 
 .history-item:hover {
-  border-color: #b8b8c0;
+  border-color: #64646f;
   transform: translateX(4px);
 }
 

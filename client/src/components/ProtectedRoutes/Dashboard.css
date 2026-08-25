@@ -3,7 +3,7 @@
   display: flex;
   height: 100vh;
   background: #fbfbfa; /* dark auth-style background */
-  color: #d9d9de;
+  color: #64646f;
   position: relative;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -58,8 +58,9 @@
 /* Logout Button */
 .logout-btn {
   margin-top: auto;
-  background: rgba(248, 113, 113, 0.1);
-  color: #f87171;
+  background: #fee2e2;
+  /* #f87171 is a dark-theme red: 2.5:1 on a light sidebar. */
+  color: #b91c1c;
   padding: 0.8rem 1rem;
   border-radius: 12px;
   display: flex;
@@ -71,7 +72,7 @@
 }
 
 .logout-btn:hover {
-  background: rgba(248, 113, 113, 0.2);
+  background: #fecaca;
 }
 
 /* Dashboard content */

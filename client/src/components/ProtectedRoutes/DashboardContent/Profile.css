@@ -133,13 +133,13 @@
 }
 
 .profile-message.success {
-  color: #059669;
+  color: #047857;
   background: rgba(52, 211, 153, 0.1);
   border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 .profile-message.error {
-  color: #f87171;
+  color: #b91c1c;
   background: rgba(248, 113, 113, 0.1);
   border: 1px solid rgba(248, 113, 113, 0.3);
 }

@@ -107,16 +107,16 @@
 
 .type.credit {
   background: #1a3a1a;
-  color: #4ade80;
+  color: #15803d;
 }
 
 .type.debit {
-  background: #3a1a1a;
-  color: #f87171;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .type.refund {
-  background: #3a2a1a;
+  background: #fef3c7;
   color: #b45309;
 }
 
@@ -157,17 +157,17 @@
 
 .status.completed {
   background: #1a3a1a;
-  color: #4ade80;
+  color: #15803d;
 }
 
 .status.pending {
-  background: #3a2a1a;
+  background: #fef3c7;
   color: #b45309;
 }
 
 .status.failed {
-  background: #3a1a1a;
-  color: #f87171;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .status.refunded {

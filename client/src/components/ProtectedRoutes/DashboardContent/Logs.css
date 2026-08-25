@@ -40,7 +40,7 @@
 
 .refresh-btn.active {
   background: #e6bd00;
-  color: white;
+  color: #0a0a0c;
   border-color: #e6bd00;
 }
 
@@ -111,11 +111,11 @@
 }
 
 .balance-card .card-value {
-  color: #059669;
+  color: #047857;
 }
 
 .unbilled-card .card-value {
-  color: #fc8181;
+  color: #b91c1c;
 }
 
 .invoice-card .card-value {
@@ -152,11 +152,11 @@
 }
 
 .stat-value.active {
-  color: #059669;
+  color: #047857;
 }
 
 .stat-value.inactive {
-  color: #fc8181;
+  color: #b91c1c;
 }
 
 /* Logs Section */
@@ -279,11 +279,11 @@
 }
 
 .log-amount.debit {
-  color: #fc8181;
+  color: #b91c1c;
 }
 
 .log-amount.credit {
-  color: #059669;
+  color: #047857;
 }
 
 .log-status {
@@ -295,8 +295,8 @@
 }
 
 .log-status.completed {
-  background: #2d5c3b;
-  color: #68d391;
+  background: #d1fae5;
+  color: #15803d;
 }
 
 /* Live Indicator */
@@ -307,8 +307,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #2d5c3b;
-  color: #68d391;
+  background: #d1fae5;
+  color: #15803d;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 12px;

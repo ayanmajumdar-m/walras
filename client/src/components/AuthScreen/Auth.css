@@ -79,7 +79,7 @@ body {
 
 /* Error message */
 .error-message {
-  color: #f87171;
+  color: #b91c1c;
   background: rgba(248, 113, 113, 0.1);
   border: 1px solid rgba(248, 113, 113, 0.3);
   padding: 0.75rem;
@@ -164,7 +164,7 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
   background: linear-gradient(135deg, #d9d9de 0%, #f7f7f8 100%);
-  border-color: #b8b8c0;
+  border-color: #64646f;
 }
 
 .auth-btn:hover:not(:disabled)::before {
@@ -198,7 +198,7 @@ body {
 }
 
 .success-message {
-  color: #059669;
+  color: #047857;
   background: rgba(52, 211, 153, 0.1);
   border: 1px solid rgba(52, 211, 153, 0.3);
   padding: 0.75rem;

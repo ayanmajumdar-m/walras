@@ -74,7 +74,7 @@
   }
   
   .dark-card:hover {
-    border-color: #d9d9de;
+    border-color: #64646f;
   }
   
   .config-title-do {
@@ -142,7 +142,7 @@
   }
   
   .dark-region-card:hover {
-    border-color: #d9d9de;
+    border-color: #64646f;
   }
   
   .region-card-active-do.blue-active {
@@ -258,7 +258,7 @@
   }
   
   .dark-image-card:hover {
-    border-color: #d9d9de;
+    border-color: #64646f;
   }
   
   .image-card-active-do.blue-active {
