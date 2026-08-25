@@ -1,6 +1,6 @@
 /* Contact.css */
 .contact-page {
-  background: var(--primary-black);
+  background: var(--page);
   color: var(--text-primary);
   min-height: 100vh;
 }
@@ -14,7 +14,7 @@
 /* Hero Section */
 .contact-hero {
   padding: 8rem 0 6rem;
-  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
   position: relative;
   overflow: hidden;
   text-align: center;
@@ -43,7 +43,7 @@
 
 .contact-subtitle {
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 10, 12, 0.9);
   max-width: 800px;
   margin: 0 auto;
   line-height: 1.6;
@@ -75,7 +75,7 @@
 /* Contact Methods Section */
 .contact-methods-section {
   padding: 6rem 0;
-  background: var(--primary-black);
+  background: var(--page);
 }
 
 .contact-grid {
@@ -85,8 +85,8 @@
 }
 
 .contact-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 16px;
   padding: 2.5rem 2rem;
   text-align: center;
@@ -107,8 +107,8 @@
 
 .contact-card:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .contact-icon-wrapper {
@@ -126,7 +126,7 @@
 .contact-icon {
   width: 32px;
   height: 32px;
-  color: var(--icon-color, #ffd400);
+  color: var(--icon-color, #0a0a0c);
 }
 
 .contact-method-title {
@@ -152,8 +152,8 @@
 /* Support Features Section */
 .support-features-section {
   padding: 6rem 0;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .features-grid {
@@ -163,8 +163,8 @@
 }
 
 .feature-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 16px;
   padding: 2rem;
   text-align: center;
@@ -173,8 +173,8 @@
 
 .feature-card:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .feature-icon-wrapper {
@@ -191,7 +191,7 @@
 .feature-icon {
   width: 28px;
   height: 28px;
-  color: #ffd400;
+  color: #0a0a0c;
 }
 
 .feature-title {
@@ -209,7 +209,7 @@
 /* Info Section */
 .info-section {
   padding: 6rem 0;
-  background: var(--primary-black);
+  background: var(--page);
 }
 
 .info-grid {
@@ -219,8 +219,8 @@
 }
 
 .info-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 16px;
   padding: 2.5rem;
 }
@@ -244,13 +244,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(0, 0, 0, 0.02);
   border-radius: 8px;
   transition: all 0.3s ease;
 }
 
 .time-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .priority {
@@ -259,7 +259,7 @@
 }
 
 .time {
-  color: #10b981;
+  color: #059669;
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -273,7 +273,7 @@
 .coverage-list li {
   padding: 1rem;
   color: var(--text-secondary);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
   padding-left: 1.5rem;
 }
@@ -286,14 +286,14 @@
   content: '✓';
   position: absolute;
   left: 0;
-  color: #10b981;
+  color: #059669;
   font-weight: bold;
 }
 
 /* CTA Section */
 .cta-section {
   padding: 6rem 0;
-  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -328,7 +328,7 @@
 
 .cta-subtitle {
   font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 10, 12, 0.9);
   margin-bottom: 2.5rem;
   max-width: 600px;
   margin-left: auto;
@@ -370,15 +370,15 @@
 }
 
 .btn.secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 /* Responsive Design */

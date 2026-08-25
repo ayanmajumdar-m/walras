@@ -6,38 +6,49 @@
   than carrying its own hex. One place to change a colour, not thirteen.
 */
 :root {
+  /*
+    These names date from the dark scheme — "primary-black" is a page
+    background, not a literal black. They are kept because a dozen
+    stylesheets reference them; only the values moved to light.
+  */
+  /*
+    These four were overloaded: the same token served as a page background
+    *and* as the dark text on a yellow button. One value cannot be both once
+    the page turns white, so background uses were re-pointed at --page and
+    --surface, and these keep the dark ink their names imply.
+  */
   --primary-black: var(--color-ink-950);
   --secondary-black: var(--color-ink-900);
-  --dark-gray: var(--color-ink-900);
-  --medium-gray: var(--color-ink-800);
-  --light-gray: var(--color-ink-700);
-  --text-primary: var(--color-ink-50);
-  --text-secondary: var(--color-ink-400);
-  --text-muted: var(--color-ink-500);
-  /* Was white. Actions are the brand's job now. */
+  --dark-gray: var(--color-ink-800);
+  --medium-gray: var(--color-ink-100);
+  --light-gray: var(--color-ink-200);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --text-muted: var(--color-ink-400);
   --accent-color: var(--color-buttr-500);
   --gradient: linear-gradient(135deg, var(--color-buttr-500) 0%, var(--color-buttr-700) 100%);
-  --gradient-text: linear-gradient(135deg, var(--color-buttr-400), var(--color-buttr-600));
+  /* On a white page the text gradient has to darken, not lighten. */
+  --gradient-text: linear-gradient(135deg, var(--color-ink-950), var(--color-ink-600));
   --gradient-animated: linear-gradient(
     -45deg,
-    var(--color-buttr-300),
-    var(--color-buttr-500),
-    var(--color-buttr-400),
+    var(--color-ink-950),
+    var(--color-buttr-700),
+    var(--color-ink-800),
     var(--color-buttr-600)
   );
-  --hover-color: var(--color-ink-800);
+  --hover-color: var(--color-ink-100);
   --border-color: var(--border);
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.6);
-  /* The glow reads as brand light, not a white smudge. */
-  --shadow-glow: 0 0 20px rgba(255, 212, 0, 0.15);
+  /* Shadows on white are about lift, not depth. */
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(255, 212, 0, 0.35);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --border-radius: 16px;
 }
 
 /* Base Styles with Larger Text */
 .homepage {
-  background-color: var(--primary-black);
+  background-color: var(--page);
   color: var(--text-primary);
   min-height: 100vh;
   font-size: 18px; /* Increased base font size */
@@ -98,7 +109,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
   transition: left 0.5s;
 }
 
@@ -161,8 +172,8 @@
 }
 
 @keyframes pulse-glow {
-  from { box-shadow: 0 0 5px rgba(255,255,255,0.1); }
-  to { box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+  from { box-shadow: 0 0 5px rgba(0, 0, 0, 0.08); }
+  to { box-shadow: 0 0 20px rgba(0, 0, 0, 0.08); }
 }
 
 @keyframes typing {
@@ -172,12 +183,12 @@
 
 @keyframes blink-caret {
   from, to { border-color: transparent; }
-  50% { border-color: var(--accent-color); }
+  50% { border-color: var(--color-buttr-ink); }
 }
 
 @keyframes input-glow {
-  from { box-shadow: 0 0 5px rgba(255,255,255,0.1); }
-  to { box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+  from { box-shadow: 0 0 5px rgba(0, 0, 0, 0.08); }
+  to { box-shadow: 0 0 15px rgba(0, 0, 0, 0.08); }
 }
 
 @keyframes gradient-shift {
@@ -198,7 +209,7 @@
 
 .hero {
   padding: 5rem 0;
-  background: linear-gradient(135deg, var(--primary-black) 0%, var(--secondary-black) 100%);
+  background: linear-gradient(135deg, var(--page) 0%, var(--secondary-black) 100%);
   overflow: hidden;
   position: relative;
 }
@@ -221,7 +232,7 @@
 
 .badge {
   display: inline-block;
-  background: var(--medium-gray);
+  background: var(--color-ink-100);
   color: var(--text-primary);
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
@@ -280,7 +291,7 @@
 
 .hero-btn.secondary {
   background: transparent;
-  color: var(--accent-color);
+  color: var(--color-buttr-ink);
   border: 2px solid var(--light-gray);
 }
 
@@ -335,7 +346,7 @@
 .bg-orb {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.08) 0%, transparent 70%);
   animation: float 8s ease-in-out infinite;
 }
 
@@ -572,7 +583,7 @@
 /* Commitments Section */
 .commitments {
   padding: 6rem 0;
-  background: linear-gradient(180deg, var(--primary-black), var(--secondary-black));
+  background: linear-gradient(180deg, var(--page), var(--secondary-black));
   position: relative;
   overflow: hidden;
 }
@@ -582,7 +593,7 @@
   position: absolute;
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
   top: 0;
 }
 
@@ -594,8 +605,8 @@
 }
 
 .commitment-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: var(--border-radius);
   padding: 2.5rem;
   text-align: center;
@@ -608,7 +619,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.03), transparent);
   opacity: 0;
   transition: var(--transition);
 }
@@ -700,7 +711,7 @@
 /* Enhanced Services */
 .services-compact {
   padding: 5rem 0; /* More padding */
-  background-color: var(--secondary-black);
+  background-color: var(--surface);
 }
 
 .services-grid-compact {
@@ -710,7 +721,7 @@
 }
 
 .service-card-compact {
-  background: linear-gradient(145deg, var(--dark-gray), var(--medium-gray));
+  background: linear-gradient(145deg, var(--surface-raised), var(--medium-gray));
   padding: 2.5rem; /* More padding */
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
@@ -772,7 +783,7 @@
 }
 
 .feature-tag {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.08);
   color: var(--text-secondary);
   padding: 0.6rem 1rem; /* Larger tags */
   border-radius: 20px;
@@ -801,7 +812,7 @@
 /* Enhanced Coming Soon */
 .coming-soon-compact {
   padding: 5rem 0; /* More padding */
-  background: linear-gradient(135deg, var(--primary-black) 0%, var(--dark-gray) 100%);
+  background: linear-gradient(135deg, var(--page) 0%, var(--dark-gray) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -822,7 +833,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.75rem; /* More spacing */
-  background: var(--medium-gray);
+  background: var(--color-ink-100);
   color: var(--text-primary);
   padding: 0.75rem 1.5rem; /* Larger */
   border-radius: 50px;
@@ -918,7 +929,7 @@
 /* Enhanced Features */
 .features-compact {
   padding: 5rem 0; /* More padding */
-  background-color: var(--primary-black);
+  background-color: var(--page);
 }
 
 .features-grid-compact {
@@ -932,7 +943,7 @@
   align-items: flex-start;
   gap: 1.5rem; /* More spacing */
   padding: 2.5rem; /* More padding */
-  background: linear-gradient(145deg, var(--dark-gray), var(--medium-gray));
+  background: linear-gradient(145deg, var(--surface-raised), var(--medium-gray));
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   transition: var(--transition);
@@ -967,7 +978,7 @@
 /* Enhanced Support */
 .support-compact {
   padding: 5rem 0;
-  background-color: var(--secondary-black);
+  background-color: var(--surface);
 }
 
 .support-content-compact {
@@ -1001,7 +1012,7 @@
 .stat-number-compact {
   font-size: 2.5rem;
   font-weight: 800;
-  color: var(--accent-color);
+  color: var(--color-buttr-ink);
   margin-bottom: 0.5rem;
 }
 
@@ -1027,7 +1038,7 @@
 }
 
 .feature-check {
-  color: var(--accent-color);
+  color: var(--color-buttr-ink);
   font-weight: 700;
   font-size: 1.3rem;
 }
@@ -1038,7 +1049,7 @@
 }
 
 .support-chat {
-  background: var(--dark-gray);
+  background: var(--surface-raised);
   padding: 2.5rem;
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
@@ -1048,7 +1059,7 @@
 }
 
 .chat-bubble {
-  background: var(--medium-gray);
+  background: var(--color-ink-100);
   padding: 1.5rem;
   border-radius: 20px 20px 20px 5px;
   margin-bottom: 1rem;
@@ -1075,7 +1086,7 @@
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.12);
 }
 
 .cta-compact::before {
@@ -1137,23 +1148,23 @@
   background: white;
   color: #33333a;
   border: none;
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .cta-btn-compact.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
 }
 
 .cta-btn-compact.outline {
   background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  color: #0a0a0c;
 }
 
 .cta-btn-compact.outline:hover {
   border-color: white;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 /* Responsive Design with Larger Text */

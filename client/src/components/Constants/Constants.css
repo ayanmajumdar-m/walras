@@ -4,7 +4,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: var(--primary-black);
+  background: var(--page);
   border-bottom: 1px solid var(--border-color);
   position: relative;
   z-index: 1000;
@@ -64,8 +64,8 @@
 }
 
 .nav-link:hover {
-  background: var(--medium-gray);
-  color: var(--accent-color);
+  background: var(--color-ink-100);
+  color: var(--color-buttr-ink);
 }
 
 /* Dropdown Styles */
@@ -89,8 +89,8 @@
 }
 
 .dropbtn:hover {
-  background: var(--medium-gray);
-  color: var(--accent-color);
+  background: var(--color-ink-100);
+  color: var(--color-buttr-ink);
 }
 
 .dropdown-chevron {
@@ -105,7 +105,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: var(--secondary-black);
+  background: var(--surface);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.5rem 0;
@@ -132,8 +132,8 @@
 }
 
 .dropdown-content a:hover {
-  background: var(--medium-gray);
-  color: var(--accent-color);
+  background: var(--color-ink-100);
+  color: var(--color-buttr-ink);
 }
 
 /* Right Navigation */
@@ -156,8 +156,8 @@
 }
 
 .icon-button:hover {
-  background: var(--medium-gray);
-  color: var(--accent-color);
+  background: var(--color-ink-100);
+  color: var(--color-buttr-ink);
 }
 
 .login-btn {
@@ -189,7 +189,7 @@
 }
 
 .mobile-toggle:hover {
-  background: var(--medium-gray);
+  background: var(--color-ink-100);
 }
 
 /* Mobile Menu Overlay */
@@ -199,7 +199,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.12);
   backdrop-filter: blur(4px);
   z-index: 999;
   animation: fadeIn 0.3s ease;
@@ -217,7 +217,7 @@
   right: -100%;
   width: 320px;
   height: 100vh;
-  background: var(--secondary-black);
+  background: var(--surface);
   border-left: 1px solid var(--border-color);
   transition: right 0.3s ease;
   z-index: 1001;
@@ -256,8 +256,8 @@
 }
 
 .mobile-close:hover {
-  background: var(--medium-gray);
-  color: var(--accent-color);
+  background: var(--color-ink-100);
+  color: var(--color-buttr-ink);
 }
 
 /* Search Container */
@@ -275,7 +275,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: #f7f7f8;
+  color: #0a0a0c;
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
@@ -315,7 +315,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  color: #f7f7f8;
+  color: #0a0a0c;
   text-decoration: none;
   border-radius: 8px;
   transition: all 0.3s ease;
@@ -336,22 +336,22 @@
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  background: #131316;
-  color: white;
+  background: #ffffff;
+  color: #0a0a0c;
   text-decoration: none;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
 
 .mobile-dashboard-btn:hover {
-  background: #2a2a31;
+  background: #d9d9de;
 }
 .search-input {
   width: 100%;
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--primary-black);
+  background: var(--page);
   color: var(--text-primary);
   font-size: 1rem;
   transition: var(--transition);
@@ -359,8 +359,8 @@
 
 .search-input:focus {
   outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  border-color: var(--color-buttr-ink);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
 .search-input::placeholder {
@@ -385,9 +385,9 @@
 }
 
 .mobile-link:hover {
-  background: var(--medium-gray);
-  color: var(--accent-color);
-  border-left-color: var(--accent-color);
+  background: var(--color-ink-100);
+  color: var(--color-buttr-ink);
+  border-left-color: var(--color-buttr-ink);
 }
 
 /* Mobile Menu Footer */
@@ -481,7 +481,7 @@
 }
 
 .mobile-links::-webkit-scrollbar-track {
-  background: var(--primary-black);
+  background: var(--page);
 }
 
 .mobile-links::-webkit-scrollbar-thumb {

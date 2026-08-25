@@ -1,6 +1,6 @@
 /* About.css */
 .about-page {
-  background: var(--primary-black);
+  background: var(--page);
   color: var(--text-primary);
   min-height: 100vh;
 }
@@ -14,7 +14,7 @@
 /* Hero Section */
 .about-hero {
   padding: 8rem 0 6rem;
-  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
   position: relative;
   overflow: hidden;
 }
@@ -43,7 +43,7 @@
 
 .about-subtitle {
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 10, 12, 0.9);
   text-align: center;
   max-width: 800px;
   margin: 0 auto;
@@ -53,7 +53,7 @@
 /* Why Choose Section */
 .why-choose-section {
   padding: 6rem 0;
-  background: var(--primary-black);
+  background: var(--page);
 }
 
 .section-header {
@@ -85,8 +85,8 @@
 }
 
 .feature-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 16px;
   padding: 2rem;
   transition: all 0.3s ease;
@@ -94,14 +94,14 @@
 
 .feature-card:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .feature-icon-wrapper {
   width: 48px;
   height: 48px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -112,7 +112,7 @@
 .feature-icon {
   width: 24px;
   height: 24px;
-  color: #ffdf33;
+  color: #0a0a0c;
 }
 
 .feature-title {
@@ -130,8 +130,8 @@
 /* Mission Section */
 .mission-section {
   padding: 6rem 0;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .mission-content {

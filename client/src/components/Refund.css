@@ -1,6 +1,6 @@
 /* Refund.css */
 .terms-page {
-  background: var(--primary-black);
+  background: var(--page);
   color: var(--text-primary);
   min-height: 100vh;
 }
@@ -14,7 +14,7 @@
 /* Hero Section */
 .terms-hero {
   padding: 6rem 0 4rem;
-  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
   position: relative;
   overflow: hidden;
 }
@@ -39,7 +39,7 @@
 .hero-icon {
   width: 64px;
   height: 64px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 10, 12, 0.9);
   margin: 0 auto 2rem;
 }
 
@@ -55,7 +55,7 @@
 
 .terms-subtitle {
   font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 10, 12, 0.9);
   line-height: 1.6;
   max-width: 800px;
   margin: 0 auto;
@@ -64,7 +64,7 @@
 /* Terms Content */
 .terms-content {
   padding: 4rem 0;
-  background: var(--primary-black);
+  background: var(--page);
 }
 
 .terms-sections {
@@ -74,16 +74,16 @@
 }
 
 .terms-section {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 16px;
   padding: 2.5rem;
   transition: all 0.3s ease;
 }
 
 .terms-section:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .section-header {
@@ -107,7 +107,7 @@
 .section-icon {
   width: 24px;
   height: 24px;
-  color: #ffd400;
+  color: #0a0a0c;
 }
 
 .section-title {

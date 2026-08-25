@@ -2,7 +2,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
-  background: var(--primary-black);
+  background: var(--page);
   min-height: 100vh;
   color: var(--text-primary);
 }
@@ -32,7 +32,7 @@
   color: var(--text-secondary);
   font-size: 1.125rem;
   padding: 3rem;
-  background: var(--dark-gray);
+  background: var(--surface-raised);
   border-radius: 12px;
   border: 1px solid var(--border-color);
 }
@@ -49,14 +49,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: var(--dark-gray);
+  background: var(--surface-raised);
   border-radius: 12px;
   border: 1px solid var(--border-color);
   transition: 0.2s;
 }
 
 .cart-item:hover {
-  border-color: var(--accent-color);
+  border-color: var(--color-buttr-ink);
   transform: translateY(-2px);
 }
 
@@ -141,7 +141,7 @@
 }
 
 .contact-form {
-  background: var(--dark-gray);
+  background: var(--surface-raised);
   padding: 2rem;
   border-radius: 12px;
   border: 1px solid var(--border-color);
@@ -165,7 +165,7 @@
 .contact-form input {
   width: 100%;
   padding: 0.875rem 1rem;
-  background: var(--secondary-black);
+  background: var(--surface);
   border: 1px solid var(--light-gray);
   border-radius: 6px;
   color: var(--text-primary);
@@ -175,8 +175,8 @@
 
 .contact-form input:focus {
   outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  border-color: var(--color-buttr-ink);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
 }
 
 .contact-form input::placeholder {

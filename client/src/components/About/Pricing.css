@@ -1,6 +1,6 @@
 /* Pricing.css */
 .pricing-page {
-  background: var(--primary-black);
+  background: var(--page);
   color: var(--text-primary);
   min-height: 100vh;
 }
@@ -14,7 +14,7 @@
 /* Hero Section */
 .pricing-hero {
   padding: 8rem 0 6rem;
-  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
   position: relative;
   overflow: hidden;
   text-align: center;
@@ -43,7 +43,7 @@
 
 .pricing-subtitle {
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 10, 12, 0.9);
   max-width: 800px;
   margin: 0 auto 2.5rem;
   line-height: 1.6;
@@ -74,19 +74,19 @@
 .notice-icon {
   width: 24px;
   height: 24px;
-  color: #f59e0b;
+  color: #b45309;
   flex-shrink: 0;
   margin-top: 0.25rem;
 }
 
 .important-notice h3 {
-  color: #f59e0b;
+  color: #b45309;
   margin-bottom: 0.5rem;
   font-size: 1.25rem;
 }
 
 .important-notice p {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 10, 12, 0.9);
   line-height: 1.6;
   margin: 0;
 }
@@ -117,7 +117,7 @@
 /* Plans Section */
 .plans-section {
   padding: 6rem 0;
-  background: var(--primary-black);
+  background: var(--page);
 }
 
 .currency-selector {
@@ -131,7 +131,7 @@
 
 .currency-buttons {
   display: flex;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   padding: 4px;
 }
@@ -147,12 +147,14 @@
 }
 
 .currency-btn.active {
-  background: rgba(255, 212, 0, 0.2);
-  color: #ffd400;
+  /* A 20% yellow wash still reads as near-white, so the label needs the
+     text-safe gold rather than the surface one. */
+  background: rgba(255, 212, 0, 0.28);
+  color: var(--color-buttr-ink);
 }
 
 .currency-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .plans-grid {
@@ -163,8 +165,8 @@
 }
 
 .plan-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 16px;
   padding: 2rem;
   position: relative;
@@ -173,8 +175,8 @@
 
 .plan-card:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .plan-card.popular {
@@ -199,7 +201,7 @@
   text-align: center;
   margin-bottom: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .plan-name {
@@ -213,7 +215,7 @@
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #ffd400;
+  color: #0a0a0c;
   margin-bottom: 0.5rem;
 }
 
@@ -231,7 +233,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .plan-features .feature-item:last-child {
@@ -241,7 +243,7 @@
 .plan-features .feature-icon {
   width: 18px;
   height: 18px;
-  color: #ffd400;
+  color: #0a0a0c;
 }
 
 .plan-btn {
@@ -254,8 +256,8 @@
   opacity: 0.55;
   cursor: not-allowed;
   pointer-events: none;
-  background: rgba(255,255,255,0.03);
-  border-color: rgba(255,255,255,0.04);
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.04);
   color: var(--text-secondary);
 }
 
@@ -269,8 +271,8 @@
 /* Services Section */
 .services-section {
   padding: 6rem 0;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .services-grid {
@@ -280,8 +282,8 @@
 }
 
 .service-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 16px;
   padding: 2rem;
   text-align: center;
@@ -290,8 +292,8 @@
 
 .service-card:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .service-icon {
@@ -308,7 +310,7 @@
 .service-icon .icon {
   width: 32px;
   height: 32px;
-  color: #ffd400;
+  color: #0a0a0c;
 }
 
 .service-card h3 {
@@ -324,8 +326,8 @@
   margin-bottom: 1.5rem;
 }
 .features-section {
-  background-color: #0a0a0c;
-  color: #ededf0;
+  background-color: #fbfbfa;
+  color: #1f1f24;
   padding: 100px 20px;
   display: flex;
   justify-content: center;
@@ -345,13 +347,13 @@
 .features-title {
   font-size: 2.4rem;
   font-weight: 700;
-  color: #f7f7f8;
+  color: #0a0a0c;
   margin-bottom: 10px;
 }
 
 .features-subtitle {
   font-size: 1.1rem;
-  color: #b8b8c0;
+  color: #4a4a53;
   max-width: 600px;
   margin: 0 auto;
 }
@@ -364,8 +366,8 @@
 }
 
 .feature-card {
-  background-color: #131316;
-  border: 1px solid #1f1f24;
+  background-color: #ffffff;
+  border: 1px solid #f7f7f8;
   border-radius: 16px;
   padding: 30px 20px;
   display: flex;
@@ -384,20 +386,20 @@
 /* Icon */
 .feature-icon {
   font-size: 2rem;
-  color: #ffd400;
+  color: #0a0a0c;
   margin-bottom: 15px;
   transition: all 0.3s ease;
 }
 
 .feature-card:hover .feature-icon {
-  color: #ffd400;
+  color: #0a0a0c;
   transform: scale(1.1);
 }
 
 /* Text */
 .feature-text {
   font-size: 1rem;
-  color: #d9d9de;
+  color: #33333a;
   line-height: 1.5;
   max-width: 220px;
 }
@@ -427,13 +429,13 @@
 .section-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #f7f7f8;
+  color: #0a0a0c;
   margin-bottom: 0.5rem;
 }
 
 .section-subtitle {
   font-size: 1.125rem;
-  color: #d9d9de;
+  color: #33333a;
   max-width: 600px;
   margin: 0 auto;
 }
@@ -536,13 +538,13 @@
 }
 
 .btn.secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 

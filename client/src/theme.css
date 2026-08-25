@@ -21,6 +21,12 @@
   --color-buttr-500: #ffd400; /* primary */
   --color-buttr-600: #e6bd00;
   --color-buttr-700: #b39300;
+  /*
+    Brand-tinted text. buttr-500 on white is about 1.4:1 — unreadable — and
+    even buttr-700 only reaches 2.9:1. This is the shade where a gold still
+    reads as gold and passes AA on a white page.
+  */
+  --color-buttr-ink: #6f5b00;
 
   /* Ink — structure, surfaces, text. */
   --color-ink-50: #f7f7f8;
@@ -36,15 +42,23 @@
   --color-ink-950: #0a0a0c;
 
   /*
-    Buttr Cloud presents dark, so these resolve to BUTTR ID's dark-theme
-    values rather than its light ones. Same palette, the other end of it.
+    Light is the product default, exactly as it is in BUTTR ID: the page stays
+    near-white, ink carries structure, and yellow is reserved for actions. A
+    large yellow field on a dark ground reads as a warning; on a white one it
+    reads as a button, which is the whole reason the brand works this way.
   */
-  --page: #0a0a0c;
-  --surface: #131316;
-  --surface-raised: #1f1f24;
-  --border: #2a2a31;
-  --text: #f7f7f8;
-  --text-muted: #8b8b96;
+  --page: #fbfbfa;
+  --surface: #ffffff;
+  --surface-raised: #f7f7f8;
+  --border: #d9d9de;
+  --text: #0a0a0c;
+  --text-muted: #64646f;
+
+  /* Kept so a future dark mode has somewhere to read its values from. */
+  --page-dark: #0a0a0c;
+  --surface-dark: #131316;
+  --border-dark: #2a2a31;
+  --text-dark: #f7f7f8;
 
   /*
     Status colours are deliberately not from the brand ramp. Success and

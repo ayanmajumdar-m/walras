@@ -1,7 +1,7 @@
 .transactions {
   padding: 20px;
-  background-color: #0a0a0c;
-  color: #f7f7f8;
+  background-color: #fbfbfa;
+  color: #0a0a0c;
   min-height: 100vh;
 }
 
@@ -11,25 +11,25 @@
   align-items: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: #131316;
+  background: #ffffff;
   border-radius: 8px;
 }
 
 .transactions-header h2 {
   margin: 0;
   font-size: 24px;
-  color: #f7f7f8;
+  color: #0a0a0c;
 }
 
 .transactions-count {
-  background: #1f1f24;
+  background: #f7f7f8;
   padding: 8px 16px;
   border-radius: 6px;
   font-weight: 500;
 }
 
 .table-container {
-  background: #131316;
+  background: #ffffff;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -50,12 +50,12 @@
 .col-status { width: 120px; }
 
 .transactions-table th {
-  background: #1f1f24;
+  background: #f7f7f8;
   padding: 16px 12px;
   text-align: left;
   font-weight: 600;
-  color: #f7f7f8;
-  border-bottom: 2px solid #2a2a31;
+  color: #0a0a0c;
+  border-bottom: 2px solid #d9d9de;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -63,7 +63,7 @@
 
 .transactions-table td {
   padding: 16px 12px;
-  border-bottom: 1px solid #2a2a31;
+  border-bottom: 1px solid #d9d9de;
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
@@ -71,7 +71,7 @@
 }
 
 .transaction-row:hover {
-  background-color: #1f1f24;
+  background-color: #f7f7f8;
 }
 
 .user-info {
@@ -83,14 +83,14 @@
 
 .user-info .name {
   font-weight: 500;
-  color: #f7f7f8;
+  color: #0a0a0c;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .user-info .email {
-  color: #b8b8c0;
+  color: #4a4a53;
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
@@ -117,23 +117,23 @@
 
 .type.refund {
   background: #3a2a1a;
-  color: #fbbf24;
+  color: #b45309;
 }
 
 .amount {
   font-weight: 600;
-  color: #f7f7f8;
+  color: #0a0a0c;
 }
 
 .description {
-  color: #b8b8c0;
+  color: #4a4a53;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .payment-id {
-  color: #b8b8c0;
+  color: #4a4a53;
   font-family: monospace;
   font-size: 12px;
   white-space: nowrap;
@@ -142,7 +142,7 @@
 }
 
 .date {
-  color: #f7f7f8;
+  color: #0a0a0c;
   white-space: nowrap;
 }
 
@@ -162,7 +162,7 @@
 
 .status.pending {
   background: #3a2a1a;
-  color: #fbbf24;
+  color: #b45309;
 }
 
 .status.failed {
@@ -171,8 +171,8 @@
 }
 
 .status.refunded {
-  background: #1f1f24;
-  color: #ffdf33;
+  background: #f7f7f8;
+  color: #0a0a0c;
 }
 
 .no-data {

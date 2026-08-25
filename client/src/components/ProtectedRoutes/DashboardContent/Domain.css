@@ -3,9 +3,9 @@
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  background: #0a0a0c;
+  background: #fbfbfa;
   min-height: 100vh;
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .domain-header {
@@ -15,14 +15,14 @@
 
 .domain-header h1 {
   font-size: 2.5rem;
-  color: #ededf0;
+  color: #1f1f24;
   margin-bottom: 0.5rem;
   font-weight: 800;
 }
 
 .domain-header p {
   font-size: 1.1rem;
-  color: #8b8b96;
+  color: #64646f;
   margin: 0;
 }
 
@@ -39,18 +39,18 @@
 .search-input-group {
   display: flex;
   gap: 1rem;
-  background: rgba(255,255,255,0.03);
+  background: rgba(0, 0, 0, 0.03);
   backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 0.5rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   transition: border-color 0.3s ease;
 }
 
 .search-input-group:focus-within {
-  border-color: rgba(255,255,255,0.4);
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
 .search-input {
@@ -60,17 +60,17 @@
   padding: 1rem 1.5rem;
   font-size: 1.1rem;
   background: transparent;
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .search-input::placeholder {
-  color: #8b8b96;
+  color: #64646f;
 }
 
 .search-button {
-  background: #131316;
-  color: #f7f7f8;
-  border: 1px solid rgba(255,255,255,0.2);
+  background: #ffffff;
+  color: #0a0a0c;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 1rem 2rem;
   border-radius: 8px;
   font-size: 1.1rem;
@@ -81,9 +81,9 @@
 }
 
 .search-button:hover:not(:disabled) {
-  background: #2a2a31;
+  background: #d9d9de;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .search-button:disabled {
@@ -109,7 +109,7 @@
 
 .results-section h2 {
   font-size: 1.8rem;
-  color: #ededf0;
+  color: #1f1f24;
   margin-bottom: 2rem;
   text-align: center;
   font-weight: 700;
@@ -123,12 +123,12 @@
 }
 
 .domain-card {
-  background: rgba(255,255,255,0.03);
+  background: rgba(0, 0, 0, 0.03);
   backdrop-filter: blur(12px);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -136,7 +136,7 @@
 
 .domain-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
 }
 
 .domain-card.available {
@@ -156,7 +156,7 @@
 .domain-name {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #ededf0;
+  color: #1f1f24;
   margin: 0 0 0.5rem 0;
   word-break: break-all;
 }
@@ -178,7 +178,7 @@
 
 .status-badge.available {
   background: rgba(52,211,153,0.2);
-  color: #34d399;
+  color: #059669;
   border: 1px solid rgba(52,211,153,0.3);
 }
 
@@ -198,21 +198,21 @@
   gap: 0.25rem;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .currency {
   font-size: 1rem;
-  color: #8b8b96;
+  color: #64646f;
 }
 
 .amount {
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .period {
   font-size: 1rem;
-  color: #8b8b96;
+  color: #64646f;
   font-weight: 500;
 }
 
@@ -223,8 +223,8 @@
 
 .purchase-button {
   flex: 1;
-  background: #131316;
-  color: #f7f7f8;
+  background: #ffffff;
+  color: #0a0a0c;
   border: 1px solid rgba(52,211,153,0.3);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -241,9 +241,9 @@
 
 .suggest-button {
   flex: 1;
-  background: rgba(255,255,255,0.05);
-  color: #8b8b96;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0, 0, 0, 0.05);
+  color: #64646f;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
@@ -257,7 +257,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,14 +266,14 @@
 }
 
 .purchase-modal {
-  background: #131316;
+  background: #ffffff;
   border-radius: 16px;
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .modal-header {
@@ -281,13 +281,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid rgba(255,255,255,0.15);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #ededf0;
+  color: #1f1f24;
   font-weight: 700;
 }
 
@@ -295,7 +295,7 @@
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #8b8b96;
+  color: #64646f;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 4px;
@@ -303,8 +303,8 @@
 }
 
 .close-button:hover {
-  background: rgba(255,255,255,0.1);
-  color: #ededf0;
+  background: rgba(0, 0, 0, 0.08);
+  color: #1f1f24;
 }
 
 .modal-content {
@@ -313,18 +313,18 @@
 
 .domain-summary h3 {
   font-size: 1.3rem;
-  color: #ededf0;
+  color: #1f1f24;
   margin: 0 0 1rem 0;
   word-break: break-all;
   font-weight: 700;
 }
 
 .pricing-details {
-  background: rgba(255,255,255,0.03);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 2rem;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .price-breakdown {
@@ -338,16 +338,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .price-item.total {
-  border-top: 2px solid rgba(255,255,255,0.15);
+  border-top: 2px solid rgba(0, 0, 0, 0.08);
   margin-top: 0.5rem;
   padding-top: 1rem;
   font-weight: 700;
   font-size: 1.1rem;
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .purchase-options {
@@ -366,22 +366,22 @@
 .registration-period label,
 .payment-method label {
   font-weight: 600;
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .registration-period select {
   padding: 0.75rem;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   font-size: 1rem;
-  background: rgba(255,255,255,0.05);
-  color: #ededf0;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1f1f24;
   transition: border-color 0.3s ease;
 }
 
 .registration-period select:focus {
   outline: none;
-  border-color: rgba(255,255,255,0.4);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .payment-options {
@@ -395,16 +395,16 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #ededf0;
+  color: #1f1f24;
 }
 
 .payment-option:hover {
-  border-color: rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .payment-option input[type="radio"] {
@@ -412,7 +412,7 @@
 }
 
 .payment-option input[type="radio"]:checked + span {
-  color: #34d399;
+  color: #059669;
   font-weight: 600;
 }
 
@@ -420,16 +420,16 @@
   display: flex;
   gap: 1rem;
   padding: 1.5rem 2rem;
-  border-top: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 0 0 16px 16px;
 }
 
 .cancel-button {
   flex: 1;
-  background: rgba(255,255,255,0.05);
-  color: #8b8b96;
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0, 0, 0, 0.05);
+  color: #64646f;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
@@ -438,14 +438,14 @@
 }
 
 .cancel-button:hover {
-  background: rgba(255,255,255,0.1);
-  color: #ededf0;
+  background: rgba(0, 0, 0, 0.08);
+  color: #1f1f24;
 }
 
 .confirm-purchase-button {
   flex: 1;
-  background: #131316;
-  color: #f7f7f8;
+  background: #ffffff;
+  color: #0a0a0c;
   border: 1px solid rgba(52,211,153,0.3);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -525,22 +525,22 @@
 .contact-information {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255,255,255,0.15);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .contact-information h4 {
-  color: #ededf0;
+  color: #1f1f24;
   margin-bottom: 1rem;
   font-size: 1.2rem;
   font-weight: 600;
 }
 
 .form-note {
-  color: #8b8b96;
+  color: #64646f;
   font-size: 0.9rem;
   margin-bottom: 1.5rem;
   padding: 0.75rem;
-  background: rgba(255,255,255,0.03);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 8px;
   border-left: 3px solid #34d399;
 }
@@ -565,35 +565,35 @@
 
 .form-group label {
   font-weight: 600;
-  color: #ededf0;
+  color: #1f1f24;
   font-size: 0.9rem;
 }
 
 .form-group input,
 .form-group select {
   padding: 0.75rem;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   font-size: 1rem;
-  background: rgba(255,255,255,0.05);
-  color: #ededf0;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1f1f24;
   transition: border-color 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: rgba(255,255,255,0.4);
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
 .form-group input::placeholder {
-  color: #8b8b96;
+  color: #64646f;
 }
 
 .form-group select option {
-  background: #131316;
-  color: #ededf0;
+  background: #ffffff;
+  color: #1f1f24;
 }
 
 .insufficient-balance {
@@ -619,7 +619,7 @@
 }
 
 .confirm-purchase-button:disabled:hover {
-  background: #131316;
+  background: #ffffff;
   transform: none;
   box-shadow: none;
 }
