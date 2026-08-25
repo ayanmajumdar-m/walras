@@ -22,7 +22,8 @@
   font-size: 48px;
   font-weight: 700;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #ffd400, #ffdf33);
+  /* Brand yellow as type is ~1.4:1 on white; the text-safe gold reads. */
+  background: linear-gradient(135deg, #0a0a0c, var(--color-buttr-ink));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -289,7 +290,9 @@
 }
 
 .credit-card {
-  background: linear-gradient(135deg, #f7f7f8, #b39300);
+  /* Pale cream copy sat on this at 2.8:1; a light band with ink text
+     is the readable version of the same idea. */
+  background: linear-gradient(135deg, #ffffff, var(--color-buttr-100));
   padding: 32px;
   border-radius: 12px;
   display: flex;
@@ -313,7 +316,7 @@
 }
 
 .credit-content p {
-  color: #fff9d6;
+  color: #0a0a0c;
   line-height: 1.6;
 }
 

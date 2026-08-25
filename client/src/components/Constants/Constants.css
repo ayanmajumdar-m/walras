@@ -15,6 +15,18 @@
   align-items: center;
 }
 
+/*
+  logo.png is white artwork drawn for a black header. On a near-white one it is
+  invisible — 419k opaque pixels, not one of them dark. Inverting renders it as
+  dark artwork on the light page.
+
+  This is a stopgap: the file is still the old "Superflare" wordmark and needs
+  replacing with a Buttr Cloud one, at which point drop this filter.
+*/
+.logo-image {
+  filter: invert(1);
+}
+
 .logo-container {
   display: flex;
   align-items: center;

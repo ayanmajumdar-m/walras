@@ -49,7 +49,7 @@
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #f7f7f8 0%, #d9d9de 100%);
+  background: linear-gradient(135deg, #0a0a0c 0%, #33333a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -612,7 +612,8 @@
 .domain-section-title {
   font-size: 3rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #f7f7f8 0%, #ffe96b 100%);
+  /* buttr-300 as the far stop vanished on white; the text-safe gold holds. */
+  background: linear-gradient(135deg, #0a0a0c 0%, var(--color-buttr-ink) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

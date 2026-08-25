@@ -42,7 +42,7 @@
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #f7f7f8 0%, #8b8b96 100%);
+    background: linear-gradient(135deg, #0a0a0c 0%, #64646f 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
@@ -657,7 +657,7 @@
   }
   
   .dark-secondary-btn:hover {
-    border-color: #8b8b96;
+    border-color: #64646f;
     color: #0a0a0c;
   }
   

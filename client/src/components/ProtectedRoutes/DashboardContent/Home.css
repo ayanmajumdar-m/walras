@@ -45,7 +45,7 @@
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 4px 0;
-  background: linear-gradient(135deg, #f7f7f8 0%, #8b8b96 100%);
+  background: linear-gradient(135deg, #0a0a0c 0%, #64646f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -287,7 +287,7 @@
 }
 
 .action-btn.secondary:hover {
-  border-color: #8b8b96;
+  border-color: #64646f;
   color: #0a0a0c;
 }
 

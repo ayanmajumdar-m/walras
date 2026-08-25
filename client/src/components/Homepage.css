@@ -24,7 +24,9 @@
   --light-gray: var(--color-ink-200);
   --text-primary: var(--text);
   --text-secondary: var(--text-muted);
-  --text-muted: var(--color-ink-400);
+  /* ink-400 is a dark-theme muted tone; on a tinted card it lands at 2.9:1.
+     ink-500 is the lightest grey that still passes on --surface-raised. */
+  --text-muted: var(--color-ink-500);
   --accent-color: var(--color-buttr-500);
   --gradient: linear-gradient(135deg, var(--color-buttr-500) 0%, var(--color-buttr-700) 100%);
   /* On a white page the text gradient has to darken, not lighten. */
@@ -209,7 +211,7 @@
 
 .hero {
   padding: 5rem 0;
-  background: linear-gradient(135deg, var(--page) 0%, var(--secondary-black) 100%);
+  background: linear-gradient(135deg, var(--page) 0%, var(--surface) 100%);
   overflow: hidden;
   position: relative;
 }
@@ -583,7 +585,7 @@
 /* Commitments Section */
 .commitments {
   padding: 6rem 0;
-  background: linear-gradient(180deg, var(--page), var(--secondary-black));
+  background: linear-gradient(180deg, var(--page), var(--surface));
   position: relative;
   overflow: hidden;
 }
@@ -721,7 +723,7 @@
 }
 
 .service-card-compact {
-  background: linear-gradient(145deg, var(--surface-raised), var(--medium-gray));
+  background: linear-gradient(145deg, var(--surface-raised), var(--color-ink-100));
   padding: 2.5rem; /* More padding */
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
@@ -812,7 +814,7 @@
 /* Enhanced Coming Soon */
 .coming-soon-compact {
   padding: 5rem 0; /* More padding */
-  background: linear-gradient(135deg, var(--page) 0%, var(--dark-gray) 100%);
+  background: linear-gradient(135deg, var(--page) 0%, var(--surface-raised) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -943,7 +945,7 @@
   align-items: flex-start;
   gap: 1.5rem; /* More spacing */
   padding: 2.5rem; /* More padding */
-  background: linear-gradient(145deg, var(--surface-raised), var(--medium-gray));
+  background: linear-gradient(145deg, var(--surface-raised), var(--color-ink-100));
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   transition: var(--transition);
@@ -1082,7 +1084,9 @@
 /* Enhanced CTA */
 .cta-compact {
   padding: 5rem 0; /* More padding */
-  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
+  /* Was ink -> dark gold, which composited to olive. A CTA band is the one
+     place the brand yellow is meant to fill a whole surface. */
+  background: linear-gradient(135deg, var(--color-buttr-400) 0%, var(--color-buttr-500) 100%);
   text-align: center;
   position: relative;
   overflow: hidden;

@@ -35,7 +35,7 @@ body {
 
 /* Card */
 .auth-card {
-  background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(15, 15, 15, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 247, 248, 0.92) 100%);
   padding: 3rem 2.5rem;
   border-radius: 24px;
   max-width: 420px;
@@ -66,7 +66,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(to right, #f7f7f8, #d9d9de, #f7f7f8);
+  background: linear-gradient(to right, #0a0a0c, #33333a, #0a0a0c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

@@ -35,7 +35,7 @@
   font-size: 4rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #f7f7f8 0%, #b8b8c0 100%);
+  background: linear-gradient(135deg, #0a0a0c 0%, #4a4a53 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -59,7 +59,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  background: linear-gradient(135deg, #f7f7f8 0%, #b8b8c0 100%);
+  background: linear-gradient(135deg, #0a0a0c 0%, #4a4a53 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -320,7 +320,7 @@
   font-size: 3rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #f7f7f8 0%, #b8b8c0 100%);
+  background: linear-gradient(135deg, #0a0a0c 0%, #4a4a53 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
