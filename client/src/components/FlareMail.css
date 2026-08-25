@@ -1,6 +1,6 @@
 .flare-mail {
-  background-color: #0a0a0a;
-  color: #ffffff;
+  background-color: #0a0a0c;
+  color: #f7f7f8;
   min-height: 100vh;
 }
 
@@ -12,17 +12,17 @@
 
 /* Header */
 .flare-header {
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  background: linear-gradient(135deg, #0a0a0c 0%, #131316 100%);
   padding: 60px 0;
   text-align: center;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #2a2a31;
 }
 
 .header-content h1 {
   font-size: 48px;
   font-weight: 700;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  background: linear-gradient(135deg, #ffd400, #ffdf33);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -30,25 +30,25 @@
 
 .header-content p {
   font-size: 20px;
-  color: #cccccc;
+  color: #b8b8c0;
 }
 
 /* Pricing Intro */
 .pricing-intro {
   padding: 80px 0;
-  background: #0a0a0a;
+  background: #0a0a0c;
   text-align: center;
 }
 
 .intro-content h2 {
   font-size: 36px;
   margin-bottom: 24px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .intro-content p {
   font-size: 18px;
-  color: #cccccc;
+  color: #b8b8c0;
   line-height: 1.6;
   max-width: 800px;
   margin: 0 auto 32px;
@@ -72,36 +72,37 @@
 }
 
 .btn-primary {
-  background: #3b82f6;
-  color: #ffffff;
+  background: #ffd400;
+  color: #0a0a0c;
 }
 
 .btn-primary:hover {
-  background: #2563eb;
+  background: #e6bd00;
   transform: translateY(-2px);
+  color: #0a0a0c;
 }
 
 .btn-secondary {
   background: transparent;
-  color: #3b82f6;
-  border: 2px solid #3b82f6;
+  color: #ffd400;
+  border: 2px solid #ffd400;
 }
 
 .btn-secondary:hover {
-  background: #3b82f6;
-  color: #ffffff;
+  background: #ffd400;
+  color: #0a0a0c;
   transform: translateY(-2px);
 }
 
 /* Pay-as-you-go Pricing */
 .payg-pricing {
   padding: 60px 0;
-  background: #1a1a1a;
+  background: #131316;
 }
 
 .pricing-card {
-  background: #0a0a0a;
-  border: 1px solid #333;
+  background: #0a0a0c;
+  border: 1px solid #2a2a31;
   border-radius: 12px;
   padding: 40px;
   max-width: 600px;
@@ -112,7 +113,7 @@
 .pricing-header h3 {
   font-size: 24px;
   margin-bottom: 20px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .price-display {
@@ -122,17 +123,17 @@
 .price {
   font-size: 48px;
   font-weight: 700;
-  color: #3b82f6;
+  color: #ffd400;
 }
 
 .period {
   font-size: 18px;
-  color: #cccccc;
+  color: #b8b8c0;
   margin-left: 8px;
 }
 
 .credit-info {
-  color: #cccccc;
+  color: #b8b8c0;
   font-size: 16px;
 }
 
@@ -147,16 +148,16 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #cccccc;
+  color: #b8b8c0;
   justify-content: center;
 }
 
 .feature-item svg {
-  color: #3b82f6;
+  color: #ffd400;
 }
 
 .example-section {
-  background: #1a1a1a;
+  background: #131316;
   padding: 20px;
   border-radius: 8px;
   margin-top: 24px;
@@ -164,24 +165,24 @@
 
 .example-section h4 {
   margin-bottom: 8px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .example-section p {
-  color: #cccccc;
+  color: #b8b8c0;
   margin-bottom: 8px;
 }
 
 .note {
   font-size: 14px;
-  color: #888;
+  color: #8b8b96;
   font-style: italic;
 }
 
 /* Cost Calculator */
 .cost-calculator {
   padding: 60px 0;
-  background: #0a0a0a;
+  background: #0a0a0c;
 }
 
 .calculator-header {
@@ -194,11 +195,11 @@
 
 .calculator-header h3 {
   font-size: 24px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .calculator-content {
-  background: #1a1a1a;
+  background: #131316;
   padding: 32px;
   border-radius: 12px;
   max-width: 500px;
@@ -212,7 +213,7 @@
 .email-input label {
   display: block;
   margin-bottom: 12px;
-  color: #cccccc;
+  color: #b8b8c0;
   font-weight: 500;
 }
 
@@ -223,31 +224,31 @@
 
 .email-display {
   text-align: center;
-  color: #3b82f6;
+  color: #ffd400;
   font-weight: 600;
 }
 
 .cost-result {
   text-align: center;
   padding: 20px;
-  background: #0a0a0a;
+  background: #0a0a0c;
   border-radius: 8px;
 }
 
 .cost-amount {
   font-size: 36px;
   font-weight: 700;
-  color: #3b82f6;
+  color: #ffd400;
   margin-bottom: 8px;
 }
 
 .cost-description {
-  color: #cccccc;
+  color: #b8b8c0;
 }
 
 .tax-note, .email-note {
   text-align: center;
-  color: #888;
+  color: #8b8b96;
   font-size: 14px;
   margin-top: 16px;
 }
@@ -255,14 +256,14 @@
 /* Features Grid */
 .features-grid-section {
   padding: 60px 0;
-  background: #1a1a1a;
+  background: #131316;
 }
 
 .features-grid-section h3 {
   text-align: center;
   font-size: 24px;
   margin-bottom: 32px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .features-grid {
@@ -276,19 +277,19 @@
 .features-grid .feature-item {
   justify-content: flex-start;
   padding: 12px;
-  background: #0a0a0a;
+  background: #0a0a0c;
   border-radius: 6px;
-  border: 1px solid #333;
+  border: 1px solid #2a2a31;
 }
 
 /* Free Credit */
 .free-credit {
   padding: 60px 0;
-  background: #0a0a0a;
+  background: #0a0a0c;
 }
 
 .credit-card {
-  background: linear-gradient(135deg, #1a3a5f, #1e40af);
+  background: linear-gradient(135deg, #1f1f24, #b39300);
   padding: 32px;
   border-radius: 12px;
   display: flex;
@@ -302,36 +303,36 @@
   background: rgba(255, 255, 255, 0.1);
   padding: 16px;
   border-radius: 50%;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .credit-content h4 {
   font-size: 20px;
   margin-bottom: 8px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .credit-content p {
-  color: #e0e7ff;
+  color: #fff9d6;
   line-height: 1.6;
 }
 
 /* Add-ons */
 .addons-section {
   padding: 60px 0;
-  background: #1a1a1a;
+  background: #131316;
 }
 
 .addons-section h3 {
   text-align: center;
   font-size: 24px;
   margin-bottom: 32px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .addon-card {
-  background: #0a0a0a;
-  border: 1px solid #333;
+  background: #0a0a0c;
+  border: 1px solid #2a2a31;
   border-radius: 12px;
   padding: 32px;
   display: flex;
@@ -342,49 +343,49 @@
 }
 
 .addon-icon {
-  background: #1a1a1a;
+  background: #131316;
   padding: 16px;
   border-radius: 50%;
-  color: #3b82f6;
-  border: 1px solid #333;
+  color: #ffd400;
+  border: 1px solid #2a2a31;
 }
 
 .addon-content h4 {
   font-size: 20px;
   margin-bottom: 8px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .addon-price {
   font-size: 18px;
   font-weight: 600;
-  color: #3b82f6;
+  color: #ffd400;
   margin-bottom: 16px;
 }
 
 .addon-content p {
-  color: #cccccc;
+  color: #b8b8c0;
   line-height: 1.6;
   margin-bottom: 12px;
 }
 
 .addon-note {
   font-size: 14px;
-  color: #888;
+  color: #8b8b96;
   font-style: italic;
 }
 
 /* Benefits */
 .benefits-section {
   padding: 80px 0;
-  background: #0a0a0a;
+  background: #0a0a0c;
 }
 
 .benefits-section h3 {
   text-align: center;
   font-size: 24px;
   margin-bottom: 48px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .benefits-grid {
@@ -397,24 +398,24 @@
 .benefit-item {
   text-align: center;
   padding: 32px;
-  background: #1a1a1a;
+  background: #131316;
   border-radius: 12px;
-  border: 1px solid #333;
+  border: 1px solid #2a2a31;
 }
 
 .benefit-item svg {
-  color: #3b82f6;
+  color: #ffd400;
   margin-bottom: 16px;
 }
 
 .benefit-item h4 {
   font-size: 18px;
   margin-bottom: 12px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .benefit-item p {
-  color: #cccccc;
+  color: #b8b8c0;
   line-height: 1.6;
 }
 
@@ -425,14 +426,14 @@
 /* Additional Reasons */
 .additional-reasons {
   padding: 60px 0;
-  background: #1a1a1a;
+  background: #131316;
 }
 
 .additional-reasons h3 {
   text-align: center;
   font-size: 24px;
   margin-bottom: 48px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .reasons-grid {
@@ -444,21 +445,21 @@
 }
 
 .reason-item {
-  background: #0a0a0a;
+  background: #0a0a0c;
   padding: 32px;
   border-radius: 12px;
-  border: 1px solid #333;
+  border: 1px solid #2a2a31;
   text-align: center;
 }
 
 .reason-item h4 {
   font-size: 20px;
   margin-bottom: 16px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .reason-item p {
-  color: #cccccc;
+  color: #b8b8c0;
   line-height: 1.6;
   margin-bottom: 20px;
 }

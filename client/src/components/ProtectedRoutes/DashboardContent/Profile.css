@@ -18,7 +18,7 @@
 }
 
 .profile-subtitle {
-  color: #9ca3af;
+  color: #8b8b96;
   font-size: 1.1rem;
 }
 
@@ -81,7 +81,7 @@
 
 .form-group label {
   font-size: 0.95rem;
-  color: #d1d5db;
+  color: #d9d9de;
   font-weight: 500;
 }
 
@@ -105,7 +105,7 @@
 }
 
 .form-group input::placeholder {
-  color: #6b7280;
+  color: #64646f;
 }
 
 /* Form Actions */
@@ -184,7 +184,7 @@
 }
 
 .modal-header p {
-  color: #9ca3af;
+  color: #8b8b96;
   font-size: 1rem;
   line-height: 1.5;
 }
@@ -215,8 +215,8 @@
 }
 
 .btn-primary {
-  background: linear-gradient(to right, #fff, #d1d5db);
-  color: #000;
+  background: linear-gradient(to right, #f7f7f8, #d9d9de);
+  color: #0a0a0c;
 }
 
 .btn-primary:hover {
@@ -242,11 +242,11 @@
   justify-content: center;
   height: 200px;
   font-size: 1.1rem;
-  color: #9ca3af;
+  color: #8b8b96;
 }
 
 .gradient-text {
-  background: linear-gradient(to right, #fff, #d1d5db, #fff);
+  background: linear-gradient(to right, #f7f7f8, #d9d9de, #f7f7f8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -254,8 +254,8 @@
 .auth-btn {
   padding: 1.2rem 2.5rem;
   border-radius: 9999px;
-  background: linear-gradient(to right, #fff, #d1d5db);
-  color: #000;
+  background: linear-gradient(to right, #f7f7f8, #d9d9de);
+  color: #0a0a0c;
   font-weight: 600;
   font-size: 1.1rem;
   cursor: pointer;

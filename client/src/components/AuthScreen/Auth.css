@@ -4,7 +4,7 @@
 body {
   margin: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #121212; /* dark theme */
+  background-color: #131316; /* dark theme */
 }
 
 /* Wrapper background */
@@ -13,7 +13,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  background: linear-gradient(135deg, #0a0a0c 0%, #131316 50%, #0a0a0c 100%);
   padding: 2rem;
   position: relative;
   overflow: hidden;
@@ -66,14 +66,14 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(to right, #fff, #d1d5db, #fff);
+  background: linear-gradient(to right, #f7f7f8, #d9d9de, #f7f7f8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .auth-subtitle {
   font-size: 1rem;
-  color: #9ca3af;
+  color: #8b8b96;
   margin-bottom: 2rem;
 }
 
@@ -104,7 +104,7 @@ body {
   display: block;
   margin-bottom: 0.4rem;
   font-size: 0.95rem;
-  color: #d1d5db;
+  color: #d9d9de;
 }
 
 .form-group input {
@@ -113,7 +113,7 @@ body {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-  color: #ffffff;
+  color: #f7f7f8;
   font-size: 1rem;
   outline: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -137,12 +137,12 @@ body {
 .auth-btn {
   padding: 1rem;
   border-radius: 16px;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #1f1f24 0%, #131316 100%);
+  color: #f7f7f8;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  border: 1px solid #3a3a3a;
+  border: 1px solid #33333a;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   position: relative;
@@ -163,8 +163,8 @@ body {
 .auth-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
-  border-color: #4a4a4a;
+  background: linear-gradient(135deg, #33333a 0%, #1f1f24 100%);
+  border-color: #4a4a53;
 }
 
 .auth-btn:hover:not(:disabled)::before {
@@ -184,17 +184,17 @@ body {
 /* Links */
 .auth-links {
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: #8b8b96;
 }
 
 .auth-links a {
-  color: #fff;
+  color: #f7f7f8;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .auth-links a:hover {
-  color: #d1d5db;
+  color: #d9d9de;
 }
 
 .success-message {

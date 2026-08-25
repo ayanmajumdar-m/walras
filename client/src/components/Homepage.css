@@ -1,24 +1,36 @@
 /* Homepage.css - Enhanced with Larger Text & Animations */
 
-/* CSS Variables - Enhanced */
+/*
+  These names predate the BUTTR palette and are used across a dozen
+  stylesheets, so they stay — but every value now points at theme.css rather
+  than carrying its own hex. One place to change a colour, not thirteen.
+*/
 :root {
-  --primary-black: #000000;
-  --secondary-black: #0a0a0a;
-  --dark-gray: #1a1a1a;
-  --medium-gray: #2d2d2d;
-  --light-gray: #404040;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-muted: #666666;
-  --accent-color: #ffffff;
-  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-text: linear-gradient(135deg, #fff, #a0a0a0);
-  --gradient-animated: linear-gradient(-45deg, #fff, #a0a0a0, #fff, #a0a0a0);
-  --hover-color: #333333;
-  --border-color: #333333;
+  --primary-black: var(--color-ink-950);
+  --secondary-black: var(--color-ink-900);
+  --dark-gray: var(--color-ink-900);
+  --medium-gray: var(--color-ink-800);
+  --light-gray: var(--color-ink-700);
+  --text-primary: var(--color-ink-50);
+  --text-secondary: var(--color-ink-400);
+  --text-muted: var(--color-ink-500);
+  /* Was white. Actions are the brand's job now. */
+  --accent-color: var(--color-buttr-500);
+  --gradient: linear-gradient(135deg, var(--color-buttr-500) 0%, var(--color-buttr-700) 100%);
+  --gradient-text: linear-gradient(135deg, var(--color-buttr-400), var(--color-buttr-600));
+  --gradient-animated: linear-gradient(
+    -45deg,
+    var(--color-buttr-300),
+    var(--color-buttr-500),
+    var(--color-buttr-400),
+    var(--color-buttr-600)
+  );
+  --hover-color: var(--color-ink-800);
+  --border-color: var(--border);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.1);
+  /* The glow reads as brand light, not a white smudge. */
+  --shadow-glow: 0 0 20px rgba(255, 212, 0, 0.15);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --border-radius: 16px;
 }
@@ -1059,7 +1071,7 @@
 /* Enhanced CTA */
 .cta-compact {
   padding: 5rem 0; /* More padding */
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -1073,8 +1085,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(255, 212, 0, 0.1) 0%, transparent 70%);
   pointer-events: none;
+  color: #0a0a0c;
 }
 
 .cta-content-compact {
@@ -1122,7 +1135,7 @@
 
 .cta-btn-compact.primary {
   background: white;
-  color: #1e3a8a;
+  color: #33333a;
   border: none;
   box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
 }

@@ -1,0 +1,77 @@
+/*
+  Buttr Cloud colour system.
+
+  These are BUTTR ID's tokens, value for value, so the two products read as one
+  family. Someone handed from buttr.cloud to the sign-in screen and back should
+  not feel like they crossed a border.
+
+  Yellow is the brand, but it is an *accent*, never a surface. Large yellow
+  fields read as a warning; yellow carries actions and focus, ink carries
+  structure. That is the rule the whole palette is built around — the previous
+  scheme used blue for actions, and every one of those has moved to buttr-500.
+*/
+
+:root {
+  /* Brand — actions, focus, emphasis. */
+  --color-buttr-50: #fffdf0;
+  --color-buttr-100: #fff9d6;
+  --color-buttr-200: #fff2a8;
+  --color-buttr-300: #ffe96b;
+  --color-buttr-400: #ffdf33;
+  --color-buttr-500: #ffd400; /* primary */
+  --color-buttr-600: #e6bd00;
+  --color-buttr-700: #b39300;
+
+  /* Ink — structure, surfaces, text. */
+  --color-ink-50: #f7f7f8;
+  --color-ink-100: #ededf0;
+  --color-ink-200: #d9d9de;
+  --color-ink-300: #b8b8c0;
+  --color-ink-400: #8b8b96;
+  --color-ink-500: #64646f;
+  --color-ink-600: #4a4a53;
+  --color-ink-700: #33333a;
+  --color-ink-800: #1f1f24;
+  --color-ink-900: #131316;
+  --color-ink-950: #0a0a0c;
+
+  /*
+    Buttr Cloud presents dark, so these resolve to BUTTR ID's dark-theme
+    values rather than its light ones. Same palette, the other end of it.
+  */
+  --page: #0a0a0c;
+  --surface: #131316;
+  --surface-raised: #1f1f24;
+  --border: #2a2a31;
+  --text: #f7f7f8;
+  --text-muted: #8b8b96;
+
+  /*
+    Status colours are deliberately not from the brand ramp. Success and
+    failure must be legible as success and failure, and a yellow that means
+    "primary action" cannot also mean "warning".
+  */
+  --status-success: #22c55e;
+  --status-warning: #f59e0b;
+  --status-danger: #ef4444;
+}
+
+/*
+  The page itself carries the palette, so a route that forgets to set its own
+  background does not fall through to the browser's white. Previously `body`
+  had no colour at all and inherited black text, which only went unnoticed
+  because every page painted over it.
+*/
+body {
+  background-color: var(--page);
+  color: var(--text);
+}
+
+/*
+  One visible focus ring across the app, in the brand colour — the same rule
+  BUTTR ID uses. Keyboard users should never lose their place.
+*/
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-buttr-500);
+  outline-offset: 2px;
+}

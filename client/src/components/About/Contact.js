@@ -10,7 +10,7 @@ const Contact = () => {
       description: "24/7 Available",
       details: "support@buttr.cloud",
       link: "mailto:support@buttr.cloud",
-      color: "#3b82f6"
+      color: "#ffd400"
     },
     {
       icon: <Phone className="contact-icon" />,

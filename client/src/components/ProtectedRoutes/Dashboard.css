@@ -2,8 +2,8 @@
 .dashboard-container {
   display: flex;
   height: 100vh;
-  background: #0f1115; /* dark auth-style background */
-  color: #e2e8f0;
+  background: #0a0a0c; /* dark auth-style background */
+  color: #d9d9de;
   position: relative;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -13,7 +13,7 @@
   width: 220px;
   background: rgba(255, 255, 255, 0.03); /* glassmorphic effect */
   backdrop-filter: blur(12px);
-  color: #f1f5f9;
+  color: #ededf0;
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
@@ -27,7 +27,7 @@
   font-weight: 800;
   margin-bottom: 1.5rem;
   text-align: center;
-  color: #fff;
+  color: #f7f7f8;
 }
 
 .sidebar-btn {
@@ -37,7 +37,7 @@
   padding: 0.8rem 1rem;
   border: none;
   background: rgba(255,255,255,0.05);
-  color: #cbd5e1;
+  color: #b8b8c0;
   cursor: pointer;
   border-radius: 12px;
   margin-bottom: 0.5rem;
@@ -47,12 +47,12 @@
 
 .sidebar-btn:hover {
   background: rgba(255,255,255,0.1);
-  color: #fff;
+  color: #f7f7f8;
 }
 
 .sidebar-btn.active {
   background: linear-gradient(to right, rgba(255,255,255,0.1), rgba(255,255,255,0.2));
-  color: #fff;
+  color: #f7f7f8;
 }
 
 /* Logout Button */
@@ -77,7 +77,7 @@
 /* Dashboard content */
 .dashboard-content {
   flex: 1;
-  background: #0f1115;
+  background: #0a0a0c;
   padding: 2rem;
   overflow-y: auto;
 }
@@ -86,7 +86,7 @@
   font-size: 1.5rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
-  color: #fff;
+  color: #f7f7f8;
 }
 
 /* Sidebar toggle button at bottom-right */
@@ -95,7 +95,7 @@
   bottom: 50px;
   right: 40px;
   background: rgba(255,255,255,0.03);
-  color: #fff;
+  color: #f7f7f8;
   border: none;
   padding: 12px 16px;
   border-radius: 50%;

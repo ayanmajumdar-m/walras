@@ -1,7 +1,7 @@
 .users {
   padding: 20px;
-  background-color: #0a0a0a;
-  color: #ffffff;
+  background-color: #0a0a0c;
+  color: #f7f7f8;
   min-height: 100vh;
 }
 
@@ -11,25 +11,25 @@
   align-items: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: #1a1a1a;
+  background: #131316;
   border-radius: 8px;
 }
 
 .users-header h2 {
   margin: 0;
   font-size: 24px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .users-count {
-  background: #2a2a2a;
+  background: #1f1f24;
   padding: 8px 16px;
   border-radius: 6px;
   font-weight: 500;
 }
 
 .table-container {
-  background: #1a1a1a;
+  background: #131316;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -51,12 +51,12 @@
 .col-actions { width: 100px; }
 
 .users-table th {
-  background: #2a2a2a;
+  background: #1f1f24;
   padding: 16px 12px;
   text-align: left;
   font-weight: 600;
-  color: #ffffff;
-  border-bottom: 2px solid #333;
+  color: #f7f7f8;
+  border-bottom: 2px solid #2a2a31;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -64,7 +64,7 @@
 
 .users-table td {
   padding: 16px 12px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #2a2a31;
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
@@ -72,7 +72,7 @@
 }
 
 .user-row:hover {
-  background-color: #2a2a2a;
+  background-color: #1f1f24;
 }
 
 .user-cell {
@@ -86,25 +86,25 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #ffd400;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  color: #ffffff;
+  color: #0a0a0c;
   flex-shrink: 0;
 }
 
 .name {
   font-weight: 500;
-  color: #ffffff;
+  color: #f7f7f8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .email {
-  color: #cccccc;
+  color: #b8b8c0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -114,7 +114,7 @@
 .role,
 .servers,
 .spent {
-  color: #ffffff;
+  color: #f7f7f8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -147,8 +147,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #3b82f6;
-  color: #ffffff;
+  background: #ffd400;
+  color: #0a0a0c;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -158,13 +158,14 @@
 }
 
 .view-btn:hover {
-  background: #2563eb;
+  background: #e6bd00;
+  color: #0a0a0c;
 }
 
 .no-data {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: #64646f;
   font-style: italic;
 }
 
@@ -201,13 +202,13 @@
 }
 
 .modal {
-  background: #1a1a1a;
+  background: #131316;
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid #333;
+  border: 1px solid #2a2a31;
 }
 
 .modal-header {
@@ -215,19 +216,19 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #2a2a31;
 }
 
 .modal-header h3 {
   margin: 0;
-  color: #ffffff;
+  color: #f7f7f8;
   font-size: 20px;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: #cccccc;
+  color: #b8b8c0;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -235,8 +236,8 @@
 }
 
 .close-btn:hover {
-  background: #333;
-  color: #ffffff;
+  background: #2a2a31;
+  color: #f7f7f8;
 }
 
 .modal-content {
@@ -249,25 +250,25 @@
   gap: 16px;
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #2a2a31;
 }
 
 .profile-avatar {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ffd400 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   font-weight: 600;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .profile-info h2 {
   margin: 0 0 8px 0;
-  color: #ffffff;
+  color: #f7f7f8;
   font-size: 24px;
 }
 
@@ -286,9 +287,9 @@
 }
 
 .profile-status.unverified {
-  background: rgba(234, 179, 8, 0.1);
-  color: #eab308;
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .user-details-grid {
@@ -305,9 +306,9 @@
 
 .detail-icon {
   padding: 8px;
-  background: #2a2a2a;
+  background: #1f1f24;
   border-radius: 6px;
-  color: #cccccc;
+  color: #b8b8c0;
   flex-shrink: 0;
 }
 
@@ -320,13 +321,13 @@
 
 .detail-content label {
   font-size: 12px;
-  color: #cccccc;
+  color: #b8b8c0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .detail-content span {
-  color: #ffffff;
+  color: #f7f7f8;
   font-size: 14px;
 }
 
@@ -336,7 +337,7 @@
 }
 
 .status-text.unverified {
-  color: #eab308;
+  color: #f59e0b;
   font-weight: 500;
 }
 
@@ -344,7 +345,7 @@
   display: flex;
   gap: 12px;
   padding: 20px;
-  border-top: 1px solid #333;
+  border-top: 1px solid #2a2a31;
   justify-content: flex-end;
 }
 
@@ -354,7 +355,7 @@
   gap: 6px;
   padding: 10px 20px;
   background: #22c55e;
-  color: #ffffff;
+  color: #f7f7f8;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -370,7 +371,7 @@
 .delete-btn {
   padding: 10px 20px;
   background: #dc2626;
-  color: #ffffff;
+  color: #f7f7f8;
   border: none;
   border-radius: 6px;
   font-size: 14px;

@@ -100,7 +100,7 @@ const DomainCheck = () => {
   }[status]);
 
   const statusConfig = {
-    available: { text: "This domain is available for registration!", color: "#3b82f6" },
+    available: { text: "This domain is available for registration!", color: "#ffd400" },
     unavailable: { text: "This domain is already registered", color: "#ef4444" },
     unknown: { text: "Unable to determine domain status", color: "#f59e0b" }
   };

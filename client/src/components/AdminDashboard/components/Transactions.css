@@ -1,7 +1,7 @@
 .transactions {
   padding: 20px;
-  background-color: #0a0a0a;
-  color: #ffffff;
+  background-color: #0a0a0c;
+  color: #f7f7f8;
   min-height: 100vh;
 }
 
@@ -11,25 +11,25 @@
   align-items: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: #1a1a1a;
+  background: #131316;
   border-radius: 8px;
 }
 
 .transactions-header h2 {
   margin: 0;
   font-size: 24px;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .transactions-count {
-  background: #2a2a2a;
+  background: #1f1f24;
   padding: 8px 16px;
   border-radius: 6px;
   font-weight: 500;
 }
 
 .table-container {
-  background: #1a1a1a;
+  background: #131316;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -50,12 +50,12 @@
 .col-status { width: 120px; }
 
 .transactions-table th {
-  background: #2a2a2a;
+  background: #1f1f24;
   padding: 16px 12px;
   text-align: left;
   font-weight: 600;
-  color: #ffffff;
-  border-bottom: 2px solid #333;
+  color: #f7f7f8;
+  border-bottom: 2px solid #2a2a31;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -63,7 +63,7 @@
 
 .transactions-table td {
   padding: 16px 12px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #2a2a31;
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
@@ -71,7 +71,7 @@
 }
 
 .transaction-row:hover {
-  background-color: #2a2a2a;
+  background-color: #1f1f24;
 }
 
 .user-info {
@@ -83,14 +83,14 @@
 
 .user-info .name {
   font-weight: 500;
-  color: #ffffff;
+  color: #f7f7f8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .user-info .email {
-  color: #cccccc;
+  color: #b8b8c0;
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
@@ -122,18 +122,18 @@
 
 .amount {
   font-weight: 600;
-  color: #ffffff;
+  color: #f7f7f8;
 }
 
 .description {
-  color: #cccccc;
+  color: #b8b8c0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .payment-id {
-  color: #cccccc;
+  color: #b8b8c0;
   font-family: monospace;
   font-size: 12px;
   white-space: nowrap;
@@ -142,7 +142,7 @@
 }
 
 .date {
-  color: #ffffff;
+  color: #f7f7f8;
   white-space: nowrap;
 }
 
@@ -171,14 +171,14 @@
 }
 
 .status.refunded {
-  background: #1a2a3a;
-  color: #60a5fa;
+  background: #1f1f24;
+  color: #ffdf33;
 }
 
 .no-data {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: #64646f;
   font-style: italic;
 }
 

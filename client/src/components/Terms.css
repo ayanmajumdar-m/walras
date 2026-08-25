@@ -14,7 +14,7 @@
 /* Hero Section */
 .terms-hero {
   padding: 6rem 0 4rem;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #33333a 0%, #b39300 50%, #b39300 100%);
   position: relative;
   overflow: hidden;
 }
@@ -26,7 +26,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(255, 212, 0, 0.1) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -47,7 +47,7 @@
   font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #fff 0%, #a8b2d1 100%);
+  background: linear-gradient(135deg, #f7f7f8 0%, #b8b8c0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -96,7 +96,7 @@
 .section-icon-wrapper {
   width: 48px;
   height: 48px;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(255, 212, 0, 0.1);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -108,7 +108,7 @@
 .section-icon {
   width: 24px;
   height: 24px;
-  color: #3b82f6;
+  color: #ffd400;
 }
 
 .section-title {
@@ -167,7 +167,7 @@
 }
 
 .effective-date strong {
-  color: #3b82f6;
+  color: #ffd400;
 }
 
 .company-info {
@@ -196,13 +196,14 @@
 }
 
 .btn.primary {
-  background: #3b82f6;
-  color: white;
+  background: #ffd400;
+  color: #0a0a0c;
 }
 
 .btn.primary:hover {
-  background: #2563eb;
+  background: #e6bd00;
   transform: translateY(-2px);
+  color: #0a0a0c;
 }
 
 /* Responsive Design */

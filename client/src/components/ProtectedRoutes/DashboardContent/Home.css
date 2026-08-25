@@ -2,8 +2,8 @@
 
 .home-dashboard {
   min-height: 100vh;
-  background: #0a0a0a;
-  color: #ffffff;
+  background: #0a0a0c;
+  color: #f7f7f8;
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -45,31 +45,31 @@
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 4px 0;
-  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  background: linear-gradient(135deg, #f7f7f8 0%, #8b8b96 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .dashboard-subtitle {
-  color: #a1a1aa;
+  color: #8b8b96;
   margin: 0;
   font-size: 14px;
 }
 
 .notification-btn {
   position: relative;
-  background: #1f1f1f;
-  border: 1px solid #333;
+  background: #1f1f24;
+  border: 1px solid #2a2a31;
   border-radius: 8px;
   padding: 8px;
-  color: #a1a1aa;
+  color: #8b8b96;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .notification-btn:hover {
-  background: #2a2a2a;
-  color: #fff;
+  background: #1f1f24;
+  color: #f7f7f8;
 }
 
 .notification-badge {
@@ -96,8 +96,8 @@
 }
 
 .stat-card-compact {
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: #131316;
+  border: 1px solid #2a2a31;
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -107,7 +107,7 @@
 }
 
 .stat-card-compact:hover {
-  border-color: #555;
+  border-color: #4a4a53;
   transform: translateY(-2px);
 }
 
@@ -120,7 +120,7 @@
 }
 
 .server-icon { background: #064e3b; color: #34d399; }
-.database-icon { background: #1e3a8a; color: #60a5fa; }
+.database-icon { background: #33333a; color: #ffdf33; }
 .globe-icon { background: #701a75; color: #e879f9; }
 .warning-icon { background: #78350f; color: #fbbf24; }
 
@@ -131,15 +131,15 @@
 }
 
 .stat-content p {
-  color: #a1a1aa;
+  color: #8b8b96;
   margin: 0;
   font-size: 14px;
 }
 
 /* Deploy Card */
 .deploy-card {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-  border: 1px solid #333;
+  background: linear-gradient(135deg, #131316 0%, #1f1f24 100%);
+  border: 1px solid #2a2a31;
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
@@ -155,13 +155,13 @@
 }
 
 .deploy-content p {
-  color: #a1a1aa;
+  color: #8b8b96;
   margin: 0 0 20px 0;
 }
 
 .deploy-now-btn {
-  background: #3b82f6;
-  color: white;
+  background: #ffd400;
+  color: #0a0a0c;
   border: none;
   border-radius: 8px;
   padding: 10px 20px;
@@ -174,8 +174,9 @@
 }
 
 .deploy-now-btn:hover {
-  background: #2563eb;
+  background: #e6bd00;
   transform: translateY(-1px);
+  color: #0a0a0c;
 }
 
 .deploy-graphic {
@@ -197,8 +198,8 @@
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: #131316;
+  border: 1px solid #2a2a31;
   border-radius: 12px;
   padding: 4px;
 }
@@ -209,7 +210,7 @@
   border: none;
   border-radius: 8px;
   padding: 12px 16px;
-  color: #a1a1aa;
+  color: #8b8b96;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -219,25 +220,25 @@
 }
 
 .tab-btn.active {
-  background: #333;
-  color: #fff;
+  background: #2a2a31;
+  color: #f7f7f8;
 }
 
 .tab-btn:hover:not(.active) {
-  background: #2a2a2a;
+  background: #1f1f24;
 }
 
 /* Content Sections */
 .content-section {
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: #131316;
+  border: 1px solid #2a2a31;
   border-radius: 16px;
   overflow: hidden;
 }
 
 .section-header {
   padding: 20px 24px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #2a2a31;
   display: flex;
   justify-content: between;
   align-items: center;
@@ -269,25 +270,25 @@
 }
 
 .action-btn.primary {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
+  background: #ffd400;
+  border-color: #ffd400;
+  color: #0a0a0c;
 }
 
 .action-btn.primary:hover {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #e6bd00;
+  border-color: #e6bd00;
 }
 
 .action-btn.secondary {
   background: transparent;
-  border-color: #555;
-  color: #a1a1aa;
+  border-color: #4a4a53;
+  color: #8b8b96;
 }
 
 .action-btn.secondary:hover {
-  border-color: #777;
-  color: #fff;
+  border-color: #64646f;
+  color: #f7f7f8;
 }
 
 .action-btn.danger {
@@ -311,8 +312,8 @@
 
 .server-card,
 .domain-card {
-  background: #0f0f0f;
-  border: 1px solid #333;
+  background: #131316;
+  border: 1px solid #2a2a31;
   border-radius: 12px;
   padding: 20px;
   transition: all 0.2s;
@@ -320,7 +321,7 @@
 
 .server-card:hover,
 .domain-card:hover {
-  border-color: #555;
+  border-color: #4a4a53;
   transform: translateY(-2px);
 }
 
@@ -348,21 +349,21 @@
 }
 
 .domain-icon {
-  color: #3b82f6;
+  color: #ffd400;
 }
 
 .more-options {
   background: transparent;
   border: none;
-  color: #a1a1aa;
+  color: #8b8b96;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
 }
 
 .more-options:hover {
-  background: #333;
-  color: #fff;
+  background: #2a2a31;
+  color: #f7f7f8;
 }
 
 /* Status Badges */
@@ -378,7 +379,7 @@
 .status-badge.success { background: #064e3b; color: #34d399; }
 .status-badge.warning { background: #78350f; color: #fbbf24; }
 .status-badge.error { background: #7f1d1d; color: #fca5a5; }
-.status-badge.default { background: #374151; color: #9ca3af; }
+.status-badge.default { background: #33333a; color: #8b8b96; }
 
 .expiry-badge {
   padding: 2px 6px;
@@ -407,21 +408,21 @@
 }
 
 .detail-label {
-  color: #a1a1aa;
+  color: #8b8b96;
   min-width: 80px;
 }
 
 .detail-value {
-  color: #fff;
+  color: #f7f7f8;
   font-weight: 500;
 }
 
 .auth-code {
   font-family: 'Courier New', monospace;
-  background: #1f1f1f;
+  background: #1f1f24;
   padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid #333;
+  border: 1px solid #2a2a31;
 }
 
 /* Card Actions */
@@ -435,11 +436,11 @@
 .empty-state {
   text-align: center;
   padding: 60px 24px;
-  color: #a1a1aa;
+  color: #8b8b96;
 }
 
 .empty-state h3 {
-  color: #fff;
+  color: #f7f7f8;
   margin: 16px 0 8px 0;
 }
 
@@ -451,14 +452,14 @@
 .loading-container {
   text-align: center;
   padding: 60px 24px;
-  color: #a1a1aa;
+  color: #8b8b96;
 }
 
 .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #333;
-  border-top: 3px solid #3b82f6;
+  border: 3px solid #2a2a31;
+  border-top: 3px solid #ffd400;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 16px auto;

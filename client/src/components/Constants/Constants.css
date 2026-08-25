@@ -275,7 +275,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: #f7f7f8;
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
@@ -283,8 +283,8 @@
 }
 
 .login-icon-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(255, 212, 0, 0.1);
+  color: #ffd400;
 }
 
 /* Mobile Login Button with Icon */
@@ -295,8 +295,8 @@
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  color: white;
+  background: linear-gradient(135deg, #b39300 0%, #ffd400 100%);
+  color: #0a0a0c;
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -306,7 +306,7 @@
 
 .mobile-login-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 212, 0, 0.3);
 }
 
 /* Ensure icon buttons have consistent styling */
@@ -315,7 +315,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  color: #ffffff;
+  color: #f7f7f8;
   text-decoration: none;
   border-radius: 8px;
   transition: all 0.3s ease;
@@ -325,8 +325,8 @@
 }
 
 .icon-button:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(255, 212, 0, 0.1);
+  color: #ffd400;
 }
 
 /* Mobile dashboard button */
@@ -336,7 +336,7 @@
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  background: #1a1a1a;
+  background: #131316;
   color: white;
   text-decoration: none;
   border-radius: 8px;
@@ -344,7 +344,7 @@
 }
 
 .mobile-dashboard-btn:hover {
-  background: #2d2d2d;
+  background: #2a2a31;
 }
 .search-input {
   width: 100%;
