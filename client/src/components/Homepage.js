@@ -127,19 +127,25 @@ const Homepage = () => {
           <AnimatedSection delay={1000}>
             <div className="hero-graphic">
               <div className="floating-graphic">
+                {/*
+                  Drawn for a black page: white strokes at 5-8% and white
+                  gradient fills. On the light theme that is white on white,
+                  which is why the graphic vanished. Same shapes, same
+                  opacities, brand ink and yellow instead of white.
+                */}
                 <svg width="420" height="420" viewBox="0 0 420 420" fill="none">
-                  <circle cx="210" cy="210" r="190" stroke="white" strokeOpacity="0.08" strokeWidth="40" className="spin-slow" />
-                  <circle cx="210" cy="210" r="140" stroke="white" strokeOpacity="0.05" strokeWidth="30" className="spin-reverse" />
-                  <polygon points="210,80 340,340 80,340" fill="url(#grad1)" opacity="0.15" className="float" />
-                  <rect x="130" y="130" width="160" height="160" rx="40" fill="url(#grad2)" opacity="0.12" className="pulse-soft" />
+                  <circle cx="210" cy="210" r="190" stroke="#0a0a0c" strokeOpacity="0.07" strokeWidth="40" className="spin-slow" />
+                  <circle cx="210" cy="210" r="140" stroke="#ffd400" strokeOpacity="0.35" strokeWidth="30" className="spin-reverse" />
+                  <polygon points="210,80 340,340 80,340" fill="url(#grad1)" opacity="0.5" className="float" />
+                  <rect x="130" y="130" width="160" height="160" rx="40" fill="url(#grad2)" opacity="0.5" className="pulse-soft" />
                   <defs>
                     <linearGradient id="grad1" x1="80" y1="340" x2="340" y2="340">
-                      <stop stopColor="#fff" stopOpacity="0.7" />
-                      <stop offset="1" stopColor="#d1d5db" stopOpacity="0.3" />
+                      <stop stopColor="#ffd400" stopOpacity="0.75" />
+                      <stop offset="1" stopColor="#ffe96b" stopOpacity="0.25" />
                     </linearGradient>
                     <linearGradient id="grad2" x1="130" y1="130" x2="290" y2="290">
-                      <stop stopColor="#fff" stopOpacity="0.5" />
-                      <stop offset="1" stopColor="#d1d5db" stopOpacity="0.1" />
+                      <stop stopColor="#0a0a0c" stopOpacity="0.16" />
+                      <stop offset="1" stopColor="#0a0a0c" stopOpacity="0.04" />
                     </linearGradient>
                   </defs>
                 </svg>

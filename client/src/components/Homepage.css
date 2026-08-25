@@ -348,7 +348,9 @@
 .bg-orb {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.08) 0%, transparent 70%);
+  /* A white glow on black inverted into a grey smudge on white, which just
+     reads as a dirty page. Warm brand light does the same job here. */
+  background: radial-gradient(circle, rgba(255, 212, 0, 0.18) 0%, transparent 70%);
   animation: float 8s ease-in-out infinite;
 }
 
