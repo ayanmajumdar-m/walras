@@ -12,10 +12,13 @@ const User = {
 
     createFromButtrId: (identity, callback) => {
         const { buttrSub, buttrHandle, name, email, phone } = identity;
+        // true/false, not 1/0: MySQL coerced integers into BOOLEAN columns,
+        // PostgreSQL refuses with "is of type boolean but expression is of
+        // type integer".
         const query = `
         INSERT INTO users (buttr_sub, buttr_handle, name, email, phone, isVerified, isEmailVerified)
-        VALUES (?, ?, ?, ?, ?, 1, ?)`;
-        connection.query(query, [buttrSub, buttrHandle, name, email || null, phone || null, email ? 1 : 0], callback);
+        VALUES (?, ?, ?, ?, ?, true, ?)`;
+        connection.query(query, [buttrSub, buttrHandle, name, email || null, phone || null, Boolean(email)], callback);
     },
 
     // Name and email are BUTTR ID's to change, so refresh the local copy on
@@ -26,7 +29,7 @@ const User = {
         UPDATE users
         SET buttr_handle = ?, name = ?, email = ?, isEmailVerified = ?
         WHERE id = ?`;
-        connection.query(query, [buttrHandle, name, email || null, email ? 1 : 0, id], callback);
+        connection.query(query, [buttrHandle, name, email || null, Boolean(email), id], callback);
     },
 
     // No findByEmail / findByPhone. Nothing may look an account up by contact

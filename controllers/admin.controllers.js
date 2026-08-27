@@ -309,7 +309,7 @@ const AdminController = {
 
     verifyUser: (req, res) => {
         const { userId } = req.body;
-        const query = 'UPDATE users SET isVerified = 1 WHERE id = ?';
+        const query = 'UPDATE users SET isVerified = true WHERE id = ?';
         connection.query(query, [userId], (err, result) => {
             if (err) {
                 return res.status(500).json({ error: 'Database error' });
