@@ -226,7 +226,7 @@ class BillingService {
             // Check if invoice already exists for this user and month
             connection.query(`
                 SELECT id FROM monthly_invoices 
-                WHERE user_id = ? AND DATE_FORMAT(billing_month, '%Y-%m') = DATE_FORMAT(?, '%Y-%m')
+                WHERE user_id = ? AND to_char(billing_month, 'YYYY-MM') = to_char(?, 'YYYY-MM')
             `, [user.id, month], (err, existingInvoices) => {
                 if (err) return reject(err);
                 
@@ -239,7 +239,7 @@ class BillingService {
                 connection.query(`
                     SELECT COALESCE(SUM(amount), 0) as total_amount
                     FROM billing_logs 
-                    WHERE user_id = ? AND DATE_FORMAT(billing_period, '%Y-%m') = DATE_FORMAT(?, '%Y-%m')
+                    WHERE user_id = ? AND to_char(billing_period, 'YYYY-MM') = to_char(?, 'YYYY-MM')
                 `, [user.id, month], (err, billingResult) => {
                     if (err) return reject(err);
                     
@@ -284,7 +284,7 @@ class BillingService {
                 SELECT DISTINCT u.id, u.name, u.email, u.company, u.address
                 FROM users u
                 JOIN billing_logs bl ON u.id = bl.user_id
-                WHERE DATE_FORMAT(bl.billing_period, '%Y-%m') = DATE_FORMAT(?, '%Y-%m')
+                WHERE to_char(bl.billing_period, 'YYYY-MM') = to_char(?, 'YYYY-MM')
             `, [month], (err, results) => {
                 if (err) reject(err);
                 else resolve(results);

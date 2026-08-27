@@ -170,7 +170,7 @@ class InvoiceService {
             connection.query(`
                 SELECT description, SUM(amount) as amount
                 FROM billing_logs 
-                WHERE user_id = ? AND DATE_FORMAT(billing_period, '%Y-%m') = ?
+                WHERE user_id = ? AND to_char(billing_period, 'YYYY-MM') = ?
                 GROUP BY description
             `, [userId, month], (err, results) => {
                 if (err) reject(err);

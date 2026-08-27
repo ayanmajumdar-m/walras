@@ -3,7 +3,7 @@
 ## 🏗️ Architecture Overview
 
 This is a **full-stack cloud hosting and domain management platform** built with:
-- **Backend**: Node.js/Express with MySQL database
+- **Backend**: Node.js/Express with PostgreSQL database
 - **Frontend**: React.js with React Router
 - **Deployment**: Docker containerization with multi-stage build
 
@@ -104,7 +104,7 @@ See **BUTTR_ID_INTEGRATION.md** for the flow, configuration and migration notes.
 
 ### Backend Dependencies
 - **Express.js** (v5.1.0) - Web framework
-- **MySQL** (mysql2 v3.15.3) - Database
+- **PostgreSQL** (pg v8) - Database, behind a mysql2-shaped facade (`config/pgCompat.js`)
 - **JWT** (jsonwebtoken v9.0.2) - Session tokens
 - **BUTTR ID** - OpenID Connect identity provider (user authentication)
 - **bcrypt** (v6.0.0) - Admin password hashing

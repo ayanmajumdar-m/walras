@@ -18,33 +18,45 @@
  * with its own passwords, and promo codes are not owned by any user.
  */
 
-const mysql = require('mysql2');
+const { Pool } = require('pg');
 require('dotenv').config();
+
+const env = (...names) => {
+    for (const n of names) {
+        if (process.env[n]) return process.env[n];
+    }
+    return undefined;
+};
+
+const DB_NAME = env('PG_DB_NAME', 'MYSQL_DB_NAME');
 
 if (!process.argv.includes('--yes-drop-all-accounts')) {
     console.error(
         'Refusing to run without --yes-drop-all-accounts.\n\n' +
         'This deletes every user, wallet balance, server, invoice and domain\n' +
-        'record in ' + (process.env.MYSQL_DB_NAME || '(no database configured)') + '. ' +
+        'record in ' + (DB_NAME || '(no database configured)') + '. ' +
         'Take a backup first:\n\n' +
-        '  mysqldump -u <user> -p <database> > backup.sql\n'
+        '  pg_dump -h <host> -U <user> -d <database> > backup.sql\n'
     );
     process.exit(1);
 }
 
 // A separate connection on purpose: requiring config/db.js would recreate every
 // table before we had a chance to drop them.
-const connection = mysql.createConnection({
-    host: process.env.MYSQL_DB_HOST,
-    user: process.env.MYSQL_DB_USER,
-    password: process.env.MYSQL_DB_PASSWORD,
-    database: process.env.MYSQL_DB_NAME,
-    port: process.env.MYSQL_DB_PORT || 3306,
-    multipleStatements: false
+const pool = new Pool({
+    host: env('PG_DB_HOST', 'MYSQL_DB_HOST'),
+    user: env('PG_DB_USER', 'MYSQL_DB_USER'),
+    password: env('PG_DB_PASSWORD', 'MYSQL_DB_PASSWORD'),
+    database: DB_NAME,
+    port: Number(env('PG_DB_PORT', 'MYSQL_DB_PORT')) || 5432,
+    ssl: (env('PG_SSL', 'DB_SSL') || '').toLowerCase() === 'false'
+        ? false
+        : { rejectUnauthorized: false },
 });
 
-// Children first, though FOREIGN_KEY_CHECKS is off anyway — the order is the
-// documentation of what depends on what.
+// Children first. PostgreSQL has no FOREIGN_KEY_CHECKS switch, so CASCADE on
+// the DROP does the same job — and the order still documents what depends on
+// what.
 const tables = [
     'promo_code_usage',
     'domain_transactions',
@@ -59,26 +71,21 @@ const tables = [
     'users'
 ];
 
-const run = (sql) => new Promise((resolve, reject) => {
-    connection.query(sql, (err, result) => (err ? reject(err) : resolve(result)));
-});
+const run = (sql) => pool.query(sql);
 
 (async () => {
     try {
-        console.log(`Resetting accounts in ${process.env.MYSQL_DB_NAME}...`);
-        await run('SET FOREIGN_KEY_CHECKS = 0');
+        console.log(`Resetting accounts in ${DB_NAME}...`);
 
         for (const table of tables) {
-            await run(`DROP TABLE IF EXISTS \`${table}\``);
+            await run(`DROP TABLE IF EXISTS "${table}" CASCADE`);
             console.log(`  dropped ${table}`);
         }
-
-        await run('SET FOREIGN_KEY_CHECKS = 1');
         console.log('\n✅ Done. Start the server to recreate the tables:  npm start');
     } catch (err) {
         console.error('\n❌ Reset failed:', err.message);
         process.exitCode = 1;
     } finally {
-        connection.end();
+        await pool.end();
     }
 })();

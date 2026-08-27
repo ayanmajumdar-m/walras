@@ -60,7 +60,12 @@ const Admin = {
         connection.query(query, callback);
     },
     getAllUsersWithDetails: (callback) => {
-        const query = `SELECT u.*, 
+        const query = `SELECT u.*,
+            u.isVerified AS "isVerified",
+            u.isEmailVerified AS "isEmailVerified",
+            u.isPhoneVerified AS "isPhoneVerified",
+            u.lastLoginAt AS "lastLoginAt",
+            u.createdAt AS "createdAt",
             w.balance,
             (SELECT COUNT(*) FROM servers WHERE user_id = u.id) as server_count,
             (SELECT COUNT(*) FROM user_sessions WHERE user_id = u.id) as total_logins,
@@ -73,7 +78,12 @@ const Admin = {
         connection.query(query, (err, results) => {
             if (err) {
                 // If user_sessions table doesn't exist, return users without session data
-                const fallbackQuery = `SELECT u.*, 
+                const fallbackQuery = `SELECT u.*,
+                    u.isVerified AS "isVerified",
+                    u.isEmailVerified AS "isEmailVerified",
+                    u.isPhoneVerified AS "isPhoneVerified",
+                    u.lastLoginAt AS "lastLoginAt",
+                    u.createdAt AS "createdAt",
                     w.balance,
                     (SELECT COUNT(*) FROM servers WHERE user_id = u.id) as server_count,
                     0 as total_logins,
@@ -240,7 +250,7 @@ const Admin = {
                    'User logged in' as description
             FROM user_sessions us
             JOIN users u ON us.user_id = u.id
-            WHERE us.login_time > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            WHERE us.login_time > NOW() - INTERVAL '24 hours'
             ORDER BY us.login_time DESC
             LIMIT 50
         )
@@ -255,7 +265,7 @@ const Admin = {
             FROM wallet_transactions wt
             JOIN wallets w ON wt.wallet_id = w.id
             JOIN users u ON w.user_id = u.id
-            WHERE wt.created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            WHERE wt.created_at > NOW() - INTERVAL '24 hours'
             ORDER BY wt.created_at DESC
             LIMIT 50
         )
@@ -273,7 +283,7 @@ const Admin = {
             FROM wallet_transactions wt
             JOIN wallets w ON wt.wallet_id = w.id
             JOIN users u ON w.user_id = u.id
-            WHERE wt.created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            WHERE wt.created_at > NOW() - INTERVAL '24 hours'
             ORDER BY wt.created_at DESC
             LIMIT 100`;
                 connection.query(fallbackQuery, callback);
