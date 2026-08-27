@@ -19,16 +19,11 @@
  */
 
 const { Pool } = require('pg');
+const { resolveDbConfig } = require('./config/dbConfig');
 require('dotenv').config();
 
-const env = (...names) => {
-    for (const n of names) {
-        if (process.env[n]) return process.env[n];
-    }
-    return undefined;
-};
-
-const DB_NAME = env('PG_DB_NAME', 'MYSQL_DB_NAME');
+const dbConfig = resolveDbConfig();
+const DB_NAME = dbConfig.database;
 
 if (!process.argv.includes('--yes-drop-all-accounts')) {
     console.error(
@@ -43,16 +38,7 @@ if (!process.argv.includes('--yes-drop-all-accounts')) {
 
 // A separate connection on purpose: requiring config/db.js would recreate every
 // table before we had a chance to drop them.
-const pool = new Pool({
-    host: env('PG_DB_HOST', 'MYSQL_DB_HOST'),
-    user: env('PG_DB_USER', 'MYSQL_DB_USER'),
-    password: env('PG_DB_PASSWORD', 'MYSQL_DB_PASSWORD'),
-    database: DB_NAME,
-    port: Number(env('PG_DB_PORT', 'MYSQL_DB_PORT')) || 5432,
-    ssl: (env('PG_SSL', 'DB_SSL') || '').toLowerCase() === 'false'
-        ? false
-        : { rejectUnauthorized: false },
-});
+const pool = new Pool(dbConfig);
 
 // Children first. PostgreSQL has no FOREIGN_KEY_CHECKS switch, so CASCADE on
 // the DROP does the same job — and the order still documents what depends on

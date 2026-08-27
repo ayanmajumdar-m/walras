@@ -1,38 +1,15 @@
 const { createConnection } = require('./pgCompat');
+const { resolveDbConfig } = require('./dbConfig');
 require('dotenv').config();
 
 /**
  * PostgreSQL, behind a mysql2-shaped facade (see pgCompat.js).
  *
- * PG_* names are read first; the MYSQL_* ones are still honoured so a
- * deployment can be switched over by changing the host and port without having
- * to rename every variable in the same breath.
+ * Configuration comes from a single DATABASE_URL where one is set, falling
+ * back to the discrete PG_DB_* / MYSQL_DB_* variables. See dbConfig.js.
  */
-const env = (...names) => {
-    for (const n of names) {
-        if (process.env[n]) return process.env[n];
-    }
-    return undefined;
-};
-
-const sslRequired = (env('PG_SSL', 'DB_SSL') || '').toLowerCase() !== 'false';
-
-const connection = createConnection({
-    host: env('PG_DB_HOST', 'MYSQL_DB_HOST'),
-    user: env('PG_DB_USER', 'MYSQL_DB_USER'),
-    password: env('PG_DB_PASSWORD', 'MYSQL_DB_PASSWORD'),
-    database: env('PG_DB_NAME', 'MYSQL_DB_NAME'),
-    port: Number(env('PG_DB_PORT', 'MYSQL_DB_PORT')) || 5432,
-    // Managed providers (Lightsail, RDS) terminate TLS with their own CA, which
-    // is not in the container's trust store. Encrypted-but-unverified is what
-    // the MySQL driver was doing implicitly; making it explicit at least says
-    // so out loud. Set PG_SSL=false for a local database with no TLS.
-    ssl: sslRequired ? { rejectUnauthorized: false } : false,
-    max: Number(process.env.PG_POOL_MAX) || 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-});
-
+const dbConfig = resolveDbConfig();
+const connection = createConnection(dbConfig);
 
 // Authentication happens in BUTTR ID, so this table holds no password and no
 // verification codes. buttr_sub is the account key: the pairwise subject
@@ -310,7 +287,7 @@ connection.connect((err) => {
         return;
     }
 
-    console.log('Connected to PostgreSQL Database');
+    console.log(`Connected to PostgreSQL (${dbConfig._describe}) via ${dbConfig._source}`);
 
     /*
       Run the schema in order, one statement at a time.
