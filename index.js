@@ -8,6 +8,7 @@ const cors = require("cors");
 
 // Initialize billing service
 require("./services/billingServices");
+const { verifyEmailTransport } = require("./utils/sendEmail");
 console.log("💰 Billing service initialized");
 
 // ✅ Step 1: Proper CORS setup (for frontend on localhost:3000)
@@ -63,6 +64,10 @@ app.use((req, res) => {
 
 
 // ✅ Step 8: Start the server
+// Check the mail relay once at boot rather than finding out on the first
+// customer email.
+void verifyEmailTransport();
+
 app.listen(port, () => {
   console.log(`🚀 Server is running at http://localhost:${port}`);
 });

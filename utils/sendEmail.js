@@ -1,28 +1,66 @@
-const { ApiClient, TransactionalEmailsApi, SendSmtpEmail } = require('@getbrevo/brevo');
+const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 
-// Ensure environment variables are loaded
 dotenv.config();
 
-// Missing mail credentials used to call process.exit(1) here, at import time,
-// which killed the whole server before Express ever bound a port — a deploy
-// with no Brevo account looked like a crash-loop with no explanation.
-//
-// Now it degrades: the site boots, everything else works, and only the mail
-// calls no-op with a warning.
-const emailConfigured = Boolean(process.env.EMAIL_API_KEY && process.env.SMTPLogin);
+/**
+ * Transactional email over SMTP (Brevo's relay).
+ *
+ * This used to go through Brevo's HTTP API with an `xkeysib-` API key. It now
+ * uses SMTP with an `xsmtpsib-` key, so Buttr Cloud and BUTTR ID authenticate
+ * to the same relay with the same credentials — one thing to rotate, one place
+ * for deliverability to be right or wrong.
+ *
+ * Missing credentials do not stop the server. They used to call process.exit(1)
+ * at import time, which killed Express before it bound a port and looked like a
+ * crash-loop with no explanation. Now mail simply no-ops with a warning.
+ */
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+
+const FROM_NAME = process.env.MAIL_FROM_NAME || 'Buttr Cloud';
+const FROM_ADDR = process.env.MAIL_FROM_ADDR || 'yours@buttrcrew.com';
+
+const emailConfigured = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
 
 if (!emailConfigured) {
-    console.warn('⚠️  EMAIL_API_KEY / SMTPLogin not set — transactional email is disabled.');
+    console.warn('⚠️  SMTP_HOST / SMTP_USER / SMTP_PASS not set — transactional email is disabled.');
 }
 
-const apiInstance = new TransactionalEmailsApi();
+// Port 587 is STARTTLS: the connection opens in the clear and is upgraded, so
+// `secure` is false here and true only for implicit TLS on 465. Getting this
+// backwards is the classic "greeting never received" hang.
+const transporter = emailConfigured
+    ? nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+    })
+    : null;
 
-if (emailConfigured) {
-    const apiKey = apiInstance.authentications['apiKey'];
-    apiKey.apiKey = process.env.EMAIL_API_KEY;
-}
-
+/**
+ * Confirms the relay is reachable and the credentials are accepted, without
+ * sending anything. Called at boot so a misconfiguration is visible in the logs
+ * rather than discovered by the first customer who buys a domain.
+ */
+const verifyEmailTransport = async () => {
+    if (!transporter) return false;
+    try {
+        await transporter.verify();
+        console.log(`✅ SMTP ready (${SMTP_USER} via ${SMTP_HOST}:${SMTP_PORT})`);
+        return true;
+    } catch (error) {
+        console.error('⚠️  SMTP verification failed:', error.message);
+        if (/unauthorized ip/i.test(error.message)) {
+            console.error("   Brevo restricts the relay to allowlisted IPs. Add this server's" +
+                ' public IP under Brevo → Security → Authorised IPs.');
+        }
+        return false;
+    }
+};
 
 const createDomainPurchaseTemplate = (name, domainName, purchaseDate) => {
     return `
@@ -71,28 +109,24 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
         return;
     }
 
-    const sendSmtpEmail = new SendSmtpEmail();
-    sendSmtpEmail.subject = "Domain Purchase Confirmation";
-    sendSmtpEmail.htmlContent = createDomainPurchaseTemplate(name, domainName, purchaseDate);
-    sendSmtpEmail.sender = { name: "Buttr Cloud", email: 'no-reply@buttr.cloud' };
-    sendSmtpEmail.to = [{ email: to }];
+    const message = {
+        from: { name: FROM_NAME, address: FROM_ADDR },
+        to,
+        subject: 'Domain Purchase Confirmation',
+        html: createDomainPurchaseTemplate(name, domainName, purchaseDate),
+    };
 
     try {
-        const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log("Domain purchase email sent successfully:", response);
+        const info = await transporter.sendMail(message);
+        console.log('Domain purchase email sent:', info.messageId);
+        return info;
     } catch (error) {
-        if (error.response && error.response.body) {
-            console.error("API Error details:", error.response.body);
-        } else if (error.message) {
-            console.error("Error sending domain purchase email:", error.message);
-        }
-        else {
-            console.error("Error sending domain purchase email:", error);
-        }
+        console.error('Error sending domain purchase email:', error.message);
         throw error;
     }
 };
 
 module.exports = {
-    sendDomainPurchaseEmail
+    sendDomainPurchaseEmail,
+    verifyEmailTransport,
 };
