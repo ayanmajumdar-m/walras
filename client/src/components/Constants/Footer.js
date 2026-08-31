@@ -5,7 +5,7 @@ import './Footer.css';
 const Footer = () => {
   return (
     <footer className="footer">
-      <div className="footer-container">
+      <div className="container">
         <div className="footer-main">
           <div className="footer-brand">
             <h3 className="footer-title">Buttr Cloud</h3>
@@ -13,7 +13,7 @@ const Footer = () => {
               From India for India and the world, Buttr Cloud delivers enterprise-grade cloud with local pricing, built just for you :)
             </p>
           </div>
-          
+
           <div className="footer-links-group">
             <h4 className="footer-subtitle">Important Links</h4>
             <ul className="footer-links">
@@ -23,7 +23,7 @@ const Footer = () => {
               <li><a href='https://help.buttr.cloud'>Documentation</a></li>
             </ul>
           </div>
-          
+
           <div className="footer-links-group">
             <h4 className="footer-subtitle">Company</h4>
             <ul className="footer-links">
@@ -35,11 +35,12 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        
+
         <div className="footer-bottom">
           <p className="copyright">
             © 2025 IOOGN TECHNOLOGIES OPC PVT LTD. All rights reserved.
           </p>
+          <p className="copyright">Mumbai, India · London, UK</p>
         </div>
       </div>
     </footer>

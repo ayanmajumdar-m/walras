@@ -1,91 +1,122 @@
 /*
-  Buttr Cloud colour system.
+  Buttr Cloud colour system — Industry revision.
 
-  These are BUTTR ID's tokens, value for value, so the two products read as one
-  family. Someone handed from buttr.cloud to the sign-in screen and back should
-  not feel like they crossed a border.
+  The structural palette comes from the Industry design system: a light
+  technical ground, ink for type, and a single steel accent that carries
+  structure (rules, kickers, icons, framing). Buttr yellow survives as what
+  theme.css always said it was — an *action* colour. It fills primary buttons,
+  marks the active nav item and the popular plan row, and nothing else.
 
-  Yellow is the brand, but it is an *accent*, never a surface. Large yellow
-  fields read as a warning; yellow carries actions and focus, ink carries
-  structure. That is the rule the whole palette is built around — the previous
-  scheme used blue for actions, and every one of those has moved to buttr-500.
+  Yellow is never a surface. Steel is never a button.
 */
 
 :root {
-  /* Brand — actions, focus, emphasis. */
-  --color-buttr-50: #fffdf0;
-  --color-buttr-100: #fff9d6;
-  --color-buttr-200: #fff2a8;
+  /* Industry ground and ink */
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+  --color-rule-soft: color-mix(in srgb, #1d1f20 8%, transparent);
+
+  /* Steel accent — structure, kickers, icons, framing */
+  --color-accent: #5980a6;
+  --color-accent-100: #eef6ff;
+  --color-accent-200: #d6ebff;
+  --color-accent-300: #b5d9fd;
+  --color-accent-400: #94bce3;
+  --color-accent-500: #749dc4;
+  --color-accent-600: #597ea3;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --color-neutral-100: #f5f5f8;
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-300: #d4d4d7;
+  --color-neutral-400: #b7b7ba;
+  --color-neutral-500: #98989b;
+  --color-neutral-600: #7a7a7d;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+  --color-neutral-900: #2b2b2d;
+
+  /* Brand — actions only */
   --color-buttr-300: #ffe96b;
   --color-buttr-400: #ffdf33;
-  --color-buttr-500: #ffd400; /* primary */
+  --color-buttr-500: #ffd400;
   --color-buttr-600: #e6bd00;
   --color-buttr-700: #b39300;
-  /*
-    Brand-tinted text. buttr-500 on white is about 1.4:1 — unreadable — and
-    even buttr-700 only reaches 2.9:1. This is the shade where a gold still
-    reads as gold and passes AA on a white page.
-  */
   --color-buttr-ink: #6f5b00;
 
-  /* Ink — structure, surfaces, text. */
-  --color-ink-50: #f7f7f8;
-  --color-ink-100: #ededf0;
-  --color-ink-200: #d9d9de;
-  --color-ink-300: #b8b8c0;
-  --color-ink-400: #8b8b96;
-  --color-ink-500: #64646f;
-  --color-ink-600: #4a4a53;
-  --color-ink-700: #33333a;
-  --color-ink-800: #1f1f24;
-  --color-ink-900: #131316;
-  --color-ink-950: #0a0a0c;
+  --font-heading: "Barlow Condensed", system-ui, sans-serif;
+  --font-heading-weight: 600;
+  --font-body: "Barlow", system-ui, sans-serif;
 
-  /*
-    Light is the product default, exactly as it is in BUTTR ID: the page stays
-    near-white, ink carries structure, and yellow is reserved for actions. A
-    large yellow field on a dark ground reads as a warning; on a white one it
-    reads as a button, which is the whole reason the brand works this way.
-  */
-  --page: #fbfbfa;
-  --surface: #ffffff;
-  --surface-raised: #f7f7f8;
-  --border: #d9d9de;
-  --text: #0a0a0c;
-  --text-muted: #64646f;
+  --space-1: 3.4px;
+  --space-2: 6.8px;
+  --space-3: 10.2px;
+  --space-4: 13.6px;
+  --space-6: 20.4px;
+  --space-8: 27.2px;
 
-  /* Kept so a future dark mode has somewhere to read its values from. */
-  --page-dark: #0a0a0c;
-  --surface-dark: #131316;
-  --border-dark: #2a2a31;
-  --text-dark: #f7f7f8;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 7px;
 
-  /*
-    Status colours are deliberately not from the brand ramp. Success and
-    failure must be legible as success and failure, and a yellow that means
-    "primary action" cannot also mean "warning".
-  */
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
+
+  /* Page-level aliases kept so existing stylesheets keep resolving */
+  --page: var(--color-bg);
+  --surface: var(--color-bg);
+  --surface-raised: var(--color-surface);
+  --border: var(--color-divider);
+  --border-color: var(--color-divider);
+  --text: var(--color-text);
+  --text-primary: var(--color-text);
+  --text-secondary: color-mix(in srgb, var(--color-text) 72%, transparent);
+  --text-muted: color-mix(in srgb, var(--color-text) 55%, transparent);
+  --accent-color: var(--color-buttr-500);
+
+  /* The old ink aliases a dozen stylesheets still reference */
+  --primary-black: var(--color-text);
+  --secondary-black: var(--color-neutral-900);
+  --dark-gray: var(--color-neutral-800);
+  --medium-gray: var(--color-neutral-200);
+  --light-gray: var(--color-neutral-300);
+  --hover-color: var(--color-neutral-200);
+
+  /* Layout */
+  --page-max: 1240px;
+  --page-gutter: 32px;
+
   --status-success: #22c55e;
   --status-warning: #f59e0b;
   --status-danger: #ef4444;
 }
 
-/*
-  The page itself carries the palette, so a route that forgets to set its own
-  background does not fall through to the browser's white. Previously `body`
-  had no colour at all and inherited black text, which only went unnoticed
-  because every page painted over it.
-*/
 body {
-  background-color: var(--page);
-  color: var(--text);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
 }
 
-/*
-  One visible focus ring across the app, in the brand colour — the same rule
-  BUTTR ID uses. Keyboard users should never lose their place.
-*/
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+a { color: var(--color-accent-700); text-decoration: none; }
+a:hover { color: var(--color-accent-800); }
+
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-buttr-500);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }

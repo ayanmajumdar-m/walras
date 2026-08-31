@@ -1,0 +1,266 @@
+/*
+  Industry primitives, shared by every page.
+
+  These are the design system's own classes — blueprint framing, buttons,
+  cards, tags, tables, fields — reproduced here so the app owns one copy
+  instead of thirteen. Page stylesheets compose with these; they do not
+  redefine them.
+
+  Import once, in index.js, immediately after theme.css.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* — page shell — */
+.container {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
+}
+.section { border-bottom: 1px solid var(--color-divider); }
+.section-pad { padding: 56px 0; }
+
+/* A section head: title, a rule that eats the slack, a right-aligned note. */
+.rule-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.rule-head h2 { font-size: 34px; margin: 0; white-space: nowrap; }
+.rule-head .rule { flex: 1; height: 1px; background: var(--color-divider); }
+.rule-head .note {
+  font-size: 14px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+.kicker {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.ref {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 45%, transparent);
+}
+
+/* — blueprint framing — */
+.blueprint {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+}
+.blueprint > .corner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.blueprint > .corner::before,
+.blueprint > .corner::after { content: ""; position: absolute; background: currentColor; }
+.blueprint > .corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
+.blueprint > .corner::after  { top: 5px; left: 0; width: 100%; height: 1px; }
+.blueprint > .corner.tl { top: -6px; left: -6px; }
+.blueprint > .corner.tr { top: -6px; right: -6px; }
+.blueprint > .corner.bl { bottom: -6px; left: -6px; }
+.blueprint > .corner.br { bottom: -6px; right: -6px; }
+
+/* — buttons — */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.btn svg { display: block; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+
+/* The brand button: yellow is the action colour, and only that. */
+.btn-primary {
+  background: var(--color-buttr-500);
+  border-color: var(--color-buttr-500);
+  color: var(--color-text);
+}
+.btn-primary:hover { background: var(--color-buttr-600); border-color: var(--color-buttr-600); }
+.btn-primary:active { background: var(--color-buttr-700); border-color: var(--color-buttr-700); }
+
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+
+.btn-ghost { color: var(--color-accent-700); border-color: transparent; padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+
+.btn-icon { width: 36px; height: 36px; padding: 0; }
+.btn-block { width: 100%; }
+.btn-lg { font-size: 15px; padding: 12px 26px; }
+
+/* — tags — */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent-700); }
+
+/* — cards: transparent line drawings, never filled blocks — */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 22px;
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+}
+.card-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 21px; margin: 8px 0 0; }
+.card-body { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+.card svg { color: var(--color-accent-700); }
+
+/* — the cell grid: equal columns divided by hairlines — */
+.cells {
+  display: grid;
+  border-left: 1px solid var(--color-divider);
+}
+.cells > * {
+  padding: 22px 18px;
+  border-right: 1px solid var(--color-divider);
+}
+.cells-2 { grid-template-columns: repeat(2, 1fr); }
+.cells-3 { grid-template-columns: repeat(3, 1fr); }
+.cells-4 { grid-template-columns: repeat(4, 1fr); }
+.cells-5 { grid-template-columns: repeat(5, 1fr); }
+.cells-6 { grid-template-columns: repeat(6, 1fr); }
+
+/* A figure number: the one place type gets big and condensed. */
+.figure-lg {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 62px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+.figure-md {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 52px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+.figure-sm {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 34px;
+  line-height: 1;
+}
+.figure-label {
+  font-size: 12.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  line-height: 1.35;
+}
+
+/* — tables — */
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+  white-space: nowrap;
+}
+.table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-rule-soft);
+}
+.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.table .name { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; white-space: nowrap; }
+/* The popular plan is marked with the action colour, not a badge ribbon. */
+.table tr.is-popular { background: color-mix(in srgb, var(--color-buttr-500) 12%, transparent); }
+.table-scroll { overflow-x: auto; }
+
+/* — fields — */
+.input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+}
+.input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+
+.seg { display: inline-flex; border: 1px solid var(--color-divider); }
+.seg-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  color: inherit;
+}
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt.is-active { background: var(--color-accent); color: var(--color-bg); }
+.seg-opt:not(.is-active):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+
+/* — the one reversed field: steel as ground, type to paper — */
+.field-dark {
+  background: var(--color-accent-900);
+  color: var(--color-bg);
+}
+.field-dark h1, .field-dark h2, .field-dark h3, .field-dark h4 { color: var(--color-bg); }
+.field-dark .kicker { color: var(--color-buttr-500); }
+.field-dark p { color: color-mix(in srgb, #f2f2f3 78%, transparent); }
+.field-dark .input {
+  background: transparent;
+  border-color: color-mix(in srgb, #f2f2f3 30%, transparent);
+  color: var(--color-bg);
+}
+
+@media (max-width: 900px) {
+  :root { --page-gutter: 20px; }
+  .cells-4, .cells-5, .cells-6 { grid-template-columns: repeat(2, 1fr); }
+  .cells-3 { grid-template-columns: 1fr; }
+  .rule-head { flex-wrap: wrap; }
+  .rule-head .note { flex-basis: 100%; }
+}

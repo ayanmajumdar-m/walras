@@ -1,189 +1,101 @@
 import React, { useState } from "react";
 import "./Constants.css";
-import { Search, ShoppingCart, User, HeadphonesIcon, Menu, ChevronDown, X } from "lucide-react";
-import Logo from '../../assets/logo.png'
+import { HeadphonesIcon, Menu, X } from "lucide-react";
+import Logo from '../../assets/logo.png';
+
+/*
+  The header is a hairline rule with three zones: mark, sections, actions.
+  The active section is marked with a 2px brand underline — the same yellow
+  that fills the primary button, so "where I am" and "what I can do" read as
+  one colour and nothing else competes.
+*/
+
+const SECTIONS = [
+  { name: "Domains", href: "/domains" },
+  { name: "Flare Compute", href: "/about/pricing" },
+  { name: "Bare Metal", href: "/bare-metal" },
+  { name: "About", href: "/about" },
+  { name: "Contact", href: "/contact" }
+];
+
+const MOBILE_LINKS = [
+  ...SECTIONS,
+  { name: "Privacy Policy", href: "/privacy" },
+  { name: "Terms of Service", href: "/terms" },
+  { name: "Support", href: "/contact" }
+];
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
   const user = JSON.parse(localStorage.getItem("userId"));
+  const path = typeof window !== "undefined" ? window.location.pathname : "/";
 
-  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
   const closeMenu = () => setIsMenuOpen(false);
-
-  const mainSections = [
-    { 
-      name: "Domains", 
-      href: "/domains",
-      type: "link"
-    },
-    { 
-      name: "Flare Compute", 
-      href: "/about/pricing",
-      type: "link"
-    },
-    { 
-      name: "Bare Metal", 
-      href: "/bare-metal",
-      type: "link"
-    },
-    // {
-    //   name: "Flare Mail",
-    //   href: "/flare-mail",
-    //   type: "link"
-    // },
-    { 
-      name: "Pages", 
-      type: "dropdown",
-      submenu: [
-        { name: "About Us", href: "/about" },
-        { name: "Contact Us", href: "/contact" },
-        { name: "Privacy Policy", href: "/privacy" },
-        { name: "Terms of Service", href: "/terms" }
-      ]
-    }
-  ];
-
-  const mobileLinks = [
-    { name: "Domains", href: "/domains" },
-    { name: "Flare Compute", href: "/about/pricing" },
-    { name: "Bare Metal", href: "/bare-metal" },
-    // Pages submenu items
-    { name: "About Us", href: "/about" },
-    { name: "Contact Us", href: "/contact" },
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
-    // Utility links
-    { name: "Cart", href: "/cart" },
-    { name: "Support", href: "/contact" },
-  ];
 
   return (
     <>
-      {/* Top Navigation Bar */}
-      <nav className="top-nav">
-        <div className="top-nav-left">
+      <header className="top-nav">
+        <div className="top-nav-inner">
           <a href="/" className="logo-container">
-            <img src={Logo} width={150} alt="Buttr Cloud Logo" className="logo-image" />
+            <img src={Logo} width={118} alt="Buttr Cloud" className="logo-image" />
           </a>
-        </div>
 
-        <div className="top-nav-center">
-          <div className="nav-links">
-            {mainSections.map((section) => 
-              section.type === "link" ? (
-                <a key={section.href} href={section.href} className="nav-link">
-                  {section.name}
-                </a>
-              ) : (
-                <div key={section.name} className="dropdown">
-                  <button className="dropbtn">
-                    {section.name}
-                    <ChevronDown size={16} className="dropdown-chevron" />
-                  </button>
-                  <div className="dropdown-content">
-                    {section.submenu.map((item) => (
-                      <a key={item.href} href={item.href}>
-                        {item.name}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )
+          <nav className="nav-links">
+            {SECTIONS.map((section) => (
+              <a
+                key={section.href}
+                href={section.href}
+                className={`nav-link${path === section.href ? " is-active" : ""}`}
+              >
+                {section.name}
+              </a>
+            ))}
+          </nav>
+
+          <div className="top-nav-right">
+            <a href="/contact" className="btn btn-secondary nav-support">
+              <HeadphonesIcon size={16} strokeWidth={1.5} />
+              <span>Support</span>
+            </a>
+            {user ? (
+              <a href="/dashboard" className="btn btn-primary">Console</a>
+            ) : (
+              <a href="/login" className="btn btn-primary">Console</a>
             )}
           </div>
+
+          <button
+            className="mobile-toggle"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label="Menu"
+          >
+            <Menu size={22} strokeWidth={1.5} />
+          </button>
         </div>
+      </header>
 
-        <div className="top-nav-right">
-          {/* <a href="/cart" className="icon-button">
-            <ShoppingCart size={24} />
-          </a> */}
-          <a href="/contact" className="icon-button">
-            <HeadphonesIcon size={24} />
-            <span>Support</span>
-          </a>
-          {user ? (
-            <a href="/dashboard" className="icon-button">
-              <User size={24} />
-              <span>Dashboard</span>
-            </a>
-          ) : (
-            <button
-              className="login-btn"
-              onClick={() => (window.location.href = "/login")}
-            >
-              Login
-            </button>
-          )}
-        </div>
+      {isMenuOpen && <div className="mobile-menu-overlay" onClick={closeMenu} />}
 
-        <button className="mobile-toggle" onClick={toggleMenu} aria-label="Menu">
-          <Menu size={24} />
-        </button>
-      </nav>
-
-      {/* Mobile Menu Overlay */}
-      {isMenuOpen && (
-        <div className="mobile-menu-overlay" onClick={closeMenu}></div>
-      )}
-
-      {/* Mobile Menu */}
-      <div className={`mobile-menu ${isMenuOpen ? "show" : ""}`}>
-        {/* Mobile Menu Header */}
+      <div className={`mobile-menu${isMenuOpen ? " show" : ""}`}>
         <div className="mobile-menu-header">
-          <div className="mobile-logo">
-            <div className="logo-box">SF</div>
-            <span className="logo-text">Buttr Cloud</span>
-          </div>
+          <span className="kicker">Menu</span>
           <button className="mobile-close" onClick={closeMenu} aria-label="Close menu">
-            <X size={24} />
+            <X size={22} strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search domains, services..."
-            className="search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {/* Mobile Menu Links */}
         <div className="mobile-links">
-          {mobileLinks.map((link) => (
-            <a 
-              key={link.href} 
-              href={link.href} 
-              className="mobile-link"
-              onClick={closeMenu}
-            >
+          {MOBILE_LINKS.map((link) => (
+            <a key={link.href + link.name} href={link.href} className="mobile-link" onClick={closeMenu}>
               {link.name}
             </a>
           ))}
         </div>
 
-        {/* Mobile Menu Footer */}
         <div className="mobile-menu-footer">
-          {user ? (
-            <a href="/dashboard" className="mobile-dashboard-btn" onClick={closeMenu}>
-              <User size={20} />
-              <span>Dashboard</span>
-            </a>
-          ) : (
-            <button
-              className="mobile-login-btn"
-              onClick={() => {
-                closeMenu();
-                window.location.href = "/login";
-              }}
-            >
-              Login to Account
-            </button>
-          )}
+          <a href={user ? "/dashboard" : "/login"} className="btn btn-primary btn-block" onClick={closeMenu}>
+            Console
+          </a>
         </div>
       </div>
     </>
