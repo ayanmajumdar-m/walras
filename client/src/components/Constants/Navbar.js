@@ -27,7 +27,13 @@ const MOBILE_LINKS = [
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const user = JSON.parse(localStorage.getItem("userId"));
+  let user = null;
+  try {
+    const storedUser = localStorage.getItem("userId");
+    user = storedUser ? (storedUser.startsWith("{") || storedUser.startsWith("[") ? JSON.parse(storedUser) : storedUser) : null;
+  } catch (e) {
+    user = localStorage.getItem("userId");
+  }
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
 
   const closeMenu = () => setIsMenuOpen(false);
