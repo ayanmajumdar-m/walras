@@ -1,74 +1,104 @@
+/* SubmitTicket.css — Industry design system. */
+
 .submit-ticket-container {
-  max-width: 500px;
-  margin: 50px auto;
-  padding: 30px;
-  background: #f7f7f8;
-  border-radius: 10px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.10);
-  font-family: Arial, sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 32px;
+  background: var(--color-bg, #f2f2f3);
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--font-body, "Barlow", system-ui, sans-serif);
+  color: var(--color-text, #1d1f20);
 }
 
 .submit-ticket-container h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #2a2a31;
+  font-family: var(--font-heading, "Barlow Condensed", system-ui, sans-serif);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin-bottom: 24px;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-divider);
+  padding-bottom: 10px;
 }
 
 .submit-ticket-container form {
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
 .submit-ticket-container label {
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #4a4a53;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: block;
 }
 
 .submit-ticket-container input,
 .submit-ticket-container select,
 .submit-ticket-container textarea {
-  margin-bottom: 15px;
-  padding: 10px;
-  border: 1px solid #b8b8c0;
-  border-radius: 5px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  font: inherit;
   font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.submit-ticket-container input:focus,
+.submit-ticket-container select:focus,
+.submit-ticket-container textarea:focus {
+  border-color: var(--color-accent);
 }
 
 .submit-ticket-container textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 .submit-ticket-container button {
-  background-color: #ffd400;
-  color: #0a0a0c;
-  border: none;
-  padding: 12px;
-  border-radius: 5px;
-  font-size: 16px;
+  background: var(--color-buttr-500);
+  border: 1px solid var(--color-buttr-500);
+  color: var(--color-text);
+  padding: 12px 24px;
+  border-radius: 0;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.12s;
+  margin-top: 8px;
 }
 
 .submit-ticket-container button:hover {
-  background-color: #b39300;
+  background: var(--color-buttr-600);
 }
 
 .error {
-  color: #ff4d4f;
-  background: #ffe6e6;
-  padding: 8px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-  text-align: center;
+  color: #b91c1c;
+  background: transparent;
+  padding: 10px 14px;
+  border: 1px solid #ef4444;
+  border-radius: 0;
+  margin-bottom: 16px;
+  font-size: 14px;
 }
 
 .success {
-  color: #28a745;
-  background: #e6ffed;
-  padding: 8px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-  text-align: center;
+  color: #15803d;
+  background: transparent;
+  padding: 10px 14px;
+  border: 1px solid #22c55e;
+  border-radius: 0;
+  margin-bottom: 16px;
+  font-size: 14px;
 }
