@@ -19,11 +19,7 @@
 }
 
 .logo-container { display: flex; align-items: center; margin-right: auto; }
-/*
-  logo.png is white artwork drawn for a black header. Inverting renders it as
-  dark artwork on the light ground. Stopgap until a Buttr Cloud mark exists.
-*/
-.logo-image { filter: invert(1); display: block; }
+.logo-image { display: block; }
 
 .nav-links { display: flex; align-items: center; gap: 4px; }
 

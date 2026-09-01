@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./AdminDashboard.css";
+const Logo = 'https://images.vestige.co.in/buttrcloud/logo.png';
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import {
   Home,
@@ -415,8 +416,10 @@ const AdminDashboard = () => {
       <div className="admin-dashboard">
         <div className="admin-sidebar">
           <div className="sidebar-header">
-            <span className="sidebar-kicker">Buttr Cloud</span>
-            <h2>Admin</h2>
+            <a href="/" className="sidebar-logo-link">
+              <img src={Logo} alt="Buttr Cloud" className="sidebar-logo" />
+            </a>
+            <span className="sidebar-kicker">Admin Panel</span>
           </div>
           <nav className="sidebar-nav">
             {/* Dashboard - Owner only */}
