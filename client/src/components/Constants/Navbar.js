@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./Constants.css";
 import { HeadphonesIcon, Menu, X } from "lucide-react";
-import Logo from "../logo.png";
+const Logo = 'https://images.vestige.co.in/buttrcloud/logo.png';
 
 /*
   The header is a hairline rule with three zones: mark, sections, actions.
