@@ -1,7 +1,8 @@
 import React from "react";
 import { NavLink } from 'react-router-dom';
 import { Home, User, Shield, LogOut, Bell, Ticket, Wallet, Earth, Logs, Globe, Server } from "lucide-react";
-import Logo from "../logo.png";
+
+const Logo = 'https://images.vestige.co.in/buttrcloud/logo-white.png';
 
 const Sidebar = ({ tabs, sidebarOpen, setSidebarOpen }) => {
   const handleLogout = () => {

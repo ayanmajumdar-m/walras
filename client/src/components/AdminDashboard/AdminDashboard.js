@@ -23,7 +23,8 @@ import Servers from './components/Servers';
 import PromoCodes from './components/PromoCodes';
 import Domain from './components/Domain';
 import CreatePromoForm from './components/CreatePromoForm';
-import Logo from "../logo.png";
+
+const Logo = 'https://images.vestige.co.in/buttrcloud/logo-white.png';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
