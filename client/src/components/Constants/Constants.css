@@ -19,8 +19,7 @@
 }
 
 .logo-container { display: flex; align-items: center; margin-right: auto; }
-/* Logo artwork is blue; hue-rotate(185deg) shifts it precisely to brand yellow (#ffd400). */
-.logo-image { display: block; filter: hue-rotate(185deg) saturate(1.5) brightness(1.05); }
+.logo-image { display: block; }
 
 .nav-links { display: flex; align-items: center; gap: 4px; }
 
