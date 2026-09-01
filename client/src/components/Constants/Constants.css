@@ -19,8 +19,8 @@
 }
 
 .logo-container { display: flex; align-items: center; margin-right: auto; }
-/* Logo artwork is blue; hue-rotate shifts it to brand yellow (#ffd400 ≈ 55° on the wheel). */
-.logo-image { display: block; filter: hue-rotate(200deg) saturate(1.4) brightness(1.05); }
+/* Logo artwork is blue; hue-rotate(185deg) shifts it precisely to brand yellow (#ffd400). */
+.logo-image { display: block; filter: hue-rotate(185deg) saturate(1.5) brightness(1.05); }
 
 .nav-links { display: flex; align-items: center; gap: 4px; }
 

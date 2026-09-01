@@ -48,7 +48,7 @@
   width: 110px;
   height: auto;
   /* Same hue-rotate as the navbar logo: blue → brand yellow. */
-  filter: hue-rotate(200deg) saturate(1.4) brightness(1.1);
+  filter: hue-rotate(185deg) saturate(1.5) brightness(1.1);
   display: block;
 }
 
