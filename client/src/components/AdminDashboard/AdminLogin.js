@@ -48,7 +48,7 @@ const AdminLogin = () => {
       // Save token and admin info
       localStorage.setItem("adminToken", data.token);
       localStorage.setItem("adminInfo", JSON.stringify(data.admin));
-      navigate("/super-admin-2025/dashboard");
+      navigate("/vadmin-1997/dashboard");
     } catch (err) {
       setError("Something went wrong. Please try again.");
     } finally {

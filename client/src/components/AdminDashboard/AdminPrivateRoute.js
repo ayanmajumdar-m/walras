@@ -20,13 +20,13 @@ const AdminProtectedRoute = ({ children }) => {
 
   if (!token ) {
     // Redirect to admin login if token missing
-    return <Navigate to="/super-admin-2025" replace />;
+    return <Navigate to="/vadmin-1997" replace />;
   }
 
   if (isTokenExpired(token)) {
     localStorage.removeItem('adminToken');
     localStorage.setItem('sessionExpired', 'true');
-    return <Navigate to="/super-admin-2025" replace />;
+    return <Navigate to="/vadmin-1997" replace />;
   }
 
   return <>{children}</>;

@@ -68,8 +68,8 @@ function App() {
         <Route path='/deploy-details' element={<DeployDetails />} />
 
         {/* Admin routes */}
-        <Route path="/super-admin-2025" element={<AdminLogin />} />
-        <Route path="/super-admin-2025/dashboard" element={<AdminDashboard />} />
+        <Route path="/vadmin-1997" element={<AdminLogin />} />
+        <Route path="/vadmin-1997/dashboard" element={<AdminDashboard />} />
 
         {/* Anything genuinely unknown goes home, not to /contact. */}
         <Route path="*" element={<Navigate to="/" replace />} />
