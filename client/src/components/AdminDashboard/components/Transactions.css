@@ -1,200 +1,185 @@
+/* Transactions — Industry design system. */
+
 .transactions {
-  padding: 20px;
-  background-color: #fbfbfa;
-  color: #0a0a0c;
-  min-height: 100vh;
+  background: var(--color-bg, #f2f2f3);
+  color: var(--color-text, #1d1f20);
 }
 
+/* ── Header ── */
 .transactions-header {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 8px;
+  gap: 16px;
+  margin-bottom: 28px;
 }
 
 .transactions-header h2 {
   margin: 0;
-  font-size: 24px;
-  color: #0a0a0c;
+  font-family: var(--font-heading, "Barlow Condensed", system-ui, sans-serif);
+  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+  white-space: nowrap;
 }
 
 .transactions-count {
-  background: #f7f7f8;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 
+/* ── Table container ── */
 .table-container {
-  background: #ffffff;
-  border-radius: 8px;
-  overflow: hidden;
+  background: transparent;
+  border-radius: 0;
+  overflow-x: auto;
 }
 
 .transactions-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  border: 1px solid var(--color-divider, rgba(29,31,32,0.16));
 }
 
-/* Column width definitions */
-.col-user { width: 200px; }
-.col-type { width: 120px; }
-.col-amount { width: 120px; }
-.col-description { width: 250px; }
-.col-payment { width: 180px; }
-.col-date { width: 150px; }
-.col-status { width: 120px; }
+/* Column widths */
+.col-user        { width: 190px; }
+.col-type        { width: 110px; }
+.col-amount      { width: 110px; }
+.col-description { width: 230px; }
+.col-payment     { width: 160px; }
+.col-date        { width: 150px; }
+.col-status      { width: 110px; }
 
 .transactions-table th {
-  background: #f7f7f8;
-  padding: 16px 12px;
+  background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  padding: 10px 12px;
   text-align: left;
-  font-weight: 600;
-  color: #0a0a0c;
-  border-bottom: 2px solid #d9d9de;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  border-bottom: 1px solid var(--color-divider);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .transactions-table td {
-  padding: 16px 12px;
-  border-bottom: 1px solid #d9d9de;
+  padding: 12px;
+  border-bottom: 1px solid var(--color-rule-soft, rgba(29,31,32,0.08));
   vertical-align: middle;
+  font-size: 13px;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: transparent;
 }
 
-.transaction-row:hover {
-  background-color: #f7f7f8;
+.transaction-row:hover td {
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
 }
 
+/* ── User info ── */
 .user-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 
 .user-info .name {
-  font-weight: 500;
-  color: #0a0a0c;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .user-info .email {
-  color: #4a4a53;
   font-size: 12px;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* ── Type badge ── */
 .type {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.type.credit {
-  background: #1a3a1a;
-  color: #15803d;
-}
-
-.type.debit {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.type.refund {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.amount {
-  font-weight: 600;
-  color: #0a0a0c;
-}
-
-.description {
-  color: #4a4a53;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid;
+  border-radius: 0;
   white-space: nowrap;
+  display: inline-block;
+}
+
+.type.credit { color: #15803d; border-color: #22c55e; }
+.type.debit  { color: #b91c1c; border-color: #ef4444; }
+.type.refund { color: #b45309; border-color: #f59e0b; }
+
+/* ── Amount ── */
+.amount { font-weight: 600; font-size: 14px; }
+
+/* ── Description / payment-id / date ── */
+.description, .date {
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .payment-id {
-  color: #4a4a53;
-  font-family: monospace;
+  font-family: "Courier New", monospace;
   font-size: 12px;
-  white-space: nowrap;
+  color: var(--color-accent-700);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.date {
-  color: #0a0a0c;
-  white-space: nowrap;
-}
-
+/* ── Status badge ── */
 .status {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: capitalize;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid;
+  border-radius: 0;
   white-space: nowrap;
+  display: inline-block;
 }
 
-.status.completed {
-  background: #1a3a1a;
-  color: #15803d;
-}
+.status.completed { color: #15803d; border-color: #22c55e; }
+.status.pending   { color: #b45309; border-color: #f59e0b; }
+.status.failed    { color: #b91c1c; border-color: #ef4444; }
+.status.refunded  { color: var(--text-muted); border-color: var(--color-divider); }
 
-.status.pending {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.status.failed {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.status.refunded {
-  background: #f7f7f8;
-  color: #0a0a0c;
-}
-
+/* ── No data ── */
 .no-data {
   text-align: center;
-  padding: 40px;
-  color: #64646f;
-  font-style: italic;
+  padding: 48px;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
+/* ── Responsive ── */
 @media (max-width: 768px) {
-  .table-container {
-    overflow-x: auto;
-  }
-  
-  .transactions-table {
-    min-width: 900px;
-    table-layout: auto;
-  }
-  
-  .transactions-header {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-  }
+  .table-container { overflow-x: auto; }
+  .transactions-table { min-width: 860px; table-layout: auto; }
+  .transactions-header { flex-direction: column; gap: 8px; align-items: flex-start; }
 }

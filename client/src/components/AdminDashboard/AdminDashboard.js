@@ -415,7 +415,8 @@ const AdminDashboard = () => {
       <div className="admin-dashboard">
         <div className="admin-sidebar">
           <div className="sidebar-header">
-            <h2>Dashboard</h2>
+            <span className="sidebar-kicker">Buttr Cloud</span>
+            <h2>Admin</h2>
           </div>
           <nav className="sidebar-nav">
             {/* Dashboard - Owner only */}
@@ -424,7 +425,7 @@ const AdminDashboard = () => {
                 className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
                 onClick={() => handleTabChange("dashboard")}
               >
-                <Home className="nav-icon" size={20} />
+                <Home className="nav-icon" size={18} />
                 Dashboard
               </button>
             )}
@@ -435,18 +436,18 @@ const AdminDashboard = () => {
                 className={`nav-item ${activeTab === "servers" ? "active" : ""}`}
                 onClick={() => handleTabChange("servers")}
               >
-                <Server className="nav-icon" size={20} />
+                <Server className="nav-icon" size={18} />
                 Servers
               </button>
             )}
 
-            {/* Domain - Placeholder for future domain management */}
+            {/* Domain */}
             {adminInfo?.access === 'owner' && (
               <button
                 className={`nav-item ${activeTab === "domain" ? "active" : ""}`}
                 onClick={() => handleTabChange("domain")}
               >
-                <Globe className="nav-icon" size={20} />
+                <Globe className="nav-icon" size={18} />
                 Domain
               </button>
             )}
@@ -456,7 +457,7 @@ const AdminDashboard = () => {
               className={`nav-item ${activeTab === "transactions" ? "active" : ""}`}
               onClick={() => handleTabChange("transactions")}
             >
-              <DollarSign className="nav-icon" size={20} />
+              <DollarSign className="nav-icon" size={18} />
               Transactions
             </button>
 
@@ -466,7 +467,7 @@ const AdminDashboard = () => {
                 className={`nav-item ${activeTab === "users" ? "active" : ""}`}
                 onClick={() => handleTabChange("users")}
               >
-                <User className="nav-icon" size={20} />
+                <User className="nav-icon" size={18} />
                 Users
               </button>
             )}
@@ -477,7 +478,7 @@ const AdminDashboard = () => {
                 className={`nav-item ${activeTab === "promo-codes" ? "active" : ""}`}
                 onClick={() => handleTabChange("promo-codes")}
               >
-                <Ticket className="nav-icon" size={20} />
+                <Ticket className="nav-icon" size={18} />
                 Promo Codes
               </button>
             )}
@@ -487,18 +488,18 @@ const AdminDashboard = () => {
               className={`nav-item ${activeTab === "invoices" ? "active" : ""}`}
               onClick={() => handleTabChange("invoices")}
             >
-              <FileText className="nav-icon" size={20} />
+              <FileText className="nav-icon" size={18} />
               Invoices
             </button>
           </nav>
 
-          {/* Logout Button */}
+          {/* Logout */}
           <div className="sidebar-footer">
             <button
               className="nav-item logout-btn"
               onClick={() => window.location.href = '/super-admin-2025'}
             >
-              <LogOut className="nav-icon" size={20} />
+              <LogOut className="nav-icon" size={18} />
               Logout
             </button>
           </div>
