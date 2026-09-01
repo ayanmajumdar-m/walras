@@ -8,22 +8,23 @@ import SubmitTicket from "./DashboardContent/SubmitTicket";
 import Wallet from "./DashboardContent/Wallet";
 import Deploy from "./DashboardContent/Deploy";
 import Logs from "./DashboardContent/Logs";
+import ComingSoon from "./DashboardContent/ComingSoon";
 import "./Dashboard.css";
 
 const tabs = [
   { key: "home", label: "Dashboard" },
   { key: 'deploy', label: 'Deploy' },
+  { key: 'domains', label: 'Domains' },
+  { key: 'hosting', label: 'Hosting' },
   { key: 'wallet', label: "Wallet" },
   { key: "profile", label: "Profile" },
   { key: "notifications", label: "Notifications" },
   { key: "submitTicket", label: "Support" },
-  {key: 'logs', label: "Logs"},
+  { key: 'logs', label: "Logs"},
 ];
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // We'll use route-based tabs. active tab is derived from the current path inside Sidebar via NavLink.
 
   return (
     <ProtectedRoute>
@@ -35,23 +36,37 @@ const DashboardLayout = () => {
         />
 
         <div className="dashboard-content">
-          {/* route-based content for each tab */}
           <div className="dashboard-main-contents">
             <Routes>
               <Route path="/home" element={<Home/>} />
               <Route path="/deploy" element={<Deploy/>} />
+              <Route path="/domains" element={
+                <ComingSoon 
+                  title="Domains Management" 
+                  description="Domain registration, DNS management, and WHOIS privacy tools are coming soon to Buttr Cloud Console."
+                />
+              } />
+              <Route path="/hosting" element={
+                <ComingSoon 
+                  title="Cloud Hosting" 
+                  description="Managed web hosting with instant SSL, one-click apps, and auto-scaling is coming soon."
+                />
+              } />
               <Route path="/wallet" element={<Wallet/>} />
               <Route path="/profile" element={<Profile/>} />
-              <Route path="/notifications" element={<div>Manage your Notifications here</div>} />
+              <Route path="/notifications" element={
+                <ComingSoon 
+                  title="Notifications & Alerts" 
+                  description="Custom webhook notifications, SMS alerts, and email preferences are coming soon."
+                />
+              } />
               <Route path="/submitTicket" element={<SubmitTicket/>} />
               <Route path="/logs" element={<Logs/>} />
-              {/* default to /home */}
               <Route path="/" element={<Home/>} />
             </Routes>
           </div>
         </div>
 
-        {/* Sidebar toggle at bottom */}
         <button
           className="sidebar-toggle"
           onClick={() => setSidebarOpen(!sidebarOpen)}

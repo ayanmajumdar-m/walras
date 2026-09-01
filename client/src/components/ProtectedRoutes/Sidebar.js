@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from 'react-router-dom';
-import { Home, User, Shield, LogOut, Bell, Ticket, Wallet, Earth, Logs, Globe } from "lucide-react";
+import { Home, User, Shield, LogOut, Bell, Ticket, Wallet, Earth, Logs, Globe, Server } from "lucide-react";
 import Logo from "../logo.png";
 
 const Sidebar = ({ tabs, sidebarOpen, setSidebarOpen }) => {
@@ -18,6 +18,8 @@ const Sidebar = ({ tabs, sidebarOpen, setSidebarOpen }) => {
     submitTicket: <Ticket size={18} />,
     wallet: <Wallet size={18}/>,
     deploy: <Earth size={18}/>,
+    domains: <Globe size={18}/>,
+    hosting: <Server size={18}/>,
     logs: <Logs size={18}/>,
     domain: <Globe size={18}/>
   };
