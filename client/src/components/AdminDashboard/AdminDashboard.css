@@ -47,9 +47,8 @@
 .sidebar-logo {
   width: 110px;
   height: auto;
-  /* The logo image is designed for a light background.
-     Invert it so it reads on the dark steel sidebar. */
-  filter: brightness(0) invert(1);
+  /* Same hue-rotate as the navbar logo: blue → brand yellow. */
+  filter: hue-rotate(200deg) saturate(1.4) brightness(1.1);
   display: block;
 }
 
