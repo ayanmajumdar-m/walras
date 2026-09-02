@@ -12,6 +12,7 @@ import Logo from "../logo.png";
 
 const SECTIONS = [
   { name: "Domains", href: "/domains" },
+  { name: "Web Hosting", href: "/web-hosting" },
   { name: "Flare Compute", href: "/about/pricing" },
   { name: "Bare Metal", href: "/bare-metal" },
   { name: "About", href: "/about" },

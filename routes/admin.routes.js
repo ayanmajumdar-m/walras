@@ -34,6 +34,13 @@ router.get('/getUserBillingLogs/:id', requireBillingAccess, AdminController.getU
 router.get('/getAllServers', requireOwnerAccess, AdminController.getAllServers);
 router.get('/getUserServers/:id', requireOwnerAccess, AdminController.getUserServers);
 
+// Hosting management (cPanel) (owner only)
+router.get('/getAllHosting', requireOwnerAccess, AdminController.getAllHosting);
+router.post('/hosting/:id/suspend', requireOwnerAccess, AdminController.suspendHosting);
+router.post('/hosting/:id/unsuspend', requireOwnerAccess, AdminController.unsuspendHosting);
+router.delete('/hosting/:id', requireOwnerAccess, AdminController.deleteHosting);
+router.get('/hosting/:id/login', requireOwnerAccess, AdminController.getHostingLogin);
+
 //Get all domains bought
 router.get('/getAllDomains', requireOwnerAccess, AdminController.getAllDomains);
 

@@ -23,6 +23,7 @@ import Servers from './components/Servers';
 import PromoCodes from './components/PromoCodes';
 import Domain from './components/Domain';
 import CreatePromoForm from './components/CreatePromoForm';
+import Hosting from './components/Hosting';
 
 const Logo = 'https://images.vestige.co.in/buttrcloud/logo-white.png';
 
@@ -33,6 +34,7 @@ const AdminDashboard = () => {
   const [transactions, setTransactions] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [servers, setServers] = useState([]);
+  const [hostingAccounts, setHostingAccounts] = useState([]);
   const [promoCodes, setPromoCodes] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -101,6 +103,95 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       setMessage({ text: err.message || "Error loading servers", type: "error" });
+    }
+  };
+
+  // Fetch all hosting accounts
+  const fetchHostingAccounts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/getAllHosting`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setHostingAccounts(data.hostingAccounts || []);
+      }
+    } catch (err) {
+      setMessage({ text: err.message || "Error loading hosting accounts", type: "error" });
+    }
+  };
+
+  const handleSuspendHosting = async (id, reason) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/hosting/${id}/suspend`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ reason })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ text: "Hosting account suspended successfully", type: "success" });
+        fetchHostingAccounts();
+      } else {
+        alert(data.error || "Failed to suspend hosting account");
+      }
+    } catch (err) {
+      alert(err.message || "Error suspending hosting account");
+    }
+  };
+
+  const handleUnsuspendHosting = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/hosting/${id}/unsuspend`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ text: "Hosting account unsuspended successfully", type: "success" });
+        fetchHostingAccounts();
+      } else {
+        alert(data.error || "Failed to unsuspend hosting account");
+      }
+    } catch (err) {
+      alert(err.message || "Error unsuspending hosting account");
+    }
+  };
+
+  const handleDeleteHosting = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/hosting/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ text: "Hosting account deleted successfully", type: "success" });
+        fetchHostingAccounts();
+      } else {
+        alert(data.error || "Failed to delete hosting account");
+      }
+    } catch (err) {
+      alert(err.message || "Error deleting hosting account");
+    }
+  };
+
+  const handleHostingLogin = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/hosting/${id}/login`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok && data.url) {
+        window.open(data.url, "_blank");
+      } else {
+        alert(data.error || "Failed to generate cPanel login session");
+      }
+    } catch (err) {
+      alert(err.message || "Error generating cPanel login");
     }
   };
 
@@ -215,6 +306,9 @@ const AdminDashboard = () => {
           break;
         case "servers":
           await fetchServers();
+          break;
+        case "hosting":
+          await fetchHostingAccounts();
           break;
         case "promo-codes":
           await fetchPromoCodes();
@@ -388,6 +482,16 @@ const AdminDashboard = () => {
           formatCurrency={formatCurrency}
           formatDate={formatDate}
         />;
+      case "hosting":
+        return <Hosting
+          hostingAccounts={hostingAccounts}
+          onSuspend={handleSuspendHosting}
+          onUnsuspend={handleUnsuspendHosting}
+          onDelete={handleDeleteHosting}
+          onLogin={handleHostingLogin}
+          onRefresh={fetchHostingAccounts}
+          formatDate={formatDate}
+        />;
       case "promo-codes":
         return <PromoCodes
           promoCodes={promoCodes}
@@ -442,6 +546,17 @@ const AdminDashboard = () => {
               >
                 <Server className="nav-icon" size={18} />
                 Servers
+              </button>
+            )}
+
+            {/* Hosting */}
+            {adminInfo?.access === 'owner' && (
+              <button
+                className={`nav-item ${activeTab === "hosting" ? "active" : ""}`}
+                onClick={() => handleTabChange("hosting")}
+              >
+                <Server className="nav-icon" size={18} />
+                Hosting
               </button>
             )}
 

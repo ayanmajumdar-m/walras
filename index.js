@@ -37,6 +37,7 @@ const adminRouter = require("./routes/admin.routes");
 const walletRouter = require("./routes/wallet.routes");
 const serverRouter = require("./routes/server.routes");
 const authRouter = require("./routes/auth.routes");
+const hostingRouter = require("./routes/hosting.routes");
 const bolddesktest = require("./bolddesktest");
 
 // ✅ Step 4: Use routes
@@ -45,6 +46,7 @@ app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
+app.use("/api/hosting", hostingRouter);
 
 // ✅ Step 5: Test DB connection
 connection.connect((err) => {

@@ -9,6 +9,7 @@ import Wallet from "./DashboardContent/Wallet";
 import Deploy from "./DashboardContent/Deploy";
 import Logs from "./DashboardContent/Logs";
 import ComingSoon from "./DashboardContent/ComingSoon";
+import HostingConsole from "./DashboardContent/HostingConsole";
 import "./Dashboard.css";
 
 const tabs = [
@@ -46,12 +47,7 @@ const DashboardLayout = () => {
                   description="Domain registration, DNS management, and WHOIS privacy tools are coming soon to Buttr Cloud Console."
                 />
               } />
-              <Route path="/hosting" element={
-                <ComingSoon 
-                  title="Cloud Hosting" 
-                  description="Managed web hosting with instant SSL, one-click apps, and auto-scaling is coming soon."
-                />
-              } />
+              <Route path="/hosting" element={<HostingConsole />} />
               <Route path="/wallet" element={<Wallet/>} />
               <Route path="/profile" element={<Profile/>} />
               <Route path="/notifications" element={

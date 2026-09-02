@@ -21,6 +21,7 @@ import Refund from './components/Refund';
 import Terms from './components/Terms';
 import BareMetal from './components/BareMetal';
 import FlareMail from './components/FlareMail';
+import WebHosting from './components/WebHosting/WebHosting';
 
 function PublicLayout({ children }) {
   return (
@@ -43,6 +44,7 @@ function App() {
         <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
         <Route path="/domains/" element={<PublicLayout><DomainCheck /></PublicLayout>} />
         <Route path="/domains/buy" element={<PublicLayout><Domain /></PublicLayout>} />
+        <Route path="/web-hosting" element={<PublicLayout><WebHosting /></PublicLayout>} />
         <Route path='/privacy' element={<PublicLayout><Privacy /></PublicLayout>} />
         <Route path='/refund' element={<PublicLayout><Refund /></PublicLayout>} />
         <Route path='/terms' element={<PublicLayout><Terms /></PublicLayout>} />
