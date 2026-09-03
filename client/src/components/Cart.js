@@ -163,7 +163,7 @@ const Cart = () => {
             value="razorpay"
             checked={paymentMethod === 'razorpay'}
             onChange={e => setPaymentMethod(e.target.value)}
-          /> Razorpay
+          /> CCAvenue
         </label>
       </div>
 

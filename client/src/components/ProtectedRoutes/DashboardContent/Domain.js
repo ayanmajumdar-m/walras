@@ -356,7 +356,7 @@ function Domain() {
                         checked={paymentMethod === 'razorpay'}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                       />
-                      <span>Credit/Debit Card (Razorpay)</span>
+                      <span>Credit/Debit Card (CCAvenue)</span>
                     </label>
                     <label className="payment-option">
                       <input 
@@ -371,7 +371,7 @@ function Domain() {
                   </div>
                   {paymentMethod === 'wallet' && walletBalance < (selectedDomain.price * registrationPeriod) && (
                     <div className="insufficient-balance">
-                      <p>Insufficient wallet balance. Add funds to your wallet or use Razorpay.</p>
+                      <p>Insufficient wallet balance. Please add funds to your wallet.</p>
                     </div>
                   )}
                 </div>

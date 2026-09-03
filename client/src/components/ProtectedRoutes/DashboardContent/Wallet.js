@@ -6,7 +6,7 @@ const Wallet = () => {
   const [unbilled, setUnbilled] = useState(0);
   const [nextInvoiceDate, setNextInvoiceDate] = useState("");
   const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("razorpay");
+  const [paymentMethod, setPaymentMethod] = useState("ccavenue");
   const [loading, setLoading] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [userData, setUserData] = useState(null);
@@ -19,6 +19,24 @@ const Wallet = () => {
   useEffect(() => {
     fetchWallet();
     fetchUserData();
+
+    // Check for return status from CCAvenue
+    const params = new URLSearchParams(window.location.search);
+    const pStatus = params.get("payment_status");
+    if (pStatus === "success") {
+      const creditedAmt = params.get("amount");
+      const trackingId = params.get("tracking_id");
+      alert(`✅ Payment Successful! Your wallet has been credited ₹${creditedAmt || ""}. (Ref: ${trackingId || ""})`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      fetchWallet();
+    } else if (pStatus === "failed") {
+      const reason = params.get("reason") || "Transaction failed";
+      alert(`❌ Payment Failed: ${reason}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (pStatus === "cancelled") {
+      alert("⚠️ Payment was cancelled.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   // ✅ Get user ID from JWT token
@@ -98,6 +116,51 @@ const Wallet = () => {
       console.error("Error converting currency:", error);
       // Fallback rate
       return (inrAmount * 0.012).toFixed(2);
+    }
+  };
+
+  // ✅ CCAvenue payment handler
+  const handleCcavenuePayment = async (amt) => {
+    try {
+      const res = await fetch(`${API_URL}/api/payment/ccavenue/initiate-wallet`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ amount: amt }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.encRequest) {
+        alert(data.error || "Failed to initiate CCAvenue payment");
+        setLoading(false);
+        return;
+      }
+
+      // Create hidden dynamic form and auto-submit to CCAvenue
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.actionUrl;
+
+      const encInput = document.createElement("input");
+      encInput.type = "hidden";
+      encInput.name = "encRequest";
+      encInput.value = data.encRequest;
+      form.appendChild(encInput);
+
+      const accessInput = document.createElement("input");
+      accessInput.type = "hidden";
+      accessInput.name = "access_code";
+      accessInput.value = data.accessCode;
+      form.appendChild(accessInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.error("[CCAvenue] Payment initiation error:", err);
+      alert("Failed to start CCAvenue checkout");
+      setLoading(false);
     }
   };
 
@@ -264,7 +327,9 @@ const Wallet = () => {
     try {
       setLoading(true);
 
-      if (paymentMethod === "razorpay") {
+      if (paymentMethod === "ccavenue") {
+        await handleCcavenuePayment(amt);
+      } else if (paymentMethod === "razorpay") {
         await handleRazorpayPayment(amt);
       } else if (paymentMethod === "paypal") {
         await handlePayPalPayment(amt);
@@ -408,7 +473,7 @@ const Wallet = () => {
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
-            <option style={{color: 'black'}} value="razorpay">Razorpay (UPI, Cards, Net Banking)</option>
+            <option style={{color: 'black'}} value="ccavenue">CCAvenue (UPI, Cards, Net Banking)</option>
             <option style={{color: 'black'}} value="paypal">PayPal (International)</option>
           </select>
         </div>
