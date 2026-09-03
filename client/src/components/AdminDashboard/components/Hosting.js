@@ -5,6 +5,28 @@ const Hosting = ({ hostingAccounts = [], onSuspend, onUnsuspend, onDelete, onLog
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
+  const [whmPackages, setWhmPackages] = useState(null);
+  const [loadingPkgs, setLoadingPkgs] = useState(false);
+
+  const fetchWhmPackages = async () => {
+    setLoadingPkgs(true);
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
+      const res = await fetch(`https://buttr.cloud/api/admin/hostingPackages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setWhmPackages(data.packages || []);
+      } else {
+        alert(data.error || "Failed to load WHM packages");
+      }
+    } catch (e) {
+      alert("Error fetching WHM packages: " + e.message);
+    } finally {
+      setLoadingPkgs(false);
+    }
+  };
 
   const safeAccounts = Array.isArray(hostingAccounts) ? hostingAccounts : [];
 
@@ -47,6 +69,15 @@ const Hosting = ({ hostingAccounts = [], onSuspend, onUnsuspend, onDelete, onLog
               <RefreshCw size={14} />
             </button>
           )}
+          <button 
+            className="btn btn-secondary btn-sm" 
+            onClick={fetchWhmPackages} 
+            disabled={loadingPkgs}
+            title="Inspect WHM packages"
+            style={{ fontSize: "12px" }}
+          >
+            {loadingPkgs ? "Checking..." : "Inspect WHM Packages"}
+          </button>
         </div>
         <div className="servers-stats">
           <span>Total: {safeAccounts.length}</span>
@@ -54,6 +85,28 @@ const Hosting = ({ hostingAccounts = [], onSuspend, onUnsuspend, onDelete, onLog
           <span>Suspended: {safeAccounts.filter((a) => a.status === "suspended").length}</span>
         </div>
       </div>
+
+      {whmPackages && (
+        <div style={{ background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+            <strong style={{ color: "#0f172a", fontSize: "13px" }}>Packages found on WHM Server ({whmPackages.length}):</strong>
+            <button className="btn btn-sm" onClick={() => setWhmPackages(null)} style={{ padding: "2px 8px", fontSize: "11px" }}>Close</button>
+          </div>
+          {whmPackages.length === 0 ? (
+            <p style={{ margin: 0, color: "#dc2626", fontSize: "12px" }}>
+              ⚠️ No packages found on WHM. Please log in to WHM and create packages (e.g. <code>Lite</code> and <code>Pro</code>) under "Add a Package".
+            </p>
+          ) : (
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "6px" }}>
+              {whmPackages.map(p => (
+                <span key={p} style={{ background: "#e2e8f0", color: "#1e293b", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontFamily: "monospace", fontWeight: "700" }}>
+                  {p}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px", gap: "12px", flexWrap: "wrap" }}>
