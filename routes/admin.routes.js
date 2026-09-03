@@ -40,6 +40,7 @@ router.post('/hosting/:id/suspend', requireOwnerAccess, AdminController.suspendH
 router.post('/hosting/:id/unsuspend', requireOwnerAccess, AdminController.unsuspendHosting);
 router.delete('/hosting/:id', requireOwnerAccess, AdminController.deleteHosting);
 router.get('/hosting/:id/login', requireOwnerAccess, AdminController.getHostingLogin);
+router.get('/hostingPackages', requireOwnerAccess, AdminController.getWhmPackages);
 
 //Get all domains bought
 router.get('/getAllDomains', requireOwnerAccess, AdminController.getAllDomains);

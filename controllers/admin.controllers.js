@@ -1176,6 +1176,16 @@ const AdminController = {
             console.error("Admin get hosting login error:", error);
             res.status(500).json({ error: "Internal server error" });
         }
+    },
+
+    getWhmPackages: async (req, res) => {
+        try {
+            const packages = await cpanelService.listPackages();
+            res.json({ success: true, packages });
+        } catch (error) {
+            console.error("Admin get WHM packages error:", error);
+            res.status(500).json({ error: error.message });
+        }
     }
 };
 

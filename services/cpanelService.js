@@ -160,11 +160,53 @@ class CpanelService {
     }
 
     /**
+     * List all packages available on this WHM server
+     */
+    async listPackages() {
+        const result = await this.callWhmApi('listpkgs');
+        if (!result || !result.success) return [];
+        const raw = result.data || result.raw?.data || {};
+        const pkgs = raw.pkg || raw.package || [];
+        if (Array.isArray(pkgs)) {
+            return pkgs.map(p => (typeof p === 'string' ? p : p.name)).filter(Boolean);
+        }
+        return [];
+    }
+
+    /**
      * Create cPanel Account
      * @param {Object} options { username, domain, plan, password, email }
      */
     async createAccount({ username, domain, plan, password, email }) {
-        const cpanelPackage = this.getPackageForPlan(plan);
+        let cpanelPackage = this.getPackageForPlan(plan);
+        const config = this.getConfig();
+
+        // Auto-detect package from WHM server if exact match fails
+        if (config.isConfigured) {
+            try {
+                const availablePkgs = await this.listPackages();
+                console.log(`[cPanel/WHM] Available packages on WHM server:`, availablePkgs);
+                if (availablePkgs.length > 0 && !availablePkgs.includes(cpanelPackage)) {
+                    // Look for username prefixed e.g. webcloud_Lite, or case-insensitive match
+                    const userPrefixed = `${config.username}_${cpanelPackage}`.toLowerCase();
+                    const match = availablePkgs.find(p => {
+                        const pLower = p.toLowerCase();
+                        return (
+                            pLower === cpanelPackage.toLowerCase() ||
+                            pLower === userPrefixed ||
+                            pLower.includes(plan.toLowerCase())
+                        );
+                    });
+                    if (match) {
+                        console.log(`[cPanel/WHM] Resolved package '${cpanelPackage}' to server package '${match}'`);
+                        cpanelPackage = match;
+                    }
+                }
+            } catch (err) {
+                console.warn('[cPanel/WHM] Could not auto-detect packages:', err.message);
+            }
+        }
+
         console.log(`[cPanel/WHM] Creating cPanel account for ${domain} (user: ${username}, package: ${cpanelPackage})...`);
 
         const result = await this.callWhmApi('createacct', {
