@@ -4,6 +4,29 @@ import "./WebHosting.css";
 
 const WebHosting = () => {
   const [openFaq, setOpenFaq] = useState(null);
+  const [selectedTerm, setSelectedTerm] = useState("12");
+
+  const PAYMENT_TERMS = [
+    { id: "1", label: "1 Month", discount: null },
+    { id: "6", label: "6 Months", discount: "Save 15%" },
+    { id: "12", label: "12 Months", discount: "Save 25% · Popular" },
+    { id: "36", label: "36 Months", discount: "Save 40% · Best Value" }
+  ];
+
+  const TERM_PRICES = {
+    Lite: {
+      "1": { monthly: 199, was: 299, termNote: "Billed ₹199 for 1 Month" },
+      "6": { monthly: 169, was: 299, termNote: "Billed ₹1,014 for 6 Months" },
+      "12": { monthly: 149, was: 299, termNote: "Billed ₹1,788 for 12 Months" },
+      "36": { monthly: 119, was: 299, termNote: "Billed ₹4,284 for 36 Months" }
+    },
+    Pro: {
+      "1": { monthly: 449, was: 599, termNote: "Billed ₹449 for 1 Month" },
+      "6": { monthly: 389, was: 599, termNote: "Billed ₹2,334 for 6 Months" },
+      "12": { monthly: 349, was: 599, termNote: "Billed ₹4,188 for 12 Months" },
+      "36": { monthly: 299, was: 599, termNote: "Billed ₹10,764 for 36 Months" }
+    }
+  };
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -12,7 +35,7 @@ const WebHosting = () => {
   const handleGetStarted = (planName) => {
     const token = localStorage.getItem("token");
     if (token) {
-      window.location.href = `/dashboard/hosting?plan=${encodeURIComponent(planName.toLowerCase())}`;
+      window.location.href = `/dashboard/hosting?plan=${encodeURIComponent(planName.toLowerCase())}&term=${selectedTerm}`;
     } else {
       window.location.href = "/login";
     }
@@ -100,6 +123,24 @@ const WebHosting = () => {
             Simple, transparent pricing designed to grow with your website.
           </p>
 
+          {/* Payment Term Selector */}
+          <div className="webhosting-term-selector-wrapper">
+            <span className="webhosting-term-label">Payment Term:</span>
+            <div className="webhosting-term-pills">
+              {PAYMENT_TERMS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`webhosting-term-btn ${selectedTerm === t.id ? "active" : ""}`}
+                  onClick={() => setSelectedTerm(t.id)}
+                >
+                  <span className="term-btn-title">{t.label}</span>
+                  {t.discount && <span className="term-btn-badge">{t.discount}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="webhosting-plans-grid">
             {/* Lite Plan */}
             <div className="hosting-plan-card">
@@ -109,12 +150,12 @@ const WebHosting = () => {
               </p>
 
               <div className="hosting-price-container">
-                <div className="hosting-was-price">Was ₹299</div>
+                <div className="hosting-was-price">Was ₹{TERM_PRICES.Lite[selectedTerm].was}</div>
                 <div className="hosting-current-price">
-                  <span className="hosting-price-amount">₹149</span>
+                  <span className="hosting-price-amount">₹{TERM_PRICES.Lite[selectedTerm].monthly}</span>
                   <span className="hosting-price-period">/ month</span>
                 </div>
-                <div className="hosting-price-term">For a 1-year term. Billed annually.</div>
+                <div className="hosting-price-term">{TERM_PRICES.Lite[selectedTerm].termNote}</div>
               </div>
 
               <button
@@ -165,12 +206,12 @@ const WebHosting = () => {
               </p>
 
               <div className="hosting-price-container">
-                <div className="hosting-was-price">Was ₹599</div>
+                <div className="hosting-was-price">Was ₹{TERM_PRICES.Pro[selectedTerm].was}</div>
                 <div className="hosting-current-price">
-                  <span className="hosting-price-amount">₹349</span>
+                  <span className="hosting-price-amount">₹{TERM_PRICES.Pro[selectedTerm].monthly}</span>
                   <span className="hosting-price-period">/ month</span>
                 </div>
-                <div className="hosting-price-term">For a 1-year term. Billed annually.</div>
+                <div className="hosting-price-term">{TERM_PRICES.Pro[selectedTerm].termNote}</div>
               </div>
 
               <button

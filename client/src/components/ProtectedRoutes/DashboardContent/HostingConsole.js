@@ -63,12 +63,34 @@ const HostingConsole = () => {
     }
   };
 
+  const [selectedTerm, setSelectedTerm] = useState("12"); // "1", "6", "12", "36"
+
+  const PAYMENT_TERMS = [
+    { id: "1", label: "1 Month", months: 1, discount: null },
+    { id: "6", label: "6 Months", months: 6, discount: "Save 15%" },
+    { id: "12", label: "12 Months", months: 12, discount: "Save 25% · Popular" },
+    { id: "36", label: "36 Months", months: 36, discount: "Save 40% · Best Value" }
+  ];
+
+  const TERM_PRICES = {
+    Lite: {
+      "1": { monthly: 199, wasMonthly: 299, total: 199, note: "Billed ₹199 for 1 Month" },
+      "6": { monthly: 169, wasMonthly: 299, total: 1014, note: "Billed ₹1,014 for 6 Months" },
+      "12": { monthly: 149, wasMonthly: 299, total: 1788, note: "Billed ₹1,788 for 12 Months" },
+      "36": { monthly: 119, wasMonthly: 299, total: 4284, note: "Billed ₹4,284 for 36 Months" }
+    },
+    Pro: {
+      "1": { monthly: 449, wasMonthly: 599, total: 449, note: "Billed ₹449 for 1 Month" },
+      "6": { monthly: 389, wasMonthly: 599, total: 2334, note: "Billed ₹2,334 for 6 Months" },
+      "12": { monthly: 349, wasMonthly: 599, total: 4188, note: "Billed ₹4,188 for 12 Months" },
+      "36": { monthly: 299, wasMonthly: 599, total: 10764, note: "Billed ₹10,764 for 36 Months" }
+    }
+  };
+
   const plans = [
     {
       id: "lite",
       name: "Lite",
-      price: 149,
-      wasPrice: 299,
       featured: false,
       description: "Good things come in small packages. Simple requirements don't need huge resources.",
       features: [
@@ -84,8 +106,6 @@ const HostingConsole = () => {
     {
       id: "pro",
       name: "Pro",
-      price: 349,
-      wasPrice: 599,
       featured: true,
       badge: "Special Offer",
       description: "Our most popular hosting plan. High speed and dedicated resources for growing sites.",
@@ -112,11 +132,16 @@ const HostingConsole = () => {
       return;
     }
 
-    if (walletBalance < plan.price) {
+    const currentPricing = TERM_PRICES[plan.name][selectedTerm];
+    const totalRequired = currentPricing.total;
+
+    if (walletBalance < totalRequired) {
       setModalState({
         open: true,
         type: "low_balance",
-        plan: plan
+        plan: plan,
+        requiredAmount: totalRequired,
+        term: PAYMENT_TERMS.find(t => t.id === selectedTerm)
       });
       return;
     }
@@ -124,7 +149,9 @@ const HostingConsole = () => {
     setModalState({
       open: true,
       type: "confirm_buy",
-      plan: plan
+      plan: plan,
+      pricing: currentPricing,
+      term: PAYMENT_TERMS.find(t => t.id === selectedTerm)
     });
   };
 
@@ -135,6 +162,7 @@ const HostingConsole = () => {
     setIsDeploying(true);
     const token = localStorage.getItem("token");
     const domain = domainNames[plan.name] || "my-web-hosting.com";
+    const termLabel = modalState.term?.label || "12 Months";
 
     try {
       const response = await fetch(`${API_URL}/api/hosting/buy`, {
@@ -146,7 +174,7 @@ const HostingConsole = () => {
         body: JSON.stringify({
           planName: plan.name,
           domain: domain,
-          billingCycle: "monthly"
+          billingCycle: termLabel
         })
       });
 
@@ -342,57 +370,79 @@ const HostingConsole = () => {
           </h2>
         </div>
 
-        <div className="hosting-console-grid">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={`console-plan-card ${plan.featured ? "featured" : ""}`}
-            >
-              {plan.badge && <div className="console-plan-badge">{plan.badge}</div>}
-
-              <h2 className="console-plan-name">{plan.name}</h2>
-              <p className="console-plan-desc">{plan.description}</p>
-
-              <div className="console-price-box">
-                <div className="console-was-price">Was ₹{plan.wasPrice}</div>
-                <div className="console-current-price">
-                  <span className="console-price-amount">₹{plan.price}</span>
-                  <span className="console-price-period">/ month</span>
-                </div>
-              </div>
-
-              <div className="console-input-group">
-                <label htmlFor={`domain-${plan.id}`}>Primary Domain Name</label>
-                <input
-                  id={`domain-${plan.id}`}
-                  type="text"
-                  className="console-input"
-                  placeholder="e.g. mywebsite.com"
-                  value={domainNames[plan.name] || ""}
-                  onChange={(e) => handleDomainChange(plan.name, e.target.value)}
-                />
-              </div>
-
+        {/* Payment Term Selector */}
+        <div className="payment-term-section">
+          <span className="payment-term-label">Payment Term:</span>
+          <div className="payment-term-pills">
+            {PAYMENT_TERMS.map((t) => (
               <button
-                className={`console-buy-btn ${plan.featured ? "console-buy-btn-primary" : "console-buy-btn-secondary"}`}
-                onClick={() => handleBuyClick(plan)}
+                key={t.id}
+                type="button"
+                className={`payment-term-btn ${selectedTerm === t.id ? "active" : ""}`}
+                onClick={() => setSelectedTerm(t.id)}
               >
-                <ShoppingCart size={18} />
-                <span>Buy {plan.name} Plan</span>
+                <span className="term-btn-title">{t.label}</span>
+                {t.discount && <span className="term-btn-badge">{t.discount}</span>}
               </button>
+            ))}
+          </div>
+        </div>
 
-              <ul className="console-features-list">
-                {plan.features.map((feat, idx) => (
-                  <li key={idx} className="console-feature-item">
-                    <span className="console-check-icon">
-                      <Check size={12} strokeWidth={3} />
-                    </span>
-                    <span>{feat}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <div className="hosting-console-grid">
+          {plans.map((plan) => {
+            const currentPricing = TERM_PRICES[plan.name][selectedTerm];
+            return (
+              <div
+                key={plan.id}
+                className={`console-plan-card ${plan.featured ? "featured" : ""}`}
+              >
+                {plan.badge && <div className="console-plan-badge">{plan.badge}</div>}
+
+                <h2 className="console-plan-name">{plan.name}</h2>
+                <p className="console-plan-desc">{plan.description}</p>
+
+                <div className="console-price-box">
+                  <div className="console-was-price">Was ₹{currentPricing.wasMonthly}</div>
+                  <div className="console-current-price">
+                    <span className="console-price-amount">₹{currentPricing.monthly}</span>
+                    <span className="console-price-period">/ month</span>
+                  </div>
+                  <div className="console-term-billing-note">{currentPricing.note}</div>
+                </div>
+
+                <div className="console-input-group">
+                  <label htmlFor={`domain-${plan.id}`}>Primary Domain Name</label>
+                  <input
+                    id={`domain-${plan.id}`}
+                    type="text"
+                    className="console-input"
+                    placeholder="e.g. mywebsite.com"
+                    value={domainNames[plan.name] || ""}
+                    onChange={(e) => handleDomainChange(plan.name, e.target.value)}
+                  />
+                </div>
+
+                <button
+                  className={`console-buy-btn ${plan.featured ? "console-buy-btn-primary" : "console-buy-btn-secondary"}`}
+                  onClick={() => handleBuyClick(plan)}
+                >
+                  <ShoppingCart size={18} />
+                  <span>Buy {plan.name} Plan (₹{currentPricing.total})</span>
+                </button>
+
+                <ul className="console-features-list">
+                  {plan.features.map((feat, idx) => (
+                    <li key={idx} className="console-feature-item">
+                      <span className="console-check-icon">
+                        <Check size={12} strokeWidth={3} />
+                      </span>
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -402,7 +452,7 @@ const HostingConsole = () => {
           <div className="console-modal">
             <h3>Insufficient Wallet Balance</h3>
             <p>
-              Your wallet balance is <strong>₹{walletBalance.toFixed(2)}</strong>. You need at least <strong>₹{modalState.plan?.price}</strong> to activate the {modalState.plan?.name} hosting plan.
+              Your wallet balance is <strong>₹{walletBalance.toFixed(2)}</strong>. You need at least <strong>₹{modalState.requiredAmount}</strong> to activate the {modalState.plan?.name} hosting plan for <strong>{modalState.term?.label}</strong>.
             </p>
             <div className="console-modal-actions">
               <button
@@ -427,7 +477,7 @@ const HostingConsole = () => {
           <div className="console-modal">
             <h3>Activate cPanel Hosting</h3>
             <p>
-              You are activating the <strong>{modalState.plan?.name} Package</strong> for domain <strong>{domainNames[modalState.plan?.name]}</strong> at <strong>₹{modalState.plan?.price}/month</strong>.
+              You are activating the <strong>{modalState.plan?.name} Package</strong> for domain <strong>{domainNames[modalState.plan?.name]}</strong> for <strong>{modalState.term?.label}</strong> at <strong>₹{modalState.pricing?.total}</strong> (₹{modalState.pricing?.monthly}/month).
             </p>
             <p className="cpanel-activation-note">
               Once paid, your cPanel account will be provisioned immediately and accessible directly from this page.

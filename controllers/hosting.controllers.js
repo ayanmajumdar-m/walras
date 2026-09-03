@@ -82,10 +82,29 @@ exports.buyHosting = async (req, res) => {
             return res.status(400).json({ error: "Please provide a valid domain name" });
         }
 
-        // Calculate price in paise
-        let monthlyPaise = normalizedPlan === 'Lite' ? 14900 : 34900; // ₹149 or ₹349
-        let totalPaise = billingCycle === 'yearly' ? monthlyPaise * 12 : monthlyPaise;
-        const durationDays = billingCycle === 'yearly' ? 365 : 30;
+        // Payment terms: 1 Month, 6 Months, 12 Months, 36 Months
+        const termConfigMap = {
+            '1': { label: '1 Month', months: 1, days: 30, liteMonthly: 199, proMonthly: 449 },
+            '6': { label: '6 Months', months: 6, days: 180, liteMonthly: 169, proMonthly: 389 },
+            '12': { label: '12 Months', months: 12, days: 365, liteMonthly: 149, proMonthly: 349 },
+            '36': { label: '36 Months', months: 36, days: 1095, liteMonthly: 119, proMonthly: 299 }
+        };
+
+        let termKey = '12';
+        if (billingCycle) {
+            const str = String(billingCycle).toLowerCase();
+            if (str.includes('36')) termKey = '36';
+            else if (str.includes('12') || str.includes('year')) termKey = '12';
+            else if (str.includes('6')) termKey = '6';
+            else if (str.includes('1') || str.includes('month')) termKey = '1';
+        }
+
+        const selectedTerm = termConfigMap[termKey] || termConfigMap['12'];
+        const monthlyRate = normalizedPlan === 'Lite' ? selectedTerm.liteMonthly : selectedTerm.proMonthly;
+        const totalAmountRupees = monthlyRate * selectedTerm.months;
+        const totalPaise = totalAmountRupees * 100;
+        const durationDays = selectedTerm.days;
+        const formattedCycle = selectedTerm.label;
 
         // Verify wallet balance
         const wallet = await getWallet(userId);
@@ -147,7 +166,7 @@ exports.buyHosting = async (req, res) => {
                         [
                             wallet.id,
                             totalPaise,
-                            `Web Hosting (${normalizedPlan}) for ${cleanDomain}`,
+                            `Web Hosting (${normalizedPlan} - ${formattedCycle}) for ${cleanDomain}`,
                             `hosting_${cpanelUsername}`
                         ],
                         (txLogErr) => {
@@ -170,7 +189,7 @@ exports.buyHosting = async (req, res) => {
                                     cleanDomain,
                                     cpanelUsername,
                                     cpanelPassword,
-                                    billingCycle,
+                                    formattedCycle,
                                     totalPaise,
                                     durationDays
                                 ],
@@ -191,7 +210,7 @@ exports.buyHosting = async (req, res) => {
                                             });
                                         }
 
-                                        console.log(`✅ Web Hosting account activated: ID ${hostingId}, User ${cpanelUsername}, Domain ${cleanDomain}`);
+                                        console.log(`✅ Web Hosting account activated: ID ${hostingId}, User ${cpanelUsername}, Domain ${cleanDomain} (${formattedCycle})`);
 
                                         res.status(201).json({
                                             message: "Web Hosting activated successfully!",
@@ -202,7 +221,7 @@ exports.buyHosting = async (req, res) => {
                                                 cpanel_package: cpanelPackage,
                                                 cpanel_username: cpanelUsername,
                                                 status: "active",
-                                                billing_cycle: billingCycle,
+                                                billing_cycle: formattedCycle,
                                                 amount: totalPaise / 100
                                             }
                                         });

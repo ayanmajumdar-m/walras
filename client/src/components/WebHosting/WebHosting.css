@@ -89,6 +89,78 @@
   margin-bottom: 50px;
 }
 
+/* Payment Term Selector */
+.webhosting-term-selector-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 auto 36px;
+  flex-wrap: wrap;
+}
+
+.webhosting-term-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.webhosting-term-pills {
+  display: inline-flex;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 30px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  gap: 4px;
+}
+
+.webhosting-term-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: none;
+  background: transparent;
+  border-radius: 24px;
+  cursor: pointer;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.webhosting-term-btn:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.webhosting-term-btn.active {
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+}
+
+.webhosting-term-btn .term-btn-title {
+  font-weight: 700;
+}
+
+.webhosting-term-btn .term-btn-badge {
+  background: #fef08a;
+  color: #854d0e;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.webhosting-term-btn.active .term-btn-badge {
+  background: #eab308;
+  color: #0f172a;
+}
+
 .webhosting-plans-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 400px));
