@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search, AlertCircle, CheckCircle, XCircle, Loader2, Copy, Globe, Shield, Settings, Mail, Lock, Star, Zap, Users, Cloud } from 'lucide-react';
+import ButtrGuarantee from "./Constants/ButtrGuarantee";
 import "./DomainCheck.css";
 
 const DomainCheck = () => {
@@ -261,6 +262,9 @@ const DomainCheck = () => {
           </div>
         )}
       </div>
+
+      {/* Buttr Guarantee Section */}
+      <ButtrGuarantee />
 
       {/* TLD Pricing */}
       <div className="tld-section">

@@ -1,6 +1,7 @@
 import React from 'react';
 import './Pricing.css';
 import { Server, Cpu, HardDrive, Wifi, Zap, Shield, Clock, HelpCircle } from 'lucide-react';
+import ButtrGuarantee from '../Constants/ButtrGuarantee';
 
 const Pricing = () => {
   const sharedPlans = [
@@ -73,6 +74,9 @@ const Pricing = () => {
           </div>
         </div>
       </section>
+
+      {/* Buttr Guarantee Section */}
+      <ButtrGuarantee />
 
       {/* Important Notice */}
       <section className="important-notice">

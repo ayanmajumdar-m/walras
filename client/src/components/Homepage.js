@@ -1,6 +1,7 @@
 import React from "react";
 import "./Homepage.css";
 import { Zap, Clock, Gauge, Globe, Server, Check } from "lucide-react";
+import ButtrGuarantee from "./Constants/ButtrGuarantee";
 
 /*
   The homepage as a specification sheet.
@@ -21,8 +22,8 @@ const COMMITMENTS = [
     ref: "C-01",
     Icon: Zap,
     value: "99.9%",
-    title: "Uptime Promise",
-    desc: "We guarantee 99.9% uptime for your servers, that's the Buttr Cloud promise."
+    title: "Uptime Guaranteed",
+    desc: "We back our network and hardware with a 99.9% uptime SLA, so your apps stay live."
   },
   {
     ref: "C-02",
@@ -52,8 +53,8 @@ const SERVICES = [
   {
     ref: "S-02",
     Icon: Server,
-    title: "Flare Compute (VPS)",
-    description: "High-performance cloud VPS with SSD storage. (Currently Out of Stock)",
+    title: "Shared CPU",
+    description: "High-performance cloud compute with SSD storage. (Currently Out of Stock)",
     features: ["Instant Deployment", "SSD Storage", "Auto Scaling", "99.9% Uptime"],
     action: { label: "Out of Stock", href: "/about/pricing" }
   }
@@ -138,6 +139,8 @@ const Homepage = () => (
         </div>
       </div>
     </section>
+ 
+    <ButtrGuarantee />
 
     <section className="section section-pad">
       <div className="container">
