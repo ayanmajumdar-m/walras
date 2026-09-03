@@ -8,23 +8,23 @@ const WebHosting = () => {
 
   const PAYMENT_TERMS = [
     { id: "1", label: "1 Month", discount: null },
-    { id: "6", label: "6 Months", discount: "Save 15%" },
-    { id: "12", label: "12 Months", discount: "Save 25% · Popular" },
-    { id: "36", label: "36 Months", discount: "Save 40% · Best Value" }
+    { id: "6", label: "6 Months", discount: "Save 5%" },
+    { id: "12", label: "12 Months", discount: "Save 10% · Popular" },
+    { id: "36", label: "36 Months", discount: "Save 15% · Best Value" }
   ];
 
   const TERM_PRICES = {
     Lite: {
-      "1": { monthly: 199, was: 299, termNote: "Billed ₹199 for 1 Month" },
-      "6": { monthly: 169, was: 299, termNote: "Billed ₹1,014 for 6 Months" },
-      "12": { monthly: 149, was: 299, termNote: "Billed ₹1,788 for 12 Months" },
-      "36": { monthly: 119, was: 299, termNote: "Billed ₹4,284 for 36 Months" }
+      "1": { monthly: 99, was: 149, termNote: "Billed ₹99 for 1 Month" },
+      "6": { monthly: 94, was: 149, termNote: "Billed ₹564 for 6 Months (5% off)" },
+      "12": { monthly: 89, was: 149, termNote: "Billed ₹1,069 for 12 Months (10% off)" },
+      "36": { monthly: 84, was: 149, termNote: "Billed ₹3,029 for 36 Months (15% off)" }
     },
     Pro: {
-      "1": { monthly: 449, was: 599, termNote: "Billed ₹449 for 1 Month" },
-      "6": { monthly: 389, was: 599, termNote: "Billed ₹2,334 for 6 Months" },
-      "12": { monthly: 349, was: 599, termNote: "Billed ₹4,188 for 12 Months" },
-      "36": { monthly: 299, was: 599, termNote: "Billed ₹10,764 for 36 Months" }
+      "1": { monthly: 179, was: 299, termNote: "Billed ₹179 for 1 Month" },
+      "6": { monthly: 170, was: 299, termNote: "Billed ₹1,020 for 6 Months (5% off)" },
+      "12": { monthly: 161, was: 299, termNote: "Billed ₹1,933 for 12 Months (10% off)" },
+      "36": { monthly: 152, was: 299, termNote: "Billed ₹5,477 for 36 Months (15% off)" }
     }
   };
 

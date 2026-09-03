@@ -82,12 +82,12 @@ exports.buyHosting = async (req, res) => {
             return res.status(400).json({ error: "Please provide a valid domain name" });
         }
 
-        // Payment terms: 1 Month, 6 Months, 12 Months, 36 Months
+        // Payment terms: Lite (₹99/m), Pro (₹179/m) with discounts 6M (5%), 12M (10%), 36M (15%)
         const termConfigMap = {
-            '1': { label: '1 Month', months: 1, days: 30, liteMonthly: 199, proMonthly: 449 },
-            '6': { label: '6 Months', months: 6, days: 180, liteMonthly: 169, proMonthly: 389 },
-            '12': { label: '12 Months', months: 12, days: 365, liteMonthly: 149, proMonthly: 349 },
-            '36': { label: '36 Months', months: 36, days: 1095, liteMonthly: 119, proMonthly: 299 }
+            '1': { label: '1 Month', months: 1, days: 30, liteTotal: 99, proTotal: 179 },
+            '6': { label: '6 Months', months: 6, days: 180, liteTotal: 564, proTotal: 1020 },
+            '12': { label: '12 Months', months: 12, days: 365, liteTotal: 1069, proTotal: 1933 },
+            '36': { label: '36 Months', months: 36, days: 1095, liteTotal: 3029, proTotal: 5477 }
         };
 
         let termKey = '12';
@@ -100,8 +100,7 @@ exports.buyHosting = async (req, res) => {
         }
 
         const selectedTerm = termConfigMap[termKey] || termConfigMap['12'];
-        const monthlyRate = normalizedPlan === 'Lite' ? selectedTerm.liteMonthly : selectedTerm.proMonthly;
-        const totalAmountRupees = monthlyRate * selectedTerm.months;
+        const totalAmountRupees = normalizedPlan === 'Lite' ? selectedTerm.liteTotal : selectedTerm.proTotal;
         const totalPaise = totalAmountRupees * 100;
         const durationDays = selectedTerm.days;
         const formattedCycle = selectedTerm.label;

@@ -67,23 +67,23 @@ const HostingConsole = () => {
 
   const PAYMENT_TERMS = [
     { id: "1", label: "1 Month", months: 1, discount: null },
-    { id: "6", label: "6 Months", months: 6, discount: "Save 15%" },
-    { id: "12", label: "12 Months", months: 12, discount: "Save 25% · Popular" },
-    { id: "36", label: "36 Months", months: 36, discount: "Save 40% · Best Value" }
+    { id: "6", label: "6 Months", months: 6, discount: "Save 5%" },
+    { id: "12", label: "12 Months", months: 12, discount: "Save 10% · Popular" },
+    { id: "36", label: "36 Months", months: 36, discount: "Save 15% · Best Value" }
   ];
 
   const TERM_PRICES = {
     Lite: {
-      "1": { monthly: 199, wasMonthly: 299, total: 199, note: "Billed ₹199 for 1 Month" },
-      "6": { monthly: 169, wasMonthly: 299, total: 1014, note: "Billed ₹1,014 for 6 Months" },
-      "12": { monthly: 149, wasMonthly: 299, total: 1788, note: "Billed ₹1,788 for 12 Months" },
-      "36": { monthly: 119, wasMonthly: 299, total: 4284, note: "Billed ₹4,284 for 36 Months" }
+      "1": { monthly: 99, wasMonthly: 149, total: 99, note: "Billed ₹99 for 1 Month" },
+      "6": { monthly: 94, wasMonthly: 149, total: 564, note: "Billed ₹564 for 6 Months (5% off)" },
+      "12": { monthly: 89, wasMonthly: 149, total: 1069, note: "Billed ₹1,069 for 12 Months (10% off)" },
+      "36": { monthly: 84, wasMonthly: 149, total: 3029, note: "Billed ₹3,029 for 36 Months (15% off)" }
     },
     Pro: {
-      "1": { monthly: 449, wasMonthly: 599, total: 449, note: "Billed ₹449 for 1 Month" },
-      "6": { monthly: 389, wasMonthly: 599, total: 2334, note: "Billed ₹2,334 for 6 Months" },
-      "12": { monthly: 349, wasMonthly: 599, total: 4188, note: "Billed ₹4,188 for 12 Months" },
-      "36": { monthly: 299, wasMonthly: 599, total: 10764, note: "Billed ₹10,764 for 36 Months" }
+      "1": { monthly: 179, wasMonthly: 299, total: 179, note: "Billed ₹179 for 1 Month" },
+      "6": { monthly: 170, wasMonthly: 299, total: 1020, note: "Billed ₹1,020 for 6 Months (5% off)" },
+      "12": { monthly: 161, wasMonthly: 299, total: 1933, note: "Billed ₹1,933 for 12 Months (10% off)" },
+      "36": { monthly: 152, wasMonthly: 299, total: 5477, note: "Billed ₹5,477 for 36 Months (15% off)" }
     }
   };
 
