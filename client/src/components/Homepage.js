@@ -52,10 +52,10 @@ const SERVICES = [
   {
     ref: "S-02",
     Icon: Server,
-    title: "Flare Compute",
-    description: "High-performance cloud VPS with SSD storage and instant deployment.",
+    title: "Flare Compute (VPS)",
+    description: "High-performance cloud VPS with SSD storage. (Currently Out of Stock)",
     features: ["Instant Deployment", "SSD Storage", "Auto Scaling", "99.9% Uptime"],
-    action: { label: "View Plans", href: "/about/pricing" }
+    action: { label: "Out of Stock", href: "/about/pricing" }
   }
 ];
 

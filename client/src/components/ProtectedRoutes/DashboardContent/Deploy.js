@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import "./DeployDetails.css";
 
 const Deploy = () => {
@@ -122,6 +123,17 @@ const Deploy = () => {
         </div>
       </div>
 
+      <div className="deploy-out-of-stock-alert">
+        <AlertTriangle size={22} style={{ flexShrink: 0, marginTop: "2px", color: "#d97706" }} />
+        <div>
+          <h4>Cloud VPS Instances Currently Out of Stock</h4>
+          <p>
+            All shared CPU Cloud VPS instances are temporarily sold out due to high demand.
+            Our infrastructure team is provisioning new server capacity. In the meantime, you can explore our <strong><a href="/dashboard/hosting" style={{ color: "#78350f", textDecoration: "underline" }}>Web Hosting & cPanel</a></strong> packages.
+          </p>
+        </div>
+      </div>
+
       <div className="deploy-table-container">
         <table className="deploy-table">
           <thead>
@@ -133,7 +145,7 @@ const Deploy = () => {
               <th>SSD Storage</th>
               <th>Bandwidth</th>
               <th>IPv4</th>
-              <th></th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -147,6 +159,7 @@ const Deploy = () => {
                       : formatHourlyPrice(plan.hourly_usd, true) + "/hr"
                     }
                   </div>
+                  <span className="stock-badge-pill out-of-stock">Out of Stock</span>
                 </td>
                 <td className="price-cell">
                   <div className="monthly-price">
@@ -163,10 +176,11 @@ const Deploy = () => {
                 <td>{plan.ip}</td>
                 <td>
                   <button 
-                    className="deploy-btn"
-                    onClick={() => handleDeployClick(plan)}
+                    className="deploy-btn out-of-stock"
+                    disabled={true}
+                    title="This VPS plan is currently out of stock"
                   >
-                    Deploy
+                    Out of Stock
                   </button>
                 </td>
               </tr>

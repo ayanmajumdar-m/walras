@@ -77,13 +77,13 @@ const Pricing = () => {
       {/* Important Notice */}
       <section className="important-notice">
         <div className="container">
-          <div className="notice-content">
-            <Shield className="notice-icon" />
+          <div className="notice-content" style={{ borderColor: "#f59e0b", background: "#fffbeb" }}>
+            <Shield className="notice-icon" style={{ color: "#d97706" }} />
             <div>
-              <h3>Important Notice</h3>
-              <p>
-                Our India-based servers are currently at full capacity and are not available for new deployments.
-                We are working on expanding our capacity. All new deployments will be on our UK servers.
+              <h3 style={{ color: "#92400e" }}>Cloud VPS Out of Stock</h3>
+              <p style={{ color: "#92400e" }}>
+                All Cloud VPS instances are currently at full capacity and temporarily out of stock for new deployments.
+                We are actively expanding our server infrastructure. In the meantime, you can explore our <strong><a href="/web-hosting" style={{ color: "#78350f", textDecoration: "underline" }}>Web Hosting & cPanel</a></strong> plans.
               </p>
             </div>
           </div>
@@ -117,6 +117,9 @@ const Pricing = () => {
                   <div className="plan-price">
                     <span className="monthly-price">{plan.hourlyPrice} | {plan.monthlyPrice}/mo</span>
                   </div>
+                  <span style={{ display: "inline-block", marginTop: "8px", background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase" }}>
+                    Out of Stock
+                  </span>
                 </div>
 
                 <div className="plan-features">
@@ -143,13 +146,12 @@ const Pricing = () => {
                 </div>
 
                 <button
-                  onClick={() => {
-                    window.location.href = "/login";
-                  }}
-                  className={`btn plan-btn  ${plan.popular ? 'primary' : 'secondary'}`}
-                  aria-disabled="true"
+                  className="btn plan-btn"
+                  disabled={true}
+                  style={{ background: "#f1f5f9", color: "#94a3b8", cursor: "not-allowed", border: "1px solid #cbd5e1" }}
+                  title="This VPS plan is currently out of stock"
                 >
-                  Deploy
+                  Out of Stock
                 </button>
               </div>
 

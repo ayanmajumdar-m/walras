@@ -580,9 +580,64 @@
   transition: all 0.2s ease;
 }
 
-.deploy-btn:hover {
+.deploy-btn:hover:not(:disabled) {
   background: #f7f7f8;
   transform: scale(1.05);
+}
+
+.deploy-btn.out-of-stock,
+.deploy-btn:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1px solid #cbd5e1;
+  cursor: not-allowed;
+  transform: none !important;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.stock-badge-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stock-badge-pill.out-of-stock {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  margin-top: 4px;
+}
+
+.deploy-out-of-stock-alert {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  color: #92400e;
+}
+
+.deploy-out-of-stock-alert h4 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #78350f;
+}
+
+.deploy-out-of-stock-alert p {
+  margin: 0;
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.5;
 }
 
 /* Wallet Container */
