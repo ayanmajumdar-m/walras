@@ -33,12 +33,14 @@ class CpanelService {
 
         const username = process.env.WHM_USERNAME || 'root';
         const apiToken = process.env.WHM_API_TOKEN || '';
+        const isPlaceholder = host.includes('your-cpanel-server.com') || host.includes('example.com');
 
         return {
             host,
             username,
             apiToken,
-            isConfigured: Boolean(host && apiToken)
+            isConfigured: Boolean(host && apiToken && !isPlaceholder),
+            isPlaceholder
         };
     }
 
@@ -103,6 +105,13 @@ class CpanelService {
      */
     async callWhmApi(functionName, params = {}) {
         const config = this.getConfig();
+
+        if (config.isPlaceholder) {
+            return {
+                success: false,
+                reason: "WHM_HOST is still set to placeholder 'your-cpanel-server.com'. Please replace it with your actual WHM server IP or domain in .env"
+            };
+        }
 
         if (!config.isConfigured) {
             console.warn(`[cPanel/WHM] Simulated API call '${functionName}': WHM_API_TOKEN or WHM_HOST is not configured.`);
