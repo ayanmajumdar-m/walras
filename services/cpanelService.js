@@ -60,19 +60,35 @@ class CpanelService {
 
     /**
      * Generate a valid cPanel username from domain name (max 16 chars, alphanumeric)
+     * Avoids cPanel/Linux reserved usernames like 'test', 'root', 'admin', etc.
      */
     generateCpanelUsername(domain) {
-        const clean = (domain || '')
+        let clean = (domain || '')
             .toLowerCase()
             .replace(/^www\./, '')
             .split('.')[0]
             .replace(/[^a-z0-9]/g, '');
 
-        const prefix = (clean.length >= 3 ? clean.substring(0, 8) : 'usr')
-            .replace(/^[0-9]+/, 'u'); // Cannot start with a digit
+        // Disallowed reserved prefixes in cPanel / Linux (/etc/reservedusers)
+        const RESERVED_PREFIXES = [
+            'test', 'admin', 'root', 'cpanel', 'whm', 'mail', 'ftp', 'nobody', 
+            'daemon', 'bin', 'sys', 'sync', 'mysql', 'postgres', 'apache', 
+            'httpd', 'ssl', 'support', 'guest', 'user', 'billing', 'operator'
+        ];
 
+        for (const reserved of RESERVED_PREFIXES) {
+            if (clean.startsWith(reserved)) {
+                clean = 'b' + clean;
+                break;
+            }
+        }
+
+        // Cannot start with a digit
+        clean = clean.replace(/^[0-9]+/, 'u');
+
+        const prefix = (clean.length >= 3 ? clean.substring(0, 7) : 'usr' + clean).substring(0, 7);
         const randomSuffix = crypto.randomBytes(3).toString('hex').substring(0, 4);
-        const username = (prefix + randomSuffix).substring(0, 16);
+        const username = (prefix + randomSuffix).substring(0, 12);
         return username;
     }
 
