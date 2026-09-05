@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Search, AlertCircle, CheckCircle, XCircle, Loader2, Copy, Globe, Shield, Settings, Mail, Lock, Star, Zap, Users, Cloud, Sparkles } from 'lucide-react';
-import ButtrGuarantee from "./Constants/ButtrGuarantee";
 import "./DomainCheck.css";
 
 const DomainCheck = () => {
@@ -149,37 +148,6 @@ const DomainCheck = () => {
     }
   ];
 
-  const DOMAIN_GUARANTEES = [
-    {
-      id: "privacy",
-      icon: <Shield size={26} className="guarantee-icon" />,
-      badge: "LIFETIME FREE",
-      title: "Privacy Guaranteed",
-      desc: "Free WHOIS privacy protection included with every domain. Keep your personal identity, contact details, and phone number 100% private from public scrapers and spammers."
-    },
-    {
-      id: "lowest-price",
-      icon: <Sparkles size={26} className="guarantee-icon" />,
-      badge: "BEST RATE",
-      title: "Lowest Price Possible",
-      desc: "Rock-bottom prices across 500+ top-level domains. No hidden registration markups, transparent renewals, and no surprise price hikes."
-    },
-    {
-      id: "dns-management",
-      icon: <Settings size={26} className="guarantee-icon" />,
-      badge: "COMING SOON",
-      title: "DNS Management",
-      desc: "Comprehensive Anycast DNS record management (A, CNAME, MX, TXT) with global edge propagation and 1-click cloud service linking coming soon."
-    },
-    {
-      id: "business-mails",
-      icon: <Mail size={26} className="guarantee-icon" />,
-      badge: "COMING SOON",
-      title: "Business Mails",
-      desc: "Custom branded domain email addresses (you@yourdomain.com) with secure webmail, intelligent spam filters, and high inbox deliverability coming soon."
-    }
-  ];
-
   return (
     <div className="domain-check">
       {/* Hero Section */}
@@ -293,14 +261,6 @@ const DomainCheck = () => {
           </div>
         )}
       </div>
-
-      {/* Buttr Guarantee Section */}
-      <ButtrGuarantee
-        kicker="DOMAIN COMMITMENT"
-        title="Buttr Guarantee"
-        subtitle="Our ironclad promises to secure, protect, and power your web presence."
-        guarantees={DOMAIN_GUARANTEES}
-      />
 
       {/* TLD Pricing */}
       <div className="tld-section">

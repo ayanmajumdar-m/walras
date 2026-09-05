@@ -1,7 +1,6 @@
 import React from "react";
 import "./Homepage.css";
 import { Zap, Clock, Gauge, Globe, Server, Check } from "lucide-react";
-import ButtrGuarantee from "./Constants/ButtrGuarantee";
 
 /*
   The homepage as a specification sheet.
@@ -140,8 +139,6 @@ const Homepage = () => (
       </div>
     </section>
  
-    <ButtrGuarantee />
-
     <section className="section section-pad">
       <div className="container">
         <div className="rule-head">

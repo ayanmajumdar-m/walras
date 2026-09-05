@@ -184,7 +184,7 @@ const HostingConsole = () => {
         setModalState({ open: false, type: "", plan: null });
         setStatusMessage({
           type: "success",
-          text: `🎉 Package activated! Your ${plan.name} Web Hosting for ${domain} is ready.`
+          text: `🎉 Plan activated! Your ${plan.name} Web Hosting for ${domain} is ready.`
         });
         setDomainNames(prev => ({ ...prev, [plan.name]: "" }));
         fetchWalletBalance();
@@ -262,7 +262,7 @@ const HostingConsole = () => {
       {/* Header */}
       <div className="hosting-console-header">
         <h1>Web Hosting & cPanel Management</h1>
-        <p>Manage your active cPanel accounts or activate a new high-speed hosting package.</p>
+        <p>Manage your active cPanel accounts or activate a new high-speed hosting plan.</p>
         
         <div className="hosting-console-wallet">
           <Wallet size={16} />
@@ -283,7 +283,7 @@ const HostingConsole = () => {
           <div className="section-title-row">
             <h2>
               <Server size={20} />
-              <span>My Active Hosting Packages</span>
+              <span>My Active Hosting Plans</span>
             </h2>
             <button className="btn-refresh" onClick={fetchUserHosting} title="Refresh Accounts">
               <RefreshCw size={15} />
@@ -295,7 +295,7 @@ const HostingConsole = () => {
               <thead>
                 <tr>
                   <th>Domain</th>
-                  <th>Plan & Package</th>
+                  <th>Plan</th>
                   <th>cPanel Username</th>
                   <th>Status</th>
                   <th>Expires On</th>
@@ -315,7 +315,6 @@ const HostingConsole = () => {
                       </td>
                       <td>
                         <span className="plan-badge-tag">{acc.plan_name}</span>
-                        <span className="package-subtext">({acc.cpanel_package})</span>
                       </td>
                       <td>
                         <code className="cpanel-user-code">{acc.cpanel_username}</code>
@@ -366,7 +365,7 @@ const HostingConsole = () => {
         <div className="section-title-row">
           <h2>
             <ShoppingCart size={20} />
-            <span>{userAccounts.length > 0 ? "Activate Another Hosting Package" : "Select Your Hosting Plan"}</span>
+            <span>{userAccounts.length > 0 ? "Activate Another Hosting Plan" : "Select Your Hosting Plan"}</span>
           </h2>
         </div>
 
@@ -477,7 +476,7 @@ const HostingConsole = () => {
           <div className="console-modal">
             <h3>Activate cPanel Hosting</h3>
             <p>
-              You are activating the <strong>{modalState.plan?.name} Package</strong> for domain <strong>{domainNames[modalState.plan?.name]}</strong> for <strong>{modalState.term?.label}</strong> at <strong>₹{modalState.pricing?.total}</strong> (₹{modalState.pricing?.monthly}/month).
+              You are activating the <strong>{modalState.plan?.name} Plan</strong> for domain <strong>{domainNames[modalState.plan?.name]}</strong> for <strong>{modalState.term?.label}</strong> at <strong>₹{modalState.pricing?.total}</strong> (₹{modalState.pricing?.monthly}/month).
             </p>
             <p className="cpanel-activation-note">
               Once paid, your cPanel account will be provisioned immediately and accessible directly from this page.
