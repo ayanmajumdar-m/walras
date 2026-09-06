@@ -48,12 +48,12 @@ const SignIn = () => {
 
   return (
     <div className="auth-wrapper">
-      {/* Background ambient lighting */}
-      <div className="auth-glow auth-glow-purple" />
+      {/* Background ambient golden butter lighting */}
       <div className="auth-glow auth-glow-amber" />
+      <div className="auth-glow auth-glow-gold" />
       <div className="auth-glow auth-glow-center" />
 
-      {/* Smooth wave line SVG overlay */}
+      {/* Smooth wave line SVG overlay with golden yellow theme */}
       <svg
         className="auth-bg-svg"
         xmlns="http://www.w3.org/2000/svg"
@@ -63,8 +63,8 @@ const SignIn = () => {
       >
         <path
           d="M 1000,0 C 750,180 620,40 400,280 C 180,520 80,720 0,900 L 0,1000 L 1000,1000 Z"
-          fill="url(#authPurpleGradient)"
-          opacity="0.12"
+          fill="url(#authYellowGradient)"
+          opacity="0.09"
         />
         <path
           d="M 1000,100 C 800,220 700,120 500,320 C 300,520 150,700 0,850"
@@ -79,14 +79,14 @@ const SignIn = () => {
           opacity="0.2"
         />
         <defs>
-          <linearGradient id="authPurpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#4c1d95" stopOpacity="0" />
+          <linearGradient id="authYellowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffd400" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#b45309" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="authLineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#c084fc" stopOpacity="0.8" />
-            <stop offset="50%" stopColor="#a855f7" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.6" />
+            <stop offset="0%" stopColor="#ffe96b" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#ffd400" stopOpacity="0.65" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.5" />
           </linearGradient>
         </defs>
       </svg>
@@ -121,7 +121,7 @@ const SignIn = () => {
               <span className="auth-badge-label">BUTTR CLOUD</span>
             </div>
 
-            {/* Connecting Bridge */}
+            {/* Connecting Bridge with Yellow Glow */}
             <div className="auth-bridge">
               <div className="auth-bridge-line" />
               <div className="auth-bridge-node">
