@@ -53,7 +53,7 @@ function App() {
 
         {/* Sign-in is delegated to BUTTR ID. /login only offers the handoff;
             /auth/callback is where the backend drops the session token. */}
-        <Route path="/login" element={<PublicLayout><SignIn /></PublicLayout>} />
+        <Route path="/login" element={<SignIn />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Registration, OTP verification and password reset all moved to

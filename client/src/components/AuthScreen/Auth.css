@@ -6,7 +6,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  background-color: #050408;
+  background-color: #07050d;
   color: #ffffff;
   padding: 1.5rem 1.5rem 2rem;
   position: relative;
@@ -20,25 +20,44 @@
   border-radius: 50%;
   pointer-events: none;
   filter: blur(120px);
-  opacity: 0.28;
   z-index: 0;
 }
 
 .auth-glow-purple {
-  top: -10%;
-  left: 25%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #7c3aed 0%, rgba(124, 58, 237, 0) 70%);
+  top: -12%;
+  right: -10%;
+  width: 540px;
+  height: 540px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.32) 0%, rgba(76, 29, 149, 0.15) 50%, transparent 70%);
 }
 
 .auth-glow-amber {
-  bottom: 0%;
-  right: 25%;
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, #f59e0b 0%, rgba(245, 158, 11, 0) 70%);
-  opacity: 0.18;
+  bottom: -15%;
+  left: -10%;
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, rgba(126, 34, 206, 0.25) 0%, rgba(67, 56, 202, 0.12) 50%, transparent 70%);
+}
+
+.auth-glow-center {
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  filter: blur(90px);
+}
+
+/* Background SVG waves */
+.auth-bg-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Header */
@@ -46,11 +65,11 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 900px;
+  max-width: 960px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0 1.5rem;
+  padding: 0.5rem 0.5rem 1.5rem;
 }
 
 .auth-header-logo {
@@ -61,13 +80,22 @@
 }
 
 .auth-header-logo:hover {
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 .auth-header-img {
   height: 32px;
   width: auto;
   object-fit: contain;
+}
+
+.auth-header-brand {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin-left: 0.75rem;
 }
 
 .auth-header-tag {
@@ -89,11 +117,12 @@
   align-items: center;
   justify-content: center;
   flex: 1;
+  padding: 1.5rem 0;
 }
 
 .auth-card-modern {
   width: 100%;
-  max-width: 400px;
+  max-width: 390px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -104,27 +133,30 @@
 /* Badges */
 .auth-badges {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
+  padding-top: 0.5rem;
 }
 
 .auth-badge-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
 .auth-badge {
-  width: 80px;
-  height: 80px;
+  width: 84px;
+  height: 84px;
   border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  padding: 14px;
+  box-sizing: border-box;
   transition: transform 0.2s ease;
 }
 
@@ -138,31 +170,43 @@
   box-shadow: 0 8px 24px rgba(109, 40, 217, 0.25);
 }
 
-.auth-badge-icon {
-  width: 36px;
-  height: 36px;
-  color: #c084fc;
-}
-
 .auth-badge-buttr {
   background: linear-gradient(180deg, #211d13 0%, #12100a 100%);
   border: 1px solid rgba(245, 158, 11, 0.3);
   box-shadow: 0 8px 24px rgba(245, 158, 11, 0.18);
 }
 
-.auth-buttr-mark {
-  font-size: 26px;
-  font-weight: 900;
+.auth-badge-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.drop-shadow-cloud {
+  filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.4));
+}
+
+.drop-shadow-buttr {
+  filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.3));
+}
+
+.auth-buttr-fallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #09090b;
   color: #fbbf24;
-  font-family: system-ui, -apple-system, sans-serif;
-  letter-spacing: -0.05em;
-  line-height: 1;
+  font-size: 20px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-badge-label {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   color: #d4d4d8;
   text-transform: uppercase;
 }
@@ -173,8 +217,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  margin-top: -1.5rem;
+  width: 56px;
+  height: 84px;
+  flex-shrink: 0;
 }
 
 .auth-bridge-line {
@@ -185,34 +230,34 @@
 
 .auth-bridge-node {
   position: absolute;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #1b1238;
-  border: 1px solid rgba(147, 51, 234, 0.5);
+  border: 1px solid rgba(147, 51, 234, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 16px rgba(147, 51, 234, 0.65);
+  box-shadow: 0 0 18px rgba(147, 51, 234, 0.7);
 }
 
 .auth-bridge-icon {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   color: #d8b4fe;
   stroke-width: 2.4;
 }
 
 /* Headings */
 .auth-headings {
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
 }
 
 .auth-hero-title {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.18;
   color: #ffffff;
   margin: 0 0 0.75rem 0;
 }
@@ -222,7 +267,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
-  filter: drop-shadow(0 0 18px rgba(168, 85, 247, 0.35));
+  filter: drop-shadow(0 0 24px rgba(168, 85, 247, 0.45));
 }
 
 .auth-hero-sub {
@@ -286,20 +331,21 @@
 }
 
 .auth-btn-login {
-  background: rgba(18, 16, 30, 0.85);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(18, 14, 36, 0.7);
+  color: #e4e4e7;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
 }
 
 .auth-btn-login:hover:not(:disabled) {
-  background: rgba(26, 21, 50, 0.95);
-  border-color: rgba(139, 92, 246, 0.4);
+  background: #1a1433;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
 }
 
 .auth-btn-login:disabled {
-  opacity: 0.7;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -334,12 +380,16 @@
 }
 
 .auth-footer-link {
-  color: #a78bfa;
+  color: #d4d4d8;
   text-decoration: underline;
   text-underline-offset: 3px;
   transition: color 0.2s;
 }
 
 .auth-footer-link:hover {
-  color: #c4b5fd;
+  color: #ffffff;
+}
+
+.hidden {
+  display: none !important;
 }

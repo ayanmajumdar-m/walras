@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useSearchParams, Link } from "react-router-dom";
-import { UserPlus, LogIn, ArrowRight, Link2, Cloud } from "lucide-react";
-import Logo from "../logo.png";
+import { UserPlus, LogIn, ArrowRight, Link2 } from "lucide-react";
+import CloudMark from "./buttr-cloud-mark.png";
+import ButtrMark from "./buttr-mark.png";
 import "./Auth.css";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://buttr.cloud";
@@ -50,11 +51,51 @@ const SignIn = () => {
       {/* Background ambient lighting */}
       <div className="auth-glow auth-glow-purple" />
       <div className="auth-glow auth-glow-amber" />
+      <div className="auth-glow auth-glow-center" />
+
+      {/* Smooth wave line SVG overlay */}
+      <svg
+        className="auth-bg-svg"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        preserveAspectRatio="none"
+        viewBox="0 0 1000 1000"
+      >
+        <path
+          d="M 1000,0 C 750,180 620,40 400,280 C 180,520 80,720 0,900 L 0,1000 L 1000,1000 Z"
+          fill="url(#authPurpleGradient)"
+          opacity="0.12"
+        />
+        <path
+          d="M 1000,100 C 800,220 700,120 500,320 C 300,520 150,700 0,850"
+          stroke="url(#authLineGradient)"
+          strokeWidth="1.2"
+          opacity="0.25"
+        />
+        <path
+          d="M 0,600 C 200,680 380,780 600,840 C 800,900 900,920 1000,960"
+          stroke="url(#authLineGradient)"
+          strokeWidth="1"
+          opacity="0.2"
+        />
+        <defs>
+          <linearGradient id="authPurpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#4c1d95" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="authLineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#c084fc" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#a855f7" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.6" />
+          </linearGradient>
+        </defs>
+      </svg>
 
       {/* Top Header */}
       <header className="auth-header">
         <Link to="/" className="auth-header-logo">
-          <img src={Logo} alt="Buttr Cloud" className="auth-header-img" />
+          <img src={CloudMark} alt="Buttr Cloud" className="auth-header-img" />
+          <span className="auth-header-brand">BUTTR CLOUD</span>
         </Link>
         <div className="auth-header-tag">
           CLOUD HOSTING
@@ -71,12 +112,16 @@ const SignIn = () => {
             {/* Buttr Cloud Badge */}
             <div className="auth-badge-col">
               <div className="auth-badge auth-badge-cloud">
-                <Cloud className="auth-badge-icon text-indigo-300" />
+                <img
+                  src={CloudMark}
+                  alt="Buttr Cloud"
+                  className="auth-badge-img drop-shadow-cloud"
+                />
               </div>
               <span className="auth-badge-label">BUTTR CLOUD</span>
             </div>
 
-            {/* Glowing bridge */}
+            {/* Connecting Bridge */}
             <div className="auth-bridge">
               <div className="auth-bridge-line" />
               <div className="auth-bridge-node">
@@ -87,7 +132,16 @@ const SignIn = () => {
             {/* Buttr ID Badge */}
             <div className="auth-badge-col">
               <div className="auth-badge auth-badge-buttr">
-                <span className="auth-buttr-mark">B</span>
+                <img
+                  src={ButtrMark}
+                  alt="Buttr"
+                  className="auth-badge-img drop-shadow-buttr"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.parentElement?.querySelector(".fallback-b")?.classList.remove("hidden");
+                  }}
+                />
+                <span className="fallback-b hidden auth-buttr-fallback">B</span>
               </div>
               <span className="auth-badge-label">BUTTR</span>
             </div>
