@@ -172,6 +172,7 @@ const AuthController = {
     config: (req, res) => {
         res.json({
             issuer: buttrId.ISSUER,
+            webUrl: buttrId.WEB_URL,
             accountUrl: buttrId.ACCOUNT_URL,
             scopes: buttrId.SCOPES
         });

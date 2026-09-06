@@ -14,10 +14,10 @@ const crypto = require('crypto');
 const axios = require('axios');
 require('dotenv').config();
 
-const ISSUER = (process.env.BUTTR_ISSUER || 'http://localhost:8080').replace(/\/+$/, '');
-const CLIENT_ID = process.env.BUTTR_CLIENT_ID;
-const CLIENT_SECRET = process.env.BUTTR_CLIENT_SECRET;
-const REDIRECT_URI = process.env.BUTTR_REDIRECT_URI;
+const ISSUER = (process.env.BUTTR_ISSUER || 'https://idcloud.buttrcrew.com').replace(/\/+$/, '');
+const CLIENT_ID = process.env.BUTTR_CLIENT_ID || 'buttr-cloud';
+const CLIENT_SECRET = process.env.BUTTR_CLIENT_SECRET || '';
+const REDIRECT_URI = process.env.BUTTR_REDIRECT_URI || 'https://buttr.cloud/api/auth/buttr/callback';
 const SCOPES = process.env.BUTTR_SCOPES || 'openid profile email';
 
 // BUTTR ID is two deployments, not one: the Go issuer that serves /oauth2/*
@@ -25,7 +25,7 @@ const SCOPES = process.env.BUTTR_SCOPES || 'openid profile email';
 // /signin, /consent and /account. The account page is on the second one, so
 // linking to `${ISSUER}/account` reaches a backend with no such route.
 // This mirrors BUTTR_PUBLIC_WEB on the identity side.
-const WEB_URL = (process.env.BUTTR_WEB_URL || ISSUER).replace(/\/+$/, '');
+const WEB_URL = (process.env.BUTTR_WEB_URL || 'https://id.buttrcrew.com').replace(/\/+$/, '');
 const ACCOUNT_URL = `${WEB_URL}/account`;
 
 // How long a started sign-in may sit unfinished before its PKCE verifier is
@@ -34,13 +34,8 @@ const ACCOUNT_URL = `${WEB_URL}/account`;
 const PENDING_TTL_MS = 10 * 60 * 1000;
 
 const assertConfigured = () => {
-    const missing = ['BUTTR_CLIENT_ID', 'BUTTR_CLIENT_SECRET', 'BUTTR_REDIRECT_URI']
-        .filter((key) => !process.env[key]);
-    if (missing.length) {
-        throw new Error(
-            `BUTTR ID is not configured: ${missing.join(', ')} missing. ` +
-            'Register this app with `buttrid-client create --confidential` in the BUTTR ID repo.'
-        );
+    if (!CLIENT_ID || !REDIRECT_URI) {
+        throw new Error('BUTTR ID is not configured: BUTTR_CLIENT_ID or BUTTR_REDIRECT_URI missing.');
     }
 };
 
@@ -161,9 +156,11 @@ const exchangeCode = async (code, verifier) => {
         code,
         redirect_uri: REDIRECT_URI,
         code_verifier: verifier,
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET
+        client_id: CLIENT_ID
     });
+    if (CLIENT_SECRET) {
+        body.set('client_secret', CLIENT_SECRET);
+    }
 
     const { data } = await axios.post(discovery.token_endpoint, body.toString(), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
