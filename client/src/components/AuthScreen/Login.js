@@ -109,7 +109,7 @@ const SignIn = () => {
           {/* Buttons */}
           <div className="auth-actions">
             <a
-              href={`${webUrl}/signup`}
+              href={`${webUrl}/signup?client_id=buttr-cloud&return_to=${encodeURIComponent(window.location.origin)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="auth-btn-create"
