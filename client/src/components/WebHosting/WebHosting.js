@@ -15,19 +15,21 @@ const WebHosting = () => {
   ];
 
   const TERM_PRICES = {
-    Lite: {
+    Seed: {
       "1": { monthly: 99, was: 149, termNote: "Billed ₹99 for 1 Month" },
       "6": { monthly: 94, was: 149, termNote: "Billed ₹564 for 6 Months (5% off)" },
       "12": { monthly: 89, was: 149, termNote: "Billed ₹1,069 for 12 Months (10% off)" },
       "36": { monthly: 84, was: 149, termNote: "Billed ₹3,029 for 36 Months (15% off)" }
     },
-    Pro: {
+    Tree: {
       "1": { monthly: 179, was: 299, termNote: "Billed ₹179 for 1 Month" },
       "6": { monthly: 170, was: 299, termNote: "Billed ₹1,020 for 6 Months (5% off)" },
       "12": { monthly: 161, was: 299, termNote: "Billed ₹1,933 for 12 Months (10% off)" },
       "36": { monthly: 152, was: 299, termNote: "Billed ₹5,477 for 36 Months (15% off)" }
     }
   };
+  TERM_PRICES.Lite = TERM_PRICES.Seed;
+  TERM_PRICES.Pro = TERM_PRICES.Tree;
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -146,25 +148,25 @@ const WebHosting = () => {
           </div>
 
           <div className="webhosting-plans-grid">
-            {/* Lite Plan */}
+            {/* Seed Plan */}
             <div className="hosting-plan-card">
-              <h3 className="hosting-plan-name">Lite</h3>
+              <h3 className="hosting-plan-name">Seed</h3>
               <p className="hosting-plan-desc">
-                Good things come in small packages. Perfect for single websites, landing pages, and personal blogs.
+                Plant the seed for your online journey. Perfect for single websites, landing pages, and personal blogs.
               </p>
 
               <div className="hosting-price-container">
-                <div className="hosting-was-price">Was ₹{TERM_PRICES.Lite[selectedTerm].was}</div>
+                <div className="hosting-was-price">Was ₹{TERM_PRICES.Seed[selectedTerm].was}</div>
                 <div className="hosting-current-price">
-                  <span className="hosting-price-amount">₹{TERM_PRICES.Lite[selectedTerm].monthly}</span>
+                  <span className="hosting-price-amount">₹{TERM_PRICES.Seed[selectedTerm].monthly}</span>
                   <span className="hosting-price-period">/ month</span>
                 </div>
-                <div className="hosting-price-term">{TERM_PRICES.Lite[selectedTerm].termNote}</div>
+                <div className="hosting-price-term">{TERM_PRICES.Seed[selectedTerm].termNote}</div>
               </div>
 
               <button
                 className="hosting-btn hosting-btn-secondary"
-                onClick={() => handleGetStarted("Lite")}
+                onClick={() => handleGetStarted("Seed")}
               >
                 Get Started
               </button>
@@ -201,26 +203,26 @@ const WebHosting = () => {
               </ul>
             </div>
 
-            {/* Pro Plan */}
+            {/* Tree Plan */}
             <div className="hosting-plan-card featured">
               <div className="hosting-card-badge">Special Offer</div>
-              <h3 className="hosting-plan-name">Pro</h3>
+              <h3 className="hosting-plan-name">Tree</h3>
               <p className="hosting-plan-desc">
-                Our most popular hosting plan. Ideal for growing businesses, portfolios, and multi-site projects.
+                Branch out with more power. Ideal for growing businesses, portfolios, and multi-site projects.
               </p>
 
               <div className="hosting-price-container">
-                <div className="hosting-was-price">Was ₹{TERM_PRICES.Pro[selectedTerm].was}</div>
+                <div className="hosting-was-price">Was ₹{TERM_PRICES.Tree[selectedTerm].was}</div>
                 <div className="hosting-current-price">
-                  <span className="hosting-price-amount">₹{TERM_PRICES.Pro[selectedTerm].monthly}</span>
+                  <span className="hosting-price-amount">₹{TERM_PRICES.Tree[selectedTerm].monthly}</span>
                   <span className="hosting-price-period">/ month</span>
                 </div>
-                <div className="hosting-price-term">{TERM_PRICES.Pro[selectedTerm].termNote}</div>
+                <div className="hosting-price-term">{TERM_PRICES.Tree[selectedTerm].termNote}</div>
               </div>
 
               <button
                 className="hosting-btn hosting-btn-primary"
-                onClick={() => handleGetStarted("Pro")}
+                onClick={() => handleGetStarted("Tree")}
               >
                 Get Started
               </button>

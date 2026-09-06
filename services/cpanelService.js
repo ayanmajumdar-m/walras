@@ -45,15 +45,15 @@ class CpanelService {
     }
 
     /**
-     * Map internal plan name ('Lite', 'Pro') to cPanel package name
+     * Map internal plan name ('Seed'/'Lite', 'Tree'/'Pro') to cPanel package name
      */
     getPackageForPlan(planName) {
         const normalized = (planName || '').trim().toLowerCase();
-        if (normalized === 'lite') {
-            return process.env.CPANEL_PACKAGE_LITE || 'Lite';
+        if (normalized === 'seed' || normalized === 'lite') {
+            return process.env.CPANEL_PACKAGE_SEED || process.env.CPANEL_PACKAGE_LITE || 'Lite';
         }
-        if (normalized === 'pro') {
-            return process.env.CPANEL_PACKAGE_PRO || 'Pro';
+        if (normalized === 'tree' || normalized === 'pro') {
+            return process.env.CPANEL_PACKAGE_TREE || process.env.CPANEL_PACKAGE_PRO || 'Pro';
         }
         return process.env.CPANEL_DEFAULT_PACKAGE || planName || 'Lite';
     }

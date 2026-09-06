@@ -72,9 +72,16 @@ exports.buyHosting = async (req, res) => {
             return res.status(400).json({ error: "Plan name and domain are required" });
         }
 
-        const normalizedPlan = planName.trim();
-        if (!['Lite', 'Pro'].includes(normalizedPlan)) {
-            return res.status(400).json({ error: "Invalid plan. Choose 'Lite' or 'Pro'" });
+        const rawPlan = (planName || '').trim();
+        const planLower = rawPlan.toLowerCase();
+
+        let normalizedPlan = 'Seed';
+        if (planLower === 'tree' || planLower === 'pro') {
+            normalizedPlan = 'Tree';
+        } else if (planLower === 'seed' || planLower === 'lite') {
+            normalizedPlan = 'Seed';
+        } else {
+            return res.status(400).json({ error: "Invalid plan. Choose 'Seed' or 'Tree'" });
         }
 
         const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
@@ -82,7 +89,7 @@ exports.buyHosting = async (req, res) => {
             return res.status(400).json({ error: "Please provide a valid domain name" });
         }
 
-        // Payment terms: Lite (₹99/m), Pro (₹179/m) with discounts 6M (5%), 12M (10%), 36M (15%)
+        // Payment terms: Seed (₹99/m), Tree (₹179/m) with discounts 6M (5%), 12M (10%), 36M (15%)
         const termConfigMap = {
             '1': { label: '1 Month', months: 1, days: 30, liteTotal: 99, proTotal: 179 },
             '6': { label: '6 Months', months: 6, days: 180, liteTotal: 564, proTotal: 1020 },
@@ -100,7 +107,7 @@ exports.buyHosting = async (req, res) => {
         }
 
         const selectedTerm = termConfigMap[termKey] || termConfigMap['12'];
-        const totalAmountRupees = normalizedPlan === 'Lite' ? selectedTerm.liteTotal : selectedTerm.proTotal;
+        const totalAmountRupees = normalizedPlan === 'Seed' ? selectedTerm.liteTotal : selectedTerm.proTotal;
         const totalPaise = totalAmountRupees * 100;
         const durationDays = selectedTerm.days;
         const formattedCycle = selectedTerm.label;

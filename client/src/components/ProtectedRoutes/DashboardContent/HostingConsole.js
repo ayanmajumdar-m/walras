@@ -6,7 +6,7 @@ const HostingConsole = () => {
   const [walletBalance, setWalletBalance] = useState(0);
   const [userAccounts, setUserAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
-  const [domainNames, setDomainNames] = useState({ Lite: "", Pro: "" });
+  const [domainNames, setDomainNames] = useState({ Seed: "", Tree: "", Lite: "", Pro: "" });
   const [isDeploying, setIsDeploying] = useState(false);
   const [modalState, setModalState] = useState({ open: false, type: "", plan: null, data: null });
   const [copiedField, setCopiedField] = useState(null);
@@ -73,26 +73,28 @@ const HostingConsole = () => {
   ];
 
   const TERM_PRICES = {
-    Lite: {
+    Seed: {
       "1": { monthly: 99, wasMonthly: 149, total: 99, note: "Billed ₹99 for 1 Month" },
       "6": { monthly: 94, wasMonthly: 149, total: 564, note: "Billed ₹564 for 6 Months (5% off)" },
       "12": { monthly: 89, wasMonthly: 149, total: 1069, note: "Billed ₹1,069 for 12 Months (10% off)" },
       "36": { monthly: 84, wasMonthly: 149, total: 3029, note: "Billed ₹3,029 for 36 Months (15% off)" }
     },
-    Pro: {
+    Tree: {
       "1": { monthly: 179, wasMonthly: 299, total: 179, note: "Billed ₹179 for 1 Month" },
       "6": { monthly: 170, wasMonthly: 299, total: 1020, note: "Billed ₹1,020 for 6 Months (5% off)" },
       "12": { monthly: 161, wasMonthly: 299, total: 1933, note: "Billed ₹1,933 for 12 Months (10% off)" },
       "36": { monthly: 152, wasMonthly: 299, total: 5477, note: "Billed ₹5,477 for 36 Months (15% off)" }
     }
   };
+  TERM_PRICES.Lite = TERM_PRICES.Seed;
+  TERM_PRICES.Pro = TERM_PRICES.Tree;
 
   const plans = [
     {
-      id: "lite",
-      name: "Lite",
+      id: "seed",
+      name: "Seed",
       featured: false,
-      description: "Good things come in small packages. Simple requirements don't need huge resources.",
+      description: "Plant the seed for your online journey. Simple requirements don't need huge resources.",
       features: [
         "1 website",
         "10GB NVMe SSD storage",
@@ -104,11 +106,11 @@ const HostingConsole = () => {
       ]
     },
     {
-      id: "pro",
-      name: "Pro",
+      id: "tree",
+      name: "Tree",
       featured: true,
       badge: "Special Offer",
-      description: "Our most popular hosting plan. High speed and dedicated resources for growing sites.",
+      description: "Branch out with more power. High speed and dedicated resources for growing sites.",
       features: [
         "Up to 10 websites",
         "50GB NVMe SSD storage",
