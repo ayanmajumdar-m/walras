@@ -1,5 +1,12 @@
 const connection = require("../config/db");
 const cpanelService = require("../services/cpanelService");
+const ccavenueService = require("../services/ccavenueService");
+
+// Web Hosting pricing: Seed ₹159, Tree ₹259 with 18% GST
+const HOSTING_PRICES = {
+    Seed: { base: 159, gstRate: 0.18, gst: 28.62, total: 187.62 },
+    Tree: { base: 259, gstRate: 0.18, gst: 46.62, total: 305.62 }
+};
 
 // Helper: ensure wallet exists for a user
 function getWallet(userId) {
@@ -89,28 +96,12 @@ exports.buyHosting = async (req, res) => {
             return res.status(400).json({ error: "Please provide a valid domain name" });
         }
 
-        // Payment terms: Seed (₹99/m), Tree (₹179/m) with discounts 6M (5%), 12M (10%), 36M (15%)
-        const termConfigMap = {
-            '1': { label: '1 Month', months: 1, days: 30, liteTotal: 99, proTotal: 179 },
-            '6': { label: '6 Months', months: 6, days: 180, liteTotal: 564, proTotal: 1020 },
-            '12': { label: '12 Months', months: 12, days: 365, liteTotal: 1069, proTotal: 1933 },
-            '36': { label: '36 Months', months: 36, days: 1095, liteTotal: 3029, proTotal: 5477 }
-        };
-
-        let termKey = '12';
-        if (billingCycle) {
-            const str = String(billingCycle).toLowerCase();
-            if (str.includes('36')) termKey = '36';
-            else if (str.includes('12') || str.includes('year')) termKey = '12';
-            else if (str.includes('6')) termKey = '6';
-            else if (str.includes('1') || str.includes('month')) termKey = '1';
-        }
-
-        const selectedTerm = termConfigMap[termKey] || termConfigMap['12'];
-        const totalAmountRupees = normalizedPlan === 'Seed' ? selectedTerm.liteTotal : selectedTerm.proTotal;
-        const totalPaise = totalAmountRupees * 100;
-        const durationDays = selectedTerm.days;
-        const formattedCycle = selectedTerm.label;
+        // Web Hosting pricing: Seed (₹159 base + 18% GST = ₹187.62), Tree (₹259 base + 18% GST = ₹305.62)
+        const priceInfo = HOSTING_PRICES[normalizedPlan];
+        const totalAmountRupees = priceInfo.total;
+        const totalPaise = Math.round(totalAmountRupees * 100);
+        const durationDays = 30;
+        const formattedCycle = billingCycle || '1 Month';
 
         // Verify wallet balance
         const wallet = await getWallet(userId);
@@ -242,6 +233,114 @@ exports.buyHosting = async (req, res) => {
     } catch (err) {
         console.error("Buy hosting error:", err);
         res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+/**
+ * 🟢 POST /api/hosting/initiate-payment
+ * Initiates direct payment via CCAvenue for Web Hosting without wallet balance or top-up.
+ */
+exports.initiateHostingPayment = async (req, res) => {
+    try {
+        const userId = req.user?.userId || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: "User unauthorized" });
+        }
+
+        const { planName, domain, billingCycle = '1 Month' } = req.body;
+
+        if (!planName || !domain) {
+            return res.status(400).json({ error: "Plan name and domain are required" });
+        }
+
+        const rawPlan = (planName || '').trim();
+        const planLower = rawPlan.toLowerCase();
+
+        let normalizedPlan = 'Seed';
+        if (planLower === 'tree' || planLower === 'pro') {
+            normalizedPlan = 'Tree';
+        } else if (planLower === 'seed' || planLower === 'lite') {
+            normalizedPlan = 'Seed';
+        } else {
+            return res.status(400).json({ error: "Invalid plan. Choose 'Seed' or 'Tree'" });
+        }
+
+        const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+        if (!cleanDomain || cleanDomain.length < 3 || !cleanDomain.includes('.')) {
+            return res.status(400).json({ error: "Please provide a valid domain name (e.g. example.com)" });
+        }
+
+        const priceInfo = HOSTING_PRICES[normalizedPlan];
+        const basePaise = Math.round(priceInfo.base * 100);
+        const gstPaise = Math.round(priceInfo.gst * 100);
+        const totalPaise = Math.round(priceInfo.total * 100);
+
+        const config = ccavenueService.getConfig();
+        if (!config.isConfigured) {
+            return res.status(500).json({
+                error: "CCAvenue gateway is not configured. Please contact support."
+            });
+        }
+
+        const user = await getUser(userId);
+        const orderId = `CCAW_HOST_${Date.now()}_${userId}`;
+
+        // Insert pending hosting order
+        await new Promise((resolve, reject) => {
+            connection.query(
+                `INSERT INTO hosting_orders 
+                 (user_id, order_id, plan_name, domain, billing_cycle, base_amount, gst_amount, total_amount, status) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+                [userId, orderId, normalizedPlan, cleanDomain, billingCycle, basePaise, gstPaise, totalPaise],
+                (err, result) => {
+                    if (err) {
+                        console.error("[Hosting] Insert order error:", err);
+                        return reject(err);
+                    }
+                    resolve(result);
+                }
+            );
+        });
+
+        const redirectUrl = `${config.clientUrl}/api/payment/ccavenue/response`;
+        const cancelUrl = `${config.clientUrl}/api/payment/ccavenue/cancel`;
+
+        const ccParams = {
+            merchant_id: config.merchantId,
+            order_id: orderId,
+            currency: 'INR',
+            amount: (totalPaise / 100).toFixed(2),
+            redirect_url: redirectUrl,
+            cancel_url: cancelUrl,
+            language: 'EN',
+            billing_name: user?.name || 'Customer',
+            billing_email: user?.email || '',
+            billing_tel: user?.phone || '',
+            merchant_param1: String(userId),
+            merchant_param2: 'hosting_purchase',
+            merchant_param3: orderId,
+            merchant_param4: cleanDomain,
+            merchant_param5: normalizedPlan
+        };
+
+        const plainText = ccavenueService.stringifyParams(ccParams);
+        const encRequest = ccavenueService.encrypt(plainText, config.workingKey);
+
+        res.json({
+            success: true,
+            actionUrl: config.actionUrl,
+            encRequest: encRequest,
+            accessCode: config.accessCode,
+            orderId: orderId,
+            planName: normalizedPlan,
+            domain: cleanDomain,
+            baseAmount: priceInfo.base,
+            gstAmount: priceInfo.gst,
+            totalAmount: priceInfo.total
+        });
+    } catch (error) {
+        console.error("[Hosting] Initiate payment error:", error);
+        res.status(500).json({ error: error.message || "Failed to initiate payment for web hosting" });
     }
 };
 

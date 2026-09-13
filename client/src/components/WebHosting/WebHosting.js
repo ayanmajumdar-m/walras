@@ -16,16 +16,16 @@ const WebHosting = () => {
 
   const TERM_PRICES = {
     Seed: {
-      "1": { monthly: 99, was: 149, termNote: "Billed ₹99 for 1 Month" },
-      "6": { monthly: 94, was: 149, termNote: "Billed ₹564 for 6 Months (5% off)" },
-      "12": { monthly: 89, was: 149, termNote: "Billed ₹1,069 for 12 Months (10% off)" },
-      "36": { monthly: 84, was: 149, termNote: "Billed ₹3,029 for 36 Months (15% off)" }
+      "1": { monthly: 159, was: 199, termNote: "₹159 + 18% GST (₹187.62 Total)" },
+      "6": { monthly: 151, was: 199, termNote: "Billed ₹906 for 6 Months (5% off) + GST" },
+      "12": { monthly: 143, was: 199, termNote: "Billed ₹1,717 for 12 Months (10% off) + GST" },
+      "36": { monthly: 135, was: 199, termNote: "Billed ₹4,865 for 36 Months (15% off) + GST" }
     },
     Tree: {
-      "1": { monthly: 179, was: 299, termNote: "Billed ₹179 for 1 Month" },
-      "6": { monthly: 170, was: 299, termNote: "Billed ₹1,020 for 6 Months (5% off)" },
-      "12": { monthly: 161, was: 299, termNote: "Billed ₹1,933 for 12 Months (10% off)" },
-      "36": { monthly: 152, was: 299, termNote: "Billed ₹5,477 for 36 Months (15% off)" }
+      "1": { monthly: 259, was: 349, termNote: "₹259 + 18% GST (₹305.62 Total)" },
+      "6": { monthly: 246, was: 349, termNote: "Billed ₹1,476 for 6 Months (5% off) + GST" },
+      "12": { monthly: 233, was: 349, termNote: "Billed ₹2,797 for 12 Months (10% off) + GST" },
+      "36": { monthly: 220, was: 349, termNote: "Billed ₹7,925 for 36 Months (15% off) + GST" }
     }
   };
   TERM_PRICES.Lite = TERM_PRICES.Seed;
@@ -36,12 +36,7 @@ const WebHosting = () => {
   };
 
   const handleGetStarted = (planName) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      window.location.href = `/dashboard/hosting?plan=${encodeURIComponent(planName.toLowerCase())}&term=${selectedTerm}`;
-    } else {
-      window.location.href = "/login";
-    }
+    window.location.href = `/web-hosting/purchase?plan=${encodeURIComponent(planName.toLowerCase())}&term=${selectedTerm}`;
   };
 
   const faqs = [
@@ -112,8 +107,8 @@ const WebHosting = () => {
           <p className="webhosting-hero-subtitle">
             High performance NVMe SSD storage, free SSL certificates, 1-click site management, and 24/7 expert support built for modern websites.
           </p>
-          <a href="#plans" className="webhosting-hero-cta">
-            View Hosting Plans
+          <a href="/web-hosting/purchase" className="webhosting-hero-cta">
+            Purchase Hosting
           </a>
         </div>
       </section>
@@ -126,7 +121,7 @@ const WebHosting = () => {
         <div className="webhosting-container">
           <h2 className="webhosting-section-title">Choose Your Hosting Plan</h2>
           <p className="webhosting-section-subtitle">
-            Simple, transparent pricing designed to grow with your website.
+            Simple, transparent pricing designed to grow with your website. (Plan Price + 18% GST)
           </p>
 
           {/* Payment Term Selector */}
@@ -159,7 +154,7 @@ const WebHosting = () => {
                 <div className="hosting-was-price">Was ₹{TERM_PRICES.Seed[selectedTerm].was}</div>
                 <div className="hosting-current-price">
                   <span className="hosting-price-amount">₹{TERM_PRICES.Seed[selectedTerm].monthly}</span>
-                  <span className="hosting-price-period">/ month</span>
+                  <span className="hosting-price-period">+ GST / month</span>
                 </div>
                 <div className="hosting-price-term">{TERM_PRICES.Seed[selectedTerm].termNote}</div>
               </div>
@@ -215,7 +210,7 @@ const WebHosting = () => {
                 <div className="hosting-was-price">Was ₹{TERM_PRICES.Tree[selectedTerm].was}</div>
                 <div className="hosting-current-price">
                   <span className="hosting-price-amount">₹{TERM_PRICES.Tree[selectedTerm].monthly}</span>
-                  <span className="hosting-price-period">/ month</span>
+                  <span className="hosting-price-period">+ GST / month</span>
                 </div>
                 <div className="hosting-price-term">{TERM_PRICES.Tree[selectedTerm].termNote}</div>
               </div>

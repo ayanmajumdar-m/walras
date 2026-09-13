@@ -249,6 +249,27 @@ CREATE TABLE IF NOT EXISTS hosting_accounts (
 )
 `;
 
+const createHostingOrdersTable = `
+CREATE TABLE IF NOT EXISTS hosting_orders (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    order_id VARCHAR(100) UNIQUE NOT NULL,
+    plan_name VARCHAR(50) NOT NULL,
+    domain VARCHAR(255) NOT NULL,
+    billing_cycle VARCHAR(50) DEFAULT '1 Month',
+    base_amount BIGINT NOT NULL, -- in paise (e.g. 15900, 25900)
+    gst_amount BIGINT NOT NULL,  -- in paise (18% GST: 2862, 4662)
+    total_amount BIGINT NOT NULL, -- in paise (e.g. 18762, 30562)
+    status VARCHAR(20) CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')) DEFAULT 'pending',
+    tracking_id VARCHAR(100),
+    bank_ref_no VARCHAR(100),
+    failure_message TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)
+`;
+
 // A database that is unreachable at boot used to throw out of this callback and
 // take the process down, so a wrong MYSQL_DB_HOST looked like a crash-loop. The
 // server now starts either way and says so; requests that need the database
@@ -264,7 +285,7 @@ END;
 $$ LANGUAGE plpgsql
 `;
 
-const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'hosting_accounts'].map(
+const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'hosting_accounts', 'hosting_orders'].map(
     (table) => `
 CREATE OR REPLACE TRIGGER ${table}_touch_updated_at
 BEFORE UPDATE ON ${table}
@@ -300,6 +321,9 @@ const createIndexes = [
     'CREATE INDEX IF NOT EXISTS idx_ha_user_id ON hosting_accounts (user_id)',
     'CREATE INDEX IF NOT EXISTS idx_ha_status ON hosting_accounts (status)',
     'CREATE INDEX IF NOT EXISTS idx_ha_expires_at ON hosting_accounts (expires_at)',
+    'CREATE INDEX IF NOT EXISTS idx_ho_user_id ON hosting_orders (user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_ho_order_id ON hosting_orders (order_id)',
+    'CREATE INDEX IF NOT EXISTS idx_ho_status ON hosting_orders (status)',
 ];
 
 connection.on('error', (err) => {
@@ -339,6 +363,7 @@ connection.connect((err) => {
         ['Monthly invoices', createMonthlyInvoicesTable],
         ['Domain transactions', createDomainTransactionsTable],
         ['Hosting accounts', createHostingAccountsTable],
+        ['Hosting orders', createHostingOrdersTable],
         ['updated_at function', createTouchFunction],
         ...touchTriggers.map((sql, i) => [`updated_at trigger ${i + 1}`, sql]),
         ['updatedAt function', createUsersTouch],

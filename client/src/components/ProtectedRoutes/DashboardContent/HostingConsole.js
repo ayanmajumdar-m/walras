@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, ShoppingCart, Wallet, ExternalLink, Key, Shield, AlertCircle, Server, RefreshCw, Copy } from "lucide-react";
+import { Check, ShoppingCart, Wallet, ExternalLink, Key, Server, RefreshCw, Copy } from "lucide-react";
 import "./HostingConsole.css";
 
 const HostingConsole = () => {
@@ -17,6 +17,32 @@ const HostingConsole = () => {
   useEffect(() => {
     fetchWalletBalance();
     fetchUserHosting();
+
+    const params = new URLSearchParams(window.location.search);
+    const pStatus = params.get("payment_status");
+    if (pStatus === "success") {
+      const pDomain = params.get("domain") || "";
+      const pPlan = params.get("plan") || "";
+      setStatusMessage({
+        type: "success",
+        text: `🎉 Payment Successful! Your ${pPlan} Web Hosting for ${pDomain} is active.`
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
+      fetchUserHosting();
+    } else if (pStatus === "failed") {
+      const reason = params.get("reason") || "Payment failed";
+      setStatusMessage({
+        type: "error",
+        text: `❌ Payment Failed: ${reason}`
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (pStatus === "cancelled") {
+      setStatusMessage({
+        type: "warning",
+        text: "⚠️ Payment was cancelled. You can try again below."
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const fetchWalletBalance = async () => {
@@ -63,7 +89,7 @@ const HostingConsole = () => {
     }
   };
 
-  const [selectedTerm, setSelectedTerm] = useState("12"); // "1", "6", "12", "36"
+  const [selectedTerm, setSelectedTerm] = useState("1"); // Default to 1 Month
 
   const PAYMENT_TERMS = [
     { id: "1", label: "1 Month", months: 1, discount: null },
@@ -74,16 +100,16 @@ const HostingConsole = () => {
 
   const TERM_PRICES = {
     Seed: {
-      "1": { monthly: 99, wasMonthly: 149, total: 99, note: "Billed ₹99 for 1 Month" },
-      "6": { monthly: 94, wasMonthly: 149, total: 564, note: "Billed ₹564 for 6 Months (5% off)" },
-      "12": { monthly: 89, wasMonthly: 149, total: 1069, note: "Billed ₹1,069 for 12 Months (10% off)" },
-      "36": { monthly: 84, wasMonthly: 149, total: 3029, note: "Billed ₹3,029 for 36 Months (15% off)" }
+      "1": { monthly: 159, wasMonthly: 199, total: 187.62, note: "₹159 + 18% GST (₹28.62) = ₹187.62" },
+      "6": { monthly: 151, wasMonthly: 199, total: 1069.08, note: "₹906 for 6 Mo + 18% GST = ₹1,069.08" },
+      "12": { monthly: 143, wasMonthly: 199, total: 2026.06, note: "₹1,717 for 12 Mo + 18% GST = ₹2,026.06" },
+      "36": { monthly: 135, wasMonthly: 199, total: 5740.70, note: "₹4,865 for 36 Mo + 18% GST = ₹5,740.70" }
     },
     Tree: {
-      "1": { monthly: 179, wasMonthly: 299, total: 179, note: "Billed ₹179 for 1 Month" },
-      "6": { monthly: 170, wasMonthly: 299, total: 1020, note: "Billed ₹1,020 for 6 Months (5% off)" },
-      "12": { monthly: 161, wasMonthly: 299, total: 1933, note: "Billed ₹1,933 for 12 Months (10% off)" },
-      "36": { monthly: 152, wasMonthly: 299, total: 5477, note: "Billed ₹5,477 for 36 Months (15% off)" }
+      "1": { monthly: 259, wasMonthly: 349, total: 305.62, note: "₹259 + 18% GST (₹46.62) = ₹305.62" },
+      "6": { monthly: 246, wasMonthly: 349, total: 1741.68, note: "₹1,476 for 6 Mo + 18% GST = ₹1,741.68" },
+      "12": { monthly: 233, wasMonthly: 349, total: 3300.46, note: "₹2,797 for 12 Mo + 18% GST = ₹3,300.46" },
+      "36": { monthly: 220, wasMonthly: 349, total: 9351.50, note: "₹7,925 for 36 Mo + 18% GST = ₹9,351.50" }
     }
   };
   TERM_PRICES.Lite = TERM_PRICES.Seed;
@@ -127,47 +153,26 @@ const HostingConsole = () => {
     setDomainNames(prev => ({ ...prev, [planName]: val }));
   };
 
-  const handleBuyClick = (plan) => {
-    const domain = domainNames[plan.name] || "";
-    if (!domain.trim()) {
-      alert(`Please enter a domain name for your ${plan.name} Web Hosting plan.`);
+  const handleBuyClick = async (plan) => {
+    const domain = (domainNames[plan.name] || "").trim().toLowerCase();
+    if (!domain) {
+      alert(`Please enter a primary domain name for your ${plan.name} Web Hosting plan.`);
+      return;
+    }
+    if (!domain.includes(".") || domain.length < 4) {
+      alert(`Please enter a valid domain name (e.g. example.com).`);
       return;
     }
 
-    const currentPricing = TERM_PRICES[plan.name][selectedTerm];
-    const totalRequired = currentPricing.total;
-
-    if (walletBalance < totalRequired) {
-      setModalState({
-        open: true,
-        type: "low_balance",
-        plan: plan,
-        requiredAmount: totalRequired,
-        term: PAYMENT_TERMS.find(t => t.id === selectedTerm)
-      });
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "/login";
       return;
     }
-
-    setModalState({
-      open: true,
-      type: "confirm_buy",
-      plan: plan,
-      pricing: currentPricing,
-      term: PAYMENT_TERMS.find(t => t.id === selectedTerm)
-    });
-  };
-
-  const confirmPurchase = async () => {
-    const plan = modalState.plan;
-    if (!plan) return;
 
     setIsDeploying(true);
-    const token = localStorage.getItem("token");
-    const domain = domainNames[plan.name] || "my-web-hosting.com";
-    const termLabel = modalState.term?.label || "12 Months";
-
     try {
-      const response = await fetch(`${API_URL}/api/hosting/buy`, {
+      const response = await fetch(`${API_URL}/api/hosting/initiate-payment`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -176,28 +181,39 @@ const HostingConsole = () => {
         body: JSON.stringify({
           planName: plan.name,
           domain: domain,
-          billingCycle: termLabel
+          billingCycle: PAYMENT_TERMS.find(t => t.id === selectedTerm)?.label || "1 Month"
         })
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        setModalState({ open: false, type: "", plan: null });
-        setStatusMessage({
-          type: "success",
-          text: `🎉 Plan activated! Your ${plan.name} Web Hosting for ${domain} is ready.`
-        });
-        setDomainNames(prev => ({ ...prev, [plan.name]: "" }));
-        fetchWalletBalance();
-        fetchUserHosting();
-      } else {
-        alert(result.error || "Purchase failed. Please try again.");
+      const data = await response.json();
+      if (!response.ok || !data.encRequest) {
+        alert(data.error || "Failed to initiate payment session");
+        setIsDeploying(false);
+        return;
       }
+
+      // Auto-submit to CCAvenue
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.actionUrl;
+
+      const encInput = document.createElement("input");
+      encInput.type = "hidden";
+      encInput.name = "encRequest";
+      encInput.value = data.encRequest;
+      form.appendChild(encInput);
+
+      const accessInput = document.createElement("input");
+      accessInput.type = "hidden";
+      accessInput.name = "access_code";
+      accessInput.value = data.accessCode;
+      form.appendChild(accessInput);
+
+      document.body.appendChild(form);
+      form.submit();
     } catch (err) {
-      console.error("Hosting purchase failed:", err);
-      alert("Error processing purchase. Please check your balance or try again.");
-    } finally {
+      console.error("[Hosting direct payment error]:", err);
+      alert("Error initiating payment. Please try again.");
       setIsDeploying(false);
     }
   };
@@ -406,7 +422,7 @@ const HostingConsole = () => {
                   <div className="console-was-price">Was ₹{currentPricing.wasMonthly}</div>
                   <div className="console-current-price">
                     <span className="console-price-amount">₹{currentPricing.monthly}</span>
-                    <span className="console-price-period">/ month</span>
+                    <span className="console-price-period">+ GST / month</span>
                   </div>
                   <div className="console-term-billing-note">{currentPricing.note}</div>
                 </div>
@@ -426,9 +442,10 @@ const HostingConsole = () => {
                 <button
                   className={`console-buy-btn ${plan.featured ? "console-buy-btn-primary" : "console-buy-btn-secondary"}`}
                   onClick={() => handleBuyClick(plan)}
+                  disabled={isDeploying}
                 >
                   <ShoppingCart size={18} />
-                  <span>Buy {plan.name} Plan (₹{currentPricing.total})</span>
+                  <span>{isDeploying ? "Connecting to Payment..." : `Pay ₹${currentPricing.total} & Activate`}</span>
                 </button>
 
                 <ul className="console-features-list">
@@ -448,61 +465,6 @@ const HostingConsole = () => {
       </div>
 
       {/* Modals */}
-      {modalState.open && modalState.type === "low_balance" && (
-        <div className="console-modal-overlay">
-          <div className="console-modal">
-            <h3>Insufficient Wallet Balance</h3>
-            <p>
-              Your wallet balance is <strong>₹{walletBalance.toFixed(2)}</strong>. You need at least <strong>₹{modalState.requiredAmount}</strong> to activate the {modalState.plan?.name} hosting plan for <strong>{modalState.term?.label}</strong>.
-            </p>
-            <div className="console-modal-actions">
-              <button
-                className="console-modal-btn console-modal-btn-cancel"
-                onClick={() => setModalState({ open: false, type: "", plan: null })}
-              >
-                Cancel
-              </button>
-              <a
-                href="/dashboard/wallet"
-                className="console-modal-btn console-modal-btn-confirm"
-              >
-                Add Funds
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modalState.open && modalState.type === "confirm_buy" && (
-        <div className="console-modal-overlay">
-          <div className="console-modal">
-            <h3>Activate cPanel Hosting</h3>
-            <p>
-              You are activating the <strong>{modalState.plan?.name} Plan</strong> for domain <strong>{domainNames[modalState.plan?.name]}</strong> for <strong>{modalState.term?.label}</strong> at <strong>₹{modalState.pricing?.total}</strong> (₹{modalState.pricing?.monthly}/month).
-            </p>
-            <p className="cpanel-activation-note">
-              Once paid, your cPanel account will be provisioned immediately and accessible directly from this page.
-            </p>
-            <div className="console-modal-actions">
-              <button
-                className="console-modal-btn console-modal-btn-cancel"
-                onClick={() => setModalState({ open: false, type: "", plan: null })}
-                disabled={isDeploying}
-              >
-                Cancel
-              </button>
-              <button
-                className="console-modal-btn console-modal-btn-confirm"
-                onClick={confirmPurchase}
-                disabled={isDeploying}
-              >
-                {isDeploying ? "Provisioning cPanel..." : "Confirm & Pay"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {modalState.open && modalState.type === "credentials" && modalState.data && (
         <div className="console-modal-overlay">
           <div className="console-modal credentials-modal">
