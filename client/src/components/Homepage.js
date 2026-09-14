@@ -1,6 +1,6 @@
 import React from "react";
 import "./Homepage.css";
-import { Zap, Clock, Gauge, Globe, Server, Check } from "lucide-react";
+import { Zap, Clock, Gauge, Globe, Server, Cpu, Check } from "lucide-react";
 
 /*
   The homepage as a specification sheet.
@@ -52,6 +52,14 @@ const SERVICES = [
   {
     ref: "S-02",
     Icon: Server,
+    title: "Web Hosting",
+    description: "High-speed NVMe SSD hosting with cPanel, automated SSL, and 24/7 expert support.",
+    features: ["NVMe SSD Storage", "Free SSL Certificate", "cPanel Control Panel", "Automated Backups"],
+    action: { label: "Explore Hosting", href: "/web-hosting" }
+  },
+  {
+    ref: "S-03",
+    Icon: Cpu,
     title: "Shared CPU",
     description: "High-performance cloud compute with SSD storage. (Currently Out of Stock)",
     features: ["Instant Deployment", "SSD Storage", "Auto Scaling", "99.9% Uptime"],

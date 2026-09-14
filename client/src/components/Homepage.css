@@ -94,9 +94,9 @@
 .commitment-desc { font-size: 14px; line-height: 1.5; color: var(--text-secondary); margin: 0; }
 
 /* — services — */
-.services-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 
-.service-card { display: flex; flex-direction: column; }
+.service-card { display: flex; flex-direction: column; height: 100%; }
 .service-head {
   display: flex;
   align-items: center;
@@ -108,13 +108,18 @@
 .service-head h3 { font-size: 26px; margin: 0; flex: 1; color: var(--color-text); }
 .service-head .ref { color: var(--text-muted); }
 
-.service-body { padding: 20px 24px 24px; }
+.service-body {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
 .service-description { font-size: 15px; line-height: 1.55; color: var(--text-secondary); margin: 0 0 20px; }
 
 .service-features {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 20px;
+  gap: 0 16px;
   margin-bottom: 24px;
 }
 .service-feature {
@@ -124,6 +129,10 @@
   padding: 7px 0;
   border-bottom: 1px solid var(--color-rule-soft);
   font-size: 13.5px;
+}
+.service-body .btn {
+  margin-top: auto;
+  align-self: center;
 }
 .feature-dot { width: 4px; height: 4px; background: var(--color-accent); flex: none; }
 
@@ -184,6 +193,11 @@
 
 @media (max-width: 1024px) {
   .hero-title { font-size: 66px; }
+  .services-grid { gap: 16px; }
+  .service-head { padding: 16px 18px; }
+  .service-head h3 { font-size: 22px; }
+  .service-body { padding: 16px 18px 20px; }
+  .service-features { gap: 0 10px; }
 }
 
 @media (max-width: 900px) {
