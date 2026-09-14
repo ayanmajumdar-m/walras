@@ -59,7 +59,7 @@ const DEFAULT_GUARANTEES = [
     isAws: true,
     badge: "TIER-4 CLOUD",
     title: "AWS Infrastructure",
-    desc: "Hosted directly on enterprise-grade Amazon Web Services NVMe compute with 99.9% uptime and bulletproof reliability."
+    desc: "Hosted directly on enterprise-grade Amazon Web Services cloud compute with 99.9% uptime and bulletproof reliability."
   }
 ];
 

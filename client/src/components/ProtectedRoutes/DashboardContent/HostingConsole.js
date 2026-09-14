@@ -123,7 +123,7 @@ const HostingConsole = () => {
       description: "Plant the seed for your online journey. Simple requirements don't need huge resources.",
       features: [
         "1 website",
-        "10GB NVMe SSD storage",
+        "10GB SSD storage",
         "Unlimited bandwidth",
         "5 email accounts",
         "1GB virtual memory",
@@ -139,7 +139,7 @@ const HostingConsole = () => {
       description: "Branch out with more power. High speed and dedicated resources for growing sites.",
       features: [
         "Up to 10 websites",
-        "50GB NVMe SSD storage",
+        "50GB SSD storage",
         "Unlimited bandwidth",
         "Unlimited email accounts",
         "2GB virtual memory",

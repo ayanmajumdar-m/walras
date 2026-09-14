@@ -16,7 +16,7 @@ const PLANS = {
     totalPrice: 187.62,
     features: [
       "1 website hosted",
-      "10GB NVMe SSD storage",
+      "10GB SSD storage",
       "Unlimited bandwidth",
       "5 professional email accounts",
       "Free SSL certificate included",
@@ -34,7 +34,7 @@ const PLANS = {
     popular: true,
     features: [
       "Up to 10 websites hosted",
-      "50GB NVMe SSD storage",
+      "50GB SSD storage",
       "Unlimited bandwidth",
       "Unlimited email accounts",
       "Free SSL & Domain included",

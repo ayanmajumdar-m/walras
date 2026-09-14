@@ -53,8 +53,8 @@ const SERVICES = [
     ref: "S-02",
     Icon: Server,
     title: "Web Hosting",
-    description: "High-speed NVMe SSD hosting with cPanel, automated SSL, and 24/7 expert support.",
-    features: ["NVMe SSD Storage", "Free SSL Certificate", "cPanel Control Panel", "Automated Backups"],
+    description: "High-speed SSD hosting with cPanel, automated SSL, and 24/7 expert support.",
+    features: ["SSD Storage", "Free SSL Certificate", "cPanel Control Panel", "Automated Backups"],
     action: { label: "Explore Hosting", href: "/web-hosting" }
   },
   {

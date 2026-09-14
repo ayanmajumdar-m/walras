@@ -65,8 +65,8 @@ const WebHosting = () => {
   const features = [
     {
       icon: <Zap size={24} />,
-      title: "Ultra-Fast NVMe Storage",
-      desc: "Blazing fast NVMe SSD storage delivers up to 10x faster page loading speeds for your websites."
+      title: "Ultra-Fast SSD Storage",
+      desc: "Blazing fast SSD storage delivers up to 10x faster page loading speeds for your websites."
     },
     {
       icon: <Shield size={24} />,
@@ -105,7 +105,7 @@ const WebHosting = () => {
             Fast, Reliable & Managed Web Hosting
           </h1>
           <p className="webhosting-hero-subtitle">
-            High performance NVMe SSD storage, free SSL certificates, 1-click site management, and 24/7 expert support built for modern websites.
+            High performance SSD storage, free SSL certificates, 1-click site management, and 24/7 expert support built for modern websites.
           </p>
           <a href="/web-hosting/purchase" className="webhosting-hero-cta">
             Purchase Hosting
@@ -173,7 +173,7 @@ const WebHosting = () => {
                 </li>
                 <li className="hosting-feature-item">
                   <span className="check-icon-circle"><Check size={13} strokeWidth={3} /></span>
-                  <span><strong>10GB NVMe SSD</strong> storage</span>
+                  <span><strong>10GB SSD</strong> storage</span>
                 </li>
                 <li className="hosting-feature-item">
                   <span className="check-icon-circle"><Check size={13} strokeWidth={3} /></span>
@@ -229,7 +229,7 @@ const WebHosting = () => {
                 </li>
                 <li className="hosting-feature-item">
                   <span className="check-icon-circle"><Check size={13} strokeWidth={3} /></span>
-                  <span><strong>50GB NVMe SSD</strong> storage</span>
+                  <span><strong>50GB SSD</strong> storage</span>
                 </li>
                 <li className="hosting-feature-item">
                   <span className="check-icon-circle"><Check size={13} strokeWidth={3} /></span>
