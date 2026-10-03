@@ -102,9 +102,9 @@ const SignIn = () => {
           <span className="auth-header-brand">WALRAS CLOUD</span>
         </Link>
         <div className="auth-header-tag">
-          CLOUD HOSTING
+          The Straightforward
           <br />
-          FOR EVERYONE
+          Cloud
         </div>
       </header>
 
