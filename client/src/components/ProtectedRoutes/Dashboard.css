@@ -20,7 +20,7 @@
   color: #f2f2f3;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--color-accent-800, #2c455d);
+  border-right: 1px solid var(--color-accent-800, #05574d);
   position: fixed;
   height: 100vh;
   overflow-y: auto;
@@ -55,7 +55,7 @@
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-buttr-500, #ffd400);
+  color: var(--color-buttr-500, #1fc4a2);
   display: block;
 }
 
@@ -97,7 +97,7 @@
 .sidebar-btn.active {
   color: #f2f2f3;
   background: color-mix(in srgb, #f2f2f3 10%, transparent);
-  border-left: 3px solid var(--color-buttr-500, #ffd400);
+  border-left: 3px solid var(--color-buttr-500, #1fc4a2);
 }
 
 .sidebar-btn svg {

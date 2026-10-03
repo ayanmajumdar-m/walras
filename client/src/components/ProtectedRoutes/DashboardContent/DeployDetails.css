@@ -34,7 +34,7 @@
   }
   
   .dark-back-button:hover {
-    border-color: #ffd400;
+    border-color: #1fc4a2;
     color: #0a0a0c;
   }
   
@@ -111,8 +111,8 @@
   .dark-input:focus,
   .dark-textarea:focus {
     outline: none;
-    border-color: #ffd400;
-    box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.1);
+    border-color: #1fc4a2;
+    box-shadow: 0 0 0 3px rgba(31, 196, 162, 0.1);
   }
   
   .dark-input::placeholder,
@@ -146,9 +146,9 @@
   }
   
   .region-card-active-do.blue-active {
-    border-color: #ffd400;
-    background: rgba(255, 212, 0, 0.05);
-    box-shadow: 0 0 0 1px #ffd400;
+    border-color: #1fc4a2;
+    background: rgba(31, 196, 162, 0.05);
+    box-shadow: 0 0 0 1px #1fc4a2;
   }
   
   .region-header-do {
@@ -164,7 +164,7 @@
   }
   
   .blue-badge {
-    background: #ffd400;
+    background: #1fc4a2;
     color: #0a0a0c;
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
@@ -235,7 +235,7 @@
   }
   
   .dark-tab-active {
-    background: #ffd400;
+    background: #1fc4a2;
     color: #0a0a0c;
   }
   
@@ -262,8 +262,8 @@
   }
   
   .image-card-active-do.blue-active {
-    border-color: #ffd400;
-    background: rgba(255, 212, 0, 0.05);
+    border-color: #1fc4a2;
+    background: rgba(31, 196, 162, 0.05);
   }
   
   .image-logo-do {
@@ -312,7 +312,7 @@
   .blue-radio-inner {
     width: 10px;
     height: 10px;
-    background: #ffd400;
+    background: #1fc4a2;
     border-radius: 50%;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -323,7 +323,7 @@
   }
   
   .image-card-active-do .dark-radio {
-    border-color: #ffd400;
+    border-color: #1fc4a2;
   }
   
   /* Summary Section */
@@ -476,7 +476,7 @@
   /* Buttons */
   .blue-button {
     width: 100%;
-    background: #ffd400;
+    background: #1fc4a2;
     color: #0a0a0c;
     border: none;
     padding: 1rem 2rem;
@@ -492,9 +492,9 @@
   }
   
   .blue-button:hover:not(:disabled) {
-    background: #b39300;
+    background: #028a7c;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 212, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(31, 196, 162, 0.3);
   }
   
   .blue-button:active {
@@ -528,7 +528,7 @@
   
   .blue-progress {
     height: 100%;
-    background: linear-gradient(90deg, #ffd400, #ffd400);
+    background: linear-gradient(90deg, #1fc4a2, #1fc4a2);
     border-radius: 3px;
     transition: width 0.3s ease;
   }
@@ -567,7 +567,7 @@
     width: 40px;
     height: 40px;
     border: 3px solid #d9d9de;
-    border-top: 3px solid #ffd400;
+    border-top: 3px solid #1fc4a2;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;

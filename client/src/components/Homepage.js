@@ -60,7 +60,7 @@ const SERVICES = [
   {
     ref: "S-03",
     Icon: Cpu,
-    title: "Shared CPU",
+    title: "Cloud Compute",
     description: "High-performance cloud compute with SSD storage. (Currently Out of Stock)",
     features: ["Instant Deployment", "SSD Storage", "Auto Scaling", "99.9% Uptime"],
     action: { label: "Out of Stock", href: "/about/pricing" }

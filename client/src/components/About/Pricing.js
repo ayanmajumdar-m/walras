@@ -74,27 +74,11 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Important Notice */}
-      <section className="important-notice">
-        <div className="container">
-          <div className="notice-content" style={{ borderColor: "#f59e0b", background: "#fffbeb" }}>
-            <Shield className="notice-icon" style={{ color: "#d97706" }} />
-            <div>
-              <h3 style={{ color: "#92400e" }}>Cloud VPS Out of Stock</h3>
-              <p style={{ color: "#92400e" }}>
-                All Cloud VPS instances are currently at full capacity and temporarily out of stock for new deployments.
-                We are actively expanding our server infrastructure. In the meantime, you can explore our <strong><a href="/web-hosting" style={{ color: "#78350f", textDecoration: "underline" }}>Web Hosting & cPanel</a></strong> plans.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Plans Section */}
       <section className="plans-section" id='plans-section'>
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Shared CPU Plans</h2>
+            <h2 className="section-title">Cloud Compute Plans</h2>
             <p className="section-subtitle">Choose the perfect plan for your workload</p>
           </div>
 

@@ -14,7 +14,7 @@
 /* Hero Section */
 .terms-hero {
   padding: 6rem 0 4rem;
-  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #028a7c 50%, #028a7c 100%);
   position: relative;
   overflow: hidden;
 }
@@ -26,7 +26,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(255, 212, 0, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(31, 196, 162, 0.1) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -96,7 +96,7 @@
 .section-icon-wrapper {
   width: 48px;
   height: 48px;
-  background: rgba(255, 212, 0, 0.1);
+  background: rgba(31, 196, 162, 0.1);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -196,12 +196,12 @@
 }
 
 .btn.primary {
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
 }
 
 .btn.primary:hover {
-  background: #e6bd00;
+  background: #03a68f;
   transform: translateY(-2px);
   color: #0a0a0c;
 }

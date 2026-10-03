@@ -14,7 +14,7 @@
 /* Hero Section */
 .pricing-hero {
   padding: 8rem 0 6rem;
-  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #028a7c 50%, #028a7c 100%);
   position: relative;
   overflow: hidden;
   text-align: center;
@@ -27,7 +27,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(255, 212, 0, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(31, 196, 162, 0.1) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -149,7 +149,7 @@
 .currency-btn.active {
   /* A 20% yellow wash still reads as near-white, so the label needs the
      text-safe gold rather than the surface one. */
-  background: rgba(255, 212, 0, 0.28);
+  background: rgba(31, 196, 162, 0.28);
   color: var(--color-buttr-ink);
 }
 
@@ -180,8 +180,8 @@
 }
 
 .plan-card.popular {
-  border-color: #ffd400;
-  background: rgba(255, 212, 0, 0.05);
+  border-color: #1fc4a2;
+  background: rgba(31, 196, 162, 0.05);
 }
 
 .popular-badge {
@@ -189,7 +189,7 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
   padding: 0.5rem 1.5rem;
   border-radius: 20px;
@@ -299,7 +299,7 @@
 .service-icon {
   width: 64px;
   height: 64px;
-  background: rgba(255, 212, 0, 0.1);
+  background: rgba(31, 196, 162, 0.1);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -378,8 +378,8 @@
 }
 
 .feature-card:hover {
-  border-color: #ffd400;
-  box-shadow: 0 0 20px rgba(255, 212, 0, 0.15);
+  border-color: #1fc4a2;
+  box-shadow: 0 0 20px rgba(31, 196, 162, 0.15);
   transform: translateY(-6px);
 }
 
@@ -527,12 +527,12 @@
 }
 
 .btn.primary {
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
 }
 
 .btn.primary:hover {
-  background: #e6bd00;
+  background: #03a68f;
   transform: translateY(-2px);
   color: #0a0a0c;
 }

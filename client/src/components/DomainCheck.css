@@ -24,7 +24,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(255, 212, 0, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(31, 196, 162, 0.1) 0%, transparent 70%);
 }
 
 .hero-content {
@@ -35,7 +35,7 @@
 .hero-icon-container {
   display: inline-flex;
   padding: 16px;
-  background: linear-gradient(135deg, #b39300 0%, #ffd400 100%);
+  background: linear-gradient(135deg, #028a7c 0%, #1fc4a2 100%);
   border-radius: 50%;
   margin-bottom: 24px;
 }
@@ -138,9 +138,9 @@
 
 .domain-check .search-input:focus {
   outline: none;
-  border-color: #ffd400;
+  border-color: #1fc4a2;
   background: #f7f7f8;
-  box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.1);
+  box-shadow: 0 0 0 3px rgba(31, 196, 162, 0.1);
 }
 
 .domain-check .search-input::placeholder {
@@ -149,7 +149,7 @@
 
 .search-btn {
   padding: 16px 32px;
-  background: linear-gradient(135deg, #b39300 0%, #ffd400 100%);
+  background: linear-gradient(135deg, #028a7c 0%, #1fc4a2 100%);
   color: #0a0a0c;
   border: none;
   border-radius: 12px;
@@ -163,7 +163,7 @@
 
 .search-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 212, 0, 0.3);
+  box-shadow: 0 8px 25px rgba(31, 196, 162, 0.3);
 }
 
 .search-btn:disabled {
@@ -207,9 +207,9 @@
 }
 
 .quick-btn:hover {
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
-  border-color: #ffd400;
+  border-color: #1fc4a2;
 }
 
 /* Search Results */
@@ -226,7 +226,7 @@
 }
 
 .status-card.available {
-  border-color: #ffd400;
+  border-color: #1fc4a2;
   background: linear-gradient(135deg, #ffffff 0%, #d9d9de 100%);
 }
 
@@ -271,13 +271,13 @@
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #b39300 0%, #ffd400 100%);
+  background: linear-gradient(135deg, #028a7c 0%, #1fc4a2 100%);
   color: #0a0a0c;
 }
 
 .primary-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 212, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(31, 196, 162, 0.4);
 }
 
 .secondary-btn {
@@ -310,13 +310,13 @@
 }
 
 .tld-card:hover {
-  border-color: #ffd400;
+  border-color: #1fc4a2;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(255, 212, 0, 0.2);
+  box-shadow: 0 8px 25px rgba(31, 196, 162, 0.2);
 }
 
 .tld-card.popular {
-  border-color: #ffd400;
+  border-color: #1fc4a2;
   background: linear-gradient(135deg, #ffffff 0%, #d9d9de 100%);
 }
 
@@ -324,7 +324,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
   padding: 4px 8px;
   border-radius: 6px;
@@ -364,15 +364,15 @@
 }
 
 .feature-card:hover {
-  border-color: #ffd400;
+  border-color: #1fc4a2;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(255, 212, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(31, 196, 162, 0.15);
 }
 
 .feature-icon-wrapper {
   display: inline-flex;
   padding: 16px;
-  background: linear-gradient(135deg, #b39300 0%, #ffd400 100%);
+  background: linear-gradient(135deg, #028a7c 0%, #1fc4a2 100%);
   border-radius: 12px;
   margin-bottom: 20px;
 }
@@ -457,7 +457,7 @@
 }
 
 .status-tag.available {
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
 }
 
@@ -601,7 +601,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #ffd400, transparent);
+  background: linear-gradient(90deg, transparent, #1fc4a2, transparent);
 }
 
 .domain-section-header {
@@ -657,17 +657,17 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #ffd400, transparent);
+  background: linear-gradient(90deg, transparent, #1fc4a2, transparent);
   opacity: 0;
   transition: opacity 0.4s ease;
 }
 
 .domain-feature-card:hover {
   transform: translateY(-8px);
-  border-color: #ffd400;
+  border-color: #1fc4a2;
   box-shadow: 
-    0 20px 40px rgba(255, 212, 0, 0.15),
-    0 0 0 1px rgba(255, 212, 0, 0.1);
+    0 20px 40px rgba(31, 196, 162, 0.15),
+    0 0 0 1px rgba(31, 196, 162, 0.1);
 }
 
 .domain-feature-card:hover::before {
@@ -678,7 +678,7 @@
   width: 80px;
   height: 80px;
   margin: 0 auto 24px;
-  background: linear-gradient(135deg, #b39300 0%, #ffd400 100%);
+  background: linear-gradient(135deg, #028a7c 0%, #1fc4a2 100%);
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -689,7 +689,7 @@
 
 .domain-feature-card:hover .domain-feature-icon {
   transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 10px 30px rgba(255, 212, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(31, 196, 162, 0.3);
 }
 
 .domain-feature-icon svg {

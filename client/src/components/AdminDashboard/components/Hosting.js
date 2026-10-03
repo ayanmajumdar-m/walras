@@ -179,7 +179,7 @@ const Hosting = ({ hostingAccounts = [], onSuspend, onUnsuspend, onDelete, onLog
                     <div style={{ fontSize: "11px", color: "#94a3b8" }}>{acc.user_email}</div>
                   </div>
                   <div className="table-cell">
-                    <span style={{ fontWeight: "600", color: "#eab308" }}>{acc.plan_name}</span>
+                    <span style={{ fontWeight: "600", color: "#03a68f" }}>{acc.plan_name}</span>
                     <span style={{ fontSize: "12px", color: "#94a3b8", marginLeft: "4px" }}>({acc.cpanel_package})</span>
                   </div>
                   <div className="table-cell">
@@ -225,7 +225,7 @@ const Hosting = ({ hostingAccounts = [], onSuspend, onUnsuspend, onDelete, onLog
                       ) : (
                         <button
                           className="btn btn-warning btn-sm"
-                          style={{ background: "#eab308", color: "#0f172a" }}
+                          style={{ background: "#03a68f", color: "#0f172a" }}
                           onClick={() => {
                             const reason = window.prompt("Enter reason for suspension:", "Administrative suspension");
                             if (reason !== null) {

@@ -1,13 +1,13 @@
 /*
-  Walras Cloud colour system — Industry revision.
+  Walras Cloud colour system — taken from the walrus logo.
 
-  The structural palette comes from the Industry design system: a light
-  technical ground, ink for type, and a single steel accent that carries
-  structure (rules, kickers, icons, framing). Buttr yellow survives as what
-  theme.css always said it was — an *action* colour. It fills primary buttons,
-  marks the active nav item and the popular plan row, and nothing else.
+  Two teals from the same family. Deep teal is the structural accent: rules,
+  kickers, icons, links and framing. Bright logo teal is the *action* colour:
+  it fills primary buttons, marks the active nav item and the popular plan
+  row, and nothing else. (Its tokens keep their old --color-buttr-* names so
+  every stylesheet keeps resolving.)
 
-  Yellow is never a surface. Steel is never a button.
+  Bright teal is never a surface. Deep teal is never a button.
 */
 
 :root {
@@ -18,17 +18,17 @@
   --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
   --color-rule-soft: color-mix(in srgb, #1d1f20 8%, transparent);
 
-  /* Steel accent — structure, kickers, icons, framing */
-  --color-accent: #5980a6;
-  --color-accent-100: #eef6ff;
-  --color-accent-200: #d6ebff;
-  --color-accent-300: #b5d9fd;
-  --color-accent-400: #94bce3;
-  --color-accent-500: #749dc4;
-  --color-accent-600: #597ea3;
-  --color-accent-700: #416180;
-  --color-accent-800: #2c455d;
-  --color-accent-900: #1d2d3d;
+  /* Deep teal accent — structure, kickers, icons, framing */
+  --color-accent: #028a7c;
+  --color-accent-100: #e8fbf5;
+  --color-accent-200: #c6f4e6;
+  --color-accent-300: #8fe8cf;
+  --color-accent-400: #4fd6b0;
+  --color-accent-500: #14b496;
+  --color-accent-600: #039580;
+  --color-accent-700: #037566;
+  --color-accent-800: #05574d;
+  --color-accent-900: #063b35;
 
   --color-neutral-100: #f5f5f8;
   --color-neutral-200: #e7e7ea;
@@ -40,13 +40,13 @@
   --color-neutral-800: #424244;
   --color-neutral-900: #2b2b2d;
 
-  /* Brand — actions only */
-  --color-buttr-300: #ffe96b;
-  --color-buttr-400: #ffdf33;
-  --color-buttr-500: #ffd400;
-  --color-buttr-600: #e6bd00;
-  --color-buttr-700: #b39300;
-  --color-buttr-ink: #6f5b00;
+  /* Brand (logo teal) — actions only */
+  --color-buttr-300: #5eebc2;
+  --color-buttr-400: #3bddb4;
+  --color-buttr-500: #1fc4a2;
+  --color-buttr-600: #03a68f;
+  --color-buttr-700: #028a7c;
+  --color-buttr-ink: #045b52;
 
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-heading-weight: 600;

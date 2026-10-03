@@ -106,7 +106,7 @@ const Deploy = () => {
   return (
     <div className="deploy-page">
       <div className="deploy-header">
-        <h1>Shared CPU Plans</h1>
+        <h1>Cloud Compute Plans</h1>
         <div className="currency-switch">
           <span
             className={currency === "INR" ? "active" : ""}
@@ -128,7 +128,7 @@ const Deploy = () => {
         <div>
           <h4>Cloud VPS Instances Currently Out of Stock</h4>
           <p>
-            All shared CPU Cloud VPS instances are temporarily sold out due to high demand.
+            All Cloud Compute instances are temporarily sold out due to high demand.
             Our infrastructure team is provisioning new server capacity. In the meantime, you can explore our <strong><a href="/dashboard/hosting" style={{ color: "#78350f", textDecoration: "underline" }}>Web Hosting & cPanel</a></strong> packages.
           </p>
         </div>

@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useSearchParams, Link } from "react-router-dom";
 import { UserPlus, LogIn, ArrowRight, Link2 } from "lucide-react";
-import CloudMark from "./buttr-cloud-mark.png";
 import ButtrMark from "./buttr-mark.png";
 import "./Auth.css";
 
+const CloudMark = `${process.env.PUBLIC_URL}/logo192.png`;
+
+// Onboarding is closed for now: the page shows a "coming soon" notice instead
+// of the Create Account / Login buttons. Flip to true to open it again.
+const LOGIN_ENABLED = false;
 const API_URL = process.env.REACT_APP_API_URL || "https://buttr.cloud";
 
 const SignIn = () => {
@@ -80,12 +84,12 @@ const SignIn = () => {
         />
         <defs>
           <linearGradient id="authYellowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffd400" stopOpacity="0.35" />
+            <stop offset="0%" stopColor="#1fc4a2" stopOpacity="0.35" />
             <stop offset="100%" stopColor="#b45309" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="authLineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffe96b" stopOpacity="0.8" />
-            <stop offset="50%" stopColor="#ffd400" stopOpacity="0.65" />
+            <stop offset="0%" stopColor="#5eebc2" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#1fc4a2" stopOpacity="0.65" />
             <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.5" />
           </linearGradient>
         </defs>
@@ -160,7 +164,17 @@ const SignIn = () => {
 
           {error && <div className="auth-error-banner">{error}</div>}
 
-          {/* Buttons */}
+          {/* Buttons — replaced by a notice while onboarding is closed */}
+          {!LOGIN_ENABLED ? (
+            <div className="auth-coming-soon" role="status">
+              <span className="auth-coming-soon-pill">Coming soon</span>
+              <p className="auth-coming-soon-title">Onboarding opens shortly</p>
+              <p className="auth-coming-soon-sub">
+                We're getting Walras Cloud ready for its first customers.
+                Sign-ups and logins will be available here soon.
+              </p>
+            </div>
+          ) : (
           <div className="auth-actions">
             <a
               href={`${webUrl}/signup?client_id=buttr-cloud&return_to=${encodeURIComponent(window.location.origin)}`}
@@ -186,6 +200,7 @@ const SignIn = () => {
               <ArrowRight className="auth-btn-icon auth-btn-arrow" />
             </button>
           </div>
+          )}
         </div>
       </main>
 

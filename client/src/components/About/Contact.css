@@ -14,7 +14,7 @@
 /* Hero Section */
 .contact-hero {
   padding: 8rem 0 6rem;
-  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #028a7c 50%, #028a7c 100%);
   position: relative;
   overflow: hidden;
   text-align: center;
@@ -27,7 +27,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(255, 212, 0, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(31, 196, 162, 0.1) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -102,7 +102,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--icon-color, #ffd400);
+  background: var(--icon-color, #1fc4a2);
 }
 
 .contact-card:hover {
@@ -180,7 +180,7 @@
 .feature-icon-wrapper {
   width: 64px;
   height: 64px;
-  background: rgba(255, 212, 0, 0.1);
+  background: rgba(31, 196, 162, 0.1);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -293,7 +293,7 @@
 /* CTA Section */
 .cta-section {
   padding: 6rem 0;
-  background: linear-gradient(135deg, #d9d9de 0%, #b39300 50%, #b39300 100%);
+  background: linear-gradient(135deg, #d9d9de 0%, #028a7c 50%, #028a7c 100%);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -306,7 +306,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(255, 212, 0, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(31, 196, 162, 0.1) 0%, transparent 70%);
   pointer-events: none;
   color: #0a0a0c;
 }
@@ -358,14 +358,14 @@
 }
 
 .btn.primary {
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
 }
 
 .btn.primary:hover {
-  background: #e6bd00;
+  background: #03a68f;
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(255, 212, 0, 0.3);
+  box-shadow: 0 10px 25px rgba(31, 196, 162, 0.3);
   color: #0a0a0c;
 }
 

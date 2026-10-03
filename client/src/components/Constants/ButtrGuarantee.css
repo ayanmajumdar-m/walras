@@ -1,13 +1,13 @@
 /* Walras Guarantee Section — High-End Gold & Black Visual Identity */
 
 .buttr-guarantee-section {
-  background: radial-gradient(circle at 50% -20%, #201b05 0%, #0c0d12 60%, #06070a 100%);
+  background: radial-gradient(circle at 50% -20%, #04201c 0%, #0c0d12 60%, #06070a 100%);
   color: #f8fafc;
   padding: 85px 24px;
   position: relative;
   overflow: hidden;
-  border-top: 1px solid rgba(234, 179, 8, 0.25);
-  border-bottom: 1px solid rgba(234, 179, 8, 0.25);
+  border-top: 1px solid rgba(3, 166, 143, 0.25);
+  border-bottom: 1px solid rgba(3, 166, 143, 0.25);
 }
 
 .buttr-guarantee-container {
@@ -25,7 +25,7 @@
   transform: translateX(-50%);
   width: 700px;
   height: 350px;
-  background: radial-gradient(ellipse at center, rgba(234, 179, 8, 0.18) 0%, rgba(234, 179, 8, 0) 70%);
+  background: radial-gradient(ellipse at center, rgba(3, 166, 143, 0.18) 0%, rgba(3, 166, 143, 0) 70%);
   pointer-events: none;
   z-index: 1;
 }
@@ -40,9 +40,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(234, 179, 8, 0.12);
-  border: 1px solid rgba(234, 179, 8, 0.4);
-  color: #ffd400;
+  background: rgba(3, 166, 143, 0.12);
+  border: 1px solid rgba(3, 166, 143, 0.4);
+  color: #1fc4a2;
   padding: 6px 16px;
   border-radius: 20px;
   font-size: 11px;
@@ -50,7 +50,7 @@
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin-bottom: 16px;
-  box-shadow: 0 0 16px rgba(234, 179, 8, 0.15);
+  box-shadow: 0 0 16px rgba(3, 166, 143, 0.15);
 }
 
 .guarantee-title {
@@ -59,10 +59,10 @@
   letter-spacing: -0.02em;
   margin: 0 0 12px;
   text-transform: uppercase;
-  background: linear-gradient(135deg, #ffffff 10%, #ffd400 60%, #eab308 100%);
+  background: linear-gradient(135deg, #ffffff 10%, #1fc4a2 60%, #03a68f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(234, 179, 8, 0.25);
+  text-shadow: 0 0 30px rgba(3, 166, 143, 0.25);
 }
 
 .guarantee-subtitle {
@@ -97,7 +97,7 @@
 /* Individual Guarantee Card */
 .guarantee-card {
   background: linear-gradient(145deg, #13151f 0%, #0a0c13 100%);
-  border: 1px solid rgba(234, 179, 8, 0.25);
+  border: 1px solid rgba(3, 166, 143, 0.25);
   border-radius: 16px;
   padding: 28px 24px;
   display: flex;
@@ -109,8 +109,8 @@
 
 .guarantee-card:hover {
   transform: translateY(-6px);
-  border-color: #ffd400;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 24px rgba(234, 179, 8, 0.22);
+  border-color: #1fc4a2;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 24px rgba(3, 166, 143, 0.22);
 }
 
 .guarantee-card-top {
@@ -124,23 +124,23 @@
   width: 54px;
   height: 54px;
   border-radius: 12px;
-  background: radial-gradient(circle at 30% 30%, #2f2504 0%, #151408 100%);
-  border: 1px solid rgba(234, 179, 8, 0.4);
+  background: radial-gradient(circle at 30% 30%, #04302b 0%, #061512 100%);
+  border: 1px solid rgba(3, 166, 143, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffd400;
-  box-shadow: 0 0 14px rgba(234, 179, 8, 0.15);
+  color: #1fc4a2;
+  box-shadow: 0 0 14px rgba(3, 166, 143, 0.15);
 }
 
 .guarantee-icon {
-  color: #ffd400;
+  color: #1fc4a2;
 }
 
 .guarantee-badge {
-  background: rgba(234, 179, 8, 0.12);
-  color: #ffd400;
-  border: 1px solid rgba(234, 179, 8, 0.35);
+  background: rgba(3, 166, 143, 0.12);
+  color: #1fc4a2;
+  border: 1px solid rgba(3, 166, 143, 0.35);
   font-size: 10px;
   font-weight: 800;
   padding: 3px 9px;
@@ -174,12 +174,12 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 11.5px;
   font-weight: 700;
-  color: #ffd400;
+  color: #1fc4a2;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
 .guarantee-check {
-  color: #ffd400;
+  color: #1fc4a2;
   flex-shrink: 0;
 }

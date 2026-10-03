@@ -213,7 +213,7 @@ function Domain() {
         contact: contactInfo.phone
       },
       theme: {
-        color: '#ffdf33'
+        color: '#3bddb4'
       }
     }
 

@@ -73,12 +73,12 @@
 }
 
 .btn-primary {
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
 }
 
 .btn-primary:hover {
-  background: #e6bd00;
+  background: #03a68f;
   transform: translateY(-2px);
   color: #0a0a0c;
 }
@@ -86,11 +86,11 @@
 .btn-secondary {
   background: transparent;
   color: #0a0a0c;
-  border: 2px solid #ffd400;
+  border: 2px solid #1fc4a2;
 }
 
 .btn-secondary:hover {
-  background: #ffd400;
+  background: #1fc4a2;
   color: #0a0a0c;
   transform: translateY(-2px);
 }

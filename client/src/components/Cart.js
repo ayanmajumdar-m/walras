@@ -101,7 +101,7 @@ const Cart = () => {
             email: contactInfo.email,
             contact: contactInfo.phone
           },
-          theme: { color: '#ffdf33' }
+          theme: { color: '#3bddb4' }
         };
         const rzp = new window.Razorpay(options);
         rzp.open();

@@ -22,8 +22,8 @@
 
 .webhosting-hero-badge {
   display: inline-block;
-  background-color: #fef08a;
-  color: #854d0e;
+  background-color: #b8f2e1;
+  color: #045b52;
   font-size: 13px;
   font-weight: 600;
   padding: 4px 14px;
@@ -53,7 +53,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background-color: #eab308;
+  background-color: #03a68f;
   color: #0f172a;
   font-weight: 700;
   font-size: 16px;
@@ -61,11 +61,11 @@
   border-radius: 8px;
   text-decoration: none;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3);
+  box-shadow: 0 4px 14px rgba(3, 166, 143, 0.3);
 }
 
 .webhosting-hero-cta:hover {
-  background-color: #ca8a04;
+  background-color: #028a7c;
   transform: translateY(-2px);
 }
 
@@ -148,8 +148,8 @@
 }
 
 .webhosting-term-btn .term-btn-badge {
-  background: #fef08a;
-  color: #854d0e;
+  background: #b8f2e1;
+  color: #045b52;
   font-size: 10px;
   font-weight: 800;
   padding: 2px 7px;
@@ -157,7 +157,7 @@
 }
 
 .webhosting-term-btn.active .term-btn-badge {
-  background: #eab308;
+  background: #03a68f;
   color: #0f172a;
 }
 
@@ -189,15 +189,15 @@
 }
 
 .hosting-plan-card.featured {
-  border: 2px solid #eab308;
-  box-shadow: 0 8px 30px rgba(234, 179, 8, 0.15);
+  border: 2px solid #03a68f;
+  box-shadow: 0 8px 30px rgba(3, 166, 143, 0.15);
 }
 
 .hosting-card-badge {
   position: absolute;
   top: -14px;
   left: 32px;
-  background: #eab308;
+  background: #03a68f;
   color: #0f172a;
   font-size: 12px;
   font-weight: 700;
@@ -283,12 +283,12 @@
 }
 
 .hosting-btn-primary {
-  background-color: #eab308;
+  background-color: #03a68f;
   color: #0f172a;
 }
 
 .hosting-btn-primary:hover {
-  background-color: #ca8a04;
+  background-color: #028a7c;
 }
 
 .hosting-btn-secondary {
@@ -323,8 +323,8 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: #fef08a;
-  color: #854d0e;
+  background-color: #b8f2e1;
+  color: #045b52;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,8 +357,8 @@
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: #fef08a;
-  color: #854d0e;
+  background: #b8f2e1;
+  color: #045b52;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -21,8 +21,8 @@
 
 .purchase-badge {
   display: inline-block;
-  background-color: #fef08a;
-  color: #854d0e;
+  background-color: #b8f2e1;
+  color: #045b52;
   font-size: 12px;
   font-weight: 700;
   padding: 4px 12px;
@@ -158,16 +158,16 @@
 }
 
 .plan-option-card.is-selected {
-  border-color: #eab308;
-  background: #fffdf5;
-  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.15);
+  border-color: #03a68f;
+  background: #f4fdfa;
+  box-shadow: 0 2px 8px rgba(3, 166, 143, 0.15);
 }
 
 .option-popular-tag {
   position: absolute;
   top: -10px;
   right: 14px;
-  background-color: #eab308;
+  background-color: #03a68f;
   color: #0f172a;
   font-size: 10px;
   font-weight: 700;
@@ -194,8 +194,8 @@
 }
 
 .radio-dot.checked {
-  border-color: #eab308;
-  background-color: #eab308;
+  border-color: #03a68f;
+  background-color: #03a68f;
 }
 
 .radio-dot.checked::after {
@@ -235,7 +235,7 @@
 .plan-option-tax {
   font-size: 11px;
   font-weight: 600;
-  color: #854d0e;
+  color: #045b52;
 }
 
 /* Features checklist */
@@ -310,8 +310,8 @@
 }
 
 .domain-text-input:focus {
-  border-color: #eab308;
-  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2);
+  border-color: #03a68f;
+  box-shadow: 0 0 0 3px rgba(3, 166, 143, 0.2);
 }
 
 .domain-text-input.has-error {
@@ -353,7 +353,7 @@
   padding: 12px 14px;
   border-radius: 8px;
   margin-bottom: 20px;
-  border-left: 4px solid #eab308;
+  border-left: 4px solid #03a68f;
 }
 
 .summary-plan-name {
@@ -402,8 +402,8 @@
 }
 
 .gst-tag {
-  background-color: #fef08a;
-  color: #854d0e;
+  background-color: #b8f2e1;
+  color: #045b52;
   font-size: 10px;
   font-weight: 700;
   padding: 2px 6px;
@@ -425,7 +425,7 @@
 
 .total-note {
   font-size: 11px;
-  color: #854d0e;
+  color: #045b52;
   font-weight: 600;
   margin-top: 2px;
 }
@@ -443,7 +443,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background-color: #eab308;
+  background-color: #03a68f;
   color: #0f172a;
   font-size: 16px;
   font-weight: 700;
@@ -452,12 +452,12 @@
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
+  box-shadow: 0 4px 14px rgba(3, 166, 143, 0.35);
   text-decoration: none;
 }
 
 .purchase-cta-btn:hover:not(:disabled) {
-  background-color: #ca8a04;
+  background-color: #028a7c;
   transform: translateY(-1px);
 }
 
