@@ -25,7 +25,7 @@ import Domain from './components/Domain';
 import CreatePromoForm from './components/CreatePromoForm';
 import Hosting from './components/Hosting';
 
-const Logo = 'https://images.vestige.co.in/buttrcloud/logo-white.png';
+const Logo = 'https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -522,7 +522,7 @@ const AdminDashboard = () => {
         <div className="admin-sidebar">
           <div className="sidebar-header">
             <a href="/" className="sidebar-logo-link">
-              <img src={Logo} alt="Buttr Cloud" className="sidebar-logo" />
+              <img src={Logo} alt="Walras Cloud" className="sidebar-logo" />
             </a>
             <span className="sidebar-kicker">Admin Panel</span>
           </div>

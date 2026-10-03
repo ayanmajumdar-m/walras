@@ -12,7 +12,7 @@ const ComingSoon = ({ title, description }) => {
         <span className="coming-soon-kicker">COMING SOON</span>
         <h1 className="coming-soon-heading">{title || "Feature Coming Soon"}</h1>
         <p className="coming-soon-text">
-          {description || "We are working hard to bring this feature to Buttr Cloud Console. Stay tuned for updates!"}
+          {description || "We are working hard to bring this feature to Walras Cloud Console. Stay tuned for updates!"}
         </p>
         
         <div className="coming-soon-badge">

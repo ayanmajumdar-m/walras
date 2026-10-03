@@ -7,7 +7,7 @@ dotenv.config();
  * Transactional email over SMTP (Brevo's relay).
  *
  * This used to go through Brevo's HTTP API with an `xkeysib-` API key. It now
- * uses SMTP with an `xsmtpsib-` key, so Buttr Cloud and BUTTR ID authenticate
+ * uses SMTP with an `xsmtpsib-` key, so Walras Cloud and BUTTR ID authenticate
  * to the same relay with the same credentials — one thing to rotate, one place
  * for deliverability to be right or wrong.
  *
@@ -20,7 +20,7 @@ const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 
-const FROM_NAME = process.env.MAIL_FROM_NAME || 'Buttr Cloud';
+const FROM_NAME = process.env.MAIL_FROM_NAME || 'Walras Cloud';
 const FROM_ADDR = process.env.MAIL_FROM_ADDR || 'yours@buttrcrew.com';
 
 const emailConfigured = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
@@ -81,7 +81,7 @@ const createDomainPurchaseTemplate = (name, domainName, purchaseDate) => {
                     </div>
                     <div class="content">
                         <h2>Hello ${name},</h2>
-                        <p>Thank you for purchasing a domain with Buttr Cloud!</p>
+                        <p>Thank you for purchasing a domain with Walras Cloud!</p>
                         <p>Here are the details of your purchase:</p>
                         <ul>
                             <li><strong>Domain Name:</strong> ${domainName}</li>
@@ -91,7 +91,7 @@ const createDomainPurchaseTemplate = (name, domainName, purchaseDate) => {
                     </div>
                     <div class="footer">
                         <p>This is an automated message, please do not reply to this email.</p>
-                        <p>&copy; ${new Date().getFullYear()} Buttr Cloud. All rights reserved.</p>
+                        <p>&copy; ${new Date().getFullYear()} Walras Cloud. All rights reserved.</p>
                     </div>
                 </div>
             </body>

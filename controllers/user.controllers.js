@@ -368,7 +368,7 @@ const UserController = {
             }
 
             // Re-authenticating with a password used to guard this endpoint.
-            // There is no Buttr Cloud password any more, and the bearer token
+            // There is no Walras Cloud password any more, and the bearer token
             // was minted minutes ago by BUTTR ID, so the token is the proof.
             //
             // Name and email are not accepted here either: they belong to the
@@ -393,7 +393,7 @@ const UserController = {
         }
     },
 
-    // forgotPassword / resetPassword used to live here. There is no Buttr Cloud
+    // forgotPassword / resetPassword used to live here. There is no Walras Cloud
     // password to reset — recovery happens at the BUTTR ID account page.
     createTicket: async (req, res) => {
         try {

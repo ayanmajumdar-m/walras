@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from 'react-router-dom';
 import { Home, User, Shield, LogOut, Bell, Ticket, Wallet, Earth, Logs, Globe, Server } from "lucide-react";
 
-const Logo = 'https://images.vestige.co.in/buttrcloud/logo-white.png';
+const Logo = 'https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png';
 
 const Sidebar = ({ tabs, sidebarOpen, setSidebarOpen }) => {
   const handleLogout = () => {
@@ -29,7 +29,7 @@ const Sidebar = ({ tabs, sidebarOpen, setSidebarOpen }) => {
     <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
       <div className="sidebar-header">
         <a href="/" className="sidebar-logo-link">
-          <img src={Logo} alt="Buttr Cloud" className="sidebar-logo" />
+          <img src={Logo} alt="Walras Cloud" className="sidebar-logo" />
         </a>
         <span className="sidebar-kicker">Console</span>
       </div>

@@ -1,4 +1,4 @@
-# Codebase Overview - Buttr Cloud AuthSystem
+# Codebase Overview - Walras Cloud AuthSystem
 
 ## 🏗️ Architecture Overview
 

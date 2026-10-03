@@ -6,7 +6,7 @@ import "./Auth.css";
  * The last hop of "Sign in with BUTTR ID".
  *
  * The backend has already exchanged the authorization code, verified the ID
- * token and resolved the Buttr Cloud account. All that arrives here is a
+ * token and resolved the Walras Cloud account. All that arrives here is a
  * session token, and it arrives in the URL fragment — fragments are never sent
  * to a server, so the token stays out of access logs and Referer headers.
  */

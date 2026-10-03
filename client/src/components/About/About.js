@@ -40,7 +40,7 @@ const About = () => {
     <div className="about-page">
       <section className="about-hero">
         <div className="container">
-          <h1 className="about-title">Why Buttr Cloud?</h1>
+          <h1 className="about-title">Why Walras Cloud?</h1>
           <p className="about-subtitle">
             Built in India, for India and the world. We're on a mission to make enterprise-grade cloud computing accessible to everyone.
           </p>
@@ -52,7 +52,7 @@ const About = () => {
       <section className="why-choose-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Why Choose Buttr Cloud?</h2>
+            <h2 className="section-title">Why Choose Walras Cloud?</h2>
             <p className="section-subtitle">
               Experience the perfect blend of performance, reliability, and cost-effectiveness
             </p>
@@ -77,7 +77,7 @@ const About = () => {
           <div className="mission-content">
             <h2 className="section-title">Our Mission</h2>
             <p className="mission-text">
-              At Buttr Cloud, we believe in democratizing cloud computing. Our mission is to provide enterprise-grade cloud infrastructure at local prices, making it accessible to businesses of all sizes. We're committed to supporting India's digital transformation by offering world-class technology with local expertise.
+              At Walras Cloud, we believe in democratizing cloud computing. Our mission is to provide enterprise-grade cloud infrastructure at local prices, making it accessible to businesses of all sizes. We're committed to supporting India's digital transformation by offering world-class technology with local expertise.
             </p>
           </div>
         </div>

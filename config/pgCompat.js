@@ -1,7 +1,7 @@
 /**
  * A mysql2-shaped facade over a PostgreSQL pool.
  *
- * Buttr Cloud has 132 `connection.query(...)` call sites written against the
+ * Walras Cloud has 132 `connection.query(...)` call sites written against the
  * mysql2 callback API. Rewriting each one by hand would be 132 chances to get
  * a placeholder or a result shape subtly wrong, with no test suite to catch
  * it. Translating at the boundary instead means the port is one file to review

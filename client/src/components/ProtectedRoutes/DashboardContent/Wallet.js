@@ -189,7 +189,7 @@ const Wallet = () => {
         key: data.key,
         amount: data.amount,
         currency: data.currency,
-        name: "Buttr Cloud Wallet",
+        name: "Walras Cloud Wallet",
         description: "Add funds to wallet",
         order_id: data.orderId,
         handler: async (response) => {

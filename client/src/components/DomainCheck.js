@@ -294,10 +294,10 @@ const DomainCheck = () => {
         )}
       </div>
 
-      {/* Buttr Guarantee Section */}
+      {/* Walras Guarantee Section */}
       <ButtrGuarantee
         kicker="DOMAIN COMMITMENT"
-        title="Buttr Guarantee"
+        title="Walras Guarantee"
         subtitle="Our ironclad promises to secure, protect, and power your web presence."
         guarantees={DOMAIN_GUARANTEES}
       />

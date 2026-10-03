@@ -65,7 +65,7 @@ const DEFAULT_GUARANTEES = [
 
 const ButtrGuarantee = ({
   kicker = "THE BUTTR COMMITMENT",
-  title = "Buttr Guarantee",
+  title = "Walras Guarantee",
   subtitle = "Four uncompromising promises built into every single service we deliver.",
   guarantees = DEFAULT_GUARANTEES
 }) => {
@@ -99,7 +99,7 @@ const ButtrGuarantee = ({
 
               <div className="guarantee-card-footer">
                 <CheckCircle2 size={15} className="guarantee-check" />
-                <span>Guaranteed by Buttr Cloud</span>
+                <span>Guaranteed by Walras Cloud</span>
               </div>
             </div>
           ))}

@@ -115,7 +115,7 @@ const Homepage = () => (
           <h1 className="hero-title">The Straightforward Cloud</h1>
           <p className="hero-subtitle">
             Tired of using AWS, DigitalOcean, or Akamai Cloud? Looking for a Desi alternative?
-            Switch to Buttr Cloud and make the shift today!
+            Switch to Walras Cloud and make the shift today!
           </p>
           <div className="hero-actions">
             <a href="/login" className="btn btn-primary btn-lg blueprint">
@@ -140,7 +140,7 @@ const Homepage = () => (
               </div>
             ))}
             <figcaption className="plate-caption">
-              Figures guaranteed by Buttr Cloud. Tax not included; final amount shown at checkout.
+              Figures guaranteed by Walras Cloud. Tax not included; final amount shown at checkout.
             </figcaption>
           </figure>
         </div>
@@ -263,7 +263,7 @@ const Homepage = () => (
       <div className="container cta-inner">
         <div>
           <h2 className="cta-title">Ready to Get Started?</h2>
-          <p className="cta-subtitle">Join thousands of developers and businesses who trust Buttr Cloud.</p>
+          <p className="cta-subtitle">Join thousands of developers and businesses who trust Walras Cloud.</p>
         </div>
         <div className="cta-actions">
           <a href="/login" className="btn btn-primary btn-lg blueprint">

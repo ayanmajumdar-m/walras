@@ -71,7 +71,7 @@ const WebHosting = () => {
     {
       icon: <Shield size={24} />,
       title: "Free SSL & Security",
-      desc: "Every website hosted on Buttr Cloud includes automated SSL protection and active DDoS defense."
+      desc: "Every website hosted on Walras Cloud includes automated SSL protection and active DDoS defense."
     },
     {
       icon: <Server size={24} />,
@@ -113,7 +113,7 @@ const WebHosting = () => {
         </div>
       </section>
 
-      {/* Buttr Guarantee Section */}
+      {/* Walras Guarantee Section */}
       <ButtrGuarantee />
 
       {/* Plans Section */}

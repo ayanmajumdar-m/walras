@@ -44,7 +44,7 @@ const DashboardLayout = () => {
               <Route path="/domains" element={
                 <ComingSoon 
                   title="Domains Management" 
-                  description="Domain registration, DNS management, and WHOIS privacy tools are coming soon to Buttr Cloud Console."
+                  description="Domain registration, DNS management, and WHOIS privacy tools are coming soon to Walras Cloud Console."
                 />
               } />
               <Route path="/hosting" element={<HostingConsole />} />

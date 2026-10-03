@@ -1,7 +1,7 @@
 /**
  * Sign in with BUTTR ID.
  *
- * Buttr Cloud keeps its own short-lived session token — every protected route
+ * Walras Cloud keeps its own short-lived session token — every protected route
  * and every controller already reads `req.user.userId` from it — but that
  * token is now only ever minted after BUTTR ID has said who the person is.
  * There is no local password, no local OTP and no local password reset.
@@ -65,7 +65,7 @@ const finishSignIn = (req, res, user, returnTo) => {
 };
 
 /**
- * Turns a set of BUTTR ID claims into a Buttr Cloud account.
+ * Turns a set of BUTTR ID claims into a Walras Cloud account.
  *
  * The subject identifier is the key, never the email address — BUTTR ID issues
  * a different `sub` to every client for the same person, and an account there
@@ -134,7 +134,7 @@ const AuthController = {
             const identity = {
                 buttrSub: claims.sub,
                 buttrHandle: userinfo.buttr_id || claims.buttr_id || null,
-                name: userinfo.name || claims.name || userinfo.buttr_id || 'Buttr Cloud user',
+                name: userinfo.name || claims.name || userinfo.buttr_id || 'Walras Cloud user',
                 email: userinfo.email || null
             };
 
@@ -143,7 +143,7 @@ const AuthController = {
                     // Logged in full, reported in outline — a database error
                     // must never be echoed into the browser.
                     console.error('BUTTR ID account resolution failed:', accountErr.message);
-                    return failureRedirect(res, 'We could not open your Buttr Cloud account. Please contact support.');
+                    return failureRedirect(res, 'We could not open your Walras Cloud account. Please contact support.');
                 }
                 return finishSignIn(req, res, user, request.returnTo);
             });
@@ -154,7 +154,7 @@ const AuthController = {
     },
 
     /**
-     * Ends the Buttr Cloud session only. The BUTTR ID session is separate and
+     * Ends the Walras Cloud session only. The BUTTR ID session is separate and
      * stays active — signing out of one site should not sign you out of your
      * identity provider.
      */

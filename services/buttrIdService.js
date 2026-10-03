@@ -1,7 +1,7 @@
 /**
  * BUTTR ID — OpenID Connect relying party.
  *
- * Buttr Cloud does not authenticate anyone itself. It hands the browser to
+ * Walras Cloud does not authenticate anyone itself. It hands the browser to
  * BUTTR ID, and BUTTR ID hands back a signed assertion of who the person is.
  * Nothing in this file ever sees a password.
  *

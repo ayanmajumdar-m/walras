@@ -2,7 +2,7 @@
  * Wipes every user account and everything hanging off one, so the database can
  * start clean under BUTTR ID.
  *
- * Buttr Cloud accounts are now created only by a BUTTR ID sign-in, and a row
+ * Walras Cloud accounts are now created only by a BUTTR ID sign-in, and a row
  * that predates the integration has no `buttr_sub` and no way to acquire one.
  * Rather than pretend those rows can be migrated, this drops them.
  *

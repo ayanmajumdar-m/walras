@@ -94,8 +94,8 @@ const SignIn = () => {
       {/* Top Header */}
       <header className="auth-header">
         <Link to="/" className="auth-header-logo">
-          <img src={CloudMark} alt="Buttr Cloud" className="auth-header-img" />
-          <span className="auth-header-brand">BUTTR CLOUD</span>
+          <img src={CloudMark} alt="Walras Cloud" className="auth-header-img" />
+          <span className="auth-header-brand">WALRAS CLOUD</span>
         </Link>
         <div className="auth-header-tag">
           CLOUD HOSTING
@@ -109,16 +109,16 @@ const SignIn = () => {
         <div className="auth-card-modern">
           {/* Linked Badges */}
           <div className="auth-badges">
-            {/* Buttr Cloud Badge */}
+            {/* Walras Cloud Badge */}
             <div className="auth-badge-col">
               <div className="auth-badge auth-badge-cloud">
                 <img
                   src={CloudMark}
-                  alt="Buttr Cloud"
+                  alt="Walras Cloud"
                   className="auth-badge-img drop-shadow-cloud"
                 />
               </div>
-              <span className="auth-badge-label">BUTTR CLOUD</span>
+              <span className="auth-badge-label">WALRAS CLOUD</span>
             </div>
 
             {/* Connecting Bridge with Yellow Glow */}
@@ -150,7 +150,7 @@ const SignIn = () => {
           {/* Heading */}
           <div className="auth-headings">
             <h1 className="auth-hero-title">
-              Access Buttr Cloud <br />
+              Access Walras Cloud <br />
               with <span className="auth-hero-gradient">Buttr ID.</span>
             </h1>
             <p className="auth-hero-sub">

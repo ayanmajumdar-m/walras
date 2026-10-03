@@ -7,17 +7,17 @@ const Refund = () => {
     {
       icon: <Clock className="section-icon" />,
       title: "168-HOURS Trial",
-      content: "All new users can start a 168-Hours trial by paying INR 100. This amount is credited to your Buttr Cloud wallet and can be used for any future purchases. During the trial period, you can evaluate our hosting services risk-free."
+      content: "All new users can start a 168-Hours trial by paying INR 100. This amount is credited to your Walras Cloud wallet and can be used for any future purchases. During the trial period, you can evaluate our hosting services risk-free."
     },
     {
       icon: <CreditCard className="section-icon" />,
       title: "No Refunds After Purchase",
-      content: "Once the trial period ends or any service is purchased, Buttr Cloud does not provide refunds for hosting services, add-ons, or domain registrations."
+      content: "Once the trial period ends or any service is purchased, Walras Cloud does not provide refunds for hosting services, add-ons, or domain registrations."
     },
     {
       icon: <Wallet className="section-icon" />,
       title: "Wallet Balance Transfers",
-      content: "Any remaining balance in your Buttr Cloud wallet can be transferred to your bank account only if it was not credited through promotional offers, discounts, or other incentives. Wallet funds obtained via offers are non-transferable."
+      content: "Any remaining balance in your Walras Cloud wallet can be transferred to your bank account only if it was not credited through promotional offers, discounts, or other incentives. Wallet funds obtained via offers are non-transferable."
     },
     {
       icon: <AlertTriangle className="section-icon" />,
@@ -39,7 +39,7 @@ const Refund = () => {
             <CreditCard className="hero-icon" />
             <h1 className="terms-title">Refund Policy</h1>
             <p className="terms-subtitle">
-              At Buttr Cloud, we do not provide refunds after purchase. We offer a 168-HOURS trial for INR 100, which is added to your wallet balance for future purchases.
+              At Walras Cloud, we do not provide refunds after purchase. We offer a 168-HOURS trial for INR 100, which is added to your wallet balance for future purchases.
             </p>
           </div>
         </div>

@@ -7,26 +7,26 @@ const Terms = () => {
     {
       icon: <FileText className="section-icon" />,
       title: "1. Acceptance of Terms",
-      content: "By registering or using Buttr Cloud services, you agree to comply with these Terms. If you do not accept these Terms, you must not use our services."
+      content: "By registering or using Walras Cloud services, you agree to comply with these Terms. If you do not accept these Terms, you must not use our services."
     },
     {
       icon: <Server className="section-icon" />,
       title: "2. Services",
-      content: "Buttr Cloud provides cloud computing services including virtual private servers (VPS), dedicated compute instances, storage, networking, control panel access, monitoring, and management tools. Services may change or evolve at our discretion. Buttr Cloud does not guarantee uninterrupted service but strives for maximum uptime."
+      content: "Walras Cloud provides cloud computing services including virtual private servers (VPS), dedicated compute instances, storage, networking, control panel access, monitoring, and management tools. Services may change or evolve at our discretion. Walras Cloud does not guarantee uninterrupted service but strives for maximum uptime."
     },
     {
       icon: <User className="section-icon" />,
       title: "3. Account Registration & Security",
       content: `Provide accurate, complete, and current information when registering.
 Maintain confidentiality of your account credentials.
-Immediately notify Buttr Cloud of any unauthorized access or security breach.
+Immediately notify Walras Cloud of any unauthorized access or security breach.
 All activity performed through your account is your responsibility.
 KYC verification may be required to comply with Indian regulations. Users must provide valid identification when requested.`
     },
     {
       icon: <Shield className="section-icon" />,
       title: "4. Acceptable Use Policy",
-      content: `You agree not to use Buttr Cloud services for any unlawful, harmful, or abusive activity, including but not limited to:
+      content: `You agree not to use Walras Cloud services for any unlawful, harmful, or abusive activity, including but not limited to:
 
 • Hosting malware, phishing campaigns, ransomware, or spam
 • Engaging in network abuse, DDoS attacks, port scanning, or attempts to breach security
@@ -47,35 +47,35 @@ Refunds are provided solely as described in our Refund Policy.`
     {
       icon: <AlertTriangle className="section-icon" />,
       title: "6. Service Level & Uptime",
-      content: "Buttr Cloud aims for high availability, but does not guarantee continuous uptime. Scheduled maintenance, force majeure, or issues beyond our control may cause temporary service interruptions. We are not liable for downtime or data loss."
+      content: "Walras Cloud aims for high availability, but does not guarantee continuous uptime. Scheduled maintenance, force majeure, or issues beyond our control may cause temporary service interruptions. We are not liable for downtime or data loss."
     },
     {
       icon: <Database className="section-icon" />,
       title: "7. User Content & Data Responsibility",
       content: `Users are solely responsible for content hosted on their cloud servers.
-Buttr Cloud may suspend or remove content violating these Terms or applicable laws.
+Walras Cloud may suspend or remove content violating these Terms or applicable laws.
 Backup of user data is the responsibility of the account holder unless explicitly provided.
-Buttr Cloud is not liable for data loss, corruption, or unauthorized access.`
+Walras Cloud is not liable for data loss, corruption, or unauthorized access.`
     },
     {
       icon: <Trash2 className="section-icon" />,
       title: "8. Termination & Suspension",
-      content: "Buttr Cloud reserves the right to suspend or terminate accounts for: violations of Terms, illegal activity, network abuse, unpaid fees, or activities jeopardizing infrastructure or other users. Termination may occur without prior notice in severe cases."
+      content: "Walras Cloud reserves the right to suspend or terminate accounts for: violations of Terms, illegal activity, network abuse, unpaid fees, or activities jeopardizing infrastructure or other users. Termination may occur without prior notice in severe cases."
     },
     {
       icon: <Crown className="section-icon" />,
       title: "9. Intellectual Property",
-      content: "Buttr Cloud's software, designs, branding, and content are owned by Buttr Cloud or its licensors. Users may not copy, distribute, modify, or create derivative works without authorization."
+      content: "Walras Cloud's software, designs, branding, and content are owned by Walras Cloud or its licensors. Users may not copy, distribute, modify, or create derivative works without authorization."
     },
     {
       icon: <Scale className="section-icon" />,
       title: "10. Limitation of Liability",
-      content: "Buttr Cloud is not liable for indirect, incidental, consequential, or special damages, including loss of data, revenue, or business opportunities. Maximum liability is limited to the fees paid in the 30 days prior to the claim."
+      content: "Walras Cloud is not liable for indirect, incidental, consequential, or special damages, including loss of data, revenue, or business opportunities. Maximum liability is limited to the fees paid in the 30 days prior to the claim."
     },
     {
       icon: <Shield className="section-icon" />,
       title: "11. Indemnification",
-      content: "You agree to indemnify, defend, and hold harmless Buttr Cloud, its affiliates, and personnel from claims, losses, damages, liabilities, or expenses arising from your use of services, violations of Terms, or unlawful activity."
+      content: "You agree to indemnify, defend, and hold harmless Walras Cloud, its affiliates, and personnel from claims, losses, damages, liabilities, or expenses arising from your use of services, violations of Terms, or unlawful activity."
     },
     {
       icon: <User className="section-icon" />,
@@ -85,7 +85,7 @@ Buttr Cloud is not liable for data loss, corruption, or unauthorized access.`
     {
       icon: <FileText className="section-icon" />,
       title: "13. Modifications to Terms",
-      content: "Buttr Cloud may update these Terms at any time. Continued use of the services constitutes acceptance of any changes. Users are encouraged to review Terms periodically."
+      content: "Walras Cloud may update these Terms at any time. Continued use of the services constitutes acceptance of any changes. Users are encouraged to review Terms periodically."
     },
     {
       icon: <Scale className="section-icon" />,
@@ -108,8 +108,8 @@ Buttr Cloud is not liable for data loss, corruption, or unauthorized access.`
             <FileText className="hero-icon" />
             <h1 className="terms-title">Terms of Service</h1>
             <p className="terms-subtitle">
-              These Terms govern your use of Buttr Cloud's cloud server and infrastructure services, 
-              operated by IOOGN TECHNOLOGIES (OPC) PVT LTD. By using Buttr Cloud services, you agree to be bound by these Terms.
+              These Terms govern your use of Walras Cloud's cloud server and infrastructure services, 
+              operated by IOOGN TECHNOLOGIES (OPC) PVT LTD. By using Walras Cloud services, you agree to be bound by these Terms.
             </p>
           </div>
         </div>

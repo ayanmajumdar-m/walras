@@ -73,7 +73,7 @@ const Profile = () => {
       .catch(() => {});
   }, [API_URL]);
 
-  // Re-entering a password used to gate this. There is no Buttr Cloud password
+  // Re-entering a password used to gate this. There is no Walras Cloud password
   // now — the bearer token came from BUTTR ID, and that is the proof.
   const submitProfileUpdate = async () => {
     try {
@@ -89,7 +89,7 @@ const Profile = () => {
       
       const formattedAddress = formatAddress(addressData);
 
-      // Only the fields Buttr Cloud owns. name and email come from BUTTR ID
+      // Only the fields Walras Cloud owns. name and email come from BUTTR ID
       // and are refreshed from it on every sign-in, so sending them would be
       // silently discarded.
       const updatedForm = {

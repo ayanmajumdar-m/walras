@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./Constants.css";
 import { HeadphonesIcon, Menu, X } from "lucide-react";
-import Logo from "../logo.png";
+const Logo = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
 
 /*
   The header is a hairline rule with three zones: mark, sections, actions.
@@ -44,7 +44,7 @@ const Navbar = () => {
       <header className="top-nav">
         <div className="top-nav-inner">
           <a href="/" className="logo-container">
-            <img src={Logo} width={118} alt="Buttr Cloud" className="logo-image" />
+            <img src={Logo} height={52} alt="Walras Cloud" className="logo-image" />
           </a>
 
           <nav className="nav-links">
