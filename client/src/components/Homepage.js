@@ -47,7 +47,7 @@ const SERVICES = [
     title: "Domains",
     description: "Comprehensive domain registration, transfer, and management with competitive pricing.",
     features: ["500+ TLDs Available", "Free WHOIS Protection", "Easy Domain Transfer", "Bulk Management"],
-    action: { label: "Search Domain", href: "/domains" }
+    action: { label: "Search Domain", href: "/pricing#domains" }
   },
   {
     ref: "S-02",
@@ -63,7 +63,7 @@ const SERVICES = [
     title: "Cloud Compute",
     description: "High-performance cloud compute with SSD storage. (Currently Out of Stock)",
     features: ["Instant Deployment", "SSD Storage", "Auto Scaling", "99.9% Uptime"],
-    action: { label: "Out of Stock", href: "/about/pricing" }
+    action: { label: "Out of Stock", href: "/pricing#cloud-compute" }
   }
 ];
 

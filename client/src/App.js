@@ -12,14 +12,17 @@ import Navbar from './components/Constants/Navbar';
 import AdminLogin from './components/AdminDashboard/AdminLogin';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
 import DeployDetails from './components/ProtectedRoutes/DashboardContent/DeployDetails';
-import DomainCheck from './components/DomainCheck';
+// The Domains and Bare Metal pages are folded into /pricing, but their
+// stylesheets carry global rules other pages (and the /domains/buy flow)
+// still use, so they stay loaded in their original order.
+import './components/DomainCheck.css';
 import Domain from './components/ProtectedRoutes/DashboardContent/Domain';
 import Footer from './components/Constants/Footer';
 import Contact from './components/About/Contact';
 import Privacy from './components/Privacy';
 import Refund from './components/Refund';
 import Terms from './components/Terms';
-import BareMetal from './components/BareMetal';
+import './components/BareMetal.css';
 import FlareMail from './components/FlareMail';
 import WebHosting from './components/WebHosting/WebHosting';
 import HostingPurchase from './components/WebHosting/HostingPurchase';
@@ -41,9 +44,10 @@ function App() {
         {/* Public routes with Navbar */}
         <Route path="/" element={<PublicLayout><Homepage /></PublicLayout>} />
         <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
-        <Route path="/about/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
+        <Route path="/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
+        <Route path="/about/pricing" element={<Navigate to="/pricing" replace />} />
         <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-        <Route path="/domains/" element={<PublicLayout><DomainCheck /></PublicLayout>} />
+        <Route path="/domains" element={<Navigate to={{ pathname: "/pricing", hash: "#domains" }} replace />} />
         <Route path="/domains/buy" element={<PublicLayout><Domain /></PublicLayout>} />
         <Route path="/web-hosting" element={<PublicLayout><WebHosting /></PublicLayout>} />
         <Route path="/web-hosting/purchase" element={<PublicLayout><HostingPurchase /></PublicLayout>} />
@@ -53,7 +57,7 @@ function App() {
         <Route path='/privacy' element={<PublicLayout><Privacy /></PublicLayout>} />
         <Route path='/refund' element={<PublicLayout><Refund /></PublicLayout>} />
         <Route path='/terms' element={<PublicLayout><Terms /></PublicLayout>} />
-        <Route path='/bare-metal' element={<PublicLayout><BareMetal /></PublicLayout>} />
+        <Route path='/bare-metal' element={<Navigate to={{ pathname: "/pricing", hash: "#bare-metal" }} replace />} />
         <Route path='/flare-mail' element={<PublicLayout><FlareMail /></PublicLayout>} />
 
         {/* Sign-in is delegated to BUTTR ID. /login only offers the handoff;

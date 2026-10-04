@@ -120,7 +120,7 @@ Withdraw consent for data processing, where applicable`
               <p className="contact-company">Operated by IOOGN TECHNOLOGIES (OPC) PVT LTD</p>
             </div>
             <div className="contact-actions">
-              <a href="/about/pricing" className="btn primary">See Our Plans</a>
+              <a href="/pricing" className="btn primary">See Our Plans</a>
             </div>
           </div>
         </div>

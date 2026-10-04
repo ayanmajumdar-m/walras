@@ -1,175 +1,153 @@
 import React from 'react';
 import './Contact.css';
-import { Mail, Phone, MapPin, MessageCircle, Clock, Shield, Zap } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Shield, Zap, Check, ArrowRight, BookOpen } from 'lucide-react';
 
-const Contact = () => {
-  const contactMethods = [
-    {
-      icon: <Mail className="contact-icon" />,
-      title: "Email Support",
-      description: "24/7 Available",
-      details: "support@buttr.cloud",
-      link: "mailto:support@buttr.cloud",
-      color: "#1fc4a2"
-    },
-    {
-      icon: <Phone className="contact-icon" />,
-      title: "Contact Sales",
-      description: "Monday to Saturday 10 AM TO 6 PM",
-      details: "+91 94296 94951",
-      link: "tel:+919429694951",
-      color: "#10b981"
-    },
-    {
-      icon: <MapPin className="contact-icon" />,
-      title: "Office Address",
-      description: "Visit our headquarters",
-      details: "IOOGNS HQ, Khudiram Sarani, Duttapukur, North 24 Parganas, Barasat I, West Bengal, India, 743248",
-      link: "https://maps.google.com",
-      color: "#8b5cf6"
-    },
-  ];
+const ADDRESS = "IOOGNS HQ, Khudiram Sarani, Duttapukur, North 24 Parganas, Barasat I, West Bengal, India, 743248";
 
-  const supportFeatures = [
-    {
-      icon: <Shield className="feature-icon" />,
-      title: "24/7 Security Monitoring",
-      description: "Round-the-clock monitoring to keep your infrastructure secure"
-    },
-    {
-      icon: <Zap className="feature-icon" />,
-      title: "Fast Response Times",
-      description: "Average response time under 15 minutes for critical issues"
-    },
-    {
-      icon: <Clock className="feature-icon" />,
-      title: "99.9% Uptime Support",
-      description: "Dedicated support team ensuring maximum uptime for your services"
-    }
-  ];
+const CONTACT_METHODS = [
+  {
+    Icon: Mail,
+    title: "Email Support",
+    meta: "Available 24/7",
+    detail: "support@buttr.cloud",
+    href: "mailto:support@buttr.cloud",
+    action: "Get support"
+  },
+  {
+    Icon: Phone,
+    title: "Contact Sales",
+    meta: "Monday to Saturday, 10 AM to 6 PM",
+    detail: "+91 94296 94951",
+    href: "tel:+919429694951",
+    action: "Call now"
+  },
+  {
+    Icon: MapPin,
+    title: "Office Address",
+    meta: "Visit our headquarters",
+    detail: ADDRESS,
+    href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ADDRESS)}`,
+    action: "Get directions",
+    external: true
+  }
+];
 
-  return (
-    <div className="contact-page">
-      {/* Hero Section */}
-      <section className="contact-hero">
-        <div className="container">
-          <h1 className="contact-title">Contact Us</h1>
-          <p className="contact-subtitle">
-            We'd love to hear from you. Reach us through any of the channels below and we'll get back to you quickly.
-          </p>
+const RESPONSE_TIMES = [
+  { priority: "Critical issues", time: "Under 30 minutes", level: "critical" },
+  { priority: "High priority", time: "Under 1 hour", level: "high" },
+  { priority: "General support", time: "Under 4 hours", level: "general" }
+];
+
+const COVERAGE = [
+  "24/7 email and ticket support",
+  "Live chat add-on available",
+  "Comprehensive documentation",
+  "Video tutorial library",
+  "Community forum access"
+];
+
+const SUPPORT_FEATURES = [
+  { Icon: Shield, title: "24/7 security monitoring", description: "Round-the-clock monitoring to keep your infrastructure secure." },
+  { Icon: Zap, title: "Fast response times", description: "Critical issues answered in under 30 minutes." },
+  { Icon: Clock, title: "99.9% uptime support", description: "A dedicated support team ensuring maximum uptime for your services." }
+];
+
+const Contact = () => (
+  <div className="ct-page">
+    {/* Hero */}
+    <header className="ct-hero">
+      <div className="ct-wrap">
+        <span className="ct-kicker">Contact us</span>
+        <h1 className="ct-hero-title">We'd love to hear from you.</h1>
+        <p className="ct-hero-sub">
+          Reach us through any of the channels below and we'll get back to you quickly.
+        </p>
+      </div>
+    </header>
+
+    {/* Contact methods */}
+    <section className="ct-wrap ct-methods" aria-label="Ways to reach us">
+      {CONTACT_METHODS.map(({ Icon, title, meta, detail, href, action, external }) => (
+        <div className="ct-card ct-method" key={title}>
+          <span className="ct-icon"><Icon aria-hidden="true" /></span>
+          <h2>{title}</h2>
+          <p className="ct-meta">{meta}</p>
+          <p className="ct-detail">{detail}</p>
+          <a
+            href={href}
+            className="ct-link"
+            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+          >
+            {action} <ArrowRight aria-hidden="true" />
+          </a>
         </div>
-      </section>
+      ))}
+    </section>
 
-      {/* Contact Methods Grid */}
-      <section className="contact-methods-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Get In Touch</h2>
-            <p className="section-subtitle">
-              Multiple ways to connect with our support team
-            </p>
+    {/* Response times + coverage */}
+    <section className="ct-section">
+      <div className="ct-wrap">
+        <div className="ct-head">
+          <span className="ct-eyebrow">Support</span>
+          <h2 className="ct-title">Help when you need it.</h2>
+          <p className="ct-lede">Enterprise-grade support tailored to your needs.</p>
+        </div>
+
+        <div className="ct-support-grid">
+          <div className="ct-card ct-panel">
+            <h3>Response time guarantee</h3>
+            <ul className="ct-times">
+              {RESPONSE_TIMES.map(({ priority, time, level }) => (
+                <li key={priority}>
+                  <span className={`ct-priority is-${level}`}>{priority}</span>
+                  <strong>{time}</strong>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="contact-grid">
-            {contactMethods.map((method, index) => (
-              <div className="contact-card" key={index}>
-                <div 
-                  className="contact-icon-wrapper"
-                  style={{ '--icon-color': method.color }}
-                >
-                  {method.icon}
-                </div>
-                <h3 className="contact-method-title">{method.title}</h3>
-                <p className="contact-method-description">{method.description}</p>
-                <p className="contact-method-details">{method.details}</p>
-                <a href={method.link} className="btn secondary">
-                  {method.title.includes('Contact') && 'Call Now'}
-                  {method.title.includes('Address') && 'Get Directions'}
-                  {method.title.includes('Support') && ' Get Support'}
-                </a>
-              </div>
-            ))}
+          <div className="ct-card ct-panel">
+            <h3>Support coverage</h3>
+            <ul className="ct-checklist">
+              {COVERAGE.map((item) => (
+                <li key={item}><Check aria-hidden="true" />{item}</li>
+              ))}
+            </ul>
           </div>
         </div>
-      </section>
 
-      {/* Support Features */}
-      <section className="support-features-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Why Our Support Stands Out</h2>
-            <p className="section-subtitle">
-              Enterprise-grade support tailored to your needs
-            </p>
-          </div>
-
-          <div className="features-grid">
-            {supportFeatures.map((feature, index) => (
-              <div className="feature-card" key={index}>
-                <div className="feature-icon-wrapper">
-                  {feature.icon}
-                </div>
-                <h3 className="feature-title">{feature.title}</h3>
-                <p className="feature-description">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Additional Info Section */}
-      <section className="info-section">
-        <div className="container">
-          <div className="info-grid">
-            <div className="info-card">
-              <h3>Response Time Guarantee</h3>
-              <div className="response-times">
-                <div className="time-item">
-                  <span className="priority">Critical Issues</span>
-                  <span className="time">Under 30 minutes</span>
-                </div>
-                <div className="time-item">
-                  <span className="priority">High Priority</span>
-                  <span className="time">Under 1 hour</span>
-                </div>
-                <div className="time-item">
-                  <span className="priority">General Support</span>
-                  <span className="time">Under 4 hours</span>
-                </div>
+        <div className="ct-feature-row">
+          {SUPPORT_FEATURES.map(({ Icon, title, description }) => (
+            <div className="ct-feature" key={title}>
+              <span className="ct-icon ct-icon-sm"><Icon aria-hidden="true" /></span>
+              <div>
+                <h3>{title}</h3>
+                <p>{description}</p>
               </div>
             </div>
-
-            <div className="info-card">
-              <h3>Support Coverage</h3>
-              <ul className="coverage-list">
-                <li>24/7 Email & Ticket Support</li>
-                <li>Live Chat Add-on Available</li>
-                <li>Comprehensive Documentation</li>
-                <li>Video Tutorial Library</li>
-                <li>Community Forum Access</li>
-              </ul>
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </div>
+    </section>
 
-      {/* CTA Section */}
-      <section className="cta-section">
-        <div className="container">
-          <div className="cta-content">
-            <h2 className="cta-title">Ready to Get Started?</h2>
-            <p className="cta-subtitle">
-              Join thousands of satisfied customers using Walras Cloud
-            </p>
-            <div className="cta-actions">
-              <a href="/about/pricing" className="btn primary">Deploy Your Server</a>
-              <a href="https://help.buttr.cloud" className="btn secondary">View Documentation</a>
-            </div>
-          </div>
+    {/* CTA */}
+    <section className="ct-cta">
+      <div className="ct-wrap ct-cta-inner">
+        <div>
+          <h2>Ready to get started?</h2>
+          <p>Join thousands of satisfied customers using Walras Cloud.</p>
         </div>
-      </section>
-    </div>
-  );
-};
+        <div className="ct-cta-actions">
+          <a href="/pricing" className="ct-btn ct-btn-primary">
+            See pricing <ArrowRight aria-hidden="true" />
+          </a>
+          <a href="https://help.buttr.cloud" className="ct-btn ct-btn-ghost">
+            <BookOpen aria-hidden="true" /> View documentation
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+);
 
 export default Contact;

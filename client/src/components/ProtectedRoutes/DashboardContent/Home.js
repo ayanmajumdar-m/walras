@@ -494,7 +494,7 @@ const Home = () => {
           <div className="section-header">
             <h2>My Domains</h2>
             <div className="section-actions">
-              <button onClick={()=>navigate('/domains')} className="action-btn primary">Register Domain</button>
+              <button onClick={()=>navigate('/pricing#domains')} className="action-btn primary">Register Domain</button>
             </div>
           </div>
           

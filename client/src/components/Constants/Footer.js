@@ -17,8 +17,8 @@ const Footer = () => {
           <div className="footer-links-group">
             <h4 className="footer-subtitle">Important Links</h4>
             <ul className="footer-links">
-              <li><Link to="/domains">Domains</Link></li>
-              <li><Link to="/about/pricing">Pricing</Link></li>
+              <li><Link to="/pricing#domains">Domains</Link></li>
+              <li><Link to="/pricing">Pricing</Link></li>
               <li><a href='https://status.buttr.cloud'>Status</a></li>
               <li><a href='https://help.buttr.cloud'>Documentation</a></li>
             </ul>

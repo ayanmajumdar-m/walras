@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import './Pricing.css';
-import { Server, Zap, Shield, Clock, HelpCircle, Layers, Globe, ChevronUp, ChevronDown } from 'lucide-react';
+import {
+  Layers, Server, Globe, ChevronUp, ChevronDown, ArrowRight, Check, Cpu, MemoryStick,
+  HardDrive, Network, Shield, Clock, BookOpen
+} from 'lucide-react';
 
-// All Cloud Compute plans: 1 IPv4 address, DDR4 RAM, SSD storage, transfer @10 Gbps.
-const sharedPlans = [
+/*
+  One page for every price on the site. A sticky rail on the left jumps
+  between sections (and follows the scroll); each section is a product.
+  /domains, /bare-metal and /about/pricing redirect here with a hash.
+*/
+
+// ── Cloud Compute ───────────────────────────────────────────────────────────
+// All plans: 1 IPv4 address, DDR4 RAM, SSD storage, transfer @10 Gbps.
+const COMPUTE_PLANS = [
   { name: "WSC-4GB", vcpu: 2, ram: 4, storage: 60, bandwidth: 2, monthly: 900, hourly: 1.25, popular: false },
   { name: "SFC-8GB", vcpu: 4, ram: 8, storage: 120, bandwidth: 4, monthly: 1800, hourly: 2.5, popular: false },
   { name: "SFC-16GB", vcpu: 6, ram: 16, storage: 240, bandwidth: 6, monthly: 3600, hourly: 5, popular: true },
@@ -15,8 +26,15 @@ const PLAN_COLUMNS = [
   { key: "ram", label: "Memory", unit: () => "GB" },
   { key: "bandwidth", label: "Bandwidth", unit: () => "TB" },
   { key: "storage", label: "SSD Storage", unit: () => "GB" },
-  { key: "monthly", label: "Monthly Price", price: true },
-  { key: "hourly", label: "Hourly Price", price: true }
+  { key: "monthly", label: "Monthly", price: true },
+  { key: "hourly", label: "Hourly", price: true }
+];
+
+const COMPUTE_INCLUDES = [
+  { Icon: Network, text: "1 IPv4 address" },
+  { Icon: Cpu, text: "10 Gbps network" },
+  { Icon: MemoryStick, text: "DDR4 memory" },
+  { Icon: HardDrive, text: "SSD storage" }
 ];
 
 const formatPrice = (key, value) =>
@@ -24,207 +42,292 @@ const formatPrice = (key, value) =>
     ? { amount: `₹${value.toLocaleString("en-IN")}`, per: "/mo" }
     : { amount: `₹${value.toFixed(2)}`, per: "/hr" };
 
-// Left rail, Vultr style. Cloud Compute is the table on this page; the other
-// products have their own pages.
-const CATEGORIES = [
-  { id: "cloud-compute", href: "#cloud-compute", Icon: Layers, title: "Cloud Compute", desc: "Easy-to-use, affordable VMs for many common workloads." },
-  { id: "bare-metal", href: "/bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers. Coming soon." },
-  { id: "domains", href: "/domains", Icon: Globe, title: "Domains", desc: "Register and manage domains with free WHOIS privacy." }
+// ── Domains (coming soon) ─────────────────────────────────────────────────
+const DOMAIN_INCLUDES = [
+  "Free lifetime WHOIS privacy on every domain",
+  "Registry lock against unauthorised transfers",
+  "DNS management from the same dashboard"
 ];
 
+// ── Rail ───────────────────────────────────────────────────────────────────
+const SECTIONS = [
+  { id: "cloud-compute", Icon: Layers, title: "Cloud Compute", desc: "Virtual machines for everyday workloads.", from: "from ₹900/mo" },
+  { id: "bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon" },
+  { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon" }
+];
+
+const PLATFORM_INCLUDES = [
+  { Icon: Clock, text: "24/7 email and ticket support" },
+  { Icon: Server, text: "User-friendly server manager" },
+  { Icon: Shield, text: "99.9% uptime guarantee" },
+  { Icon: Check, text: "168-hour trial" },
+  { Icon: BookOpen, text: "Documentation and video tutorials" }
+];
+
+const scrollToSection = (id, smooth = true) => {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+};
+
 const Pricing = () => {
+  const location = useLocation();
+  const [active, setActive] = useState(SECTIONS[0].id);
   const [sort, setSort] = useState({ key: "monthly", dir: "asc" });
 
-  const sortedPlans = [...sharedPlans].sort((a, b) =>
+  // Land on the right section when arriving via /pricing#domains etc. On a
+  // fresh page load (e.g. the /domains redirect) the browser resets scroll
+  // when loading finishes, so scroll again once it has.
+  useEffect(() => {
+    const id = location.hash.replace("#", "");
+    if (!id) return;
+    const go = () => scrollToSection(id, false);
+    requestAnimationFrame(go);
+    if (document.readyState !== "complete") {
+      window.addEventListener("load", go, { once: true });
+      return () => window.removeEventListener("load", go);
+    }
+  }, [location.hash]);
+
+  // Scroll-spy: highlight the rail item for the section in view.
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        });
+      },
+      { rootMargin: "-35% 0px -60% 0px" }
+    );
+    SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const jumpTo = (e, id) => {
+    e.preventDefault();
+    scrollToSection(id);
+    window.history.replaceState(null, "", `#${id}`);
+  };
+
+  const sortedPlans = [...COMPUTE_PLANS].sort((a, b) =>
     sort.dir === "asc" ? a[sort.key] - b[sort.key] : b[sort.key] - a[sort.key]
   );
 
   const toggleSort = (key) =>
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
 
-  const features = [
-    { icon: <Clock className="feature-icon" />, text: "24/7 Email and Ticket Support" },
-    { icon: <Server className="feature-icon" />, text: "User Friendly Server Manager" },
-    { icon: <Shield className="feature-icon" />, text: "99.99% Uptime Guarantee" },
-    { icon: <Zap className="feature-icon" />, text: "168-HOURS Free Trial" },
-    { icon: <HelpCircle className="feature-icon" />, text: "Complete Documentation & Video Tutorials" },
-    // { icon: <Wifi className="feature-icon" />, text: "Live Chat Support Available as Addon" }
-  ];
-
   return (
-    <div className="pricing-page">
-      {/* Hero Section */}
-      <section className="pricing-hero">
-        <div className="container">
-          <h1 className="pricing-title">Scalable & Simplified Pricing</h1>
-          <p className="pricing-subtitle">
-            Simple, all-inclusive plans for server, storage, and transfer. No hidden fees, scale with confidence and pay only for the term you need.
+    <div className="pr-page">
+      {/* Hero */}
+      <header className="pr-hero">
+        <div className="pr-wrap">
+          <span className="pr-kicker">Pricing</span>
+          <h1 className="pr-hero-title">Straightforward pricing. No surprises.</h1>
+          <p className="pr-hero-sub">
+            Every price on one page, in rupees. Pick what you need and pay only for that.
           </p>
-          <div className="pricing-actions">
-            <a href="#plans-section" className="btn primary">View All Plans</a>
-          </div>
-        </div>
-      </section>
-
-      {/* Plans Section */}
-      <section className="plans-section" id='plans-section'>
-        <div className="container cc-layout">
-          {/* Category rail */}
-          <nav className="cc-rail" aria-label="Product categories">
-            {CATEGORIES.map(({ id, href, Icon, title, desc }) => (
-              <a key={id} href={href} className={`cc-rail-item ${id === "cloud-compute" ? "is-active" : ""}`}>
-                <Icon className="cc-rail-icon" aria-hidden="true" />
-                <span>
-                  <span className="cc-rail-title">{title}</span>
-                  <span className="cc-rail-desc">{desc}</span>
-                </span>
+          <div className="pr-hero-tiles">
+            {SECTIONS.map(({ id, Icon, title, from }) => (
+              <a key={id} href={`#${id}`} className="pr-hero-tile" onClick={(e) => jumpTo(e, id)}>
+                <Icon className="pr-hero-tile-icon" aria-hidden="true" />
+                <span className="pr-hero-tile-title">{title}</span>
+                <span className="pr-hero-tile-from">{from}</span>
+                <ArrowRight className="pr-hero-tile-arrow" aria-hidden="true" />
               </a>
             ))}
-          </nav>
+          </div>
+        </div>
+      </header>
 
-          {/* Cloud Compute */}
-          <div className="cc-content">
-            <div className="cc-block" id="cloud-compute">
-              <h2 className="cc-heading">
-                <Layers className="cc-heading-icon" aria-hidden="true" />
-                Cloud Compute
-              </h2>
-              <p className="cc-lede">
-                Virtual machines with a balanced mix of CPU, memory and SSD storage, suitable for
-                websites, apps and everyday workloads. Every plan includes one IPv4 address and
-                transfer at 10 Gbps.
-              </p>
+      <div className="pr-wrap pr-layout">
+        {/* Rail */}
+        <nav className="pr-rail" aria-label="Pricing sections">
+          {SECTIONS.map(({ id, Icon, title, desc }) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              onClick={(e) => jumpTo(e, id)}
+              className={`pr-rail-item${active === id ? " is-active" : ""}`}
+              aria-current={active === id ? "true" : undefined}
+            >
+              <Icon className="pr-rail-icon" aria-hidden="true" />
+              <span>
+                <span className="pr-rail-title">{title}</span>
+                <span className="pr-rail-desc">{desc}</span>
+              </span>
+            </a>
+          ))}
+        </nav>
 
-              <div className="cc-table-card">
-                <table className="cc-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Plan</th>
-                      {PLAN_COLUMNS.map(({ key, label }) => {
-                        const active = sort.key === key;
-                        return (
-                          <th
-                            scope="col"
-                            key={key}
-                            aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+        <main className="pr-content">
+          {/* ── Cloud Compute ── */}
+          <section className="pr-section" id="cloud-compute">
+            <div className="pr-section-head">
+              <span className="pr-section-icon"><Layers aria-hidden="true" /></span>
+              <div>
+                <h2 className="pr-section-title">Cloud Compute</h2>
+                <p className="pr-section-lede">
+                  Virtual machines with a balanced mix of CPU, memory and SSD storage, suitable for
+                  websites, apps and everyday workloads.
+                </p>
+              </div>
+            </div>
+
+            <ul className="pr-chips">
+              {COMPUTE_INCLUDES.map(({ Icon, text }) => (
+                <li key={text}><Icon aria-hidden="true" />{text}</li>
+              ))}
+            </ul>
+
+            <div className="pr-card pr-table-card">
+              <table className="pr-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Plan</th>
+                    {PLAN_COLUMNS.map(({ key, label }) => {
+                      const isSorted = sort.key === key;
+                      return (
+                        <th
+                          scope="col"
+                          key={key}
+                          aria-sort={isSorted ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+                        >
+                          <button
+                            type="button"
+                            className={`pr-sort${isSorted ? " is-active" : ""}`}
+                            onClick={() => toggleSort(key)}
                           >
-                            <button
-                              type="button"
-                              className={`cc-sort ${active ? "is-active" : ""}`}
-                              onClick={() => toggleSort(key)}
-                            >
-                              {label}
-                              <span className="cc-sort-arrows" aria-hidden="true">
-                                <ChevronUp className={active && sort.dir === "asc" ? "on" : ""} />
-                                <ChevronDown className={active && sort.dir === "desc" ? "on" : ""} />
-                              </span>
-                            </button>
-                          </th>
-                        );
-                      })}
-                      <th scope="col">Availability</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedPlans.map((plan) => (
-                      <tr key={plan.name}>
-                        <td className="cc-plan-name">
-                          {plan.name}
-                          {plan.popular && <span className="cc-tag">Popular</span>}
-                        </td>
-                        {PLAN_COLUMNS.map(({ key, unit, price }) => {
-                          const active = sort.key === key;
-                          if (price) {
-                            const { amount, per } = formatPrice(key, plan[key]);
-                            return (
-                              <td key={key} className={`cc-price ${active ? "is-active" : ""}`}>
-                                <strong>{amount}</strong> <span className="cc-unit">{per}</span>
-                              </td>
-                            );
-                          }
+                            {label}
+                            <span className="pr-sort-arrows" aria-hidden="true">
+                              <ChevronUp className={isSorted && sort.dir === "asc" ? "on" : ""} />
+                              <ChevronDown className={isSorted && sort.dir === "desc" ? "on" : ""} />
+                            </span>
+                          </button>
+                        </th>
+                      );
+                    })}
+                    <th scope="col">Availability</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedPlans.map((plan) => (
+                    <tr key={plan.name} className={plan.popular ? "is-popular" : ""}>
+                      <td className="pr-plan-name" data-label="Plan">
+                        {plan.name}
+                        {plan.popular && <span className="pr-tag">Popular</span>}
+                      </td>
+                      {PLAN_COLUMNS.map(({ key, label, unit, price }) => {
+                        const cls = sort.key === key ? "is-sorted" : "";
+                        if (price) {
+                          const { amount, per } = formatPrice(key, plan[key]);
                           return (
-                            <td key={key} className={active ? "is-active" : ""}>
-                              <strong>{plan[key]}</strong> <span className="cc-unit">{unit(plan)}</span>
+                            <td key={key} data-label={`${label} price`} className={`pr-price ${cls}`}>
+                              <strong>{amount}</strong> <span className="pr-unit">{per}</span>
                             </td>
                           );
-                        })}
-                        <td>
-                          <span className="cc-stock">Out of stock</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <p className="cc-footnote">
-                Prices exclude tax; the final amount is shown at checkout. Transfer runs at 10 Gbps,
-                or 1 Gbps in Asian locations.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="services-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Additional Services</h2>
-            <p className="section-subtitle">Enhance your cloud experience with our premium services</p>
-          </div>
-
-          <div className="services-grid">
-            <div className="service-card">
-              <div className="service-icon">
-                <Server className="icon" />
-              </div>
-              <h3>Infrastructure Management</h3>
-              <p>Managed by Us – Let us handle your server management for ₹15,000 per server per month. We take care of updates, monitoring, security, and technical support.</p>
-              {/* <a className="btn secondary" href="/account/services">Add to My Account</a> */}
+                        }
+                        return (
+                          <td key={key} data-label={label} className={cls}>
+                            <strong>{plan[key]}</strong> <span className="pr-unit">{unit(plan)}</span>
+                          </td>
+                        );
+                      })}
+                      <td data-label="Availability">
+                        <span className="pr-stock">Out of stock</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            <div className="service-card">
-              <div className="service-icon">
-                <Zap className="icon" />
-              </div>
-              <h3>Cloud Consulting and Migration</h3>
-              <p>Need Migration Help? Open a support ticket or email our team for guidance on moving your workloads to the cloud.</p>
-              {/* <a className="btn secondary" href="/contact">Get a Quote</a> */}
-            </div>
-
-            <div className="service-card">
-              <div className="service-icon">
-                <Shield className="icon" />
-              </div>
-              <h3>Multiple Data Center Locations</h3>
-              <p>Our premium data centers in Mumbai, India and London, UK offer fast, secure, and reliable cloud infrastructure with local compliance and support.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="features-section">
-        <div className="features-container">
-          <div className="features-header">
-            <h2 className="features-title">All Plans Include</h2>
-            <p className="features-subtitle">
-              Everything you need to run your applications smoothly
+            <p className="pr-footnote">
+              Prices exclude tax; the final amount is shown at checkout. Transfer runs at 10 Gbps,
+              or 1 Gbps in Asian locations.
             </p>
-          </div>
+          </section>
 
-          <div className="features-grid">
-            {features.map((feature, index) => (
-              <div className="feature-card" key={index}>
-                <div className="feature-icon">{feature.icon}</div>
-                <p className="feature-text">{feature.text}</p>
+          {/* ── Bare Metal ── */}
+          <section className="pr-section" id="bare-metal">
+            <div className="pr-section-head">
+              <span className="pr-section-icon"><Server aria-hidden="true" /></span>
+              <div>
+                <h2 className="pr-section-title">Bare Metal <span className="pr-soon">Coming soon</span></h2>
+                <p className="pr-section-lede">
+                  Dedicated servers for workloads that need the whole machine: no hypervisor,
+                  no neighbours.
+                </p>
               </div>
-            ))}
+            </div>
+
+            <div className="pr-card pr-bm">
+              <ul className="pr-checklist">
+                <li><Check aria-hidden="true" />Single-tenant hardware: the entire server is yours</li>
+                <li><Check aria-hidden="true" />Dedicated CPU cores, memory and storage</li>
+                <li><Check aria-hidden="true" />Full root access to the machine</li>
+              </ul>
+              <div className="pr-bm-cta">
+                <p>Plans and pricing are being finalised. Tell us what you need and we'll reach out when it launches.</p>
+                <a href="/contact" className="pr-btn pr-btn-primary">
+                  Talk to us <ArrowRight aria-hidden="true" />
+                </a>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Domains ── */}
+          <section className="pr-section" id="domains">
+            <div className="pr-section-head">
+              <span className="pr-section-icon"><Globe aria-hidden="true" /></span>
+              <div>
+                <h2 className="pr-section-title">Domains <span className="pr-soon">Coming soon</span></h2>
+                <p className="pr-section-lede">
+                  Register your name alongside your servers and manage it all from one dashboard.
+                </p>
+              </div>
+            </div>
+
+            <div className="pr-card pr-bm">
+              <ul className="pr-checklist">
+                {DOMAIN_INCLUDES.map((text) => (
+                  <li key={text}><Check aria-hidden="true" />{text}</li>
+                ))}
+              </ul>
+              <div className="pr-bm-cta">
+                <p>Domain registration is on its way. Get in touch and we'll let you know as soon as it opens.</p>
+                <a href="/contact" className="pr-btn pr-btn-primary">
+                  Talk to us <ArrowRight aria-hidden="true" />
+                </a>
+              </div>
+            </div>
+          </section>
+
+          {/* Every plan includes */}
+          <section className="pr-card pr-includes" aria-label="Included with every plan">
+            <h2>Included with every plan</h2>
+            <ul>
+              {PLATFORM_INCLUDES.map(({ Icon, text }) => (
+                <li key={text}><Icon aria-hidden="true" />{text}</li>
+              ))}
+            </ul>
+          </section>
+        </main>
+      </div>
+
+      {/* Closing CTA */}
+      <section className="pr-cta">
+        <div className="pr-wrap pr-cta-inner">
+          <div>
+            <h2>Not sure which plan fits?</h2>
+            <p>Tell us about your workload and we'll point you to the right setup.</p>
           </div>
+          <a href="/contact" className="pr-btn pr-btn-primary pr-btn-lg">
+            Talk to our team <ArrowRight aria-hidden="true" />
+          </a>
         </div>
       </section>
-
     </div>
   );
 };

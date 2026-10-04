@@ -153,7 +153,7 @@ Walras Cloud is not liable for data loss, corruption, or unauthorized access.`
               </div>
             </div>
             <div className="footer-actions">
-              <a href="/about/pricing" className="btn primary">See Our Plans</a>
+              <a href="/pricing" className="btn primary">See Our Plans</a>
             </div>
           </div>
         </div>
