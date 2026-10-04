@@ -12,7 +12,8 @@ const Logo = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png"
 
 const SECTIONS = [
   { name: "Domains", href: "/domains" },
-  { name: "Web Hosting", href: "/web-hosting" },
+  // Hidden from the navbar for now; the /web-hosting page still exists.
+  // { name: "Web Hosting", href: "/web-hosting" },
   { name: "Cloud Compute", href: "/about/pricing" },
   { name: "Bare Metal", href: "/bare-metal" },
   { name: "About", href: "/about" },

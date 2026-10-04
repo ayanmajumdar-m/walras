@@ -609,3 +609,258 @@
     gap: 0.5rem;
   }
 }
+/* ── Cloud Compute plans: Vultr-style category rail + sortable table ── */
+.cc-layout {
+  max-width: 1280px;
+  display: grid;
+  grid-template-columns: 208px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.cc-rail {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cc-rail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: color-mix(in srgb, #ffffff 55%, transparent);
+  border: 1px solid var(--color-divider);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-lg);
+  color: var(--color-text);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cc-rail-item:hover {
+  background: #ffffff;
+  color: var(--color-text);
+}
+
+.cc-rail-item.is-active {
+  background: #ffffff;
+  border-left-color: var(--color-buttr-500);
+  box-shadow: var(--shadow-sm);
+}
+
+.cc-rail-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+.cc-rail-title {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.cc-rail-desc {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.cc-content {
+  min-width: 0;
+}
+
+.cc-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 12px;
+  font-size: 34px;
+  color: var(--color-text);
+}
+
+.cc-heading-icon {
+  width: 34px;
+  height: 34px;
+  color: var(--color-accent);
+}
+
+.cc-lede {
+  max-width: 720px;
+  margin: 0 0 28px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.cc-table-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow-x: auto;
+}
+
+.cc-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.cc-table th:first-child,
+.cc-table td:first-child {
+  padding-left: 22px;
+}
+
+.cc-table th {
+  padding: 18px 12px;
+  text-align: left;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.cc-table td {
+  padding: 14px 12px;
+  border-top: 1px solid var(--color-rule-soft);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.cc-table tbody tr {
+  transition: background 0.12s ease;
+}
+
+.cc-table tbody tr:hover {
+  background: var(--color-accent-100);
+}
+
+.cc-table td strong {
+  font-weight: 600;
+}
+
+.cc-unit {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* The sorted column reads in teal, as Vultr does with its blue */
+.cc-table td.is-active,
+.cc-table td.is-active .cc-unit {
+  color: var(--color-accent-700);
+}
+
+.cc-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cc-sort:hover,
+.cc-sort.is-active {
+  color: var(--color-accent-700);
+}
+
+.cc-sort-arrows {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 0;
+}
+
+.cc-sort-arrows svg {
+  width: 12px;
+  height: 12px;
+  margin: -2px 0;
+  opacity: 0.35;
+}
+
+.cc-sort-arrows svg.on {
+  opacity: 1;
+}
+
+.cc-plan-name {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 16px;
+}
+
+.cc-tag {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background: var(--color-buttr-500);
+  color: #0a0a0c;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+
+.cc-stock {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cc-footnote {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 960px) {
+  .cc-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .cc-rail {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .cc-rail-item {
+    flex: 0 0 auto;
+    align-items: center;
+    padding: 10px 14px;
+    border-left-width: 1px;
+  }
+
+  .cc-rail-item.is-active {
+    border-color: var(--color-buttr-500);
+  }
+
+  .cc-rail-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .cc-rail-desc {
+    display: none;
+  }
+
+  .cc-heading {
+    font-size: 28px;
+  }
+}

@@ -1,54 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Pricing.css';
-import { Server, Cpu, HardDrive, Wifi, Zap, Shield, Clock, HelpCircle } from 'lucide-react';
+import { Server, Zap, Shield, Clock, HelpCircle, Layers, Globe, ChevronUp, ChevronDown } from 'lucide-react';
+
+// All Cloud Compute plans: 1 IPv4 address, DDR4 RAM, SSD storage, transfer @10 Gbps.
+const sharedPlans = [
+  { name: "SFC-4GB", vcpu: 2, ram: 4, storage: 60, bandwidth: 2, monthly: 900, hourly: 1.25, popular: false },
+  { name: "SFC-8GB", vcpu: 4, ram: 8, storage: 120, bandwidth: 4, monthly: 1800, hourly: 2.5, popular: false },
+  { name: "SFC-16GB", vcpu: 6, ram: 16, storage: 240, bandwidth: 6, monthly: 3600, hourly: 5, popular: true },
+  { name: "SFC-32GB", vcpu: 10, ram: 32, storage: 480, bandwidth: 10, monthly: 5400, hourly: 7.5, popular: false }
+];
+
+const PLAN_COLUMNS = [
+  { key: "vcpu", label: "vCPUs", unit: (p) => (p.vcpu === 1 ? "vCPU" : "vCPUs") },
+  { key: "ram", label: "Memory", unit: () => "GB" },
+  { key: "bandwidth", label: "Bandwidth", unit: () => "TB" },
+  { key: "storage", label: "SSD Storage", unit: () => "GB" },
+  { key: "monthly", label: "Monthly Price", price: true },
+  { key: "hourly", label: "Hourly Price", price: true }
+];
+
+const formatPrice = (key, value) =>
+  key === "monthly"
+    ? { amount: `₹${value.toLocaleString("en-IN")}`, per: "/mo" }
+    : { amount: `₹${value.toFixed(2)}`, per: "/hr" };
+
+// Left rail, Vultr style. Cloud Compute is the table on this page; the other
+// products have their own pages.
+const CATEGORIES = [
+  { id: "cloud-compute", href: "#cloud-compute", Icon: Layers, title: "Cloud Compute", desc: "Easy-to-use, affordable VMs for many common workloads." },
+  { id: "bare-metal", href: "/bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers. Coming soon." },
+  { id: "domains", href: "/domains", Icon: Globe, title: "Domains", desc: "Register and manage domains with free WHOIS privacy." }
+];
 
 const Pricing = () => {
-  const sharedPlans = [
-    {
-      name: "SFC-4GB",
-      monthlyPrice: "₹900",
-      hourlyPrice: "₹1.25/hr",
-      ram: "4GB DDR4 RAM",
-      cpu: "2 vCPU Cores",
-      storage: "60GB SSD",
-      bandwidth: "2TB BANDWIDTH @10 Gbps",
-      ip: "1 IPv4 Address",
-      popular: false
-    },
-    {
-      name: "SFC-8GB",
-      monthlyPrice: "₹1,800",
-      hourlyPrice: "₹2.50/hr",
-      ram: "8GB DDR4 RAM",
-      cpu: "4 vCPU Cores",
-      storage: "120GB SSD",
-      bandwidth: "4TB BANDWIDTH @10 Gbps",
-      ip: "1 IPv4 Address",
-      popular: false
-    },
-    {
-      name: "SFC-16GB",
-      monthlyPrice: "₹3,600",
-      hourlyPrice: "₹5.00/hr",
-      ram: "16GB DDR4 RAM",
-      cpu: "6 vCPU Cores",
-      storage: "240GB SSD",
-      bandwidth: "6TB BANDWIDTH @10 Gbps",
-      ip: "1 IPv4 Address",
-      popular: true
-    },
-    {
-      name: "SFC-32GB",
-      monthlyPrice: "₹5,400",
-      hourlyPrice: "₹7.50/hr",
-      ram: "32GB DDR4 RAM",
-      cpu: "10 vCPU Cores",
-      storage: "480GB SSD",
-      bandwidth: "10TB BANDWIDTH @10 Gbps",
-      ip: "1 IPv4 Address",
-      popular: false
-    }
-  ];
+  const [sort, setSort] = useState({ key: "monthly", dir: "asc" });
+
+  const sortedPlans = [...sharedPlans].sort((a, b) =>
+    sort.dir === "asc" ? a[sort.key] - b[sort.key] : b[sort.key] - a[sort.key]
+  );
+
+  const toggleSort = (key) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
 
   const features = [
     { icon: <Clock className="feature-icon" />, text: "24/7 Email and Ticket Support" },
@@ -76,82 +68,101 @@ const Pricing = () => {
 
       {/* Plans Section */}
       <section className="plans-section" id='plans-section'>
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Cloud Compute Plans</h2>
-            <p className="section-subtitle">Choose the perfect plan for your workload</p>
-          </div>
+        <div className="container cc-layout">
+          {/* Category rail */}
+          <nav className="cc-rail" aria-label="Product categories">
+            {CATEGORIES.map(({ id, href, Icon, title, desc }) => (
+              <a key={id} href={href} className={`cc-rail-item ${id === "cloud-compute" ? "is-active" : ""}`}>
+                <Icon className="cc-rail-icon" aria-hidden="true" />
+                <span>
+                  <span className="cc-rail-title">{title}</span>
+                  <span className="cc-rail-desc">{desc}</span>
+                </span>
+              </a>
+            ))}
+          </nav>
 
-          {/* Currency Selector */}
-          <div className="currency-selector">
-            <span>Currency:</span>
-            <div className="currency-buttons">
-              <button className="currency-btn active">INR ₹</button>
-              <button className="currency-btn">USD $</button>
-            </div>
-          </div>
+          {/* Cloud Compute */}
+          <div className="cc-content">
+            <div className="cc-block" id="cloud-compute">
+              <h2 className="cc-heading">
+                <Layers className="cc-heading-icon" aria-hidden="true" />
+                Cloud Compute
+              </h2>
+              <p className="cc-lede">
+                Virtual machines with a balanced mix of CPU, memory and SSD storage, suitable for
+                websites, apps and everyday workloads. Every plan includes one IPv4 address and
+                transfer at 10 Gbps.
+              </p>
 
-          {/* Plans Grid */}
-          <div className="plans-grid">
-            {sharedPlans.map((plan, index) => (
-              <div className={`plan-card ${plan.popular ? 'popular' : ''}`} key={index}>
-                {plan.popular && <div className="popular-badge">Most Popular</div>}
-                <div className="plan-header">
-                  <h3 className="plan-name">{plan.name}</h3>
-                  <div className="plan-price">
-                    <span className="monthly-price">{plan.hourlyPrice} | {plan.monthlyPrice}/mo</span>
-                  </div>
-                  <span style={{ display: "inline-block", marginTop: "8px", background: "#fee2e2", color: "#dc2626", border: "1px solid #fca5a5", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase" }}>
-                    Out of Stock
-                  </span>
-                </div>
-
-                <div className="plan-features">
-                  <div className="feature-item">
-                    <Server className="feature-icon" />
-                    <span>{plan.ram}</span>
-                  </div>
-                  <div className="feature-item">
-                    <Cpu className="feature-icon" />
-                    <span>{plan.cpu}</span>
-                  </div>
-                  <div className="feature-item">
-                    <HardDrive className="feature-icon" />
-                    <span>{plan.storage}</span>
-                  </div>
-                  <div className="feature-item">
-                    <Wifi className="feature-icon" />
-                    <span>{plan.bandwidth} Transfer</span>
-                  </div>
-                  {/* <div className="feature-item">
-                    <Zap className="feature-icon" />
-                    <span>{plan.speed}</span>
-                  </div> */}
-                </div>
-
-                <button
-                  className="btn plan-btn"
-                  disabled={true}
-                  style={{ background: "#f1f5f9", color: "#94a3b8", cursor: "not-allowed", border: "1px solid #cbd5e1" }}
-                  title="This VPS plan is currently out of stock"
-                >
-                  Out of Stock
-                </button>
+              <div className="cc-table-card">
+                <table className="cc-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Plan</th>
+                      {PLAN_COLUMNS.map(({ key, label }) => {
+                        const active = sort.key === key;
+                        return (
+                          <th
+                            scope="col"
+                            key={key}
+                            aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+                          >
+                            <button
+                              type="button"
+                              className={`cc-sort ${active ? "is-active" : ""}`}
+                              onClick={() => toggleSort(key)}
+                            >
+                              {label}
+                              <span className="cc-sort-arrows" aria-hidden="true">
+                                <ChevronUp className={active && sort.dir === "asc" ? "on" : ""} />
+                                <ChevronDown className={active && sort.dir === "desc" ? "on" : ""} />
+                              </span>
+                            </button>
+                          </th>
+                        );
+                      })}
+                      <th scope="col">Availability</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedPlans.map((plan) => (
+                      <tr key={plan.name}>
+                        <td className="cc-plan-name">
+                          {plan.name}
+                          {plan.popular && <span className="cc-tag">Popular</span>}
+                        </td>
+                        {PLAN_COLUMNS.map(({ key, unit, price }) => {
+                          const active = sort.key === key;
+                          if (price) {
+                            const { amount, per } = formatPrice(key, plan[key]);
+                            return (
+                              <td key={key} className={`cc-price ${active ? "is-active" : ""}`}>
+                                <strong>{amount}</strong> <span className="cc-unit">{per}</span>
+                              </td>
+                            );
+                          }
+                          return (
+                            <td key={key} className={active ? "is-active" : ""}>
+                              <strong>{plan[key]}</strong> <span className="cc-unit">{unit(plan)}</span>
+                            </td>
+                          );
+                        })}
+                        <td>
+                          <span className="cc-stock">Out of stock</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-            ))}
-
+              <p className="cc-footnote">
+                Prices exclude tax; the final amount is shown at checkout. Transfer runs at 10 Gbps,
+                or 1 Gbps in Asian locations.
+              </p>
+            </div>
           </div>
-          <div className='note' style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', height: '20px',marginBottom:'100px' }}>
-            <p className="tax-note">Tax not included. Final amount shown at checkout</p>
-            <p className="tax-note">@1Gbps for Asian locations</p>
-
-
-          </div>
-
-
-
-
         </div>
       </section>
 
