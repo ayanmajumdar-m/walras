@@ -4,7 +4,7 @@ import { Server, Zap, Shield, Clock, HelpCircle, Layers, Globe, ChevronUp, Chevr
 
 // All Cloud Compute plans: 1 IPv4 address, DDR4 RAM, SSD storage, transfer @10 Gbps.
 const sharedPlans = [
-  { name: "SFC-4GB", vcpu: 2, ram: 4, storage: 60, bandwidth: 2, monthly: 900, hourly: 1.25, popular: false },
+  { name: "WSC-4GB", vcpu: 2, ram: 4, storage: 60, bandwidth: 2, monthly: 900, hourly: 1.25, popular: false },
   { name: "SFC-8GB", vcpu: 4, ram: 8, storage: 120, bandwidth: 4, monthly: 1800, hourly: 2.5, popular: false },
   { name: "SFC-16GB", vcpu: 6, ram: 16, storage: 240, bandwidth: 6, monthly: 3600, hourly: 5, popular: true },
   { name: "SFC-32GB", vcpu: 10, ram: 32, storage: 480, bandwidth: 10, monthly: 5400, hourly: 7.5, popular: false }

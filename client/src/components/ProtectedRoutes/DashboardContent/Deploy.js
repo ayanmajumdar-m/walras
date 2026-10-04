@@ -26,7 +26,7 @@ const Deploy = () => {
   const plans = [
     {
       id: 1,
-      name: "SFC-4GB",
+      name: "WSC-4GB",
       inr: 900,
       usd: calculateUSDPrice(900),
       ram: "4GB DDR4 RAM",

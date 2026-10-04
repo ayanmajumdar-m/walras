@@ -62,7 +62,7 @@ See **BUTTR_ID_INTEGRATION.md** for the flow, configuration and migration notes.
 - Multi-currency wallet support (INR/USD)
 
 ### 3. **Server/Cloud Deployment**
-- VPS deployment plans (SFC-4GB, SFC-8GB, SFC-16GB, SFC-32GB)
+- VPS deployment plans (WSC-4GB, SFC-8GB, SFC-16GB, SFC-32GB)
 - Hourly billing system with automated cron jobs
 - Server status management
 - Configuration tracking
