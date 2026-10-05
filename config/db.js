@@ -11,24 +11,23 @@ require('dotenv').config();
 const dbConfig = resolveDbConfig();
 const connection = createConnection(dbConfig);
 
-// Authentication happens in BUTTR ID, so this table holds no password and no
-// verification codes. buttr_sub is the account key: the pairwise subject
-// identifier BUTTR ID issues for this client. email and phone are a local copy
-// of what BUTTR ID shared, kept for billing and for reaching the customer —
-// neither is the identity, and an account created with only a mobile number
-// arrives with no email at all.
+// Walras Cloud runs its own sign-up and sign-in: email + password, with the
+// email address confirmed by a one-time code sent through Brevo. Codes live in
+// email_codes (hashed), never on the users row.
 //
-// This shape only applies to a database that has never held a pre-BUTTR user.
+// Emails are stored lowercased by the application, so UNIQUE is effectively
+// case-insensitive.
 const createTableUsers = `CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    buttr_sub VARCHAR(255) NOT NULL UNIQUE,
-    buttr_handle VARCHAR(100),
+    account_type VARCHAR(10) NOT NULL DEFAULT 'personal' CHECK (account_type IN ('personal', 'business')),
     name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255),
+    phone VARCHAR(20) UNIQUE,
     company VARCHAR(100),
+    gstin VARCHAR(15),
     role VARCHAR(50),
     address VARCHAR(255),
-    phone VARCHAR(20) UNIQUE,
-    email VARCHAR(255) UNIQUE,
     isVerified BOOLEAN DEFAULT FALSE,
     isEmailVerified BOOLEAN DEFAULT FALSE,
     isPhoneVerified BOOLEAN DEFAULT FALSE,
@@ -38,9 +37,39 @@ const createTableUsers = `CREATE TABLE IF NOT EXISTS users (
     updatedAt TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 )`;
 
-// There is no migration from the pre-BUTTR schema. Every account is created by
-// a BUTTR ID sign-in, so a database carrying old password-authenticated rows is
-// wiped rather than upgraded — run `node reset-accounts.js` once, deliberately.
+/*
+  Upgrades a users table created during the BUTTR ID period. Additive only:
+  nothing is dropped, so existing accounts keep their id, wallet and servers.
+  Those accounts have no password yet; their owners set one with "Forgot
+  password", which also proves they still hold the email address.
+*/
+const migrateUsersFromButtrId = [
+    `DO $$
+     BEGIN
+       IF EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_name = 'users' AND column_name = 'buttr_sub') THEN
+         ALTER TABLE users ALTER COLUMN buttr_sub DROP NOT NULL;
+       END IF;
+     END $$`,
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS account_type VARCHAR(10) NOT NULL DEFAULT 'personal' CHECK (account_type IN ('personal', 'business'))",
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS gstin VARCHAR(15)',
+];
+
+// One-time codes for email verification and password reset. Only an HMAC of
+// the code is stored; attempts caps guessing on a single code.
+const createEmailCodesTable = `
+CREATE TABLE IF NOT EXISTS email_codes (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    purpose VARCHAR(10) NOT NULL CHECK (purpose IN ('verify', 'reset')),
+    code_hash VARCHAR(64) NOT NULL,
+    attempts INT NOT NULL DEFAULT 0,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)
+`;
 
 const createAdminsTable = `CREATE TABLE IF NOT EXISTS admins (
     id SERIAL PRIMARY KEY,
@@ -324,6 +353,7 @@ const createIndexes = [
     'CREATE INDEX IF NOT EXISTS idx_ho_user_id ON hosting_orders (user_id)',
     'CREATE INDEX IF NOT EXISTS idx_ho_order_id ON hosting_orders (order_id)',
     'CREATE INDEX IF NOT EXISTS idx_ho_status ON hosting_orders (status)',
+    'CREATE INDEX IF NOT EXISTS idx_email_codes_user ON email_codes (user_id, purpose)',
 ];
 
 connection.on('error', (err) => {
@@ -350,6 +380,8 @@ connection.connect((err) => {
     */
     const schema = [
         ['Users', createTableUsers],
+        ...migrateUsersFromButtrId.map((sql, i) => [`users migration ${i + 1}`, sql]),
+        ['Email codes', createEmailCodesTable],
         ['Admins', createAdminsTable],
         ['Wallet', createWalletTable],
         ['Wallet transaction', createWalletTransactionTable],

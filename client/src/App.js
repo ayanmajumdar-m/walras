@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import SignIn from './components/AuthScreen/Login';
-import AuthCallback from './components/AuthScreen/AuthCallback';
+import Signup from './components/AuthScreen/Signup';
+import VerifyEmail from './components/AuthScreen/VerifyEmail';
+import ForgotPassword from './components/AuthScreen/ForgotPassword';
 import About from './components/About/About';
 import Pricing from './components/About/Pricing';
 import DashboardLayout from './components/ProtectedRoutes/DashboardLayout';
@@ -60,17 +62,14 @@ function App() {
         <Route path='/bare-metal' element={<Navigate to={{ pathname: "/pricing", hash: "#bare-metal" }} replace />} />
         <Route path='/flare-mail' element={<PublicLayout><FlareMail /></PublicLayout>} />
 
-        {/* Sign-in is delegated to BUTTR ID. /login only offers the handoff;
-            /auth/callback is where the backend drops the session token. */}
+        {/* Accounts: email + password, email confirmed with a code sent via Brevo. */}
         <Route path="/login" element={<SignIn />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-
-        {/* Registration, OTP verification and password reset all moved to
-            BUTTR ID. Anyone holding an old bookmark lands on sign-in. */}
-        <Route path="/register" element={<Navigate to="/login" replace />} />
-        <Route path="/verify-email-otp" element={<Navigate to="/login" replace />} />
-        <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
-        <Route path="/reset-password/:token" element={<Navigate to="/login" replace />} />
+        <Route path="/register" element={<Signup />} />
+        <Route path="/signup" element={<Navigate to="/register" replace />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-email-otp" element={<Navigate to="/verify-email" replace />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<Navigate to="/forgot-password" replace />} />
 
         {/* User Dashboard routes without Navbar */}
         <Route path="/dashboard/*" element={<DashboardLayout />} />

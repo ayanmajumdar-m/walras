@@ -1,50 +1,59 @@
 const connection = require('../config/db');
 
 const User = {
-    // Identity lives in BUTTR ID. The only thing that identifies an account
-    // here is the subject identifier BUTTR ID issues for this client — it is
-    // stable for a person, and deliberately different from what any other
-    // BUTTR service sees for the same person.
-    findByButtrSub: (buttrSub, callback) => {
-        const query = 'SELECT * FROM users WHERE buttr_sub = ?';
-        connection.query(query, [buttrSub], callback);
+    // Accounts are keyed on email. Callers lowercase it before it gets here,
+    // and the column is UNIQUE, so one address means one account.
+    findByEmail: (email, callback) => {
+        connection.query('SELECT * FROM users WHERE email = ?', [email], callback);
     },
 
-    createFromButtrId: (identity, callback) => {
-        const { buttrSub, buttrHandle, name, email, phone } = identity;
-        // true/false, not 1/0: MySQL coerced integers into BOOLEAN columns,
-        // PostgreSQL refuses with "is of type boolean but expression is of
-        // type integer".
+    findById: (id, callback) => {
+        connection.query('SELECT * FROM users WHERE id = ?', [id], callback);
+    },
+
+    findByPhone: (phone, callback) => {
+        connection.query('SELECT id, email FROM users WHERE phone = ?', [phone], callback);
+    },
+
+    // New accounts start unverified; verifying the email flips both flags.
+    create: (data, callback) => {
+        const { accountType, name, email, phone, passwordHash, company, gstin, role } = data;
         const query = `
-        INSERT INTO users (buttr_sub, buttr_handle, name, email, phone, isVerified, isEmailVerified)
-        VALUES (?, ?, ?, ?, ?, true, ?)`;
-        connection.query(query, [buttrSub, buttrHandle, name, email || null, phone || null, Boolean(email)], callback);
+        INSERT INTO users (account_type, name, email, phone, password_hash, company, gstin, role, isVerified, isEmailVerified)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, false, false)`;
+        connection.query(query, [accountType, name, email, phone, passwordHash, company, gstin, role], callback);
     },
 
-    // Name and email are BUTTR ID's to change, so refresh the local copy on
-    // every sign-in rather than letting it drift.
-    syncFromButtrId: (id, identity, callback) => {
-        const { buttrHandle, name, email } = identity;
+    // Someone signing up again before verifying: take the latest details.
+    replaceUnverified: (id, data, callback) => {
+        const { accountType, name, phone, passwordHash, company, gstin, role } = data;
         const query = `
         UPDATE users
-        SET buttr_handle = ?, name = ?, email = ?, isEmailVerified = ?
-        WHERE id = ?`;
-        connection.query(query, [buttrHandle, name, email || null, Boolean(email), id], callback);
+        SET account_type = ?, name = ?, phone = ?, password_hash = ?, company = ?, gstin = ?, role = ?
+        WHERE id = ? AND isEmailVerified = false`;
+        connection.query(query, [accountType, name, phone, passwordHash, company, gstin, role, id], callback);
     },
 
-    // No findByEmail / findByPhone. Nothing may look an account up by contact
-    // detail: buttr_sub is the identity, and an account can have no email.
+    markEmailVerified: (id, callback) => {
+        connection.query('UPDATE users SET isEmailVerified = true, isVerified = true WHERE id = ?', [id], callback);
+    },
+
+    setPassword: (id, passwordHash, callback) => {
+        connection.query('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, id], callback);
+    },
 
     viewData: (id, callback) => {
-        const query = 'SELECT id, name, email, phone, company, role, address, buttr_handle FROM users WHERE id = ?';
+        const query = `
+        SELECT id, account_type, name, email, phone, company, gstin, role, address, isEmailVerified
+        FROM users WHERE id = ?`;
         connection.query(query, [id], callback);
     },
     updateData: (id, userData, callback) => {
-        // name and email are not updatable here — they are owned by BUTTR ID
-        // and overwritten from it on the next sign-in.
-        const { phone, company, role, address } = userData;
-        const query = 'UPDATE users SET phone = ?, company = ?, role = ?, address = ? WHERE id = ?';
-        connection.query(query, [phone, company, role, address, id], callback);
+        // email is not updatable here: changing it would need a fresh
+        // verification of the new address.
+        const { name, phone, company, gstin, role, address } = userData;
+        const query = 'UPDATE users SET name = ?, phone = ?, company = ?, gstin = ?, role = ?, address = ? WHERE id = ?';
+        connection.query(query, [name, phone, company, gstin, role, address, id], callback);
     },
 
     // Update login information

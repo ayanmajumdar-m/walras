@@ -8,9 +8,8 @@ const Profile = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const API_URL = `https://buttr.cloud`
 
-  // Where to send someone who wants to change their name, email, password or
-  // sign-in methods — all of that lives in BUTTR ID, not here.
-  const [buttrAccountUrl, setButtrAccountUrl] = useState("");
+  const [pw, setPw] = useState({ currentPassword: "", newPassword: "" });
+  const [pwMessage, setPwMessage] = useState({ text: "", type: "" });
 
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
@@ -66,15 +65,29 @@ const Profile = () => {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/auth/config`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => data && setButtrAccountUrl(data.accountUrl))
-      .catch(() => {});
-  }, [API_URL]);
+  const changePassword = async (e) => {
+    e.preventDefault();
+    setPwMessage({ text: "", type: "" });
+    try {
+      const res = await fetch(`${API_URL}/api/auth/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(pw),
+      });
+      const result = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setPwMessage({ text: "Password changed ✅", type: "success" });
+        setPw({ currentPassword: "", newPassword: "" });
+      } else {
+        setPwMessage({ text: result.error || "Could not change password", type: "error" });
+      }
+    } catch {
+      setPwMessage({ text: "Error changing password", type: "error" });
+    }
+  };
 
-  // Re-entering a password used to gate this. There is no Walras Cloud password
-  // now — the bearer token came from BUTTR ID, and that is the proof.
+  const isBusiness = form.account_type === "business";
+
   const submitProfileUpdate = async () => {
     try {
       // Format address before submission
@@ -89,12 +102,12 @@ const Profile = () => {
       
       const formattedAddress = formatAddress(addressData);
 
-      // Only the fields Walras Cloud owns. name and email come from BUTTR ID
-      // and are refreshed from it on every sign-in, so sending them would be
-      // silently discarded.
+      // Email is not sent: changing it would need the new address verified.
       const updatedForm = {
+        name: form.name || '',
         phone: form.phone || '',
         company: form.company || '',
+        gstin: form.gstin || '',
         role: form.role || '',
         address: formattedAddress
       };
@@ -131,7 +144,9 @@ const Profile = () => {
     <div className="profile-container">
       <div className="profile-header">
         <h1 className="profile-title gradient-text">Your Profile</h1>
-        <p className="profile-subtitle">Manage your personal information</p>
+        <p className="profile-subtitle">
+          {isBusiness ? "Business account" : "Personal account"} · Manage your details
+        </p>
       </div>
 
       {message.text && (
@@ -142,25 +157,18 @@ const Profile = () => {
 
       <div className="profile-content">
         <div className="profile-card">
-          <h2 className="section-title">Personal Information</h2>
+          <h2 className="section-title">{isBusiness ? "Account & Business Information" : "Personal Information"}</h2>
           <form className="profile-form" onSubmit={(e) => e.preventDefault()}>
             <div className="form-grid">
               <div className="form-group">
                 <label htmlFor="name">Full Name</label>
-                <input id="name" type="text" value={form.name || ""} readOnly disabled />
-                <small>Managed by your BUTTR ID</small>
+                <input id="name" type="text" name="name" value={form.name || ""} onChange={handleChange} />
               </div>
 
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={form.email || "Not shared by your BUTTR ID"}
-                  readOnly
-                  disabled
-                />
-                <small>Managed by your BUTTR ID</small>
+                <input id="email" type="email" value={form.email || ""} readOnly disabled />
+                <small>{form.isemailverified ? "Verified ✓" : "Not verified"} · Contact support to change your email</small>
               </div>
 
               <div className="form-group">
@@ -175,8 +183,9 @@ const Profile = () => {
                 />
               </div>
 
+              {isBusiness && (<>
               <div className="form-group">
-                <label htmlFor="company">Company</label>
+                <label htmlFor="company">Business Name</label>
                 <input
                   id="company"
                   type="text"
@@ -198,6 +207,20 @@ const Profile = () => {
                   onChange={handleChange}
                 />
               </div>
+
+              <div className="form-group">
+                <label htmlFor="gstin">GSTIN</label>
+                <input
+                  id="gstin"
+                  type="text"
+                  name="gstin"
+                  maxLength={15}
+                  placeholder="Optional, e.g. 22AAAAA0000A1Z5"
+                  value={form.gstin || ""}
+                  onChange={(e) => setForm({ ...form, gstin: e.target.value.toUpperCase() })}
+                />
+              </div>
+              </>)}
             </div>
 
             <div className="address-section">
@@ -291,17 +314,40 @@ const Profile = () => {
       </div>
 
       <div className="profile-card">
-        <h2 className="section-title">Your BUTTR ID</h2>
-        <p>
-          Your name, email address, password and sign-in methods are managed by
-          BUTTR ID{form.buttr_handle ? ` (${form.buttr_handle})` : ""}. Buttr
-          Cloud never sees your password.
-        </p>
-        {buttrAccountUrl && (
-          <a className="auth-btn update-btn" href={buttrAccountUrl} target="_blank" rel="noreferrer">
-            Manage your BUTTR ID
-          </a>
+        <h2 className="section-title">Change Password</h2>
+        {pwMessage.text && (
+          <div className={`profile-message ${pwMessage.type}`}>{pwMessage.text}</div>
         )}
+        <form className="profile-form" onSubmit={changePassword}>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="currentPassword">Current Password</label>
+              <input
+                id="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                value={pw.currentPassword}
+                onChange={(e) => setPw({ ...pw, currentPassword: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="newPassword">New Password</label>
+              <input
+                id="newPassword"
+                type="password"
+                autoComplete="new-password"
+                placeholder="At least 8 characters, a letter and a number"
+                value={pw.newPassword}
+                onChange={(e) => setPw({ ...pw, newPassword: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="auth-btn update-btn" disabled={!pw.currentPassword || !pw.newPassword}>
+              Change Password
+            </button>
+          </div>
+        </form>
       </div>
 
     </div>

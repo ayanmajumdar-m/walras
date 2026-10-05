@@ -14,8 +14,7 @@ const validateEmail = (email) => {
     return emailRegex.test(email);
 };
 
-// Password rules live in BUTTR ID, which is the only thing that ever sees a
-// password now.
+// Password rules live with the sign-up code in controllers/auth.controllers.js.
 
 module.exports = {
     validateName,

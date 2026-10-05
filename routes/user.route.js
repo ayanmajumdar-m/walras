@@ -8,8 +8,8 @@ const authenticateToken = require('../utils/auth.middleware');
 
 // Public routes
 //
-// Registration, login, OTP verification and password reset are gone: they live
-// in BUTTR ID now, behind /api/auth/buttr/start. See routes/auth.routes.js.
+// Sign-up, sign-in, email verification and password reset are in
+// routes/auth.routes.js, mounted at /api/auth.
 userRouter.post('/create-ticket', UserController.createTicket);
 userRouter.get('/tickets/', UserController.getTickets);
 

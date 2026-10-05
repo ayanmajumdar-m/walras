@@ -10,6 +10,13 @@ class BillingService {
     }
 
     setupCronJobs() {
+        // Local development points at a scratch database; never let it charge
+        // wallets, suspend cPanel accounts or issue invoices.
+        if (process.env.DISABLE_BILLING === 'true') {
+            console.log('⏸️  DISABLE_BILLING=true — billing and suspension jobs are not scheduled.');
+            return;
+        }
+
         // Run every hour at minute 0
         cron.schedule('0 * * * *', () => {
             console.log('🕒 Running hourly billing cycle...');

@@ -9,12 +9,12 @@ const cors = require("cors");
 // Initialize billing service
 require("./services/billingServices");
 const { verifyEmailTransport } = require("./utils/sendEmail");
-console.log("💰 Billing service initialized");
+if (process.env.DISABLE_BILLING !== "true") console.log("💰 Billing service initialized");
 
 // ✅ Step 1: Proper CORS setup (for frontend on localhost:3000)
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://dujdidnis.buttr.cloud", "https://buttr.cloud", "https://www.buttr.cloud"],
+    origin: ["http://localhost:3000", "https://dujdidnis.buttr.cloud", "https://buttr.cloud", "https://www.buttr.cloud", "https://walras.net", "https://www.walras.net"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [

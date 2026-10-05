@@ -331,8 +331,8 @@ async function proceedWithDomainRegistration(domainTransactionId, domainName,
 }
 
 const UserController = {
-    // register / login / verifyEmailOtp / verifyPhoneOtp used to live here.
-    // Authentication is BUTTR ID's job now — see controllers/auth.controllers.js.
+    // Sign-up, sign-in, verification and password reset live in
+    // controllers/auth.controllers.js.
     viewProfile: async (req, res) => {
         try {
             const userId = req.params.id;
@@ -362,17 +362,21 @@ const UserController = {
         try {
             const userId = req.params.id;
             const { phone, company, role, address } = req.body;
+            const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+            const gstin = typeof req.body.gstin === 'string' ? req.body.gstin.trim().toUpperCase() : '';
 
             if (userId != req.user.userId) {
                 return res.status(403).json({ error: 'Unauthorized access' });
             }
 
-            // Re-authenticating with a password used to guard this endpoint.
-            // There is no Walras Cloud password any more, and the bearer token
-            // was minted minutes ago by BUTTR ID, so the token is the proof.
-            //
-            // Name and email are not accepted here either: they belong to the
-            // BUTTR ID account and are refreshed from it on every sign-in.
+            // Email is not accepted here: changing it would need the new
+            // address verified first.
+            if (name.length < 2 || name.length > 100) {
+                return res.status(400).json({ error: 'Enter your full name' });
+            }
+            if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) {
+                return res.status(400).json({ error: 'Enter a valid 15-character GSTIN, or leave it blank' });
+            }
             if (phone && !validatePhone(phone)) {
                 return res.status(400).json({ error: 'Invalid phone number' });
             }
@@ -381,7 +385,10 @@ const UserController = {
                 if (err) return res.status(500).json({ error: 'Database error' });
                 if (!results || results.length === 0) return res.status(404).json({ error: 'User not found' });
 
-                User.updateData(userId, { phone, company, role, address }, (updateErr) => {
+                User.updateData(userId, { name, phone, company, gstin: gstin || null, role, address }, (updateErr) => {
+                    if (updateErr && updateErr.code === 'ER_DUP_ENTRY') {
+                        return res.status(409).json({ error: 'This phone number is already linked to another account' });
+                    }
                     if (updateErr) return res.status(500).json({ error: 'Database error' });
 
                     res.status(200).json({ message: 'Profile updated successfully' });
@@ -393,8 +400,6 @@ const UserController = {
         }
     },
 
-    // forgotPassword / resetPassword used to live here. There is no Walras Cloud
-    // password to reset — recovery happens at the BUTTR ID account page.
     createTicket: async (req, res) => {
         try {
             const { subject, description, priorityId, brandId, name, email } = req.body;

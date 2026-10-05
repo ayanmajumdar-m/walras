@@ -100,8 +100,86 @@ const createDomainPurchaseTemplate = (name, domainName, purchaseDate) => {
 };
 
 
-// The welcome-with-OTP and password-reset emails left with the local auth
-// system. BUTTR ID sends its own verification and recovery mail.
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+const AUTH_CODE_COPY = {
+    verify: {
+        subject: 'Your Walras Cloud verification code',
+        heading: 'Verify your email',
+        intro: 'Thanks for signing up for Walras Cloud. Enter this code to confirm your email address:',
+    },
+    reset: {
+        subject: 'Your Walras Cloud password reset code',
+        heading: 'Reset your password',
+        intro: 'We received a request to reset your Walras Cloud password. Enter this code to choose a new one:',
+    },
+};
+
+// Table layout and inline styles: email clients ignore most <style> blocks.
+const createAuthCodeTemplate = (name, code, purpose, minutes) => {
+    const copy = AUTH_CODE_COPY[purpose];
+    return `
+<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f2f2f3;font-family:Arial,Helvetica,sans-serif;color:#1d1f20;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f3;padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e3e5e4;">
+          <tr><td style="background:#0b2622;padding:22px 28px;">
+            <span style="font-size:18px;font-weight:700;letter-spacing:0.08em;color:#ffffff;">WALRAS CLOUD</span>
+          </td></tr>
+          <tr><td style="padding:28px;">
+            <h1 style="margin:0 0 12px;font-size:22px;">${copy.heading}</h1>
+            <p style="margin:0 0 6px;font-size:15px;line-height:1.6;">Hi ${escapeHtml(name)},</p>
+            <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">${copy.intro}</p>
+            <div style="margin:0 0 22px;padding:18px;text-align:center;background:#e8fbf5;border:1px solid #c6f4e6;border-radius:10px;">
+              <span style="font-size:32px;font-weight:700;letter-spacing:0.35em;color:#037566;font-family:'Courier New',monospace;">${code}</span>
+            </div>
+            <p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#5d5d60;">This code expires in ${minutes} minutes.</p>
+            <p style="margin:0;font-size:14px;line-height:1.6;color:#5d5d60;">If you didn't request this, you can safely ignore this email.</p>
+          </td></tr>
+          <tr><td style="padding:18px 28px;border-top:1px solid #e3e5e4;font-size:12px;color:#7a7a7d;">
+            &copy; ${new Date().getFullYear()} Walras Cloud. This is an automated message; please do not reply.
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+};
+
+/**
+ * Sends a sign-up verification or password-reset code. Throws if mail is not
+ * configured or the relay rejects it, so the caller can tell the user the
+ * code was not sent instead of leaving them waiting for an email.
+ */
+const sendAuthCodeEmail = async (to, name, code, purpose, minutes) => {
+    // Local testing only: Brevo refuses relays from IPs not on its allowlist,
+    // so print the code instead. Ignored in production.
+    if (process.env.MAIL_DEV_LOG === 'true' && process.env.NODE_ENV !== 'production') {
+        console.log(`📧 [MAIL_DEV_LOG] ${purpose} code for ${to}: ${code} (valid ${minutes} min)`);
+        return { messageId: 'dev-log' };
+    }
+    if (!emailConfigured) {
+        throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
+    }
+    const copy = AUTH_CODE_COPY[purpose];
+    const info = await transporter.sendMail({
+        from: { name: FROM_NAME, address: FROM_ADDR },
+        to,
+        subject: copy.subject,
+        text: `${copy.intro}
+
+${code}
+
+This code expires in ${minutes} minutes. If you didn't request this, ignore this email.`,
+        html: createAuthCodeTemplate(name, code, purpose, minutes),
+    });
+    console.log(`Auth code email (${purpose}) sent:`, info.messageId);
+    return info;
+};
 
 const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
     if (!emailConfigured) {
@@ -127,6 +205,7 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
 };
 
 module.exports = {
+    sendAuthCodeEmail,
     sendDomainPurchaseEmail,
     verifyEmailTransport,
 };
