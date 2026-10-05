@@ -1,56 +1,76 @@
 import React from "react";
-import { NavLink } from 'react-router-dom';
-import { Home, User, Shield, LogOut, Bell, Ticket, Wallet, Earth, Logs, Globe, Server } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X } from "lucide-react";
 
-const Logo = 'https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png';
+const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
 
-const Sidebar = ({ tabs, sidebarOpen, setSidebarOpen }) => {
-  const handleLogout = () => {
+const NAV = [
+  { to: "/dashboard/home", label: "Overview", Icon: LayoutGrid },
+  { to: "/dashboard/create", label: "Create", Icon: PlusSquare },
+  { to: "/dashboard/resources", label: "Resources", Icon: Boxes },
+  { to: "/dashboard/billing", label: "Billing", Icon: CreditCard },
+];
+
+const NAV_SECONDARY = [
+  { to: "/dashboard/submitTicket", label: "Support", Icon: LifeBuoy },
+  { to: "/dashboard/profile", label: "Account", Icon: UserCircle },
+];
+
+const initials = (name) =>
+  (name || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0].toUpperCase())
+    .join("") || "W";
+
+const Sidebar = ({ open, onClose, profile }) => {
+  const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     window.location.href = "/login";
   };
 
-  const icons = {
-    home: <Home size={18} />,
-    profile: <User size={18} />,
-    privacy: <Shield size={18} />,
-    notifications: <Bell size={18} />,
-    submitTicket: <Ticket size={18} />,
-    wallet: <Wallet size={18}/>,
-    deploy: <Earth size={18}/>,
-    domains: <Globe size={18}/>,
-    hosting: <Server size={18}/>,
-    logs: <Logs size={18}/>,
-    domain: <Globe size={18}/>
-  };
+  const link = ({ to, label, Icon }) => (
+    <NavLink key={to} to={to} className={({ isActive }) => `cx-nav-item${isActive ? " is-active" : ""}`}>
+      <Icon size={18} aria-hidden="true" />
+      <span>{label}</span>
+    </NavLink>
+  );
 
   return (
-    <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-      <div className="sidebar-header">
-        <a href="/" className="sidebar-logo-link">
-          <img src={Logo} alt="Walras Cloud" className="sidebar-logo" />
-        </a>
-        <span className="sidebar-kicker">Console</span>
-      </div>
-      <nav className="sidebar-nav">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.key}
-            to={`/dashboard/${tab.key === 'home' ? 'home' : tab.key}`}
-            className={({ isActive }) => `sidebar-btn ${isActive ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            {icons[tab.key]} <span>{tab.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-      <div className="sidebar-footer">
-        <button onClick={handleLogout} className="logout-btn">
-          <LogOut size={18} /> <span>Logout</span>
-        </button>
-      </div>
-    </aside>
+    <>
+      {open && <div className="cx-scrim" onClick={onClose} aria-hidden="true" />}
+      <aside className={`cx-sidebar${open ? " is-open" : ""}`}>
+        <div className="cx-brand">
+          <a href="/" className="cx-brand-link">
+            <img src={LOGO} alt="" />
+            <span>Walras Cloud</span>
+          </a>
+          <button type="button" className="cx-close-btn" onClick={onClose} aria-label="Close menu">
+            <X size={18} />
+          </button>
+        </div>
+        <span className="cx-kicker">Console</span>
+
+        <nav className="cx-nav" aria-label="Console">
+          {NAV.map(link)}
+          <span className="cx-nav-sep" aria-hidden="true" />
+          {NAV_SECONDARY.map(link)}
+        </nav>
+
+        <div className="cx-user">
+          <span className="cx-avatar" aria-hidden="true">{initials(profile?.name)}</span>
+          <span className="cx-user-text">
+            <strong>{profile?.name || "Your account"}</strong>
+            <small>{profile?.email || ""}</small>
+          </span>
+          <button type="button" className="cx-logout" onClick={logout} title="Sign out" aria-label="Sign out">
+            <LogOut size={17} />
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 
