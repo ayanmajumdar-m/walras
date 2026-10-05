@@ -21,7 +21,7 @@ const Home = () => {
     fetchServers();
     fetchDomains();
   }, []);
-  const API_URL = `https://buttr.cloud`
+  const API_URL = ``
 
   const fetchServers = async () => {
     try {

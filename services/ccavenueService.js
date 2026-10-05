@@ -25,7 +25,7 @@ class CcavenueService {
             ? 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction'
             : 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
 
-        const clientUrl = (process.env.CLIENT_URL || 'https://buttr.cloud').replace(/\/+$/, '');
+        const clientUrl = (process.env.CLIENT_URL || 'https://www.walras.net').replace(/\/+$/, '');
 
         return {
             merchantId,

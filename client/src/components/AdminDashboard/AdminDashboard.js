@@ -43,7 +43,7 @@ const AdminDashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [showCreatePromo, setShowCreatePromo] = useState(false);
-  const API_URL = 'https://buttr.cloud';
+  const API_URL = '';
   const token = localStorage.getItem("adminToken");
 
   // Fetch dashboard stats

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Check, Shield, Globe, Lock, CreditCard, ArrowRight, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import "./HostingPurchase.css";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://buttr.cloud";
+const API_URL = process.env.REACT_APP_API_URL || "";
 
 const PLANS = {
   seed: {

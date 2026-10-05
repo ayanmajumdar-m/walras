@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const CreatePromoForm = ({ onSuccess, onCancel }) => {
-  const API_URL='https://buttr.cloud' || 'http://localhost:3001';
+  const API_URL='';
   const [formData, setFormData] = useState({
     code: '',
     description: '',

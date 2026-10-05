@@ -12,7 +12,7 @@ const HostingConsole = () => {
   const [copiedField, setCopiedField] = useState(null);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  const API_URL = "https://buttr.cloud";
+  const API_URL = "";
 
   useEffect(() => {
     fetchWalletBalance();

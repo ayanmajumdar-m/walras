@@ -12,7 +12,7 @@ const Hosting = ({ hostingAccounts = [], onSuspend, onUnsuspend, onDelete, onLog
     setLoadingPkgs(true);
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
-      const res = await fetch(`https://buttr.cloud/api/admin/hostingPackages`, {
+      const res = await fetch(`/api/admin/hostingPackages`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();

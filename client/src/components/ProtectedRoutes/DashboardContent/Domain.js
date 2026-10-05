@@ -167,7 +167,7 @@ function Domain() {
     }
   }
 
-  const API_URL = `https://buttr.cloud`
+  const API_URL = ``
   const handleRazorpayPayment = async (orderData) => {
     const options = {
       key: orderData.key,

@@ -1,6 +1,8 @@
 // Shared plumbing for the sign-in, sign-up, verification and reset screens.
 
-export const API_URL = process.env.REACT_APP_API_URL || "https://buttr.cloud";
+// Same origin: the Express server that serves the site also serves /api.
+// In development, client/package.json proxies /api to the local backend.
+export const API_URL = process.env.REACT_APP_API_URL || "";
 
 /**
  * POSTs JSON to /api/auth/<path>. Resolves with the body on success; rejects

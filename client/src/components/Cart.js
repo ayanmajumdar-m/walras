@@ -13,7 +13,7 @@ const Cart = () => {
     state: '', country: 'India', postalCode: '', gender: 'm'
   });
 
-  const API_URL = `https://buttr.cloud`
+  const API_URL = ``
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('cart') || '[]');

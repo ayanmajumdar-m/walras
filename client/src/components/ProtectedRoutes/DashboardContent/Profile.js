@@ -6,7 +6,7 @@ const Profile = () => {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: "", type: "" });
-  const API_URL = `https://buttr.cloud`
+  const API_URL = ``
 
   const [pw, setPw] = useState({ currentPassword: "", newPassword: "" });
   const [pwMessage, setPwMessage] = useState({ text: "", type: "" });

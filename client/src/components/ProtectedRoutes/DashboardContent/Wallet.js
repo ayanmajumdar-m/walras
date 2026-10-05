@@ -10,7 +10,7 @@ const Wallet = () => {
   const [loading, setLoading] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [userData, setUserData] = useState(null);
-  const API_URL = `https://buttr.cloud`
+  const API_URL = ``
 
   const [promoLoading, setPromoLoading] = useState(false);
 

@@ -21,7 +21,7 @@ const DomainCheck = () => {
     setError("");
     setResults(null);
 
-    const API_URL = `https://buttr.cloud`
+    const API_URL = ``
 
     try {
       const response = await fetch(

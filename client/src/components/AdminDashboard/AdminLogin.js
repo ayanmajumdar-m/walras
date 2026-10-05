@@ -23,7 +23,7 @@ const AdminLogin = () => {
     setError("");
   };
 
-  const API_URL = `https://buttr.cloud`
+  const API_URL = ``
 
   const handleSubmit = async (e) => {
     e.preventDefault();
