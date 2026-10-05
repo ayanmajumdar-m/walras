@@ -266,7 +266,7 @@ const AuthController = {
 
         const [user] = await db.findByEmail(email);
 
-        // Accounts from the BUTTR ID period have no password until their owner
+        // Accounts from the earlier single-sign-on period have no password until their owner
         // sets one through "Forgot password".
         const ok = user && user.password_hash && await bcrypt.compare(password, user.password_hash);
         if (!ok) {

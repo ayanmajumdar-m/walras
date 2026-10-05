@@ -154,7 +154,7 @@
   font-family: var(--font-heading);
   font-size: 12px;
   letter-spacing: 0.1em;
-  color: var(--color-buttr-500);
+  color: var(--color-brand-500);
   padding-top: 4px;
 }
 .upcoming-title { font-size: 21px; margin: 0 0 4px; }

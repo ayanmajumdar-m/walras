@@ -107,8 +107,8 @@
   font-size: 14px;
   font-weight: 600;
   padding: 10px 24px;
-  background: var(--color-buttr-500);
-  border: 1px solid var(--color-buttr-500);
+  background: var(--color-brand-500);
+  border: 1px solid var(--color-brand-500);
   color: var(--color-text);
   cursor: pointer;
   border-radius: 0;
@@ -116,7 +116,7 @@
 }
 
 .save-btn:hover {
-  background: var(--color-buttr-600);
+  background: var(--color-brand-600);
 }
 
 @media (max-width: 768px) {

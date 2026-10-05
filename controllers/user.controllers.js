@@ -6,8 +6,7 @@ const { sendDomainPurchaseEmail } = require('../utils/sendEmail');
 dotenv.config();
 const { validatePhone } = require('../utils/validation');
 
-// Passwords, OTP generation and SMS delivery all left with the local auth
-// system. BUTTR ID owns those now — see controllers/auth.controllers.js.
+// Passwords and email verification codes live in controllers/auth.controllers.js.
 
 // Helper function to handle wallet payment for domain purchase
 async function handleWalletPayment(userId, amountPaise, domainTransactionId, domainName,

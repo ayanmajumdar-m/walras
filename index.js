@@ -14,7 +14,7 @@ if (process.env.DISABLE_BILLING !== "true") console.log("💰 Billing service in
 // ✅ Step 1: Proper CORS setup (for frontend on localhost:3000)
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://dujdidnis.buttr.cloud", "https://buttr.cloud", "https://www.buttr.cloud", "https://walras.net", "https://www.walras.net"],
+    origin: ["http://localhost:3000", "https://walras.net", "https://www.walras.net"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [

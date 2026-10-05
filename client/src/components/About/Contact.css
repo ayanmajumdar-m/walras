@@ -691,7 +691,7 @@
 
 .ct-priority.is-critical::before { background: #ef4444; }
 .ct-priority.is-high::before { background: #f59e0b; }
-.ct-priority.is-general::before { background: var(--color-buttr-500); }
+.ct-priority.is-general::before { background: var(--color-brand-500); }
 
 .ct-checklist {
   margin: 0;
@@ -795,12 +795,12 @@
 .ct-btn svg { width: 17px; height: 17px; }
 
 .ct-btn-primary {
-  background: var(--color-buttr-500);
+  background: var(--color-brand-500);
   color: #0a0a0c;
 }
 
 .ct-btn-primary:hover {
-  background: var(--color-buttr-400);
+  background: var(--color-brand-400);
   color: #0a0a0c;
 }
 

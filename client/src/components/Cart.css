@@ -56,7 +56,7 @@
 }
 
 .cart-item:hover {
-  border-color: var(--color-buttr-ink);
+  border-color: var(--color-brand-ink);
   transform: translateY(-2px);
 }
 
@@ -175,7 +175,7 @@
 
 .contact-form input:focus {
   outline: none;
-  border-color: var(--color-buttr-ink);
+  border-color: var(--color-brand-ink);
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
 }
 

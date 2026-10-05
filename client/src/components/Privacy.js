@@ -116,7 +116,7 @@ Withdraw consent for data processing, where applicable`
               For questions, concerns, or requests regarding this Privacy Policy, contact our support team.
             </p>
             <div className="contact-info">
-              <p className="contact-email">Our support email is <strong>support@buttr.cloud</strong></p>
+              <p className="contact-email">Our support email is <strong>support@walras.net</strong></p>
               <p className="contact-company">Operated by IOOGN TECHNOLOGIES (OPC) PVT LTD</p>
             </div>
             <div className="contact-actions">

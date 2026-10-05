@@ -9,8 +9,8 @@ const CONTACT_METHODS = [
     Icon: Mail,
     title: "Email Support",
     meta: "Available 24/7",
-    detail: "support@buttr.cloud",
-    href: "mailto:support@buttr.cloud",
+    detail: "support@walras.net",
+    href: "mailto:support@walras.net",
     action: "Get support"
   },
   {
@@ -141,7 +141,7 @@ const Contact = () => (
           <a href="/pricing" className="ct-btn ct-btn-primary">
             See pricing <ArrowRight aria-hidden="true" />
           </a>
-          <a href="https://help.buttr.cloud" className="ct-btn ct-btn-ghost">
+          <a href="https://help.walras.net" className="ct-btn ct-btn-ghost">
             <BookOpen aria-hidden="true" /> View documentation
           </a>
         </div>

@@ -7,9 +7,8 @@ dotenv.config();
  * Transactional email over SMTP (Brevo's relay).
  *
  * This used to go through Brevo's HTTP API with an `xkeysib-` API key. It now
- * uses SMTP with an `xsmtpsib-` key, so Walras Cloud and BUTTR ID authenticate
- * to the same relay with the same credentials — one thing to rotate, one place
- * for deliverability to be right or wrong.
+ * uses SMTP with an `xsmtpsib-` key — one credential to rotate, one place for
+ * deliverability to be right or wrong.
  *
  * Missing credentials do not stop the server. They used to call process.exit(1)
  * at import time, which killed Express before it bound a port and looked like a
@@ -21,7 +20,28 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 
 const FROM_NAME = process.env.MAIL_FROM_NAME || 'Walras Cloud';
-const FROM_ADDR = process.env.MAIL_FROM_ADDR || 'yours@buttrcrew.com';
+const FROM_ADDR = process.env.MAIL_FROM_ADDR || 'noreply@walras.net';
+
+/**
+ * The sender for every outgoing email. An admin can override the name and
+ * address from the admin dashboard (stored in app_settings); otherwise the
+ * MAIL_FROM_NAME / MAIL_FROM_ADDR environment values apply. The address must
+ * be on a domain verified in Brevo, or Brevo will reject the message.
+ */
+const resolveSender = async () => {
+    try {
+        // Required lazily: appSettings pulls in the DB connection, which a
+        // plain `require('./sendEmail')` (e.g. at boot) should not depend on.
+        const settings = await require('./appSettings').getAll();
+        return {
+            name: settings.mail_from_name || FROM_NAME,
+            address: settings.mail_from_addr || FROM_ADDR,
+        };
+    } catch (err) {
+        console.error('Could not read sender settings, using environment defaults:', err.message);
+        return { name: FROM_NAME, address: FROM_ADDR };
+    }
+};
 
 const emailConfigured = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
 
@@ -167,7 +187,7 @@ const sendAuthCodeEmail = async (to, name, code, purpose, minutes) => {
     }
     const copy = AUTH_CODE_COPY[purpose];
     const info = await transporter.sendMail({
-        from: { name: FROM_NAME, address: FROM_ADDR },
+        from: await resolveSender(),
         to,
         subject: copy.subject,
         text: `${copy.intro}
@@ -188,7 +208,7 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
     }
 
     const message = {
-        from: { name: FROM_NAME, address: FROM_ADDR },
+        from: await resolveSender(),
         to,
         subject: 'Domain Purchase Confirmation',
         html: createDomainPurchaseTemplate(name, domainName, purchaseDate),
@@ -204,7 +224,29 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
     }
 };
 
+/**
+ * Sends a short test message with the current sender, so an admin can confirm
+ * a new sender address is accepted by Brevo before customers depend on it.
+ */
+const sendTestEmail = async (to) => {
+    if (!emailConfigured) throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
+    const from = await resolveSender();
+    const info = await transporter.sendMail({
+        from,
+        to,
+        subject: 'Walras Cloud test email',
+        text: `This is a test email from Walras Cloud.
+
+Sender: ${from.name} <${from.address}>
+
+If you received this, the sender settings work.`,
+    });
+    return { messageId: info.messageId, from };
+};
+
 module.exports = {
+    resolveSender,
+    sendTestEmail,
     sendAuthCodeEmail,
     sendDomainPurchaseEmail,
     verifyEmailTransport,

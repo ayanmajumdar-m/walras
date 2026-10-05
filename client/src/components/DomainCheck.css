@@ -615,8 +615,8 @@
 .domain-section-title {
   font-size: 3rem;
   font-weight: 800;
-  /* buttr-300 as the far stop vanished on white; the text-safe gold holds. */
-  background: linear-gradient(135deg, #0a0a0c 0%, var(--color-buttr-ink) 100%);
+  /* brand-300 as the far stop vanished on white; the text-safe shade holds. */
+  background: linear-gradient(135deg, #0a0a0c 0%, var(--color-brand-ink) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

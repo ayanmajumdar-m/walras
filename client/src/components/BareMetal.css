@@ -66,7 +66,7 @@
   align-items: center;
   gap: 0.5rem;
   background: rgba(0, 0, 0, 0.08);
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
   font-weight: 600;
@@ -115,7 +115,7 @@
 .bm-countdown-number {
   font-size: 3.5rem;
   font-weight: 800;
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
   margin-bottom: 0.5rem;
 }
 
@@ -159,12 +159,12 @@
 
 .bm-feature-card:hover {
   transform: translateY(-8px);
-  border-color: var(--color-buttr-ink);
+  border-color: var(--color-brand-ink);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
 }
 
 .bm-feature-icon {
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
   margin-bottom: 1.5rem;
 }
 
@@ -202,7 +202,7 @@
   justify-content: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
 }
 
 .bm-notification-header h3 {
@@ -242,7 +242,7 @@
 
 .bm-email-input:focus {
   outline: none;
-  border-color: var(--color-buttr-ink);
+  border-color: var(--color-brand-ink);
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -297,7 +297,7 @@
 .bm-info-number {
   font-size: 2rem;
   font-weight: 800;
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
   margin-bottom: 0.5rem;
 }
 
@@ -391,7 +391,7 @@
 
 .bm-server-card:hover {
   transform: translateY(-8px);
-  border-color: var(--color-buttr-ink);
+  border-color: var(--color-brand-ink);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
 }
 
@@ -422,7 +422,7 @@
 .bm-price-amount {
   font-size: 2rem;
   font-weight: 800;
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
 }
 
 .bm-price-interval {
@@ -451,7 +451,7 @@
 }
 
 .bm-spec-item svg {
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
   margin-top: 0.125rem;
   flex-shrink: 0;
 }

@@ -2,12 +2,21 @@ const AdminController = require('../controllers/admin.controllers');
 const { authenticateAdminToken, requireOwnerAccess, requireBillingAccess } = require('../utils/admin.middleware');
 const router = require('express').Router();
 
-// Admin authentication (no middleware needed)
-router.post('/create', AdminController.register);
+// Admin sign-in is the only public admin route.
 router.post('/login', AdminController.login);
 
 // All admin routes below require authentication
 router.use(authenticateAdminToken);
+
+// Creating admins used to be public, which let anyone mint a billing admin.
+// Owners only now; bootstrap the first owner with `node create-admin.js`.
+router.post('/create', requireOwnerAccess, AdminController.register);
+
+// Email sender settings (owner only)
+const SettingsController = require('../controllers/settings.controllers');
+router.get('/settings/mail', requireOwnerAccess, SettingsController.getMail);
+router.put('/settings/mail', requireOwnerAccess, SettingsController.updateMail);
+router.post('/settings/mail/test', requireOwnerAccess, SettingsController.testMail);
 
 // Owner-only routes
 router.get('/viewAllUsers', requireOwnerAccess, AdminController.viewUsers);

@@ -115,7 +115,7 @@ exports.buyHosting = async (req, res) => {
 
         // Get user for contact email
         const user = await getUser(userId);
-        const contactEmail = user?.email || `user_${userId}@buttr.cloud`;
+        const contactEmail = user?.email || `user_${userId}@walras.net`;
 
         // Generate cPanel credentials
         const cpanelUsername = cpanelService.generateCpanelUsername(cleanDomain);
@@ -423,8 +423,8 @@ exports.getHostingCredentials = async (req, res) => {
                     status: account.status,
                     expires_at: account.expires_at,
                     nameservers: [
-                        process.env.CPANEL_NS1 || "ns1.buttrcloud.com",
-                        process.env.CPANEL_NS2 || "ns2.buttrcloud.com"
+                        process.env.CPANEL_NS1 || "ns1.walras.net",
+                        process.env.CPANEL_NS2 || "ns2.walras.net"
                     ]
                 });
             }

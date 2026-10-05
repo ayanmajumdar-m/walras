@@ -1,5 +1,5 @@
 import React from "react";
-import "./ButtrGuarantee.css";
+import "./WalrasGuarantee.css";
 import { Globe, Clock, RefreshCw, Sparkles, CheckCircle2 } from "lucide-react";
 
 // Official AWS Logo SVG
@@ -63,15 +63,15 @@ const DEFAULT_GUARANTEES = [
   }
 ];
 
-const ButtrGuarantee = ({
+const WalrasGuarantee = ({
   kicker = "THE WALRAS COMMITMENT",
   title = "Walras Guarantee",
   subtitle = "Four uncompromising promises built into every single service we deliver.",
   guarantees = DEFAULT_GUARANTEES
 }) => {
   return (
-    <section className="buttr-guarantee-section">
-      <div className="buttr-guarantee-container">
+    <section className="walras-guarantee-section">
+      <div className="walras-guarantee-container">
         {/* Glow ambient background */}
         <div className="guarantee-ambient-glow" />
 
@@ -109,4 +109,4 @@ const ButtrGuarantee = ({
   );
 };
 
-export default ButtrGuarantee;
+export default WalrasGuarantee;

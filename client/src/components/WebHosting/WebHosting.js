@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Check, ChevronDown, ChevronUp, Zap, Shield, Globe, Server, Clock, HardDrive } from "lucide-react";
-import ButtrGuarantee from "../Constants/ButtrGuarantee";
+import WalrasGuarantee from "../Constants/WalrasGuarantee";
 import "./WebHosting.css";
 
 const WebHosting = () => {
@@ -114,7 +114,7 @@ const WebHosting = () => {
       </section>
 
       {/* Walras Guarantee Section */}
-      <ButtrGuarantee />
+      <WalrasGuarantee />
 
       {/* Plans Section */}
       <section className="webhosting-plans-section" id="plans">

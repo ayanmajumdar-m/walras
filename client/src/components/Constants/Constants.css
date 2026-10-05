@@ -37,7 +37,7 @@
 .nav-link:hover { color: var(--color-text); }
 .nav-link.is-active {
   color: var(--color-text);
-  border-bottom-color: var(--color-buttr-500);
+  border-bottom-color: var(--color-brand-500);
 }
 
 .top-nav-right { display: flex; align-items: center; gap: 10px; }

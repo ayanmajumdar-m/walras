@@ -270,7 +270,7 @@ const Homepage = () => (
             Get Started
             <Corners />
           </a>
-          <a href="https://help.buttr.cloud" className="btn btn-secondary btn-lg">View Documentation</a>
+          <a href="https://help.walras.net" className="btn btn-secondary btn-lg">View Documentation</a>
         </div>
       </div>
     </section>

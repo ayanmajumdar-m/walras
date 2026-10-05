@@ -27,7 +27,7 @@ const Refund = () => {
     {
       icon: <Mail className="section-icon" />,
       title: "Contact Support",
-      content: "For questions about your account, trial, or wallet balance, contact our support team at support@buttr.cloud."
+      content: "For questions about your account, trial, or wallet balance, contact our support team at support@walras.net."
     }
   ];
 

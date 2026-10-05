@@ -64,7 +64,7 @@ const HostingPurchase = () => {
 
   const plan = PLANS[selectedPlanKey] || PLANS.seed;
 
-  // Restore draft purchase if returning from BUTTR ID sign-in
+  // Restore draft purchase if returning from sign-in
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem("pending_hosting_draft");
@@ -110,7 +110,7 @@ const HostingPurchase = () => {
     const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
     const token = localStorage.getItem("token");
 
-    // If user is not logged in, preserve state and send to BUTTR ID sign-in
+    // If user is not logged in, preserve state and send to sign-in
     if (!token) {
       sessionStorage.setItem("pending_hosting_draft", JSON.stringify({
         plan: selectedPlanKey,

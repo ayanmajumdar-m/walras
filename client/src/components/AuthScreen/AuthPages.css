@@ -311,9 +311,9 @@
 }
 
 .au-type.is-selected {
-  border-color: var(--color-buttr-500);
+  border-color: var(--color-brand-500);
   background: color-mix(in srgb, var(--color-accent-100) 60%, #ffffff);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-buttr-500) 18%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-500) 18%, transparent);
 }
 
 .au-type:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent); }
@@ -390,7 +390,7 @@
   padding: 12px 20px;
   border: 0;
   border-radius: 10px;
-  background: var(--color-buttr-500);
+  background: var(--color-brand-500);
   color: #0a0a0c;
   font-family: var(--font-body);
   font-size: 16px;
@@ -399,7 +399,7 @@
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.au-btn:hover:not(:disabled) { background: var(--color-buttr-400); }
+.au-btn:hover:not(:disabled) { background: var(--color-brand-400); }
 .au-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .au-spin {

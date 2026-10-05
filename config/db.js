@@ -38,12 +38,12 @@ const createTableUsers = `CREATE TABLE IF NOT EXISTS users (
 )`;
 
 /*
-  Upgrades a users table created during the BUTTR ID period. Additive only:
+  Upgrades a users table created during the earlier single-sign-on period. Additive only:
   nothing is dropped, so existing accounts keep their id, wallet and servers.
   Those accounts have no password yet; their owners set one with "Forgot
   password", which also proves they still hold the email address.
 */
-const migrateUsersFromButtrId = [
+const migrateLegacyUsers = [
     `DO $$
      BEGIN
        IF EXISTS (SELECT 1 FROM information_schema.columns
@@ -55,6 +55,16 @@ const migrateUsersFromButtrId = [
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS account_type VARCHAR(10) NOT NULL DEFAULT 'personal' CHECK (account_type IN ('personal', 'business'))",
     'ALTER TABLE users ADD COLUMN IF NOT EXISTS gstin VARCHAR(15)',
 ];
+
+// Small key/value store for settings admins can change without a redeploy
+// (e.g. the email sender name and address).
+const createAppSettingsTable = `
+CREATE TABLE IF NOT EXISTS app_settings (
+    key VARCHAR(100) PRIMARY KEY,
+    value TEXT,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+)
+`;
 
 // One-time codes for email verification and password reset. Only an HMAC of
 // the code is stored; attempts caps guessing on a single code.
@@ -380,8 +390,9 @@ connection.connect((err) => {
     */
     const schema = [
         ['Users', createTableUsers],
-        ...migrateUsersFromButtrId.map((sql, i) => [`users migration ${i + 1}`, sql]),
+        ...migrateLegacyUsers.map((sql, i) => [`users migration ${i + 1}`, sql]),
         ['Email codes', createEmailCodesTable],
+        ['App settings', createAppSettingsTable],
         ['Admins', createAdminsTable],
         ['Wallet', createWalletTable],
         ['Wallet transaction', createWalletTransactionTable],

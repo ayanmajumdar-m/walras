@@ -178,7 +178,7 @@ exports.handleCcavenueResponse = async (req, res) => {
                         // Fetch user for cPanel contact email
                         connection.query("SELECT * FROM users WHERE id = ?", [userId], async (uErr, uRows) => {
                             const user = uRows?.[0];
-                            const contactEmail = user?.email || `user_${userId}@buttr.cloud`;
+                            const contactEmail = user?.email || `user_${userId}@walras.net`;
 
                             // Generate cPanel credentials
                             const cpanelUsername = cpanelService.generateCpanelUsername(cleanDomain);

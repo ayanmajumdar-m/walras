@@ -1,7 +1,7 @@
 /**
  * Resolves database connection settings from the environment.
  *
- * One connection string is the preferred form, matching how BUTTR ID is
+ * One connection string is the preferred form, matching how other services are
  * configured:
  *
  *   DATABASE_URL=postgres://user:password@host:5432/dbname

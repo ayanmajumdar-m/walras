@@ -150,7 +150,7 @@
   /* A 20% yellow wash still reads as near-white, so the label needs the
      text-safe gold rather than the surface one. */
   background: rgba(31, 196, 162, 0.28);
-  color: var(--color-buttr-ink);
+  color: var(--color-brand-ink);
 }
 
 .currency-btn:hover:not(.active) {
@@ -783,7 +783,7 @@
 .pr-rail-item.is-active {
   background: #ffffff;
   border-color: var(--color-divider);
-  box-shadow: inset 3px 0 0 var(--color-buttr-500), var(--shadow-sm);
+  box-shadow: inset 3px 0 0 var(--color-brand-500), var(--shadow-sm);
 }
 
 .pr-rail-icon {
@@ -961,7 +961,7 @@
 
 .pr-table tbody tr.is-popular {
   background: color-mix(in srgb, var(--color-accent-100) 70%, #ffffff);
-  box-shadow: inset 3px 0 0 var(--color-buttr-500);
+  box-shadow: inset 3px 0 0 var(--color-brand-500);
 }
 
 .pr-table td strong { font-weight: 600; }
@@ -1015,7 +1015,7 @@
   margin-left: 8px;
   padding: 2px 7px;
   border-radius: 9999px;
-  background: var(--color-buttr-500);
+  background: var(--color-brand-500);
   color: #0a0a0c;
   font-family: var(--font-body);
   font-size: 10px;
@@ -1112,12 +1112,12 @@
 .pr-btn svg { width: 16px; height: 16px; }
 
 .pr-btn-primary {
-  background: var(--color-buttr-500);
+  background: var(--color-brand-500);
   color: #0a0a0c;
 }
 
 .pr-btn-primary:hover {
-  background: var(--color-buttr-400);
+  background: var(--color-brand-400);
   color: #0a0a0c;
 }
 
@@ -1222,7 +1222,7 @@
 
 .pr-result-main > svg { flex-shrink: 0; width: 28px; height: 28px; }
 
-.pr-result.is-available { border-left-color: var(--color-buttr-500); }
+.pr-result.is-available { border-left-color: var(--color-brand-500); }
 .pr-result.is-available .pr-result-main > svg { color: var(--color-accent-700); }
 .pr-result.is-unavailable { border-left-color: #ef4444; }
 .pr-result.is-unavailable .pr-result-main > svg { color: #dc2626; }
@@ -1440,7 +1440,7 @@
   }
 
   .pr-rail-item.is-active {
-    border-color: var(--color-buttr-500);
+    border-color: var(--color-brand-500);
     box-shadow: none;
     background: var(--color-accent-100);
   }
@@ -1483,7 +1483,7 @@
     box-shadow: var(--shadow-sm);
   }
 
-  .pr-table tbody tr.is-popular { box-shadow: inset 3px 0 0 var(--color-buttr-500), var(--shadow-sm); }
+  .pr-table tbody tr.is-popular { box-shadow: inset 3px 0 0 var(--color-brand-500), var(--shadow-sm); }
 
   .pr-table td,
   .pr-table td:first-child,

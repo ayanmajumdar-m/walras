@@ -44,8 +44,8 @@
 }
 
 .refresh-btn.active {
-  background: var(--color-buttr-500);
-  border-color: var(--color-buttr-500);
+  background: var(--color-brand-500);
+  border-color: var(--color-brand-500);
   color: var(--color-text);
 }
 

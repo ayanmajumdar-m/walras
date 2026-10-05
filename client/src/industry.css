@@ -97,12 +97,12 @@
 
 /* The brand button: yellow is the action colour, and only that. */
 .btn-primary {
-  background: var(--color-buttr-500);
-  border-color: var(--color-buttr-500);
+  background: var(--color-brand-500);
+  border-color: var(--color-brand-500);
   color: var(--color-text);
 }
-.btn-primary:hover { background: var(--color-buttr-600); border-color: var(--color-buttr-600); }
-.btn-primary:active { background: var(--color-buttr-700); border-color: var(--color-buttr-700); }
+.btn-primary:hover { background: var(--color-brand-600); border-color: var(--color-brand-600); }
+.btn-primary:active { background: var(--color-brand-700); border-color: var(--color-brand-700); }
 
 .btn-secondary { border-color: var(--color-divider); }
 .btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
@@ -207,7 +207,7 @@
 .table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .table .name { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; white-space: nowrap; }
 /* The popular plan is marked with the action colour, not a badge ribbon. */
-.table tr.is-popular { background: color-mix(in srgb, var(--color-buttr-500) 12%, transparent); }
+.table tr.is-popular { background: color-mix(in srgb, var(--color-brand-500) 12%, transparent); }
 .table-scroll { overflow-x: auto; }
 
 /* — fields — */
@@ -249,7 +249,7 @@
   color: var(--color-bg);
 }
 .field-dark h1, .field-dark h2, .field-dark h3, .field-dark h4 { color: var(--color-bg); }
-.field-dark .kicker { color: var(--color-buttr-500); }
+.field-dark .kicker { color: var(--color-brand-500); }
 .field-dark p { color: color-mix(in srgb, #f2f2f3 78%, transparent); }
 .field-dark .input {
   background: transparent;

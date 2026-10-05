@@ -66,8 +66,8 @@
 }
 
 .submit-ticket-container button {
-  background: var(--color-buttr-500);
-  border: 1px solid var(--color-buttr-500);
+  background: var(--color-brand-500);
+  border: 1px solid var(--color-brand-500);
   color: var(--color-text);
   padding: 12px 24px;
   border-radius: 0;
@@ -80,7 +80,7 @@
 }
 
 .submit-ticket-container button:hover {
-  background: var(--color-buttr-600);
+  background: var(--color-brand-600);
 }
 
 .error {

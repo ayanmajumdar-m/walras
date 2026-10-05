@@ -1,6 +1,6 @@
 /* Walras Guarantee Section — High-End Gold & Black Visual Identity */
 
-.buttr-guarantee-section {
+.walras-guarantee-section {
   background: radial-gradient(circle at 50% -20%, #04201c 0%, #0c0d12 60%, #06070a 100%);
   color: #f8fafc;
   padding: 85px 24px;
@@ -10,7 +10,7 @@
   border-bottom: 1px solid rgba(3, 166, 143, 0.25);
 }
 
-.buttr-guarantee-container {
+.walras-guarantee-container {
   max-width: 1240px;
   margin: 0 auto;
   position: relative;

@@ -83,7 +83,7 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  background: var(--color-buttr-500);
+  background: var(--color-brand-500);
   color: var(--color-text);
   border-radius: 0;
   width: 16px;
@@ -175,8 +175,8 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: var(--color-buttr-500);
-  border: 1px solid var(--color-buttr-500);
+  background: var(--color-brand-500);
+  border: 1px solid var(--color-brand-500);
   color: var(--color-text);
   font-family: var(--font-heading);
   font-size: 14px;
@@ -187,8 +187,8 @@
 }
 
 .deploy-now-btn:hover {
-  background: var(--color-buttr-600);
-  border-color: var(--color-buttr-600);
+  background: var(--color-brand-600);
+  border-color: var(--color-brand-600);
 }
 
 .cloud-animation {
@@ -228,7 +228,7 @@
 }
 
 .tab-btn.active {
-  background: var(--color-buttr-500);
+  background: var(--color-brand-500);
   color: var(--color-text);
 }
 
@@ -408,14 +408,14 @@
 }
 
 .action-btn.primary {
-  background: var(--color-buttr-500);
-  border-color: var(--color-buttr-500);
+  background: var(--color-brand-500);
+  border-color: var(--color-brand-500);
   color: var(--color-text);
 }
 
 .action-btn.primary:hover {
-  background: var(--color-buttr-600);
-  border-color: var(--color-buttr-600);
+  background: var(--color-brand-600);
+  border-color: var(--color-brand-600);
 }
 
 .action-btn.secondary {

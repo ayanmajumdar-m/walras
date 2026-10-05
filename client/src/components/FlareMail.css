@@ -23,7 +23,7 @@
   font-weight: 700;
   margin-bottom: 16px;
   /* Brand yellow as type is ~1.4:1 on white; the text-safe gold reads. */
-  background: linear-gradient(135deg, #0a0a0c, var(--color-buttr-ink));
+  background: linear-gradient(135deg, #0a0a0c, var(--color-brand-ink));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -292,7 +292,7 @@
 .credit-card {
   /* Pale cream copy sat on this at 2.8:1; a light band with ink text
      is the readable version of the same idea. */
-  /* Was --color-buttr-100, which the redesigned theme drops along with the
+  /* Was --color-brand-100, which the redesigned theme drops along with the
      rest of the pale-yellow steps — yellow is now reserved for actions. An
      undefined custom property makes the whole gradient invalid, so this page
      would have lost its background entirely. */

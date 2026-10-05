@@ -1,4 +1,4 @@
-/* Auth.css - Modern Co-Branded Walras Cloud Login (Buttr Yellow Theme) */
+/* Auth.css - Walras Cloud admin login and legacy auth screens */
 
 .auth-wrapper {
   min-height: 100vh;
@@ -171,7 +171,7 @@
   box-shadow: 0 8px 26px rgba(31, 196, 162, 0.22);
 }
 
-.auth-badge-buttr {
+.auth-badge-partner {
   background: linear-gradient(180deg, #0a2621 0%, #061311 100%);
   border: 1px solid rgba(245, 158, 11, 0.35);
   box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);
@@ -187,11 +187,11 @@
   filter: drop-shadow(0 2px 10px rgba(31, 196, 162, 0.45));
 }
 
-.drop-shadow-buttr {
+.drop-shadow-brand {
   filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.3));
 }
 
-.auth-buttr-fallback {
+.auth-partner-fallback {
   width: 44px;
   height: 44px;
   border-radius: 50%;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Search, AlertCircle, CheckCircle, XCircle, Loader2, Copy, Globe, Shield, Settings, Mail, Lock, Star, Zap, Users, Cloud, Sparkles } from 'lucide-react';
-import ButtrGuarantee from "./Constants/ButtrGuarantee";
+import WalrasGuarantee from "./Constants/WalrasGuarantee";
 import "./DomainCheck.css";
 
 const DomainCheck = () => {
@@ -295,7 +295,7 @@ const DomainCheck = () => {
       </div>
 
       {/* Walras Guarantee Section */}
-      <ButtrGuarantee
+      <WalrasGuarantee
         kicker="DOMAIN COMMITMENT"
         title="Walras Guarantee"
         subtitle="Our ironclad promises to secure, protect, and power your web presence."

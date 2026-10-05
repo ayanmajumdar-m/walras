@@ -11,7 +11,8 @@ import {
   LogOut,
   CheckCircle,
   AlertTriangle,
-  User
+  User,
+  Settings as SettingsIcon
 } from "lucide-react";
 
 // Import components
@@ -24,6 +25,7 @@ import PromoCodes from './components/PromoCodes';
 import Domain from './components/Domain';
 import CreatePromoForm from './components/CreatePromoForm';
 import Hosting from './components/Hosting';
+import Settings from './components/Settings';
 
 const Logo = 'https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png';
 
@@ -506,6 +508,8 @@ const AdminDashboard = () => {
         />;
       case "domain":
         return <Domain />;
+      case "settings":
+        return <Settings />;
       default:
         return <Dashboard
           dashboardStats={dashboardStats}
@@ -610,6 +614,17 @@ const AdminDashboard = () => {
               <FileText className="nav-icon" size={18} />
               Invoices
             </button>
+
+            {/* Settings */}
+            {adminInfo?.access === 'owner' && (
+              <button
+                className={`nav-item ${activeTab === "settings" ? "active" : ""}`}
+                onClick={() => handleTabChange("settings")}
+              >
+                <SettingsIcon className="nav-icon" size={18} />
+                Settings
+              </button>
+            )}
           </nav>
 
           {/* Logout */}
