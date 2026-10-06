@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const connection = require('../config/db');
 const taxService = require('./taxServices');
+const { getPlatform } = require('../utils/platformSettings');
 
 class InvoiceService {
     async generateInvoice(user, month) {
@@ -27,15 +28,14 @@ class InvoiceService {
 
             doc.pipe(fs.createWriteStream(filePath));
 
-            // Company Header with GST Details
+            // Company Header with GST Details (admin Settings → Invoice details)
+            const { invoice: company } = await getPlatform();
             doc.fontSize(16).font('Helvetica-Bold')
-               .text('IOOGN TECHNOLOGIES (OPC) PRIVATE LIMITED', 50, 50)
+               .text(company.legalName, 50, 50, { width: 330 })
                .fontSize(8).font('Helvetica')
-               .text('Registered Address: IOOGNS HQ, Khudiram Sarani, Duttapukur, North 24 Parganas - 743248,', 50, 70)
-               .text('Barasat - I, West Bengal, India', 50, 80)
-               .text('GST Registered Address: 1, IOOGN HQ, Duttapukur Station Road, Aurobindapally,', 50, 95)
-               .text('Nebadhai Duttapukur, North 24 Parganas - 743248, West Bengal', 50, 105)
-               .text('GSTIN: 19AAHCI9209H1Z9', 50, 120);
+               .text(`Registered Address: ${company.registeredAddress}`, 50, 72, { width: 330 })
+               .text(`GST Registered Address: ${company.gstAddress}`, 50, 96, { width: 330 })
+               .text(`GSTIN: ${company.gstin}`, 50, 120);
 
             // Invoice Details
             doc.fontSize(16).font('Helvetica-Bold')
@@ -141,15 +141,17 @@ class InvoiceService {
                .text('• Interest of 1.5% per month will be charged on overdue amounts.', 50, yPosition + 45)
                .text(`• HSN Code: ${hsnCode} - IT Services`, 50, yPosition + 60);
 
-            // Bank Details
-            doc.text('Bank Details: IOOGN TECHNOLOGIES (OPC) PRIVATE LIMITED', 300, yPosition)
-               .text('Bank: [Your Bank Name]', 300, yPosition + 15)
-               .text('Account No: [Your Account Number]', 300, yPosition + 30)
-               .text('IFSC: [Your IFSC Code]', 300, yPosition + 45);
+            // Bank Details, only once they've been filled in under Settings
+            if (company.bankName && company.accountNumber) {
+                doc.text(`Bank Details: ${company.legalName}`, 300, yPosition, { width: 250 })
+                   .text(`Bank: ${company.bankName}`, 300, yPosition + 15)
+                   .text(`Account No: ${company.accountNumber}`, 300, yPosition + 30)
+                   .text(`IFSC: ${company.ifsc}`, 300, yPosition + 45);
+            }
 
             // For Authorized Signatory
             yPosition += 100;
-            doc.text('For IOOGN TECHNOLOGIES (OPC) PRIVATE LIMITED', 400, yPosition)
+            doc.text(`For ${company.legalName}`, 300, yPosition, { width: 250, align: 'right' })
                .text('Authorized Signatory', 400, yPosition + 30);
 
             doc.end();

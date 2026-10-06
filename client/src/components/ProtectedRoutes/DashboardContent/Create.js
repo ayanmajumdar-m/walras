@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock } from "lucide-react";
 import { api } from "../consoleApi";
+import { useConsole } from "../ConsoleContext";
 import { PRODUCTS } from "./products";
 import { COMPUTE_PLANS, HOSTING_PLANS, HOSTING_PRICES, formatINR } from "../../../data/plans";
 
@@ -17,12 +18,18 @@ const cleanDomain = (value) =>
 
 // ── Web Hosting ────────────────────────────────────────────────────────────
 const HostingConfigurator = () => {
+  const { platform } = useConsole();
+  const onSale = (name) => platform?.planAvailability?.hosting?.[name] !== false;
+  const paymentsPaused = Boolean(platform?.paymentsPaused);
   const [planName, setPlanName] = useState("Tree");
   const [domain, setDomain] = useState("");
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
 
-  const price = HOSTING_PRICES[planName];
+  // If the chosen plan has been taken off sale, fall back to one that's on sale.
+  const effectivePlan = onSale(planName) ? planName : HOSTING_PLANS.find((p) => onSale(p.name))?.name || planName;
+  const price = HOSTING_PRICES[effectivePlan];
+  const nothingOnSale = !HOSTING_PLANS.some((p) => onSale(p.name));
   const domainValue = cleanDomain(domain);
   const domainValid = DOMAIN_RE.test(domainValue);
 
@@ -36,7 +43,7 @@ const HostingConfigurator = () => {
     try {
       const data = await api("/api/hosting/initiate-payment", {
         method: "POST",
-        body: { planName, domain: domainValue, billingCycle: "1 Month" },
+        body: { planName: effectivePlan, domain: domainValue, billingCycle: "1 Month" },
       });
       if (!data.encRequest) throw new Error("Could not start the payment. Please try again.");
 
@@ -62,18 +69,23 @@ const HostingConfigurator = () => {
   return (
     <div className="cx-create-body">
       <div className="cx-config">
+        {paymentsPaused && (
+          <div className="cx-alert is-info">Purchases are paused for a short while. You can set up your order, but payment will open again soon.</div>
+        )}
         <section className="cx-card cx-step">
           <h3><span className="cx-step-num">1</span> Choose a plan</h3>
           <div className="cx-plan-grid">
             {HOSTING_PLANS.map((plan) => {
               const p = HOSTING_PRICES[plan.name];
-              const selected = plan.name === planName;
+              const available = onSale(plan.name);
+              const selected = plan.name === effectivePlan && available;
               return (
-                <label key={plan.name} className={`cx-plan${selected ? " is-selected" : ""}`}>
-                  <input type="radio" name="hosting-plan" checked={selected} onChange={() => setPlanName(plan.name)} />
+                <label key={plan.name} className={`cx-plan${selected ? " is-selected" : ""}${available ? "" : " is-disabled"}`}>
+                  <input type="radio" name="hosting-plan" checked={selected} disabled={!available} onChange={() => setPlanName(plan.name)} />
                   <span className="cx-plan-top">
                     <span className="cx-plan-name">{plan.name}</span>
-                    {plan.popular && <span className="cx-tag">Popular</span>}
+                    {plan.popular && available && <span className="cx-tag">Popular</span>}
+                    {!available && <span className="cx-pill cx-plan-off">Unavailable</span>}
                   </span>
                   <span className="cx-plan-tagline">{plan.tagline}</span>
                   <span className="cx-plan-price">
@@ -126,7 +138,7 @@ const HostingConfigurator = () => {
           <h3>Order summary</h3>
           <dl>
             <div><dt>Product</dt><dd>Web Hosting</dd></div>
-            <div><dt>Plan</dt><dd>{planName}</dd></div>
+            <div><dt>Plan</dt><dd>{effectivePlan}</dd></div>
             <div><dt>Domain</dt><dd className="cx-ellipsis">{domainValid ? domainValue : "—"}</dd></div>
             <div><dt>Billing</dt><dd>Monthly</dd></div>
           </dl>
@@ -136,8 +148,11 @@ const HostingConfigurator = () => {
             <div className="cx-summary-total"><dt>Total due today</dt><dd>{formatINR(price.total, 2)}</dd></div>
           </dl>
           {error && <p className="cx-alert is-error" role="alert">{error}</p>}
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={pay} disabled={paying}>
-            {paying ? <><Loader2 size={18} className="cx-spin" /> Connecting to payment…</> : <>Pay {formatINR(price.total, 2)} &amp; activate</>}
+          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={pay} disabled={paying || paymentsPaused || nothingOnSale}>
+            {paying ? <><Loader2 size={18} className="cx-spin" /> Connecting to payment…</>
+              : paymentsPaused ? "Payments paused"
+              : nothingOnSale ? "Currently unavailable"
+              : <>Pay {formatINR(price.total, 2)} &amp; activate</>}
           </button>
           <p className="cx-summary-note"><Lock size={13} aria-hidden="true" /> Secure payment via CCAvenue. Your cPanel account is created as soon as payment succeeds.</p>
         </div>

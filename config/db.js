@@ -66,6 +66,46 @@ CREATE TABLE IF NOT EXISTS app_settings (
 )
 `;
 
+// ── Admin console: roles, permissions, audit trail, customer suspension ──
+// Additive upgrades of the admins and users tables.
+const migrateAdmins = [
+    "ALTER TABLE admins ADD COLUMN IF NOT EXISTS role VARCHAR(20)",
+    'ALTER TABLE admins ADD COLUMN IF NOT EXISTS full_name VARCHAR(100)',
+    'ALTER TABLE admins ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE',
+    'ALTER TABLE admins ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ',
+    'ALTER TABLE admins ADD COLUMN IF NOT EXISTS notifications_seen_at TIMESTAMPTZ',
+    // The old two-level access maps onto the new roles once.
+    "UPDATE admins SET role = CASE WHEN access = 'owner' THEN 'super_admin' ELSE 'finance' END WHERE role IS NULL",
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS suspension_reason VARCHAR(255)',
+];
+
+// Which permissions each role has. super_admin always has every permission
+// regardless of this table (see utils/adminRbac.js).
+const createRolePermissionsTable = `
+CREATE TABLE IF NOT EXISTS admin_role_permissions (
+    id SERIAL PRIMARY KEY,
+    role VARCHAR(20) NOT NULL,
+    permission VARCHAR(40) NOT NULL,
+    UNIQUE (role, permission)
+)
+`;
+
+// Who did what, to which record, from where. Never updated or deleted by the app.
+const createAuditLogsTable = `
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+    id SERIAL PRIMARY KEY,
+    admin_id INT,
+    admin_username VARCHAR(50),
+    action VARCHAR(60) NOT NULL,
+    target_type VARCHAR(30),
+    target_id VARCHAR(60),
+    metadata JSONB,
+    ip VARCHAR(45),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+)
+`;
+
 // One-time codes for email verification and password reset. Only an HMAC of
 // the code is stored; attempts caps guessing on a single code.
 const createEmailCodesTable = `
@@ -364,6 +404,8 @@ const createIndexes = [
     'CREATE INDEX IF NOT EXISTS idx_ho_order_id ON hosting_orders (order_id)',
     'CREATE INDEX IF NOT EXISTS idx_ho_status ON hosting_orders (status)',
     'CREATE INDEX IF NOT EXISTS idx_email_codes_user ON email_codes (user_id, purpose)',
+    'CREATE INDEX IF NOT EXISTS idx_audit_created ON admin_audit_logs (created_at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_audit_action ON admin_audit_logs (action)',
 ];
 
 connection.on('error', (err) => {
@@ -394,6 +436,9 @@ connection.connect((err) => {
         ['Email codes', createEmailCodesTable],
         ['App settings', createAppSettingsTable],
         ['Admins', createAdminsTable],
+        ...migrateAdmins.map((sql, i) => [`admin migration ${i + 1}`, sql]),
+        ['Role permissions', createRolePermissionsTable],
+        ['Audit logs', createAuditLogsTable],
         ['Wallet', createWalletTable],
         ['Wallet transaction', createWalletTransactionTable],
         ['Billing logs', createBillingLogsTable],

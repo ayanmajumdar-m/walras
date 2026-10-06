@@ -6,11 +6,6 @@ const Admin = {
         const query = 'SELECT * FROM admins WHERE username = ?';
         connection.query(query, [username], callback);
     },
-    create: (adminData, callback) => {
-        const { username, password } = adminData;
-        const query = 'INSERT INTO admins (username, password, access) VALUES (?, ?, "owner")';
-        connection.query(query, [username, password], callback);
-    },
     getAllUsers: (callback) => {
         const query = 'SELECT id, name, email, phone, company, role, address FROM users';
         connection.query(query, callback);

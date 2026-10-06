@@ -1,5 +1,6 @@
 const connection = require("../config/db");
 const crypto = require('crypto');
+const { getPlatform } = require('../utils/platformSettings');
 
 // Helper: ensure wallet exists for a user
 async function ensureWallet(userId) {
@@ -45,6 +46,14 @@ exports.deployServer = async (req, res) => {
         // Validate required fields
         if (!plan || !hostname || !rootPassword || !location || !os) {
             return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // The plan (and its price) comes from the browser, so only plans the
+        // platform says are on sale may be deployed. Cloud Compute is locked
+        // off while deployment is simulated; see utils/platformSettings.js.
+        const { planAvailability } = await getPlatform();
+        if (!planAvailability.compute[plan.name]) {
+            return res.status(400).json({ error: "This plan is not available right now" });
         }
 
         // Calculate costs

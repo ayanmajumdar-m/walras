@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
-import { Menu, Plus, Wallet as WalletIcon } from "lucide-react";
+import { Menu, Plus, Wallet as WalletIcon, Wrench } from "lucide-react";
 import ProtectedRoute from "./PrivateRoutes";
 import Sidebar from "./Sidebar";
 import Overview from "./DashboardContent/Overview";
@@ -34,6 +34,7 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [balance, setBalance] = useState(0);
+  const [platform, setPlatform] = useState(null);
 
   const refreshBalance = useCallback(() => {
     api("/api/wallet").then((d) => setBalance(rupees(d.balance))).catch(() => {});
@@ -43,6 +44,7 @@ const DashboardLayout = () => {
     const userId = localStorage.getItem("userId");
     if (userId) api(`/api/users/profile/${userId}`).then(setProfile).catch(() => {});
     refreshBalance();
+    fetch("/api/settings/public").then((r) => r.json()).then(setPlatform).catch(() => {});
   }, [refreshBalance]);
 
   // Close the mobile drawer whenever the page changes.
@@ -53,7 +55,7 @@ const DashboardLayout = () => {
 
   return (
     <ProtectedRoute>
-      <ConsoleContext.Provider value={{ profile, balance, refreshBalance }}>
+      <ConsoleContext.Provider value={{ profile, balance, refreshBalance, platform }}>
         <div className="cx-shell">
           <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} profile={profile} />
 
@@ -75,6 +77,14 @@ const DashboardLayout = () => {
             </header>
 
             <main className="cx-content">
+              {platform?.maintenanceMode ? (
+                <div className="cx-card cx-empty cx-maintenance">
+                  <span className="cx-empty-icon"><Wrench size={26} aria-hidden="true" /></span>
+                  <h4>We're doing some maintenance</h4>
+                  <p>The console is temporarily unavailable while we work on the platform. Your services keep running. Please check back shortly.</p>
+                  <a href="/contact" className="cx-btn cx-btn-ghost">Contact support</a>
+                </div>
+              ) : (
               <Routes>
                 <Route path="/" element={<Navigate to="home" replace />} />
                 <Route path="/home" element={<Overview />} />
@@ -94,6 +104,7 @@ const DashboardLayout = () => {
                 <Route path="/logs" element={<Billing initialTab="usage" />} />
                 <Route path="*" element={<Navigate to="/dashboard/home" replace />} />
               </Routes>
+              )}
             </main>
           </div>
         </div>

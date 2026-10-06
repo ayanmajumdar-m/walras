@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authenticateToken = require("../utils/auth.middleware");
+const { requireSalesOpen } = require("../utils/platformSettings");
 const {
     getUserHosting,
     buyHosting,
@@ -13,8 +14,8 @@ const {
 router.use(authenticateToken);
 
 router.get("/", getUserHosting);
-router.post("/buy", buyHosting);
-router.post("/initiate-payment", initiateHostingPayment);
+router.post("/buy", requireSalesOpen, buyHosting);
+router.post("/initiate-payment", requireSalesOpen, initiateHostingPayment);
 router.get("/:id/login", getCpanelLogin);
 router.get("/:id/credentials", getHostingCredentials);
 

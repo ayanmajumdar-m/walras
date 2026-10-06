@@ -42,6 +42,19 @@ const paymentRouter = require("./routes/payment.routes");
 const bolddesktest = require("./bolddesktest");
 
 // ✅ Step 4: Use routes
+// What the website and console need to know about the platform's state:
+// maintenance, paused payments and which plans are on sale. No secrets here.
+const { getPlatform } = require("./utils/platformSettings");
+app.get("/api/settings/public", async (req, res) => {
+  try {
+    const { maintenanceMode, paymentsPaused, planAvailability } = await getPlatform();
+    res.json({ maintenanceMode, paymentsPaused, planAvailability });
+  } catch (err) {
+    console.error("Public settings failed:", err.message);
+    res.json({ maintenanceMode: false, paymentsPaused: false, planAvailability: null });
+  }
+});
+
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);

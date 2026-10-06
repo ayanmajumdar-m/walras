@@ -680,6 +680,10 @@
 }
 
 .cx-plan.is-selected::after { border: 6px solid var(--color-accent-700); }
+.cx-plan.is-disabled { opacity: 0.55; cursor: not-allowed; }
+.cx-plan.is-disabled:hover { border-color: color-mix(in srgb, #1d1f20 12%, transparent); }
+.cx-plan-off { margin-left: 8px; }
+.cx-maintenance { padding: 56px 24px; }
 
 .cx-plan-top { display: flex; align-items: center; }
 .cx-plan-name { font-family: var(--font-heading); font-weight: 700; font-size: 24px; }

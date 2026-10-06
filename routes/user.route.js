@@ -5,6 +5,7 @@ const WHOIS_API_KEY = process.env.WHOIS_API_KEY;
 const UserController = require('../controllers/user.controllers');
 const WalletController = require('../controllers/wallet.controllers')
 const authenticateToken = require('../utils/auth.middleware');
+const { requireSalesOpen } = require('../utils/platformSettings');
 
 // Public routes
 //
@@ -22,7 +23,7 @@ userRouter.get('/wallet/billing-history', authenticateToken, WalletController.ge
 userRouter.get('/openprovider/auth-token', authenticateToken, UserController.getOpenProviderAuthToken);
 userRouter.get('/openprovider/domains', authenticateToken, UserController.getOpenProviderDomains);
 userRouter.post('/openprovider/search-domain', authenticateToken, UserController.searchDomain);
-userRouter.post('/openprovider/purchase-domain', authenticateToken, UserController.purchaseDomain);
+userRouter.post('/openprovider/purchase-domain', authenticateToken, requireSalesOpen, UserController.purchaseDomain);
 userRouter.post('/openprovider/verify-domain-payment', authenticateToken, UserController.verifyDomainPayment);
 userRouter.get('/openprovider/domain-transactions', authenticateToken, UserController.getDomainTransactions);
 // Update nameservers for a purchased domain

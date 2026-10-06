@@ -21,7 +21,7 @@ export const api = async (path, { method = "GET", body } = {}) => {
   });
   const data = await res.json().catch(() => ({}));
 
-  if (res.status === 401 || (res.status === 403 && /token/i.test(data.error || ""))) {
+  if (res.status === 401 || (res.status === 403 && (data.suspended || /token/i.test(data.error || "")))) {
     sessionExpired(data.error);
     throw new Error("Session expired");
   }

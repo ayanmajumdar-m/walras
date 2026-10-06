@@ -1,691 +1,179 @@
-import React, { useEffect, useState } from "react";
-import "./AdminDashboard.css";
-import AdminProtectedRoute from "./AdminPrivateRoute";
+import React, { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-  Home,
-  Globe,
-  Server,
-  DollarSign,
-  Ticket,
-  FileText,
-  LogOut,
-  CheckCircle,
-  AlertTriangle,
-  User,
-  Settings as SettingsIcon
+  LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
+  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X,
 } from "lucide-react";
+import AdminProtectedRoute from "./AdminPrivateRoute";
+import { adminApi, adminLogout } from "./adminApi";
+import Customers from "./sections/Customers";
+import CustomerDetail from "./sections/CustomerDetail";
+import Orders from "./sections/Orders";
+import Administrators from "./sections/Administrators";
+import AuditLogs from "./sections/AuditLogs";
+import PlatformSettings from "./sections/PlatformSettings";
+import NotificationsBell from "./sections/NotificationsBell";
+import {
+  DashboardSection, TransactionsSection, InvoicesSection, PromoCodesSection,
+  ServersSection, HostingSection, DomainsSection,
+} from "./sections/Legacy";
+// AdminDashboard.css still styles the pre-existing views (Dashboard,
+// Transactions, Invoices, …); the console + admin sheets come after it.
+import "./AdminDashboard.css";
+// Users.css outlived the old Users view: its .modal* rules style the promo
+// form and the console's nameserver/transfer dialogs.
+import "./components/Users.css";
+import "../ProtectedRoutes/Console.css";
+import "./AdminConsole.css";
 
-// Import components
-import Dashboard from './components/Dashboard';
-import Users from './components/Users';
-import Transactions from './components/Transactions';
-import Invoices from './components/Invoices';
-import Servers from './components/Servers';
-import PromoCodes from './components/PromoCodes';
-import Domain from './components/Domain';
-import CreatePromoForm from './components/CreatePromoForm';
-import Hosting from './components/Hosting';
-import Settings from './components/Settings';
+const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
 
-const Logo = 'https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png';
+// Sidebar, grouped like Fantom's "Vestige Root": operations, then governance.
+const GROUPS = [
+  {
+    label: "Operations",
+    items: [
+      { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard, perm: "view_dashboard" },
+      { id: "customers", label: "Customers", Icon: Users, perm: "view_users" },
+      { id: "orders", label: "Orders", Icon: Receipt, perm: "view_billing" },
+      { id: "transactions", label: "Transactions", Icon: ArrowLeftRight, perm: "view_billing" },
+      { id: "invoices", label: "Invoices", Icon: FileText, perm: "view_billing" },
+      { id: "promo-codes", label: "Promo codes", Icon: Ticket, perm: ["manage_coupons", "view_billing"] },
+      { id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" },
+      { id: "servers", label: "Cloud servers", Icon: Layers, perm: "view_services" },
+      { id: "domains", label: "Domains", Icon: Globe, perm: "view_services" },
+    ],
+  },
+  {
+    label: "Governance",
+    items: [
+      { id: "admins", label: "Administrators", Icon: UserCog, perm: "manage_admins" },
+      { id: "audit", label: "Audit logs", Icon: ScrollText, perm: "view_audit_logs" },
+      { id: "settings", label: "Settings", Icon: SettingsIcon, perm: "manage_settings" },
+    ],
+  },
+];
+
+const ROLE_LABELS = { super_admin: "Super admin", admin: "Admin", support: "Support", finance: "Finance", readonly: "Read only" };
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [dashboardStats, setDashboardStats] = useState({});
-  const [users, setUsers] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [servers, setServers] = useState([]);
-  const [hostingAccounts, setHostingAccounts] = useState([]);
-  const [promoCodes, setPromoCodes] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [adminInfo, setAdminInfo] = useState(null);
-  const [message, setMessage] = useState({ text: '', type: '' });
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
-  const [showCreatePromo, setShowCreatePromo] = useState(false);
-  const API_URL = '';
-  const token = localStorage.getItem("adminToken");
+  const [params, setParams] = useSearchParams();
+  const [me, setMe] = useState(null);
+  const [error, setError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [notice, setNotice] = useState(null);
 
-  // Fetch dashboard stats
-  const fetchDashboardStats = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/dashboardStats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setDashboardStats(data);
-      }
-    } catch (err) {
-      console.error("Error fetching dashboard stats:", err);
-    }
-  };
-
-  // Fetch all users with details
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/getAllUsersWithDetails`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setUsers(data);
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error loading users", type: "error" });
-    }
-  };
-
-  // Fetch all transactions
-  const fetchTransactions = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/getAllTransactions`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setTransactions(data);
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error loading transactions", type: "error" });
-    }
-  };
-
-  // Fetch all servers
-  const fetchServers = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/getAllServers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setServers(data);
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error loading servers", type: "error" });
-    }
-  };
-
-  // Fetch all hosting accounts
-  const fetchHostingAccounts = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/getAllHosting`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setHostingAccounts(data.hostingAccounts || []);
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error loading hosting accounts", type: "error" });
-    }
-  };
-
-  const handleSuspendHosting = async (id, reason) => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/hosting/${id}/suspend`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ reason })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMessage({ text: "Hosting account suspended successfully", type: "success" });
-        fetchHostingAccounts();
-      } else {
-        alert(data.error || "Failed to suspend hosting account");
-      }
-    } catch (err) {
-      alert(err.message || "Error suspending hosting account");
-    }
-  };
-
-  const handleUnsuspendHosting = async (id) => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/hosting/${id}/unsuspend`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMessage({ text: "Hosting account unsuspended successfully", type: "success" });
-        fetchHostingAccounts();
-      } else {
-        alert(data.error || "Failed to unsuspend hosting account");
-      }
-    } catch (err) {
-      alert(err.message || "Error unsuspending hosting account");
-    }
-  };
-
-  const handleDeleteHosting = async (id) => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/hosting/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMessage({ text: "Hosting account deleted successfully", type: "success" });
-        fetchHostingAccounts();
-      } else {
-        alert(data.error || "Failed to delete hosting account");
-      }
-    } catch (err) {
-      alert(err.message || "Error deleting hosting account");
-    }
-  };
-
-  const handleHostingLogin = async (id) => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/hosting/${id}/login`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok && data.url) {
-        window.open(data.url, "_blank");
-      } else {
-        alert(data.error || "Failed to generate cPanel login session");
-      }
-    } catch (err) {
-      alert(err.message || "Error generating cPanel login");
-    }
-  };
-
-  // Fetch recent activity
-  const fetchRecentActivity = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/getRecentActivity`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setRecentActivity(data);
-      }
-    } catch (err) {
-      console.error("Error loading recent activity:", err);
-    }
-  };
-
-  // Fetch user details
-  const fetchUserDetails = async (userId) => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/getUser/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setUserDetails(data);
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error fetching user details", type: "error" });
-    }
-  };
-
-  // Fetch promo codes
-  const fetchPromoCodes = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/promo-codes?t=${Date.now()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setPromoCodes(data.promoCodes || data);
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error loading promo codes", type: "error" });
-    }
-  };
-
-  // Delete promo code
-  const deletePromoCode = async (promoId) => {
-    if (!window.confirm("Are you sure you want to delete this promo code?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/admin/promo-codes/${promoId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        setMessage({ text: "Promo code deleted successfully", type: "success" });
-        fetchPromoCodes();
-      } else {
-        throw new Error("Failed to delete promo code");
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error deleting promo code", type: "error" });
-    }
-  };
-
-  // Fetch monthly invoices
-  const fetchInvoices = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/monthly-invoices?t=${Date.now()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setInvoices(data.invoices || data);
-      }
-    } catch (err) {
-      setMessage({ text: err.message || "Error loading invoices", type: "error" });
-    }
-  };
-
-  // Load data based on active tab
-  const loadTabData = async (tab) => {
-    setLoading(true);
-    try {
-      switch (tab) {
-        case "dashboard":
-          await fetchDashboardStats();
-          await fetchRecentActivity();
-          break;
-        case "users":
-          await fetchUsers();
-          break;
-        case "transactions":
-          await fetchTransactions();
-          break;
-        case "invoices":
-          await fetchInvoices();
-          break;
-        case "servers":
-          await fetchServers();
-          break;
-        case "hosting":
-          await fetchHostingAccounts();
-          break;
-        case "promo-codes":
-          await fetchPromoCodes();
-          break;
-        default:
-          break;
-      }
-    } catch (err) {
-      console.error("Error loading tab data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-  try {
-    console.log('Starting delete process for user:', userId);
-
-    // Send ID as URL parameter instead of in body
-    const response = await fetch(`${API_URL}/api/admin/deleteUser/${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      // Remove the body since we're using URL parameters
-    });
-
-    console.log('DELETE Response status:', response.status);
-    console.log('DELETE Response URL:', response.url);
-
-    const responseText = await response.text();
-    console.log('DELETE Response text length:', responseText.length);
-    console.log('DELETE Response text (first 200 chars):', responseText.substring(0, 200));
-
-    // Check if we're getting the React app HTML
-    if (responseText.includes('<!doctype') || responseText.includes('create-react-app')) {
-      console.error('Got React HTML instead of API response!');
-      throw new Error('Backend server not running or route not found');
-    }
-
-    let result;
-    try {
-      result = JSON.parse(responseText);
-    } catch (parseError) {
-      throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
-    }
-
-    if (!response.ok) {
-      throw new Error(result.error || result.message || `Server error: ${response.status}`);
-    }
-
-    setMessage({ text: result.message || 'User deleted successfully', type: 'success' });
-    setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
-
-  } catch (error) {
-    console.error('Error in handleDeleteUser:', error);
-    setMessage({
-      text: `Delete failed: ${error.message}`,
-      type: 'error'
-    });
-  }
-};
-
-  const handleVerifyUser = async (userId) => {
-    try {
-      const response = await fetch(`${API_URL}/api/admin/verifyUser`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ userId: userId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to verify user');
-      }
-
-      const result = await response.json();
-      setMessage({ text: result.message, type: 'success' });
-
-      // Update user verification status in local state
-      setUsers(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId ? { ...user, isVerified: true } : user
-        )
-      );
-    } catch (error) {
-      console.error('Error verifying user:', error);
-      setMessage({ text: error.message || 'Failed to verify user', type: 'error' });
-    }
-  };
   useEffect(() => {
-    const adminToken = localStorage.getItem("adminToken");
-    if (adminToken) {
-      setAdminInfo({ username: "Admin", access: "owner" });
-      loadTabData(activeTab);
-    }
-  }, [activeTab]);
+    adminApi("/me").then(setMe).catch((e) => setError(e.message));
+  }, []);
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setShowCreatePromo(false);
-    loadTabData(tab);
+  const can = useCallback(
+    (perm) => {
+      const have = me?.permissions || [];
+      return (Array.isArray(perm) ? perm : [perm]).some((p) => have.includes(p));
+    },
+    [me]
+  );
+
+  const visibleGroups = GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => can(i.perm)) })).filter((g) => g.items.length);
+  const firstSection = visibleGroups[0]?.items[0]?.id;
+  const requested = params.get("section");
+  const allowed = visibleGroups.flatMap((g) => g.items).some((i) => i.id === requested) || (requested === "customer" && can("view_users"));
+  const section = allowed ? requested : firstSection;
+  const customerId = params.get("id");
+
+  const go = (id, extra = {}) => {
+    setNotice(null);
+    setParams({ section: id, ...extra });
+    setMenuOpen(false);
+    window.scrollTo(0, 0);
   };
+  const openCustomer = (id) => go("customer", { id: String(id) });
+  const notify = (text, type = "success") => setNotice({ text, type });
 
-  // Handle user selection
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
-    fetchUserDetails(user.id);
-  };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `₹${(amount / 100).toFixed(2)}`;
-  };
-
-  // Format date
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  // Render content based on active tab
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading...</p>
-        </div>
+  const render = () => {
+    switch (section) {
+      case "dashboard": return <DashboardSection />;
+      case "customers": return <Customers openCustomer={openCustomer} />;
+      case "customer": return (
+        <CustomerDetail key={customerId} userId={customerId} can={can}
+          onBack={(msg) => { go("customers"); if (typeof msg === "string") notify(msg); }} />
       );
-    }
-
-    switch (activeTab) {
-      case "dashboard":
-        return <Dashboard
-          dashboardStats={dashboardStats}
-          recentActivity={recentActivity}
-          formatCurrency={formatCurrency}
-          formatDate={formatDate}
-        />;
-      case "users":
-        return <Users
-          users={users}
-          handleUserSelect={handleUserSelect}
-          formatCurrency={formatCurrency}
-          onDeleteUser={handleDeleteUser}  // Add this
-          onVerifyUser={handleVerifyUser}  // Add this
-        />;
-      case "transactions":
-        return <Transactions
-          transactions={transactions}
-          formatCurrency={formatCurrency}
-          formatDate={formatDate}
-        />;
-      case "invoices":
-        return <Invoices
-          invoices={invoices}
-          loading={loading}
-          adminInfo={adminInfo}
-          token={token}
-          setMessage={setMessage}
-          fetchInvoices={fetchInvoices}
-          formatDate={formatDate}
-        />;
-      case "servers":
-        return <Servers
-          servers={servers}
-          formatCurrency={formatCurrency}
-          formatDate={formatDate}
-        />;
-      case "hosting":
-        return <Hosting
-          hostingAccounts={hostingAccounts}
-          onSuspend={handleSuspendHosting}
-          onUnsuspend={handleUnsuspendHosting}
-          onDelete={handleDeleteHosting}
-          onLogin={handleHostingLogin}
-          onRefresh={fetchHostingAccounts}
-          formatDate={formatDate}
-        />;
-      case "promo-codes":
-        return <PromoCodes
-          promoCodes={promoCodes}
-          setShowCreatePromo={setShowCreatePromo}
-          deletePromoCode={deletePromoCode}
-          formatDate={formatDate}
-          onPromoUpdate={(updatedPromo) => {
-            setPromoCodes(prev => prev.map(promo =>
-              promo.id === updatedPromo.id ? updatedPromo : promo
-            ));
-          }}
-        />;
-      case "domain":
-        return <Domain />;
-      case "settings":
-        return <Settings />;
-      default:
-        return <Dashboard
-          dashboardStats={dashboardStats}
-          recentActivity={recentActivity}
-          formatCurrency={formatCurrency}
-          formatDate={formatDate}
-        />;
+      case "orders": return <Orders openCustomer={openCustomer} />;
+      case "transactions": return <TransactionsSection />;
+      case "invoices": return <InvoicesSection can={can} notify={notify} />;
+      case "promo-codes": return <PromoCodesSection notify={notify} />;
+      case "hosting": return <HostingSection notify={notify} />;
+      case "servers": return <ServersSection />;
+      case "domains": return <DomainsSection />;
+      case "admins": return <Administrators me={me} />;
+      case "audit": return <AuditLogs openCustomer={openCustomer} />;
+      case "settings": return <PlatformSettings />;
+      default: return <div className="cx-card cx-empty"><h4>No sections available</h4><p>Your role doesn't include any admin permissions. Ask a super admin.</p></div>;
     }
   };
+
+  const activeNav = section === "customer" ? "customers" : section;
 
   return (
     <AdminProtectedRoute>
-      <div className="admin-dashboard">
-        <div className="admin-sidebar">
-          <div className="sidebar-header">
-            <a href="/" className="sidebar-logo-link">
-              <img src={Logo} alt="Walras Cloud" className="sidebar-logo" />
-            </a>
-            <span className="sidebar-kicker">Admin Panel</span>
+      <div className="cx-shell ad-shell">
+        {menuOpen && <div className="cx-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+        <aside className={`cx-sidebar${menuOpen ? " is-open" : ""}`}>
+          <div className="cx-brand">
+            <a href="/" className="cx-brand-link"><img src={LOGO} alt="" /><span>Walras Cloud</span></a>
+            <button type="button" className="cx-close-btn" onClick={() => setMenuOpen(false)} aria-label="Close menu"><X size={18} /></button>
           </div>
-          <nav className="sidebar-nav">
-            {/* Dashboard - Owner only */}
-            {adminInfo?.access === 'owner' && (
-              <button
-                className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
-                onClick={() => handleTabChange("dashboard")}
-              >
-                <Home className="nav-icon" size={18} />
-                Dashboard
-              </button>
-            )}
+          <span className="cx-kicker">Admin panel</span>
 
-            {/* Servers */}
-            {adminInfo?.access === 'owner' && (
-              <button
-                className={`nav-item ${activeTab === "servers" ? "active" : ""}`}
-                onClick={() => handleTabChange("servers")}
-              >
-                <Server className="nav-icon" size={18} />
-                Servers
-              </button>
-            )}
-
-            {/* Hosting */}
-            {adminInfo?.access === 'owner' && (
-              <button
-                className={`nav-item ${activeTab === "hosting" ? "active" : ""}`}
-                onClick={() => handleTabChange("hosting")}
-              >
-                <Server className="nav-icon" size={18} />
-                Hosting
-              </button>
-            )}
-
-            {/* Domain */}
-            {adminInfo?.access === 'owner' && (
-              <button
-                className={`nav-item ${activeTab === "domain" ? "active" : ""}`}
-                onClick={() => handleTabChange("domain")}
-              >
-                <Globe className="nav-icon" size={18} />
-                Domain
-              </button>
-            )}
-
-            {/* Transactions */}
-            <button
-              className={`nav-item ${activeTab === "transactions" ? "active" : ""}`}
-              onClick={() => handleTabChange("transactions")}
-            >
-              <DollarSign className="nav-icon" size={18} />
-              Transactions
-            </button>
-
-            {/* Users */}
-            {adminInfo?.access === 'owner' && (
-              <button
-                className={`nav-item ${activeTab === "users" ? "active" : ""}`}
-                onClick={() => handleTabChange("users")}
-              >
-                <User className="nav-icon" size={18} />
-                Users
-              </button>
-            )}
-
-            {/* Promo Codes */}
-            {adminInfo?.access === 'owner' && (
-              <button
-                className={`nav-item ${activeTab === "promo-codes" ? "active" : ""}`}
-                onClick={() => handleTabChange("promo-codes")}
-              >
-                <Ticket className="nav-icon" size={18} />
-                Promo Codes
-              </button>
-            )}
-
-            {/* Invoices */}
-            <button
-              className={`nav-item ${activeTab === "invoices" ? "active" : ""}`}
-              onClick={() => handleTabChange("invoices")}
-            >
-              <FileText className="nav-icon" size={18} />
-              Invoices
-            </button>
-
-            {/* Settings */}
-            {adminInfo?.access === 'owner' && (
-              <button
-                className={`nav-item ${activeTab === "settings" ? "active" : ""}`}
-                onClick={() => handleTabChange("settings")}
-              >
-                <SettingsIcon className="nav-icon" size={18} />
-                Settings
-              </button>
-            )}
+          <nav className="cx-nav" aria-label="Admin">
+            {visibleGroups.map((g, gi) => (
+              <React.Fragment key={g.label}>
+                {gi > 0 && <span className="cx-nav-sep" aria-hidden="true" />}
+                <span className="ad-nav-label">{g.label}</span>
+                {g.items.map(({ id, label, Icon }) => (
+                  <button key={id} type="button" className={`cx-nav-item ad-nav-btn${activeNav === id ? " is-active" : ""}`} onClick={() => go(id)}>
+                    <Icon size={18} aria-hidden="true" /><span>{label}</span>
+                  </button>
+                ))}
+              </React.Fragment>
+            ))}
           </nav>
 
-          {/* Logout */}
-          <div className="sidebar-footer">
-            <button
-              className="nav-item logout-btn"
-              onClick={() => window.location.href = '/vadmin-1997'}
-            >
-              <LogOut className="nav-icon" size={18} />
-              Logout
-            </button>
+          <div className="cx-user">
+            <span className="cx-avatar" aria-hidden="true">{(me?.fullName || me?.username || "A").slice(0, 1).toUpperCase()}</span>
+            <span className="cx-user-text">
+              <strong>{me?.fullName || me?.username || "Admin"}</strong>
+              <small>{ROLE_LABELS[me?.role] || ""}</small>
+            </span>
+            <button type="button" className="cx-logout" onClick={adminLogout} title="Sign out" aria-label="Sign out"><LogOut size={17} /></button>
           </div>
-        </div>
+        </aside>
 
-        <div className="admin-main">
-          <header className="admin-header">
-            <div className="header-left">
-              <h1>Admin Dashboard</h1>
-              {adminInfo && (
-                <div className="admin-info">
-                  <span className="admin-username">{adminInfo.username}</span>
-                  <span className={`admin-access ${adminInfo.access}`}>
-                    {adminInfo.access.charAt(0).toUpperCase() + adminInfo.access.slice(1)}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="header-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => window.location.href = '/vadmin-1997'}
-              >
-                Logout
-              </button>
+        <div className="cx-main">
+          <header className="cx-topbar">
+            <button type="button" className="cx-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
+            <h1 className="cx-topbar-title">
+              {section === "customer" ? "Customer" : visibleGroups.flatMap((g) => g.items).find((i) => i.id === section)?.label || "Admin"}
+            </h1>
+            <div className="cx-topbar-actions">
+              {me && <NotificationsBell openCustomer={openCustomer} />}
+              {me && <span className="cx-pill is-brand ad-role-pill">{ROLE_LABELS[me.role]}</span>}
             </div>
           </header>
 
-          {message.text && (
-            <div className={`admin-message ${message.type}`}>
-              <span className="message-icon">
-                {message.type === "success" ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-              </span>
-              {message.text}
-            </div>
-          )}
-
-          <main className="admin-content">
-            {renderContent()}
+          <main className="cx-content">
+            {error && <div className="cx-alert is-error">{error}</div>}
+            {notice && (
+              <div className={`cx-alert is-${notice.type} ad-page-notice`} role="status">
+                {notice.text}
+                <button type="button" className="cx-icon-btn" onClick={() => setNotice(null)} aria-label="Dismiss"><X size={15} /></button>
+              </div>
+            )}
+            {me ? render() : !error && <div className="cx-card cx-empty"><p>Loading…</p></div>}
           </main>
         </div>
       </div>
-
-      {showCreatePromo && (
-        <CreatePromoForm
-          onSuccess={() => {
-            setShowCreatePromo(false);
-            fetchPromoCodes();
-          }}
-          onCancel={() => setShowCreatePromo(false)}
-        />
-      )}
     </AdminProtectedRoute>
   );
 };

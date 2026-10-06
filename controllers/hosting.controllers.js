@@ -1,6 +1,13 @@
 const connection = require("../config/db");
 const cpanelService = require("../services/cpanelService");
 const ccavenueService = require("../services/ccavenueService");
+const { getPlatform } = require("../utils/platformSettings");
+
+// Admins can take a hosting plan off sale from Settings.
+async function assertPlanOnSale(planName) {
+    const { planAvailability } = await getPlatform();
+    return planAvailability.hosting[planName] !== false;
+}
 
 // Web Hosting pricing: Seed ₹159, Tree ₹259 with 18% GST
 const HOSTING_PRICES = {
@@ -97,6 +104,9 @@ exports.buyHosting = async (req, res) => {
         }
 
         // Web Hosting pricing: Seed (₹159 base + 18% GST = ₹187.62), Tree (₹259 base + 18% GST = ₹305.62)
+        if (!(await assertPlanOnSale(normalizedPlan))) {
+            return res.status(400).json({ error: `The ${normalizedPlan} plan is not available right now` });
+        }
         const priceInfo = HOSTING_PRICES[normalizedPlan];
         const totalAmountRupees = priceInfo.total;
         const totalPaise = Math.round(totalAmountRupees * 100);
@@ -270,6 +280,9 @@ exports.initiateHostingPayment = async (req, res) => {
             return res.status(400).json({ error: "Please provide a valid domain name (e.g. example.com)" });
         }
 
+        if (!(await assertPlanOnSale(normalizedPlan))) {
+            return res.status(400).json({ error: `The ${normalizedPlan} plan is not available right now` });
+        }
         const priceInfo = HOSTING_PRICES[normalizedPlan];
         const basePaise = Math.round(priceInfo.base * 100);
         const gstPaise = Math.round(priceInfo.gst * 100);

@@ -6,62 +6,46 @@ const bcrypt = require('bcrypt');
 const taxService = require('../services/taxServices');
 const cpanelService = require('../services/cpanelService');
 const dotenv = require('dotenv');
+const audit = require('../utils/audit');
+const { permissionsFor } = require('../utils/adminRbac');
+const { getPlatform } = require('../utils/platformSettings');
 dotenv.config();
 
 
 const AdminController = {
-    register: async (req, res) => {
-        try {
-            const { username, password } = req.body;
-
-            // Validate input
-            if (!username || !password) {
-                return res.status(400).json({ error: 'Username and password are required' });
-            }
-
-            // Hash password
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            Admin.create({ username, password: hashedPassword }, (err, result) => {
-                if (err) {
-                    if (err.code === 'ER_DUP_ENTRY') {
-                        return res.status(400).json({ error: 'Username already exists' });
-                    }
-                    return res.status(500).json({ error: 'Database error', details: err });
-                }
-
-                res.status(201).json({ message: 'Admin created successfully', adminId: result.insertId });
-            });
-        } catch (error) {
-            console.error('Admin register error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
+    // Admin accounts are created from the Administrators page
+    // (controllers/adminPlatform.controllers.js) or `node create-admin.js`.
 
     // Admin login
     login: (req, res) => {
-        const { username, password } = req.body;
+        const username = typeof req.body.username === 'string' ? req.body.username.trim() : '';
+        const { password } = req.body;
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
         Admin.findByUsername(username, async (err, results) => {
             if (err) return res.status(500).json({ error: 'Database error' });
-            if (results.length === 0) return res.status(401).json({ error: 'Invalid username or password' });
-
-            const admin = results[0];
-            const isPasswordValid = await bcrypt.compare(password, admin.password);
-            if (!isPasswordValid) {
+            const admin = results && results[0];
+            const ok = admin && admin.is_active !== false && await bcrypt.compare(password, admin.password);
+            if (!ok) {
                 return res.status(401).json({ error: 'Invalid username or password' });
             }
 
-            const token = jwt.sign({ adminId: admin.id, access: admin.access }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const role = admin.role || (admin.access === 'owner' ? 'super_admin' : 'finance');
+            const token = jwt.sign({ adminId: admin.id, typ: 'admin' }, process.env.JWT_SECRET, { expiresIn: '8h' });
+            connection.query('UPDATE admins SET last_login_at = NOW() WHERE id = ?', [admin.id], () => {});
+            req.admin = { adminId: admin.id, username: admin.username };
+            audit(req, 'admin.login', 'admin', admin.id);
+
             res.json({
                 token,
                 admin: {
                     id: admin.id,
                     username: admin.username,
-                    access: admin.access
+                    fullName: admin.full_name,
+                    role,
+                    permissions: await permissionsFor(role),
                 }
             });
         });
@@ -798,12 +782,12 @@ const AdminController = {
                     doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 50, 115);
                     doc.text(`Status: ${invoice.status.toUpperCase()}`, 50, 130);
 
-                    // Company Info
-                    doc.text('ioogn Services', 400, 85)
-                        .text('Cloud Infrastructure Provider', 400, 100)
-                        .text('Billing Department', 400, 115)
-                        .text('contact@ioogn.com', 400, 130)
-                        .text('+91-9876543210', 400, 145);
+                    // Company Info (admin Settings → Invoice details)
+                    const { invoice: company } = await getPlatform();
+                    doc.text(company.legalName, 330, 85, { width: 220 })
+                        .text(`GSTIN: ${company.gstin}`, 330, 115, { width: 220 })
+                        .text(company.email, 330, 130, { width: 220 })
+                        .text(company.phone, 330, 145, { width: 220 });
 
                     // Customer Info
                     doc.text('Bill To:', 50, 180)

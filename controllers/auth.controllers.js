@@ -275,6 +275,10 @@ const AuthController = {
                 : 'Incorrect email or password');
         }
 
+        if (user.suspended_at) {
+            throw new AuthError(403, `Your account is suspended${user.suspension_reason ? `: ${user.suspension_reason}` : ''}. Contact support@walras.net.`, { suspended: true });
+        }
+
         if (!user.isemailverified) {
             await issueCode(user, 'verify');
             throw new AuthError(403, 'Please verify your email first. We\'ve sent you a code.', { needsVerification: true, email });

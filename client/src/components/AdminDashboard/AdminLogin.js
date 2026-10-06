@@ -1,101 +1,67 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../AuthScreen/Auth.css";
+import { Loader2, ShieldCheck } from "lucide-react";
+import AuthLayout from "../AuthScreen/AuthLayout";
 
 const AdminLogin = () => {
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  React.useEffect(() => {
-    const expiredFlag = localStorage.getItem('sessionExpired');
-    const expiredMessage = localStorage.getItem('sessionExpiredMessage');
-    if (expiredFlag || expiredMessage) {
-      setError(expiredMessage || 'Your admin session has expired. Please login again.');
-      localStorage.removeItem('sessionExpired');
-      localStorage.removeItem('sessionExpiredMessage');
+  useEffect(() => {
+    const expiredMessage = localStorage.getItem("sessionExpiredMessage");
+    if (localStorage.getItem("sessionExpired") || expiredMessage) {
+      setError(expiredMessage || "Your admin session has expired. Please sign in again.");
+      localStorage.removeItem("sessionExpired");
+      localStorage.removeItem("sessionExpiredMessage");
     }
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError("");
-  };
-
-  const API_URL = ``
-
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
-      const res = await fetch(`${API_URL}/api/admin/login`, {
+      const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(form),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Login failed. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      // Save token and admin info
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Sign-in failed. Please try again.");
       localStorage.setItem("adminToken", data.token);
-      localStorage.setItem("adminInfo", JSON.stringify(data.admin));
       navigate("/vadmin-1997/dashboard");
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const set = (field) => (e) => {
+    setForm({ ...form, [field]: e.target.value });
+    setError("");
+  };
+
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card">
-        <h2 className="auth-title">
-          <span className="gradient-text">Admin Login</span>
-        </h2>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              placeholder="Enter your username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-      </div>
-    </div>
+    <AuthLayout title="Admin panel" subtitle="Sign in with your administrator account.">
+      <div className="au-mail-icon"><ShieldCheck aria-hidden="true" /></div>
+      {error && <div className="au-alert is-error" role="alert">{error}</div>}
+      <form className="au-form" onSubmit={submit}>
+        <label className="au-field">
+          <span>Username</span>
+          <input type="text" autoComplete="username" value={form.username} onChange={set("username")} required autoFocus />
+        </label>
+        <label className="au-field">
+          <span>Password</span>
+          <input type="password" autoComplete="current-password" value={form.password} onChange={set("password")} required />
+        </label>
+        <button type="submit" className="au-btn" disabled={loading || !form.username || !form.password}>
+          {loading ? <Loader2 className="au-spin" aria-hidden="true" /> : "Sign in"}
+        </button>
+      </form>
+    </AuthLayout>
   );
 };
 
