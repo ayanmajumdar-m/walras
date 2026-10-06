@@ -48,7 +48,12 @@ const { getPlatform } = require("./utils/platformSettings");
 app.get("/api/settings/public", async (req, res) => {
   try {
     const { maintenanceMode, paymentsPaused, planAvailability } = await getPlatform();
-    res.json({ maintenanceMode, paymentsPaused, planAvailability });
+    // "All plans out of stock" (stored as paymentsPaused) overrides every plan.
+    const effective = paymentsPaused
+      ? Object.fromEntries(Object.entries(planAvailability).map(([family, plans]) =>
+          [family, Object.fromEntries(Object.keys(plans).map((name) => [name, false]))]))
+      : planAvailability;
+    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, planAvailability: effective });
   } catch (err) {
     console.error("Public settings failed:", err.message);
     res.json({ maintenanceMode: false, paymentsPaused: false, planAvailability: null });

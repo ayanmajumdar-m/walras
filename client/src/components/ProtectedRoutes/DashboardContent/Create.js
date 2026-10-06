@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
-import { PRODUCTS } from "./products";
+import { PRODUCTS, productStatus } from "./products";
 import { COMPUTE_PLANS, HOSTING_PLANS, HOSTING_PRICES, formatINR } from "../../../data/plans";
 
 /*
@@ -20,7 +20,6 @@ const cleanDomain = (value) =>
 const HostingConfigurator = () => {
   const { platform } = useConsole();
   const onSale = (name) => platform?.planAvailability?.hosting?.[name] !== false;
-  const paymentsPaused = Boolean(platform?.paymentsPaused);
   const [planName, setPlanName] = useState("Tree");
   const [domain, setDomain] = useState("");
   const [paying, setPaying] = useState(false);
@@ -69,8 +68,8 @@ const HostingConfigurator = () => {
   return (
     <div className="cx-create-body">
       <div className="cx-config">
-        {paymentsPaused && (
-          <div className="cx-alert is-info">Purchases are paused for a short while. You can set up your order, but payment will open again soon.</div>
+        {nothingOnSale && (
+          <div className="cx-alert is-info">Web Hosting is out of stock right now. New capacity is on its way; please check back soon.</div>
         )}
         <section className="cx-card cx-step">
           <h3><span className="cx-step-num">1</span> Choose a plan</h3>
@@ -85,7 +84,7 @@ const HostingConfigurator = () => {
                   <span className="cx-plan-top">
                     <span className="cx-plan-name">{plan.name}</span>
                     {plan.popular && available && <span className="cx-tag">Popular</span>}
-                    {!available && <span className="cx-pill cx-plan-off">Unavailable</span>}
+                    {!available && <span className="cx-pill cx-plan-off">Out of stock</span>}
                   </span>
                   <span className="cx-plan-tagline">{plan.tagline}</span>
                   <span className="cx-plan-price">
@@ -148,10 +147,9 @@ const HostingConfigurator = () => {
             <div className="cx-summary-total"><dt>Total due today</dt><dd>{formatINR(price.total, 2)}</dd></div>
           </dl>
           {error && <p className="cx-alert is-error" role="alert">{error}</p>}
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={pay} disabled={paying || paymentsPaused || nothingOnSale}>
+          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={pay} disabled={paying || nothingOnSale}>
             {paying ? <><Loader2 size={18} className="cx-spin" /> Connecting to payment…</>
-              : paymentsPaused ? "Payments paused"
-              : nothingOnSale ? "Currently unavailable"
+              : nothingOnSale ? "Out of stock"
               : <>Pay {formatINR(price.total, 2)} &amp; activate</>}
           </button>
           <p className="cx-summary-note"><Lock size={13} aria-hidden="true" /> Secure payment via CCAvenue. Your cPanel account is created as soon as payment succeeds.</p>
@@ -251,6 +249,7 @@ const ComingSoon = ({ type }) => {
 
 // ── Page ───────────────────────────────────────────────────────────────────
 const Create = () => {
+  const { platform } = useConsole();
   const [params, setParams] = useSearchParams();
   const type = PRODUCTS.some((p) => p.id === params.get("type")) ? params.get("type") : "hosting";
 
@@ -262,7 +261,10 @@ const Create = () => {
       </div>
 
       <div className="cx-product-tabs" role="tablist" aria-label="Product">
-        {PRODUCTS.map(({ id, Icon, title, from, status }) => (
+        {PRODUCTS.map((product) => {
+          const { id, Icon, title } = product;
+          const { label, available } = productStatus(product, platform);
+          return (
           <button
             key={id}
             type="button"
@@ -274,10 +276,11 @@ const Create = () => {
             <Icon size={20} aria-hidden="true" />
             <span>
               <strong>{title}</strong>
-              <small className={status === "available" ? "is-brand" : ""}>{from}</small>
+              <small className={available ? "is-brand" : ""}>{label}</small>
             </span>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {type === "hosting" && <HostingConfigurator />}

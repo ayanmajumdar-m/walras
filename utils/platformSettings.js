@@ -78,8 +78,9 @@ const setInvoiceDetails = (details) => {
 };
 
 /**
- * Express guard for anything that takes money or provisions a paid service.
- * Admins switch it via maintenance mode or "pause all payments".
+ * Express guard for buying a plan (hosting, servers, domains). Refused during
+ * maintenance or while "All plans out of stock" is on. Wallet top-ups use
+ * requireNotMaintenance instead: they aren't a plan.
  */
 const requireSalesOpen = async (req, res, next) => {
     try {
@@ -87,8 +88,9 @@ const requireSalesOpen = async (req, res, next) => {
         if (maintenanceMode) {
             return res.status(503).json({ error: 'Walras Cloud is under maintenance. Please try again shortly.', maintenance: true });
         }
+        // "paymentsPaused" is the stored name; admins see it as "All plans out of stock".
         if (paymentsPaused) {
-            return res.status(503).json({ error: 'Payments are temporarily paused. Please try again later.', paymentsPaused: true });
+            return res.status(409).json({ error: 'This plan is out of stock right now.', outOfStock: true });
         }
         next();
     } catch (err) {

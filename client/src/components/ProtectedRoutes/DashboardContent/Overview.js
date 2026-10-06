@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import { Layers, Server, Globe, Cpu, ArrowRight, Wallet, Plus, Boxes } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
-import { PRODUCTS } from "./products";
+import { PRODUCTS, productStatus } from "./products";
 
 const formatDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 const Overview = () => {
-  const { profile, balance } = useConsole();
+  const { profile, balance, platform } = useConsole();
   const [servers, setServers] = useState([]);
   const [hosting, setHosting] = useState([]);
   const [domains, setDomains] = useState([]);
@@ -73,16 +73,20 @@ const Overview = () => {
           <h3>Create a new resource</h3>
         </div>
         <div className="cx-product-grid">
-          {PRODUCTS.map(({ id, Icon, title, desc, from, status }) => (
-            <Link to={`/dashboard/create?type=${id}`} className={`cx-product${status === "available" ? "" : " is-muted"}`} key={id}>
+          {PRODUCTS.map((product) => {
+            const { id, Icon, title, desc } = product;
+            const { label, available } = productStatus(product, platform);
+            return (
+            <Link to={`/dashboard/create?type=${id}`} className={`cx-product${available ? "" : " is-muted"}`} key={id}>
               <span className="cx-product-icon"><Icon size={22} aria-hidden="true" /></span>
               <span className="cx-product-body">
                 <span className="cx-product-title">{title} <ArrowRight size={15} aria-hidden="true" /></span>
                 <span className="cx-product-desc">{desc}</span>
               </span>
-              <span className={`cx-pill${status === "available" ? " is-brand" : ""}`}>{from}</span>
+              <span className={`cx-pill${available ? " is-brand" : ""}`}>{label}</span>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Power, Pause, Package, FileText, Lock, Save } from "lucide-react";
+import { Power, PackageX, Package, FileText, Lock, Save } from "lucide-react";
 import { adminApi } from "../adminApi";
 import EmailSender from "../components/Settings";
 
@@ -72,8 +72,8 @@ const PlatformSettings = () => {
           <Switch Icon={Power} tone="warn" label="Maintenance mode"
             hint="Customers see a maintenance screen in the console and can't buy anything. Admins are unaffected."
             checked={s.maintenanceMode} onChange={(v) => setS({ ...s, maintenanceMode: v })} />
-          <Switch Icon={Pause} tone="warn" label="Pause all payments"
-            hint="Blocks every purchase and wallet top-up until switched back on. Existing services keep running."
+          <Switch Icon={PackageX} tone="warn" label="All plans out of stock"
+            hint="Every plan shows Out of stock and can't be bought. Wallet top-ups still work, and existing services keep running."
             checked={s.paymentsPaused} onChange={(v) => setS({ ...s, paymentsPaused: v })} />
           <div className="ap-card-foot">
             <button type="button" className="cx-btn cx-btn-primary" disabled={busy === "platform"}
@@ -85,10 +85,10 @@ const PlatformSettings = () => {
 
         <section className="cx-card ap-card">
           <h3>Plan availability</h3>
-          <p className="ap-muted">Turn a plan off to stop new purchases. Customers who already have it aren't affected.</p>
+          <p className="ap-muted">Turn a plan off to mark it Out of stock. Customers who already have it aren't affected.</p>
           <h4 className="ap-subhead">Web Hosting</h4>
           {Object.entries(s.planAvailability.hosting).map(([plan, on]) => (
-            <Switch key={plan} Icon={Package} label={plan} hint={on ? "On sale" : "Hidden from sale"} checked={on}
+            <Switch key={plan} Icon={Package} label={plan} hint={s.paymentsPaused ? "Out of stock (all plans switch is on)" : on ? "In stock" : "Out of stock"} checked={on}
               onChange={(v) => setS({ ...s, planAvailability: { ...s.planAvailability, hosting: { ...s.planAvailability.hosting, [plan]: v } } })} />
           ))}
           <h4 className="ap-subhead">Cloud Compute <Lock size={13} /></h4>

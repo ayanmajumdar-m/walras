@@ -62,6 +62,23 @@ const HostingPurchase = () => {
   const confirmedPlan = searchParams.get("plan");
   const failureReason = searchParams.get("reason");
 
+  // Admin plan availability (Settings → Plan availability / All plans out of stock).
+  const [availability, setAvailability] = useState(null);
+  useEffect(() => {
+    fetch("/api/settings/public").then((r) => r.json()).then((s) => setAvailability(s.planAvailability?.hosting || null)).catch(() => {});
+  }, []);
+  const inStock = (p) => !availability || availability[p.name] !== false;
+  const allOut = Boolean(availability) && !Object.values(PLANS).some(inStock);
+  useEffect(() => {
+    // If the chosen plan is out of stock, move to one that isn't.
+    const current = PLANS[selectedPlanKey];
+    if (current && !inStock(current)) {
+      const next = Object.values(PLANS).find(inStock);
+      if (next) setSelectedPlanKey(next.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availability]);
+
   const plan = PLANS[selectedPlanKey] || PLANS.seed;
 
   // Restore draft purchase if returning from sign-in
@@ -278,14 +295,18 @@ const HostingPurchase = () => {
 
               <div className="plan-selection-toggle">
                 {Object.values(PLANS).map((p) => {
-                  const isSelected = selectedPlanKey === p.id;
+                  const available = inStock(p);
+                  const isSelected = selectedPlanKey === p.id && available;
                   return (
                     <div
                       key={p.id}
                       className={`plan-option-card ${isSelected ? "is-selected" : ""} ${p.popular ? "is-popular" : ""}`}
-                      onClick={() => setSelectedPlanKey(p.id)}
+                      onClick={() => available && setSelectedPlanKey(p.id)}
+                      style={available ? undefined : { opacity: 0.55, cursor: "not-allowed" }}
+                      aria-disabled={!available}
                     >
-                      {p.popular && <span className="option-popular-tag">Popular</span>}
+                      {p.popular && available && <span className="option-popular-tag">Popular</span>}
+                      {!available && <span className="option-popular-tag" style={{ background: "#e7e7ea", color: "#5d5d60" }}>Out of stock</span>}
                       <div className="plan-option-radio">
                         <div className={`radio-dot ${isSelected ? "checked" : ""}`} />
                       </div>
@@ -386,9 +407,11 @@ const HostingPurchase = () => {
                 type="button"
                 className="purchase-cta-btn"
                 onClick={handleProceedToPayment}
-                disabled={loading}
+                disabled={loading || allOut || !inStock(plan)}
               >
-                {loading ? (
+                {allOut || !inStock(plan) ? (
+                  <span>Out of stock</span>
+                ) : loading ? (
                   <>
                     <RefreshCw size={18} className="spinning-icon" />
                     <span>Connecting to Payment...</span>
