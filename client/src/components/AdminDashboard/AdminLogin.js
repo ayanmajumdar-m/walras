@@ -45,7 +45,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <AuthLayout title="Admin panel" subtitle="Sign in with your administrator account.">
+    <AuthLayout title="Admin panel" subtitle="Sign in with your administrator account." ignoreMaintenance>
       <div className="au-mail-icon"><ShieldCheck aria-hidden="true" /></div>
       {error && <div className="au-alert is-error" role="alert">{error}</div>}
       <form className="au-form" onSubmit={submit}>

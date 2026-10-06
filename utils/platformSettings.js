@@ -97,7 +97,24 @@ const requireSalesOpen = async (req, res, next) => {
     }
 };
 
+/**
+ * Express guard for customer sign-in and sign-up: refused during maintenance.
+ * Admin sign-in does not use this, so the panel stays reachable.
+ */
+const requireNotMaintenance = async (req, res, next) => {
+    try {
+        const { maintenanceMode } = await getPlatform();
+        if (maintenanceMode) {
+            return res.status(503).json({ error: 'Walras Cloud is under maintenance. Sign-in and sign-up will be back shortly.', maintenance: true });
+        }
+    } catch (err) {
+        console.error('Platform settings check failed:', err.message);
+    }
+    next();
+};
+
 module.exports = {
+    requireNotMaintenance,
     LOCKED_FAMILIES,
     PLAN_DEFAULTS,
     INVOICE_DEFAULTS,
