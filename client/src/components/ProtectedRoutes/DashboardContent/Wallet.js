@@ -189,8 +189,8 @@ const Wallet = () => {
         key: data.key,
         amount: data.amount,
         currency: data.currency,
-        name: "Walras Cloud Wallet",
-        description: "Add funds to wallet",
+        name: "Walras Cloud Account Balance",
+        description: "Add funds to account balance",
         order_id: data.orderId,
         handler: async (response) => {
           // Step 3: Verify payment
@@ -207,7 +207,7 @@ const Wallet = () => {
           });
           const verifyData = await verifyRes.json();
           if (verifyRes.ok) {
-            alert("✅ Payment successful! Wallet credited ₹" + verifyData.amount);
+            alert("✅ Payment successful! Account balance credited ₹" + verifyData.amount);
             fetchWallet();
             setAmount("");
             // If user had entered BLACKFRIDAY promo and topped up ₹5000 or more, apply promo now
@@ -290,7 +290,7 @@ const Wallet = () => {
             
             const verifyData = await verifyRes.json();
             if (verifyRes.ok) {
-              alert(`✅ Payment successful! Wallet credited ₹${amt}`);
+              alert(`✅ Payment successful! Account balance credited ₹${amt}`);
               fetchWallet();
               setAmount("");
               // If user had entered BLACKFRIDAY promo and topped up ₹5000 or more, apply promo now
@@ -417,7 +417,7 @@ const Wallet = () => {
     <div className="wallet-container">
       {/* Header */}
       <div className="wallet-header">
-        <h1>My Wallet</h1>
+        <h1>Account Balance</h1>
         {userData && (
           <p className="welcome-message">Welcome back, {userData.name}!</p>
         )}

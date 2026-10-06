@@ -66,7 +66,7 @@ const DashboardLayout = () => {
               </button>
               <h1 className="cx-topbar-title">{title}</h1>
               <div className="cx-topbar-actions">
-                <Link to="/dashboard/billing" className="cx-balance" title="Wallet balance">
+                <Link to="/dashboard/billing" className="cx-balance" title="Account balance">
                   <WalletIcon size={16} />
                   <span>₹{balance.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </Link>

@@ -366,12 +366,12 @@ function Domain() {
                         checked={paymentMethod === 'wallet'}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                       />
-                      <span>Wallet Balance (₹{walletBalance.toFixed(2)})</span>
+                      <span>Account Balance (₹{walletBalance.toFixed(2)})</span>
                     </label>
                   </div>
                   {paymentMethod === 'wallet' && walletBalance < (selectedDomain.price * registrationPeriod) && (
                     <div className="insufficient-balance">
-                      <p>Insufficient wallet balance. Please add funds to your wallet.</p>
+                      <p>Insufficient account balance. Please add funds to your account balance.</p>
                     </div>
                   )}
                 </div>

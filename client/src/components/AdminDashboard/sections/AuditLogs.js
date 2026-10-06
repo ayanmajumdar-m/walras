@@ -7,7 +7,7 @@ const ACTION_FILTERS = [
   { id: "admin.", label: "Administrators" },
   { id: "role.", label: "Roles" },
   { id: "user.", label: "Customers" },
-  { id: "wallet.", label: "Wallets" },
+  { id: "wallet.", label: "Account balances" },
   { id: "hosting.", label: "Hosting" },
   { id: "promo.", label: "Promo codes" },
   { id: "invoice.", label: "Invoices" },

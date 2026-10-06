@@ -310,7 +310,7 @@ const PlatformController = {
 
         const balance = Number(updated.rows[0].balance) / 100;
         audit(req, `wallet.${type}`, 'user', id, { amount: rupees, reason, balanceAfter: balance });
-        res.json({ message: `Wallet ${type === 'credit' ? 'credited' : 'debited'}`, balance });
+        res.json({ message: `Account balance ${type === 'credit' ? 'credited' : 'debited'}`, balance });
     }),
 
     // ── Orders ───────────────────────────────────────────────────────────
@@ -331,7 +331,7 @@ const PlatformController = {
         }
         if (type !== 'hosting') {
             parts.push(`SELECT 'wallet' AS type, wt.reference_id AS order_id, w.user_id, u.name AS user_name, u.email,
-                               'Wallet top-up' AS item, wt.amount, wt.status, wt.razorpay_payment_id AS tracking_id,
+                               'Account balance top-up' AS item, wt.amount, wt.status, wt.razorpay_payment_id AS tracking_id,
                                NULL AS failure_message, wt.created_at
                         FROM wallet_transactions wt
                         JOIN wallets w ON w.id = wt.wallet_id LEFT JOIN users u ON u.id = w.user_id
@@ -374,7 +374,7 @@ const PlatformController = {
                 userId: o.user_id,
                 at: o.at,
             })),
-            ...failedTopups.map((t) => ({ kind: 'payment_failed', title: 'Wallet top-up failed', body: `${t.name || 'Customer'} · ₹${(Number(t.amount) / 100).toFixed(2)}`, userId: t.user_id, at: t.at })),
+            ...failedTopups.map((t) => ({ kind: 'payment_failed', title: 'Account balance top-up failed', body: `${t.name || 'Customer'} · ₹${(Number(t.amount) / 100).toFixed(2)}`, userId: t.user_id, at: t.at })),
         ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 30);
 
         const seenAt = me?.notifications_seen_at ? new Date(me.notifications_seen_at) : null;

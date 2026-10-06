@@ -412,7 +412,7 @@ const DeployDetails = () => {
             {/* Wallet Info */}
             <div className="wallet-section-do">
               <div className="wallet-balance-do dark-wallet-balance">
-                <span>Wallet Balance</span>
+                <span>Account Balance</span>
                 <span className="balance-amount-do">₹{walletBalance.toFixed(2)}</span>
               </div>
               {walletBalance < 500 && (
@@ -475,7 +475,7 @@ const DeployDetails = () => {
               <h3>Insufficient Balance</h3>
             </div>
             <div className="popup-content-do dark-popup-content">
-              <p>You need at least <strong>₹500</strong> in your wallet to deploy a Server.</p>
+              <p>You need at least <strong>₹500</strong> in your account balance to deploy a Server.</p>
               <p>Current balance: <strong>₹{walletBalance.toFixed(2)}</strong></p>
             </div>
             <div className="popup-actions-do">

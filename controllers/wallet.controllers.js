@@ -175,7 +175,7 @@ exports.verifyPayment = async (req, res) => {
                                                         });
                                                     }
                                                     res.json({
-                                                        message: "Wallet credited successfully",
+                                                        message: "Account balance credited successfully",
                                                         amount: (amountPaise / 100).toFixed(2)
                                                     });
                                                 });

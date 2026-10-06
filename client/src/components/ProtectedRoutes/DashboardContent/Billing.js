@@ -5,13 +5,13 @@ import Wallet from "./Wallet";
 import Logs from "./Logs";
 
 /*
-  Wallet (balance, add funds, promo codes) and Usage (billing activity) under
+  Account Balance (balance, add funds, promo codes) and Usage (billing activity) under
   one page. The tab lives in component state, not the URL, so the
   ?payment_status=… that payment gateways append to /dashboard/wallet is left
   for Wallet to read.
 */
 const TABS = [
-  { id: "wallet", label: "Wallet", Icon: WalletIcon },
+  { id: "wallet", label: "Account Balance", Icon: WalletIcon },
   { id: "usage", label: "Usage & activity", Icon: Activity },
 ];
 
@@ -23,7 +23,7 @@ const Billing = ({ initialTab }) => {
     <div className="cx-page">
       <div className="cx-page-head">
         <h2>Billing</h2>
-        <p>Your wallet balance, top-ups and usage.</p>
+        <p>Your account balance, top-ups and usage.</p>
       </div>
 
       <div className="cx-tabs" role="tablist">

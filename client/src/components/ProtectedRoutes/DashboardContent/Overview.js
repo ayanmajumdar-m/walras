@@ -31,7 +31,7 @@ const Overview = () => {
     { label: "Cloud servers", value: servers.length, note: `${activeServers} running`, Icon: Layers, to: "/dashboard/resources?tab=servers" },
     { label: "Web hosting", value: hosting.length, note: `${activeHosting} active`, Icon: Server, to: "/dashboard/resources?tab=hosting" },
     { label: "Domains", value: domains.length, note: "registered", Icon: Globe, to: "/dashboard/resources?tab=domains" },
-    { label: "Wallet balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: "Add funds", Icon: Wallet, to: "/dashboard/billing" },
+    { label: "Account balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: "Add funds", Icon: Wallet, to: "/dashboard/billing" },
   ];
 
   // Newest first, across every kind of resource.

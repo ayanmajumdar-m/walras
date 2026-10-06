@@ -73,7 +73,7 @@ const PlatformSettings = () => {
             hint="Customers see a maintenance screen in the console and can't buy anything. Admins are unaffected."
             checked={s.maintenanceMode} onChange={(v) => setS({ ...s, maintenanceMode: v })} />
           <Switch Icon={PackageX} tone="warn" label="All plans out of stock"
-            hint="Every plan shows Out of stock and can't be bought. Wallet top-ups still work, and existing services keep running."
+            hint="Every plan shows Out of stock and can't be bought. Account balance top-ups still work, and existing services keep running."
             checked={s.paymentsPaused} onChange={(v) => setS({ ...s, paymentsPaused: v })} />
           <div className="ap-card-foot">
             <button type="button" className="cx-btn cx-btn-primary" disabled={busy === "platform"}

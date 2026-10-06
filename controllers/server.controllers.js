@@ -123,7 +123,7 @@ exports.deployServer = async (req, res) => {
                             (walletErr) => {
                                 if (walletErr) {
                                     return connection.rollback(() => {
-                                        res.status(500).json({ error: "Failed to deduct wallet balance" });
+                                        res.status(500).json({ error: "Failed to deduct account balance" });
                                     });
                                 }
 

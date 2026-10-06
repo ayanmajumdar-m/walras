@@ -432,7 +432,7 @@ const HostingPurchase = () => {
 
               <div className="guarantee-box">
                 <Shield size={16} className="guarantee-icon" />
-                <span>Zero wallet balance required. Direct, secure checkout with 30-day money-back guarantee.</span>
+                <span>No account balance required. Direct, secure checkout with 30-day money-back guarantee.</span>
               </div>
             </div>
           </div>

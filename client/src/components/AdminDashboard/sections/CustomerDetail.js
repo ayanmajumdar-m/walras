@@ -100,7 +100,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
             </button>
           )}
           {can("manage_wallets") && (
-            <button type="button" className="cx-btn cx-btn-ghost" onClick={() => setModal("wallet")}><Wallet size={16} /> Adjust wallet</button>
+            <button type="button" className="cx-btn cx-btn-ghost" onClick={() => setModal("wallet")}><Wallet size={16} /> Adjust account balance</button>
           )}
           {can("manage_users") && (suspended ? (
             <button type="button" className="cx-btn cx-btn-ghost" disabled={busy}
@@ -133,7 +133,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
           <p>Role: {user.role || "—"}</p>
         </div>
         <div className="cx-card ap-kv">
-          <h3>Wallet</h3>
+          <h3>Account balance</h3>
           <p className="ap-big">{inr(wallet?.balance)}</p>
           <p className="ap-muted">Last sign-in {fmtDate(user.lastloginat, true)}{user.lastloginip ? ` from ${user.lastloginip}` : ""}</p>
         </div>
@@ -168,7 +168,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
             <Table head={["Order", "Item", "Amount", "Status", "Date"]} empty="No orders."
               rows={orders.map((o) => <tr key={o.id}><td><code>{o.order_id}</code></td><td>{o.plan_name} · {o.domain}</td><td>{inr(o.total_amount)}</td><td><span className={`cx-status is-${o.status}`}>{o.status}</span>{o.failure_message && <small>{o.failure_message}</small>}</td><td>{fmtDate(o.created_at, true)}</td></tr>)} />
           </div>
-          <div className="cx-card"><h3 className="ap-card-title">Wallet transactions</h3>
+          <div className="cx-card"><h3 className="ap-card-title">Account balance transactions</h3>
             <Table head={["Description", "Type", "Amount", "Status", "Date"]} empty="No transactions."
               rows={transactions.map((t) => <tr key={t.id}><td>{t.description}</td><td>{t.type}</td><td className={t.type === "credit" ? "ap-pos" : "ap-neg"}>{t.type === "credit" ? "+" : "−"}{inr(t.amount)}</td><td><span className={`cx-status is-${t.status === "completed" ? "active" : t.status}`}>{t.status}</span></td><td>{fmtDate(t.created_at, true)}</td></tr>)} />
           </div>
@@ -195,7 +195,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
       )}
 
       {modal === "wallet" && (
-        <Modal title="Adjust wallet" onClose={() => setModal(null)}>
+        <Modal title="Adjust account balance" onClose={() => setModal(null)}>
           <div className="ap-seg">
             {["credit", "debit"].map((t) => (
               <button key={t} type="button" className={form.type === t ? "is-active" : ""} onClick={() => setForm({ ...form, type: t })}>{t === "credit" ? "Credit (add)" : "Debit (remove)"}</button>
@@ -209,7 +209,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
           </label>
           <p className="ap-muted">Current balance {inr(wallet?.balance)}. Debits can't take the balance below zero.</p>
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block" disabled={busy || !form.amount || form.reason.trim().length < 3}
-            onClick={() => run(() => adminApi(`/users/${user.id}/wallet-adjust`, { method: "POST", body: { type: form.type, amount: Number(form.amount), reason: form.reason } }), `Wallet ${form.type === "credit" ? "credited" : "debited"}`)}>
+            onClick={() => run(() => adminApi(`/users/${user.id}/wallet-adjust`, { method: "POST", body: { type: form.type, amount: Number(form.amount), reason: form.reason } }), `Account balance ${form.type === "credit" ? "credited" : "debited"}`)}>
             {form.type === "credit" ? "Credit" : "Debit"} ₹{form.amount || "0"}
           </button>
         </Modal>
@@ -230,7 +230,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {modal === "delete" && (
         <Modal title="Delete customer permanently?" onClose={() => setModal(null)}>
-          <p className="ap-muted">This deletes {user.email} and everything attached: wallet, servers, hosting records, domains, orders and invoices. It can't be undone.</p>
+          <p className="ap-muted">This deletes {user.email} and everything attached: account balance, servers, hosting records, domains, orders and invoices. It can't be undone.</p>
           <label className="cx-field"><span>Type the customer's email to confirm</span>
             <input value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder={user.email} />
           </label>

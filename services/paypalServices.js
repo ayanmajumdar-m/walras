@@ -8,7 +8,7 @@ exports.createPayPalOrder = async (req, res) => {
         const order = await paypalService.createOrder({
             amount: amount,
             currency: currency,
-            description: 'Add funds to Walras Cloud wallet'
+            description: 'Add funds to Walras Cloud account balance'
         });
 
         res.json({

@@ -41,7 +41,7 @@ KYC verification may be required to comply with Indian regulations. Users must p
       title: "5. Payments & Billing",
       content: `All fees are payable in advance as stated for your selected service plan.
 Failure to pay may result in suspension or termination of services.
-Wallet balances can only be withdrawn to your bank if not credited via promotions or offers.
+Account balances can only be withdrawn to your bank if not credited via promotions or offers.
 Refunds are provided solely as described in our Refund Policy.`
     },
     {

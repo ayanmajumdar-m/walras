@@ -64,7 +64,7 @@ const Cart = () => {
         const remaining = cart.filter(c => c.domain !== item.domain);
         setCart(remaining);
         localStorage.setItem('cart', JSON.stringify(remaining));
-        alert(`Domain ${item.domain} purchased successfully via Wallet!`);
+        alert(`Domain ${item.domain} purchased successfully via Account Balance!`);
       }
 
       // === RAZORPAY PAYMENT FLOW ===
@@ -155,7 +155,7 @@ const Cart = () => {
             value="wallet"
             checked={paymentMethod === 'wallet'}
             onChange={e => setPaymentMethod(e.target.value)}
-          /> Wallet
+          /> Account Balance
         </label>
         <label>
           <input

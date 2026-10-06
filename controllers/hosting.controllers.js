@@ -161,7 +161,7 @@ exports.buyHosting = async (req, res) => {
                 (wErr, wRes) => {
                     if (wErr || wRes.affectedRows === 0) {
                         return connection.rollback(() => {
-                            res.status(400).json({ error: "Failed to deduct wallet balance" });
+                            res.status(400).json({ error: "Failed to deduct account balance" });
                         });
                     }
 

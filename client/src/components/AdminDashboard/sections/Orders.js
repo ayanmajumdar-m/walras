@@ -6,7 +6,7 @@ const STATUSES = ["all", "completed", "pending", "failed", "cancelled"];
 const TYPES = [
   { id: "all", label: "All orders" },
   { id: "hosting", label: "Web hosting" },
-  { id: "wallet", label: "Wallet top-ups" },
+  { id: "wallet", label: "Account balance top-ups" },
 ];
 
 const statusClass = (s) => (s === "completed" ? "active" : s);
@@ -37,7 +37,7 @@ const Orders = ({ openCustomer }) => {
       <div className="cx-page-head cx-page-head-row">
         <div>
           <h2>Orders</h2>
-          <p>Hosting purchases and wallet top-ups. {orders.length} shown · {inr(paid)} paid</p>
+          <p>Hosting purchases and account balance top-ups. {orders.length} shown · {inr(paid)} paid</p>
         </div>
         <button type="button" className="cx-btn cx-btn-ghost" onClick={load} disabled={loading}><RefreshCw size={15} className={loading ? "cx-spin" : ""} /> Refresh</button>
       </div>

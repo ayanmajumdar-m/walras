@@ -68,7 +68,7 @@ exports.initiateWalletTopup = async (req, res) => {
                 `INSERT INTO wallet_transactions 
                 (wallet_id, type, amount, description, reference_id, status)
                 VALUES (?, 'credit', ?, ?, ?, 'pending')`,
-                [wallet.id, amountPaise, `CCAvenue Wallet Top-up (Order ${orderId})`, orderId],
+                [wallet.id, amountPaise, `CCAvenue Account Balance Top-up (Order ${orderId})`, orderId],
                 (err) => {
                     if (err) {
                         console.error("[CCAvenue] Error creating pending tx:", err);

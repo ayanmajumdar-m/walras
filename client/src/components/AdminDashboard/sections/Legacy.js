@@ -55,7 +55,7 @@ export const DashboardSection = () => {
 export const TransactionsSection = () => {
   const { data, error } = useLoad(() => adminApi("/getAllTransactions"));
   return (
-    <Page title="Transactions" subtitle="Every wallet credit and debit.">
+    <Page title="Transactions" subtitle="Every account balance credit and debit.">
       <ErrorNote error={error} />
       <Transactions transactions={data || []} formatCurrency={formatCurrency} formatDate={formatDate} />
     </Page>
@@ -101,7 +101,7 @@ export const PromoCodesSection = ({ notify }) => {
   return (
     <Page
       title="Promo codes"
-      subtitle="Wallet credit codes for customers."
+      subtitle="Account balance credit codes for customers."
     >
       <ErrorNote error={error} />
       <PromoCodes

@@ -37,7 +37,7 @@ async function handleWalletPayment(userId, amountPaise, domainTransactionId, dom
                 (updateErr) => {
                     if (updateErr) {
                         return connection.rollback(() => {
-                            res.status(500).json({ error: 'Failed to deduct from wallet' });
+                            res.status(500).json({ error: 'Failed to deduct from account balance' });
                         });
                     }
 
@@ -64,7 +64,7 @@ async function handleWalletPayment(userId, amountPaise, domainTransactionId, dom
         });
     } catch (error) {
         connection.rollback(() => {
-            res.status(500).json({ error: 'Wallet payment processing failed' });
+            res.status(500).json({ error: 'Account balance payment failed' });
         });
     }
 }

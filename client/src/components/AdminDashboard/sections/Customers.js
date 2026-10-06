@@ -72,7 +72,7 @@ const Customers = ({ openCustomer }) => {
         <div className="cx-card cx-table-wrap">
           <table className="cx-table ap-click-rows">
             <thead>
-              <tr><th>Customer</th><th>Type</th><th>Status</th><th>Wallet</th><th>Servers</th><th>Joined</th><th /></tr>
+              <tr><th>Customer</th><th>Type</th><th>Status</th><th>Account balance</th><th>Servers</th><th>Joined</th><th /></tr>
             </thead>
             <tbody>
               {shown.map((u) => {
@@ -89,7 +89,7 @@ const Customers = ({ openCustomer }) => {
                         : verified ? <span className="cx-status is-active">verified</span>
                         : <span className="cx-status is-pending">unverified</span>}
                     </td>
-                    <td data-label="Wallet">{inr(u.balance)}</td>
+                    <td data-label="Account balance">{inr(u.balance)}</td>
                     <td data-label="Servers">{u.server_count ?? 0}</td>
                     <td data-label="Joined">{fmtDate(u.createdAt || u.createdat)}</td>
                     <td className="cx-actions"><ChevronRight size={16} aria-hidden="true" /></td>
