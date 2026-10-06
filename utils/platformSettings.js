@@ -44,6 +44,9 @@ const getPlatform = async () => {
     return {
         maintenanceMode: s['platform.maintenance_mode'] === 'true',
         paymentsPaused: s['platform.payments_paused'] === 'true',
+        // Account balance top-ups. Off until an admin turns them back on in
+        // Settings (unset counts as paused, unlike the other switches).
+        topUpsPaused: s['platform.topups_paused'] !== 'false',
         planAvailability: {
             hosting: { ...PLAN_DEFAULTS.hosting, ...(plans.hosting || {}) },
             compute: { ...PLAN_DEFAULTS.compute }, // locked, see LOCKED_FAMILIES
@@ -53,10 +56,11 @@ const getPlatform = async () => {
     };
 };
 
-const setPlatform = ({ maintenanceMode, paymentsPaused }) =>
+const setPlatform = ({ maintenanceMode, paymentsPaused, topUpsPaused }) =>
     appSettings.setMany({
         'platform.maintenance_mode': String(Boolean(maintenanceMode)),
         'platform.payments_paused': String(Boolean(paymentsPaused)),
+        'platform.topups_paused': String(Boolean(topUpsPaused)),
     });
 
 const setPlanAvailability = (availability) => {
@@ -79,8 +83,8 @@ const setInvoiceDetails = (details) => {
 
 /**
  * Express guard for buying a plan (hosting, servers, domains). Refused during
- * maintenance or while "All plans out of stock" is on. Wallet top-ups use
- * requireNotMaintenance instead: they aren't a plan.
+ * maintenance or while "All plans out of stock" is on. Account balance
+ * top-ups use requireTopUpsOpen instead: they aren't a plan.
  */
 const requireSalesOpen = async (req, res, next) => {
     try {
@@ -115,8 +119,29 @@ const requireNotMaintenance = async (req, res, next) => {
     next();
 };
 
+/**
+ * Express guard for starting an account balance top-up: refused during
+ * maintenance or while top-ups are paused in Settings. Payment callbacks for
+ * top-ups already started are not guarded, so those still complete.
+ */
+const requireTopUpsOpen = async (req, res, next) => {
+    try {
+        const { maintenanceMode, topUpsPaused } = await getPlatform();
+        if (maintenanceMode) {
+            return res.status(503).json({ error: 'Walras Cloud is under maintenance. Please try again shortly.', maintenance: true });
+        }
+        if (topUpsPaused) {
+            return res.status(409).json({ error: 'Adding funds to your account balance is unavailable right now.', topUpsPaused: true });
+        }
+    } catch (err) {
+        console.error('Platform settings check failed:', err.message);
+    }
+    next();
+};
+
 module.exports = {
     requireNotMaintenance,
+    requireTopUpsOpen,
     LOCKED_FAMILIES,
     PLAN_DEFAULTS,
     INVOICE_DEFAULTS,

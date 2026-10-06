@@ -31,7 +31,7 @@ const Overview = () => {
     { label: "Cloud servers", value: servers.length, note: `${activeServers} running`, Icon: Layers, to: "/dashboard/resources?tab=servers" },
     { label: "Web hosting", value: hosting.length, note: `${activeHosting} active`, Icon: Server, to: "/dashboard/resources?tab=hosting" },
     { label: "Domains", value: domains.length, note: "registered", Icon: Globe, to: "/dashboard/resources?tab=domains" },
-    { label: "Account balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: "Add funds", Icon: Wallet, to: "/dashboard/billing" },
+    { label: "Account balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: platform?.topUpsPaused ? "View billing" : "Add funds", Icon: Wallet, to: "/dashboard/billing" },
   ];
 
   // Newest first, across every kind of resource.
@@ -53,7 +53,9 @@ const Overview = () => {
         </div>
         <div className="cx-welcome-actions">
           <Link to="/dashboard/create" className="cx-btn cx-btn-primary cx-btn-lg"><Plus size={18} /> Create resource</Link>
-          <Link to="/dashboard/billing" className="cx-btn cx-btn-ghost-light cx-btn-lg"><Wallet size={18} /> Add funds</Link>
+          {!platform?.topUpsPaused && (
+            <Link to="/dashboard/billing" className="cx-btn cx-btn-ghost-light cx-btn-lg"><Wallet size={18} /> Add funds</Link>
+          )}
         </div>
       </section>
 

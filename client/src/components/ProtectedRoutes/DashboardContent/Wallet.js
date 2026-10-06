@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
+import { useConsole } from "../ConsoleContext";
 
 const Wallet = () => {
+  // Admins can pause top-ups in Settings; the server refuses them too.
+  const topUpsPaused = Boolean(useConsole().platform?.topUpsPaused);
   const [balance, setBalance] = useState(0);
   const [unbilled, setUnbilled] = useState(0);
   const [nextInvoiceDate, setNextInvoiceDate] = useState("");
@@ -463,6 +466,12 @@ const Wallet = () => {
       </div>
 
       {/* Add Funds Section */}
+      {topUpsPaused ? (
+      <div className="wallet-add-section">
+        <h2>Add Funds</h2>
+        <p>Adding funds to your account balance is unavailable right now. Your current balance stays available for your services.</p>
+      </div>
+      ) : (
       <div className="wallet-add-section">
         <h2>Add Funds</h2>
         <p>Select a payment method and enter the amount to add to your wallet.</p>
@@ -505,6 +514,7 @@ const Wallet = () => {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

@@ -197,9 +197,10 @@ const PlatformController = {
         const next = {
             maintenanceMode: req.body.maintenanceMode !== undefined ? Boolean(req.body.maintenanceMode) : before.maintenanceMode,
             paymentsPaused: req.body.paymentsPaused !== undefined ? Boolean(req.body.paymentsPaused) : before.paymentsPaused,
+            topUpsPaused: req.body.topUpsPaused !== undefined ? Boolean(req.body.topUpsPaused) : before.topUpsPaused,
         };
         await platform.setPlatform(next);
-        audit(req, 'settings.platform', 'settings', 'platform', { before: { maintenanceMode: before.maintenanceMode, paymentsPaused: before.paymentsPaused }, after: next });
+        audit(req, 'settings.platform', 'settings', 'platform', { before: { maintenanceMode: before.maintenanceMode, paymentsPaused: before.paymentsPaused, topUpsPaused: before.topUpsPaused }, after: next });
         res.json({ message: 'Platform settings saved', ...(await platform.getPlatform()) });
     }),
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Power, PackageX, Package, FileText, Lock, Save } from "lucide-react";
+import { Power, PackageX, Package, FileText, Lock, Save, WalletCards } from "lucide-react";
 import { adminApi } from "../adminApi";
 import EmailSender from "../components/Settings";
 
@@ -73,11 +73,14 @@ const PlatformSettings = () => {
             hint="Customers see a maintenance screen in the console and can't buy anything. Admins are unaffected."
             checked={s.maintenanceMode} onChange={(v) => setS({ ...s, maintenanceMode: v })} />
           <Switch Icon={PackageX} tone="warn" label="All plans out of stock"
-            hint="Every plan shows Out of stock and can't be bought. Account balance top-ups still work, and existing services keep running."
+            hint="Every plan shows Out of stock and can't be bought. Existing services keep running."
             checked={s.paymentsPaused} onChange={(v) => setS({ ...s, paymentsPaused: v })} />
+          <Switch Icon={WalletCards} tone="warn" label="Pause account balance top-ups"
+            hint="Customers can't add funds to their account balance. Their existing balance still works, and admins can still adjust balances."
+            checked={s.topUpsPaused} onChange={(v) => setS({ ...s, topUpsPaused: v })} />
           <div className="ap-card-foot">
             <button type="button" className="cx-btn cx-btn-primary" disabled={busy === "platform"}
-              onClick={() => save("platform", "/settings/platform", { maintenanceMode: s.maintenanceMode, paymentsPaused: s.paymentsPaused }, "Platform settings saved")}>
+              onClick={() => save("platform", "/settings/platform", { maintenanceMode: s.maintenanceMode, paymentsPaused: s.paymentsPaused, topUpsPaused: s.topUpsPaused }, "Platform settings saved")}>
               <Save size={15} /> Save
             </button>
           </div>

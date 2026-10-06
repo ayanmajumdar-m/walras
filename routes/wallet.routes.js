@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const bodyParser = require("body-parser");
 const authenticateToken = require("../utils/auth.middleware");
-const { requireNotMaintenance } = require("../utils/platformSettings");
+const { requireTopUpsOpen } = require("../utils/platformSettings");
 const {
   getWallet,
   createOrderController,
@@ -18,7 +18,7 @@ router.use(bodyParser.json());
 
 // Protected routes
 router.get("/", authenticateToken, getWallet);
-router.post("/create-order", authenticateToken, requireNotMaintenance, createOrderController);
+router.post("/create-order", authenticateToken, requireTopUpsOpen, createOrderController);
 router.post("/verify", authenticateToken, verifyPayment);
 router.get("/transactions", authenticateToken, getTransactions);
 router.post("/apply-promo", authenticateToken, applyPromoCode);
