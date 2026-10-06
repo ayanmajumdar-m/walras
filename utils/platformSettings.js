@@ -8,7 +8,11 @@ const appSettings = require('./appSettings');
 // Cloud Compute can't be switched on from the admin: deployServer only
 // simulates a server (random IP, no real VM) while charging the wallet, so
 // selling it would bill customers for machines that don't exist.
+// Web Hosting is withdrawn for now: no new hosting can be bought. Existing
+// hosting accounts keep running and stay manageable. Delete the entry to
+// sell it again (the per-plan switches in Settings then apply).
 const LOCKED_FAMILIES = {
+    hosting: 'Web Hosting is withdrawn for now, so no new hosting can be bought. Existing hosting accounts keep running.',
     compute: 'Cloud Compute deployments are simulated (no real VM is created), so it stays unavailable until real provisioning is connected.',
 };
 
@@ -48,7 +52,9 @@ const getPlatform = async () => {
         // Settings (unset counts as paused, unlike the other switches).
         topUpsPaused: s['platform.topups_paused'] !== 'false',
         planAvailability: {
-            hosting: { ...PLAN_DEFAULTS.hosting, ...(plans.hosting || {}) },
+            hosting: LOCKED_FAMILIES.hosting
+                ? Object.fromEntries(Object.keys(PLAN_DEFAULTS.hosting).map((name) => [name, false]))
+                : { ...PLAN_DEFAULTS.hosting, ...(plans.hosting || {}) },
             compute: { ...PLAN_DEFAULTS.compute }, // locked, see LOCKED_FAMILIES
         },
         lockedFamilies: LOCKED_FAMILIES,
@@ -65,7 +71,7 @@ const setPlatform = ({ maintenanceMode, paymentsPaused, topUpsPaused }) =>
 
 const setPlanAvailability = (availability) => {
     const clean = { hosting: {} };
-    for (const family of ['hosting']) {
+    for (const family of ['hosting'].filter((f) => !LOCKED_FAMILIES[f])) {
         for (const plan of Object.keys(PLAN_DEFAULTS[family])) {
             if (availability?.[family] && plan in availability[family]) clean[family][plan] = Boolean(availability[family][plan]);
         }

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Server, Layers, Globe, ExternalLink, KeyRound, Copy, Check, Play, Square, RotateCcw, Trash2, RefreshCw, Plus, X } from "lucide-react";
 import { api } from "../consoleApi";
+import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 import EditNSModal from "./EditNSModal";
 import TransferDomainModal from "./TransferDomainModal";
 
@@ -255,9 +256,10 @@ const DomainsTab = ({ domains, reload, notify }) => {
 // ── Page ──────────────────────────────────────────────────────────────────
 const Resources = () => {
   const [params, setParams] = useSearchParams();
-  const tab = TABS.some((t) => t.id === params.get("tab")) ? params.get("tab") : "hosting";
-
   const [hosting, setHosting] = useState([]);
+  // Web Hosting's tab only shows while it's sold, or for customers who have it.
+  const tabs = TABS.filter((t) => t.id !== "hosting" || WEB_HOSTING_ENABLED || hosting.length > 0);
+  const tab = tabs.some((t) => t.id === params.get("tab")) ? params.get("tab") : tabs[0].id;
   const [servers, setServers] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -291,7 +293,7 @@ const Resources = () => {
       </div>
 
       <div className="cx-tabs" role="tablist">
-        {TABS.map(({ id, label, Icon }) => (
+        {tabs.map(({ id, label, Icon }) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id}
             className={`cx-tab${tab === id ? " is-active" : ""}`} onClick={() => setParams({ tab: id }, { replace: true })}>
             <Icon size={16} aria-hidden="true" /> {label} <span className="cx-count">{counts[id]}</span>

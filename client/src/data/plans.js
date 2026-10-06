@@ -20,6 +20,11 @@ export const HOSTING_PRICES = {
   Tree: { monthly: 259, gst: 46.62, total: 305.62 }
 };
 
+// Web Hosting is withdrawn for now: hidden from the site and the console, and
+// the server refuses new hosting (utils/platformSettings.js LOCKED_FAMILIES).
+// Customers who already have hosting still see and manage it.
+export const WEB_HOSTING_ENABLED = false;
+
 // Same wording as the public purchase page (components/WebHosting/HostingPurchase.js).
 export const HOSTING_PLANS = [
   {

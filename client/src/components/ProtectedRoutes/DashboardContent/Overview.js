@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Layers, Server, Globe, Cpu, ArrowRight, Wallet, Plus, Boxes } from "lucide-react";
 import { api } from "../consoleApi";
+import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
 
@@ -29,7 +30,9 @@ const Overview = () => {
 
   const STATS = [
     { label: "Cloud Compute", value: servers.length, note: `${activeServers} running`, Icon: Layers, to: "/dashboard/resources?tab=servers" },
-    { label: "Web hosting", value: hosting.length, note: `${activeHosting} active`, Icon: Server, to: "/dashboard/resources?tab=hosting" },
+    ...(WEB_HOSTING_ENABLED || hosting.length > 0
+      ? [{ label: "Web hosting", value: hosting.length, note: `${activeHosting} active`, Icon: Server, to: "/dashboard/resources?tab=hosting" }]
+      : []),
     { label: "Domains", value: domains.length, note: "registered", Icon: Globe, to: "/dashboard/resources?tab=domains" },
     { label: "Account balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: platform?.topUpsPaused ? "View billing" : "Add funds", Icon: Wallet, to: "/dashboard/billing" },
   ];
@@ -49,7 +52,7 @@ const Overview = () => {
         <div>
           <span className="cx-eyebrow cx-eyebrow-light">Welcome back</span>
           <h2>{firstName ? `Hi ${firstName}, what are we building today?` : "What are we building today?"}</h2>
-          <p>Create Cloud Compute and web hosting, and manage everything from one place.</p>
+          <p>Create cloud resources and manage everything from one place.</p>
         </div>
         <div className="cx-welcome-actions">
           <Link to="/dashboard/create" className="cx-btn cx-btn-primary cx-btn-lg"><Plus size={18} /> Create resource</Link>
@@ -59,7 +62,7 @@ const Overview = () => {
         </div>
       </section>
 
-      <section className="cx-stats">
+      <section className="cx-stats" style={{ "--cx-stat-cols": STATS.length }}>
         {STATS.map(({ label, value, note, Icon, to }) => (
           <Link to={to} className="cx-stat" key={label}>
             <span className="cx-stat-icon"><Icon size={20} aria-hidden="true" /></span>

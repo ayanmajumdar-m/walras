@@ -1,5 +1,6 @@
 import React from "react";
 import "./Homepage.css";
+import { WEB_HOSTING_ENABLED } from "../data/plans";
 import { Zap, Clock, Gauge, Globe, Server, Cpu, Check } from "lucide-react";
 
 /*
@@ -40,7 +41,7 @@ const COMMITMENTS = [
   }
 ];
 
-const SERVICES = [
+const ALL_SERVICES = [
   {
     ref: "S-01",
     Icon: Globe,
@@ -66,6 +67,8 @@ const SERVICES = [
     action: { label: "Out of Stock", href: "/pricing#cloud-compute" }
   }
 ];
+
+const SERVICES = ALL_SERVICES.filter((s) => s.title !== "Web Hosting" || WEB_HOSTING_ENABLED);
 
 /* Every figure here is a commitment made elsewhere on the site — uptime from
    the commitments band, response and trial from support, regions and entry
@@ -178,7 +181,7 @@ const Homepage = () => (
           <span className="rule" />
           <span className="note">Complete infrastructure solutions for businesses of all sizes</span>
         </div>
-        <div className="services-grid">
+        <div className="services-grid" style={{ "--services-cols": SERVICES.length }}>
           {SERVICES.map(({ ref, Icon, title, description, features, action }) => (
             <div className="service-card blueprint" key={ref}>
               <Corners />

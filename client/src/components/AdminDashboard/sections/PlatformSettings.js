@@ -89,11 +89,16 @@ const PlatformSettings = () => {
         <section className="cx-card ap-card">
           <h3>Plan availability</h3>
           <p className="ap-muted">Turn a plan off to mark it Out of stock. Customers who already have it aren't affected.</p>
+          {s.lockedFamilies?.hosting ? (<>
+            <h4 className="ap-subhead">Web Hosting <Lock size={13} /></h4>
+            <p className="ap-locked">{s.lockedFamilies.hosting}</p>
+          </>) : (<>
           <h4 className="ap-subhead">Web Hosting</h4>
           {Object.entries(s.planAvailability.hosting).map(([plan, on]) => (
             <Switch key={plan} Icon={Package} label={plan} hint={s.paymentsPaused ? "Out of stock (all plans switch is on)" : on ? "In stock" : "Out of stock"} checked={on}
               onChange={(v) => setS({ ...s, planAvailability: { ...s.planAvailability, hosting: { ...s.planAvailability.hosting, [plan]: v } } })} />
           ))}
+          </>)}
           <h4 className="ap-subhead">Cloud Compute <Lock size={13} /></h4>
           <p className="ap-locked">{s.lockedFamilies?.compute}</p>
           <div className="ap-card-foot">

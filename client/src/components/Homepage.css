@@ -94,7 +94,7 @@
 .commitment-desc { font-size: 14px; line-height: 1.5; color: var(--text-secondary); margin: 0; }
 
 /* — services — */
-.services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.services-grid { display: grid; grid-template-columns: repeat(var(--services-cols, 3), 1fr); gap: 24px; }
 
 .service-card { display: flex; flex-direction: column; height: 100%; }
 .service-head {

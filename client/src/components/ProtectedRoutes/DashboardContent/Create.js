@@ -251,7 +251,7 @@ const ComingSoon = ({ type }) => {
 const Create = () => {
   const { platform } = useConsole();
   const [params, setParams] = useSearchParams();
-  const type = PRODUCTS.some((p) => p.id === params.get("type")) ? params.get("type") : "hosting";
+  const type = PRODUCTS.some((p) => p.id === params.get("type")) ? params.get("type") : PRODUCTS[0].id;
 
   return (
     <div className="cx-page">

@@ -105,7 +105,7 @@ exports.buyHosting = async (req, res) => {
 
         // Web Hosting pricing: Seed (₹159 base + 18% GST = ₹187.62), Tree (₹259 base + 18% GST = ₹305.62)
         if (!(await assertPlanOnSale(normalizedPlan))) {
-            return res.status(400).json({ error: `The ${normalizedPlan} plan is not available right now` });
+            return res.status(409).json({ error: 'Web Hosting is not available right now.', outOfStock: true });
         }
         const priceInfo = HOSTING_PRICES[normalizedPlan];
         const totalAmountRupees = priceInfo.total;
@@ -281,7 +281,7 @@ exports.initiateHostingPayment = async (req, res) => {
         }
 
         if (!(await assertPlanOnSale(normalizedPlan))) {
-            return res.status(400).json({ error: `The ${normalizedPlan} plan is not available right now` });
+            return res.status(409).json({ error: 'Web Hosting is not available right now.', outOfStock: true });
         }
         const priceInfo = HOSTING_PRICES[normalizedPlan];
         const basePaise = Math.round(priceInfo.base * 100);
