@@ -8,7 +8,7 @@ import Create from "./DashboardContent/Create";
 import Resources from "./DashboardContent/Resources";
 import Billing from "./DashboardContent/Billing";
 import Profile from "./DashboardContent/Profile";
-import SubmitTicket from "./DashboardContent/SubmitTicket";
+import Support from "./DashboardContent/Support";
 import { api, rupees } from "./consoleApi";
 import { ConsoleContext } from "./ConsoleContext";
 // The retired Home and HostingConsole pages' stylesheets carry generic global
@@ -25,6 +25,7 @@ const TITLES = {
   billing: "Billing",
   wallet: "Billing",
   logs: "Billing",
+  support: "Support",
   submitTicket: "Support",
   profile: "Account",
 };
@@ -92,12 +93,13 @@ const DashboardLayout = () => {
                 <Route path="/resources" element={<Resources />} />
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/submitTicket" element={<SubmitTicket />} />
+                <Route path="/support" element={<Support />} />
 
                 {/* Old per-service pages fold into Create / Resources / Billing. */}
                 <Route path="/deploy" element={<Navigate to="/dashboard/create?type=compute" replace />} />
                 <Route path="/hosting" element={<Navigate to="/dashboard/resources?tab=hosting" replace />} />
                 <Route path="/domains" element={<Navigate to="/dashboard/resources?tab=domains" replace />} />
+                <Route path="/submitTicket" element={<Navigate to="/dashboard/support" replace />} />
                 <Route path="/notifications" element={<Navigate to="/dashboard/home" replace />} />
                 {/* Payment gateways return to /dashboard/wallet?payment_status=… — keep the query. */}
                 <Route path="/wallet" element={<Billing initialTab="wallet" />} />

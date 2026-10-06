@@ -44,9 +44,23 @@ const ErrorNote = ({ error }) => (error ? <div className="cx-alert is-error">{er
 export const DashboardSection = () => {
   const stats = useLoad(() => adminApi("/dashboardStats").then((d) => (Array.isArray(d) ? d[0] : d)));
   const activity = useLoad(() => adminApi("/getRecentActivity"));
+  const support = useLoad(() => adminApi("/support/summary"));
+  const s = support.data;
   return (
     <Page title="Dashboard" subtitle="Platform at a glance.">
       <ErrorNote error={stats.error} />
+      {s && (
+        <div className="cx-alert is-info">
+          <span>
+            {!s.configured
+              ? "Support tickets: Zendesk isn't connected yet (set the ZENDESK_* environment variables)."
+              : s.openTickets === null
+                ? "Support tickets: couldn't reach Zendesk just now."
+                : `${s.openTickets} unsolved support ticket${s.openTickets === 1 ? "" : "s"} in Zendesk.`}
+          </span>
+          {s.agentUrl && <a href={s.agentUrl} target="_blank" rel="noreferrer" className="cx-link">Open Zendesk</a>}
+        </div>
+      )}
       <Dashboard dashboardStats={stats.data || {}} recentActivity={activity.data || []} formatCurrency={formatCurrency} formatDate={formatDate} />
     </Page>
   );

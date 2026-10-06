@@ -12,7 +12,7 @@ const NAV = [
 ];
 
 const NAV_SECONDARY = [
-  { to: "/dashboard/submitTicket", label: "Support", Icon: LifeBuoy },
+  { to: "/dashboard/support", label: "Support", Icon: LifeBuoy },
   { to: "/dashboard/profile", label: "Account", Icon: UserCircle },
 ];
 

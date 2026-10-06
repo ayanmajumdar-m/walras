@@ -27,6 +27,10 @@ app.use(
   })
 );
 
+// Support tickets carry attachments, so they get their own larger body limit;
+// mounted before the global parser (100kb) so that one never sees them.
+app.use("/api/support", require("./routes/support.routes"));
+
 // ✅ Step 2: Body parser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -39,7 +43,6 @@ const serverRouter = require("./routes/server.routes");
 const authRouter = require("./routes/auth.routes");
 const hostingRouter = require("./routes/hosting.routes");
 const paymentRouter = require("./routes/payment.routes");
-const bolddesktest = require("./bolddesktest");
 
 // ✅ Step 4: Use routes
 // What the website and console need to know about the platform's state:

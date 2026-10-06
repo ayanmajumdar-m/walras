@@ -10,6 +10,7 @@ const audit = require('../utils/audit');
 const rbac = require('../utils/adminRbac');
 const platform = require('../utils/platformSettings');
 const { forgetUserStatus } = require('../utils/auth.middleware');
+const zendesk = require('../services/zendesk');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -385,6 +386,17 @@ const PlatformController = {
     markNotificationsSeen: handle(async (req, res) => {
         await q('UPDATE admins SET notifications_seen_at = NOW() WHERE id = ?', [req.admin.adminId]);
         res.json({ message: 'ok' });
+    }),
+
+    // ── Support (Zendesk) ────────────────────────────────────────────────
+    // Unsolved ticket count for the dashboard; null when Zendesk isn't set up
+    // or doesn't answer quickly, so the dashboard never waits on it.
+    supportSummary: handle(async (req, res) => {
+        const openTickets = await zendesk.countOpenZendeskTickets().catch((err) => {
+            console.warn('Zendesk ticket count failed:', err.message);
+            return null;
+        });
+        res.json({ configured: zendesk.zendeskConfigured(), openTickets, agentUrl: zendesk.zendeskAgentUrl() });
     }),
 };
 

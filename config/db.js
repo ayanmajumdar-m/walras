@@ -54,6 +54,8 @@ const migrateLegacyUsers = [
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)",
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS account_type VARCHAR(10) NOT NULL DEFAULT 'personal' CHECK (account_type IN ('personal', 'business'))",
     'ALTER TABLE users ADD COLUMN IF NOT EXISTS gstin VARCHAR(15)',
+    // The customer's Zendesk end-user (support tickets), linked on first use.
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS zendesk_user_id BIGINT',
 ];
 
 // Small key/value store for settings admins can change without a redeploy

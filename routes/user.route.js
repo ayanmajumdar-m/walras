@@ -11,8 +11,6 @@ const { requireSalesOpen } = require('../utils/platformSettings');
 //
 // Sign-up, sign-in, email verification and password reset are in
 // routes/auth.routes.js, mounted at /api/auth.
-userRouter.post('/create-ticket', UserController.createTicket);
-userRouter.get('/tickets/', UserController.getTickets);
 
 // Protected routes
 userRouter.get('/profile/:id', authenticateToken, UserController.viewProfile);

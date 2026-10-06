@@ -46,6 +46,7 @@ router.post('/notifications/seen', Platform.markNotificationsSeen);
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
 router.get('/dashboardStats', can('view_dashboard'), AdminController.getDashboardStats);
+router.get('/support/summary', can('view_dashboard'), Platform.supportSummary);
 router.get('/getTotalUsers', can('view_dashboard'), AdminController.getTotalUsers);
 router.get('/getTotalServers', can('view_dashboard'), AdminController.getTotalServers);
 router.get('/getTotalRevenue', can('view_dashboard'), AdminController.getTotalRevenue);

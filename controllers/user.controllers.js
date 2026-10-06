@@ -1,7 +1,6 @@
 const User = require('../model/User.model');
 const dotenv = require('dotenv');
 const axios = require('axios');
-const { getTickets, createTicket } = require('../bolddesktest');
 const { sendDomainPurchaseEmail } = require('../utils/sendEmail');
 dotenv.config();
 const { validatePhone } = require('../utils/validation');
@@ -399,63 +398,6 @@ const UserController = {
         }
     },
 
-    createTicket: async (req, res) => {
-        try {
-            const { subject, description, priorityId, brandId, name, email } = req.body;
-
-            if (!subject || !description || !priorityId || !brandId || !email) {
-                return res.status(400).json({
-                    error: "Required fields: subject, description, priorityId, brandId, email",
-                });
-            }
-
-            const ticket = await createTicket(
-                subject,
-                description,
-                priorityId,
-                brandId,
-                { email, name: name || "Guest User" }
-            );
-
-            res.status(201).json({
-                message: "Ticket created successfully",
-                ticket,
-            });
-        } catch (error) {
-            console.error("Error creating ticket:", error);
-
-            if (error.response && error.response.data) {
-                return res.status(error.response.status || 500).json({
-                    error: error.response.data,
-                });
-            }
-
-            res.status(500).json({ error: "Internal server error" });
-        }
-    },
-    getTickets: async (req, res) => {
-        try {
-            const tickets = await getTickets();
-            const flattenedTickets = tickets.map(ticket => ({
-                ticketId: ticket.ticketId,
-                title: ticket.title,
-                status: ticket.status?.description || null,
-                priority: ticket.priority?.description || null,
-                requesterName: ticket.requestedBy?.name || null,
-                requesterEmail: ticket.requestedBy?.emailId || null,
-                createdOn: ticket.createdOn,
-                lastUpdatedOn: ticket.lastUpdatedOn
-            }));
-
-            res.status(200).json({ tickets: flattenedTickets });
-        } catch (error) {
-            console.error('Error fetching tickets:', error);
-            if (error.response && error.response.data) {
-                return res.status(error.response.status || 500).json({ error: error.response.data });
-            }
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
     getOpenProviderAuthToken: async (req, res) => {
         try {
             const { getAuthToken } = require('../services/openProviderServices');
