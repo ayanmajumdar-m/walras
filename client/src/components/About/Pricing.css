@@ -1523,3 +1523,12 @@
 /* In stock: links to the console to deploy */
 .pr-stock.is-in { background: var(--color-accent-100, #e6f6f2); color: var(--color-accent-700, #037566); border-color: transparent; text-decoration: none; }
 .pr-stock.is-in:hover { text-decoration: underline; }
+
+/* Plan family heading above a pricing table (e.g. "Shared CPU") */
+.pr-subtitle {
+  margin: 6px 0 12px;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+}

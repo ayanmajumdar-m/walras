@@ -1380,3 +1380,6 @@
   .cx-input-row { flex-wrap: wrap; }
   .cx-input-row input { flex-basis: 100%; }
 }
+
+/* Plan family heading inside the plan step (e.g. "Shared CPU") */
+.cx-plan-family { margin: 0 0 10px; font-family: var(--font-heading); font-size: 17px; font-weight: 700; }

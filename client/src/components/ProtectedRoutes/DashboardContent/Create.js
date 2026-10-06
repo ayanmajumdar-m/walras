@@ -271,6 +271,7 @@ const ComputeConfigurator = () => {
 
         <section className="cx-card cx-step">
           <h3><span className="cx-step-num">{hasLocations ? 2 : 1}</span> Choose a plan</h3>
+          <h4 className="cx-plan-family">Shared CPU</h4>
           <div className="cx-table-wrap">
             <table className="cx-table cx-table-select">
               <thead>

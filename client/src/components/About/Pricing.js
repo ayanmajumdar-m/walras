@@ -183,6 +183,7 @@ const Pricing = () => {
               ))}
             </ul>
 
+            <h3 className="pr-subtitle">Shared CPU</h3>
             <div className="pr-card pr-table-card">
               <table className="pr-table">
                 <thead>
