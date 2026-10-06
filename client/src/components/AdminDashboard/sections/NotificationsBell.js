@@ -38,16 +38,16 @@ const NotificationsBell = ({ openCustomer }) => {
   };
 
   return (
-    <div className="ad-bell" ref={ref}>
-      <button type="button" className="cx-icon-btn ad-bell-btn" onClick={toggle} aria-label={`Notifications${data.unread ? `, ${data.unread} new` : ""}`}>
+    <div className="ap-bell" ref={ref}>
+      <button type="button" className="cx-icon-btn ap-bell-btn" onClick={toggle} aria-label={`Notifications${data.unread ? `, ${data.unread} new` : ""}`}>
         <Bell size={17} />
-        {data.unread > 0 && <span className="ad-bell-dot">{data.unread > 9 ? "9+" : data.unread}</span>}
+        {data.unread > 0 && <span className="ap-bell-dot">{data.unread > 9 ? "9+" : data.unread}</span>}
       </button>
       {open && (
-        <div className="ad-bell-panel" role="dialog" aria-label="Notifications">
-          <div className="ad-bell-head">Notifications <small>last 14 days</small></div>
+        <div className="ap-bell-panel" role="dialog" aria-label="Notifications">
+          <div className="ap-bell-head">Notifications <small>last 14 days</small></div>
           {data.items.length === 0 ? (
-            <p className="ad-muted ad-pad">Nothing new.</p>
+            <p className="ap-muted ap-pad">Nothing new.</p>
           ) : (
             <ul>
               {data.items.map((n, i) => {
@@ -55,11 +55,11 @@ const NotificationsBell = ({ openCustomer }) => {
                 return (
                   <li key={i}>
                     <button type="button" onClick={() => { setOpen(false); if (n.userId) openCustomer(n.userId); }}>
-                      <span className={`ad-bell-icon is-${n.kind}`}><Icon size={15} /></span>
-                      <span className="ad-bell-text">
+                      <span className={`ap-bell-icon is-${n.kind}`}><Icon size={15} /></span>
+                      <span className="ap-bell-text">
                         <strong>{n.title}</strong>
                         <small>{n.body}</small>
-                        <small className="ad-muted">{fmtDate(n.at, true)}</small>
+                        <small className="ap-muted">{fmtDate(n.at, true)}</small>
                       </span>
                     </button>
                   </li>

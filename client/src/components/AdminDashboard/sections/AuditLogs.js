@@ -46,10 +46,10 @@ const AuditLogs = ({ openCustomer }) => {
         <p>Every change made from this admin panel: who, what, to which record, and from where.</p>
       </div>
 
-      <div className="ad-toolbar">
-        <div className="ad-chips">
+      <div className="ap-toolbar">
+        <div className="ap-chips">
           {ACTION_FILTERS.map((f) => (
-            <button key={f.id || "all"} type="button" className={`ad-chip${action === f.id ? " is-active" : ""}`}
+            <button key={f.id || "all"} type="button" className={`ap-chip${action === f.id ? " is-active" : ""}`}
               onClick={() => { setAction(f.id); setPage(1); }}>{f.label}</button>
           ))}
         </div>
@@ -71,10 +71,10 @@ const AuditLogs = ({ openCustomer }) => {
                   <td data-label="Action"><code>{l.action}</code></td>
                   <td data-label="Target">
                     {l.target_type === "user" && l.target_id
-                      ? <button type="button" className="ad-linkish" onClick={() => openCustomer(l.target_id)}>Customer #{l.target_id}</button>
+                      ? <button type="button" className="ap-linkish" onClick={() => openCustomer(l.target_id)}>Customer #{l.target_id}</button>
                       : l.target_type ? `${l.target_type}${l.target_id ? ` #${l.target_id}` : ""}` : "—"}
                   </td>
-                  <td data-label="Details" className="ad-details">{describe(l.metadata)}</td>
+                  <td data-label="Details" className="ap-details">{describe(l.metadata)}</td>
                   <td data-label="IP"><code>{l.ip || "—"}</code></td>
                 </tr>
               ))}
@@ -84,7 +84,7 @@ const AuditLogs = ({ openCustomer }) => {
       )}
 
       {pages > 1 && (
-        <div className="ad-pager">
+        <div className="ap-pager">
           <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft size={14} /> Newer</button>
           <span>Page {page} of {pages}</span>
           <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" disabled={page >= pages} onClick={() => setPage(page + 1)}>Older <ChevronRight size={14} /></button>

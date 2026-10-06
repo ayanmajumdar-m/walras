@@ -45,14 +45,14 @@ const Customers = ({ openCustomer }) => {
         </div>
       </div>
 
-      <div className="ad-toolbar">
-        <label className="ad-search">
+      <div className="ap-toolbar">
+        <label className="ap-search">
           <Search size={16} aria-hidden="true" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, phone, company or ID" />
         </label>
-        <div className="ad-chips">
+        <div className="ap-chips">
           {FILTERS.map((f) => (
-            <button key={f.id} type="button" className={`ad-chip${filter === f.id ? " is-active" : ""}`} onClick={() => setFilter(f.id)}>
+            <button key={f.id} type="button" className={`ap-chip${filter === f.id ? " is-active" : ""}`} onClick={() => setFilter(f.id)}>
               {f.label}
             </button>
           ))}
@@ -70,7 +70,7 @@ const Customers = ({ openCustomer }) => {
         </div>
       ) : (
         <div className="cx-card cx-table-wrap">
-          <table className="cx-table ad-click-rows">
+          <table className="cx-table ap-click-rows">
             <thead>
               <tr><th>Customer</th><th>Type</th><th>Status</th><th>Wallet</th><th>Servers</th><th>Joined</th><th /></tr>
             </thead>

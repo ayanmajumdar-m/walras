@@ -82,13 +82,13 @@ const Administrators = ({ me }) => {
                 <tr key={a.id}>
                   <td data-label="Administrator"><strong>{a.full_name || a.username}</strong><small>@{a.username}{self ? " · you" : ""}</small></td>
                   <td data-label="Role">
-                    <select className="ad-select" value={a.role || ""} disabled={self || lockedSuper || busy}
+                    <select className="ap-select" value={a.role || ""} disabled={self || lockedSuper || busy}
                       onChange={(e) => act(() => adminApi(`/admins/${a.id}`, { method: "PATCH", body: { role: e.target.value } }), `${a.username} is now ${roleLabel(e.target.value)}`)}>
                       {(lockedSuper ? roles : assignable).map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
                     </select>
                   </td>
                   <td data-label="Status">
-                    <label className="ad-switch">
+                    <label className="ap-switch">
                       <input type="checkbox" checked={a.is_active} disabled={self || lockedSuper || busy}
                         onChange={(e) => act(() => adminApi(`/admins/${a.id}`, { method: "PATCH", body: { isActive: e.target.checked } }), `${a.username} ${e.target.checked ? "activated" : "deactivated"}`)} />
                       <span>{a.is_active ? "Active" : "Disabled"}</span>
@@ -111,24 +111,24 @@ const Administrators = ({ me }) => {
 
       <section className="cx-section">
         <div className="cx-section-head"><h3>Role permissions</h3></div>
-        <p className="ad-muted">Changes apply to everyone with that role within 30 seconds. Super admins always have every permission.</p>
+        <p className="ap-muted">Changes apply to everyone with that role within 30 seconds. Super admins always have every permission.</p>
         <div className="cx-card cx-table-wrap">
-          <table className="cx-table ad-matrix">
+          <table className="cx-table ap-matrix">
             <thead>
               <tr><th>Permission</th>{roles.map((r) => <th key={r.id} title={r.description}>{r.label}</th>)}</tr>
             </thead>
             <tbody>
               {groups.map((g) => (
                 <React.Fragment key={g}>
-                  <tr className="ad-matrix-group"><td colSpan={roles.length + 1}>{g}</td></tr>
+                  <tr className="ap-matrix-group"><td colSpan={roles.length + 1}>{g}</td></tr>
                   {permissions.filter((p) => p.group === g).map((p) => (
                     <tr key={p.id}>
                       <td>{p.label}</td>
                       {roles.map((r) => {
                         const on = (matrix[r.id] || []).includes(p.id);
                         return (
-                          <td key={r.id} className="ad-matrix-cell">
-                            {r.id === "super_admin" ? <ShieldCheck size={16} className="ad-pos" aria-label="Always" />
+                          <td key={r.id} className="ap-matrix-cell">
+                            {r.id === "super_admin" ? <ShieldCheck size={16} className="ap-pos" aria-label="Always" />
                               : <input type="checkbox" checked={on} aria-label={`${r.label}: ${p.label}`} onChange={(e) => togglePerm(r.id, p.id, e.target.checked)} />}
                           </td>
                         );
@@ -148,7 +148,7 @@ const Administrators = ({ me }) => {
           <label className="cx-field"><span>Username</span><input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase() })} placeholder="priya" autoComplete="off" /></label>
           <label className="cx-field"><span>Temporary password</span><input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 10 characters, a letter and a number" autoComplete="new-password" /></label>
           <label className="cx-field"><span>Role</span>
-            <select className="ad-select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+            <select className="ap-select" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
               {assignable.map((r) => <option key={r.id} value={r.id}>{r.label}: {r.description}</option>)}
             </select>
           </label>

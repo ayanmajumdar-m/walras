@@ -42,12 +42,12 @@ const Orders = ({ openCustomer }) => {
         <button type="button" className="cx-btn cx-btn-ghost" onClick={load} disabled={loading}><RefreshCw size={15} className={loading ? "cx-spin" : ""} /> Refresh</button>
       </div>
 
-      <div className="ad-toolbar">
-        <div className="ad-chips">
-          {TYPES.map((t) => <button key={t.id} type="button" className={`ad-chip${type === t.id ? " is-active" : ""}`} onClick={() => setType(t.id)}>{t.label}</button>)}
+      <div className="ap-toolbar">
+        <div className="ap-chips">
+          {TYPES.map((t) => <button key={t.id} type="button" className={`ap-chip${type === t.id ? " is-active" : ""}`} onClick={() => setType(t.id)}>{t.label}</button>)}
         </div>
-        <div className="ad-chips">
-          {STATUSES.map((s) => <button key={s} type="button" className={`ad-chip${status === s ? " is-active" : ""}`} onClick={() => setStatus(s)}>{s === "all" ? "Any status" : s}</button>)}
+        <div className="ap-chips">
+          {STATUSES.map((s) => <button key={s} type="button" className={`ap-chip${status === s ? " is-active" : ""}`} onClick={() => setStatus(s)}>{s === "all" ? "Any status" : s}</button>)}
         </div>
       </div>
 
@@ -57,7 +57,7 @@ const Orders = ({ openCustomer }) => {
         <div className="cx-card cx-empty"><span className="cx-empty-icon"><Receipt size={24} /></span><h4>No orders</h4><p>Nothing matches these filters.</p></div>
       ) : (
         <div className="cx-card cx-table-wrap">
-          <table className="cx-table ad-click-rows">
+          <table className="cx-table ap-click-rows">
             <thead><tr><th>Order</th><th>Customer</th><th>Item</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
             <tbody>
               {orders.map((o) => (

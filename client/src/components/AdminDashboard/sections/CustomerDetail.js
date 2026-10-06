@@ -22,7 +22,7 @@ const Modal = ({ title, onClose, children }) => (
 
 const Table = ({ head, rows, empty }) =>
   rows.length === 0 ? (
-    <p className="ad-muted ad-pad">{empty}</p>
+    <p className="ap-muted ap-pad">{empty}</p>
   ) : (
     <div className="cx-table-wrap">
       <table className="cx-table">
@@ -66,7 +66,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
     }
   };
 
-  if (error) return <div className="cx-page"><button type="button" className="cx-btn cx-btn-ghost ad-back" onClick={onBack}><ArrowLeft size={16} /> Customers</button><div className="cx-alert is-error">{error}</div></div>;
+  if (error) return <div className="cx-page"><button type="button" className="cx-btn cx-btn-ghost ap-back" onClick={onBack}><ArrowLeft size={16} /> Customers</button><div className="cx-alert is-error">{error}</div></div>;
   if (!data) return <div className="cx-page"><div className="cx-card cx-empty"><p>Loading customer…</p></div></div>;
 
   const { user, wallet, hosting, servers, domains, orders, transactions, invoices, sessions } = data;
@@ -76,23 +76,23 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
   return (
     <div className="cx-page">
-      <button type="button" className="cx-btn cx-btn-ghost ad-back" onClick={onBack}><ArrowLeft size={16} /> Customers</button>
+      <button type="button" className="cx-btn cx-btn-ghost ap-back" onClick={onBack}><ArrowLeft size={16} /> Customers</button>
 
-      <section className="cx-card ad-profile">
-        <div className="ad-profile-main">
-          <span className="ad-avatar">{(user.name || "?").split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("")}</span>
+      <section className="cx-card ap-profile">
+        <div className="ap-profile-main">
+          <span className="ap-avatar">{(user.name || "?").split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("")}</span>
           <div>
             <h2>{user.name}</h2>
-            <div className="ad-badges">
+            <div className="ap-badges">
               <span className="cx-pill">{user.account_type === "business" ? "Business" : "Personal"}</span>
               {suspended ? <span className="cx-status is-suspended">suspended</span>
                 : verified ? <span className="cx-status is-active">verified</span>
                 : <span className="cx-status is-pending">email unverified</span>}
-              <span className="ad-muted">#{user.id} · joined {fmtDate(user.createdat)}</span>
+              <span className="ap-muted">#{user.id} · joined {fmtDate(user.createdat)}</span>
             </div>
           </div>
         </div>
-        <div className="ad-profile-actions">
+        <div className="ap-profile-actions">
           {can("manage_users") && !verified && (
             <button type="button" className="cx-btn cx-btn-ghost" disabled={busy}
               onClick={() => run(() => adminApi("/verifyUser", { method: "PUT", body: { userId: user.id } }), "Customer marked verified")}>
@@ -108,7 +108,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
               <ShieldCheck size={16} /> Reinstate
             </button>
           ) : (
-            <button type="button" className="cx-btn cx-btn-ghost ad-danger" onClick={() => setModal("suspend")}><ShieldOff size={16} /> Suspend</button>
+            <button type="button" className="cx-btn cx-btn-ghost ap-danger" onClick={() => setModal("suspend")}><ShieldOff size={16} /> Suspend</button>
           ))}
           {can("manage_users") && (
             <button type="button" className="cx-icon-btn is-danger" onClick={() => setModal("delete")} title="Delete customer"><Trash2 size={16} /></button>
@@ -119,23 +119,23 @@ const CustomerDetail = ({ userId, can, onBack }) => {
       {suspended && <div className="cx-alert is-error">Suspended {fmtDate(user.suspended_at, true)}{user.suspension_reason ? `: ${user.suspension_reason}` : ""}. They can't sign in or use the console.</div>}
       {notice && <div className={`cx-alert is-${notice.type}`} role="status">{notice.text}<button type="button" className="cx-icon-btn" onClick={() => setNotice(null)} aria-label="Dismiss"><X size={15} /></button></div>}
 
-      <div className="ad-grid-3">
-        <div className="cx-card ad-kv">
+      <div className="ap-grid-3">
+        <div className="cx-card ap-kv">
           <h3>Contact</h3>
           <p><Mail size={15} /> {user.email}</p>
           <p><Phone size={15} /> {user.phone || "—"}</p>
           {address && <p><MapPin size={15} /> {address}</p>}
         </div>
-        <div className="cx-card ad-kv">
+        <div className="cx-card ap-kv">
           <h3>Business</h3>
           <p><Building2 size={15} /> {user.company || "—"}</p>
           <p>GSTIN: {user.gstin || "—"}</p>
           <p>Role: {user.role || "—"}</p>
         </div>
-        <div className="cx-card ad-kv">
+        <div className="cx-card ap-kv">
           <h3>Wallet</h3>
-          <p className="ad-big">{inr(wallet?.balance)}</p>
-          <p className="ad-muted">Last sign-in {fmtDate(user.lastloginat, true)}{user.lastloginip ? ` from ${user.lastloginip}` : ""}</p>
+          <p className="ap-big">{inr(wallet?.balance)}</p>
+          <p className="ap-muted">Last sign-in {fmtDate(user.lastloginat, true)}{user.lastloginip ? ` from ${user.lastloginip}` : ""}</p>
         </div>
       </div>
 
@@ -146,16 +146,16 @@ const CustomerDetail = ({ userId, can, onBack }) => {
       </div>
 
       {tab === "services" && (
-        <div className="ad-stack">
-          <div className="cx-card"><h3 className="ad-card-title">Web hosting ({hosting.length})</h3>
+        <div className="ap-stack">
+          <div className="cx-card"><h3 className="ap-card-title">Web hosting ({hosting.length})</h3>
             <Table head={["Domain", "Plan", "cPanel user", "Status", "Expires"]} empty="No hosting accounts."
               rows={hosting.map((h) => <tr key={h.id}><td><strong>{h.domain}</strong></td><td>{h.plan_name}</td><td><code>{h.cpanel_username}</code></td><td><span className={`cx-status is-${h.status}`}>{h.status}</span></td><td>{fmtDate(h.expires_at)}</td></tr>)} />
           </div>
-          <div className="cx-card"><h3 className="ad-card-title">Cloud servers ({servers.length})</h3>
+          <div className="cx-card"><h3 className="ap-card-title">Cloud servers ({servers.length})</h3>
             <Table head={["Name", "IP", "Plan", "Location", "Status"]} empty="No servers."
               rows={servers.map((s) => <tr key={s.id}><td><strong>{s.name}</strong></td><td><code>{s.ip_address || "—"}</code></td><td>{s.plan_name}</td><td>{s.location}</td><td><span className={`cx-status is-${s.status}`}>{s.status}</span></td></tr>)} />
           </div>
-          <div className="cx-card"><h3 className="ad-card-title">Domains ({domains.length})</h3>
+          <div className="cx-card"><h3 className="ap-card-title">Domains ({domains.length})</h3>
             <Table head={["Domain", "Status", "Registered", "Expires"]} empty="No domains."
               rows={domains.map((d) => <tr key={d.id}><td><strong>{d.full_domain}</strong></td><td><span className={`cx-status is-${d.status}`}>{d.status}</span></td><td>{fmtDate(d.registration_date)}</td><td>{fmtDate(d.expiration_date)}</td></tr>)} />
           </div>
@@ -163,16 +163,16 @@ const CustomerDetail = ({ userId, can, onBack }) => {
       )}
 
       {tab === "billing" && (
-        <div className="ad-stack">
-          <div className="cx-card"><h3 className="ad-card-title">Orders</h3>
+        <div className="ap-stack">
+          <div className="cx-card"><h3 className="ap-card-title">Orders</h3>
             <Table head={["Order", "Item", "Amount", "Status", "Date"]} empty="No orders."
               rows={orders.map((o) => <tr key={o.id}><td><code>{o.order_id}</code></td><td>{o.plan_name} · {o.domain}</td><td>{inr(o.total_amount)}</td><td><span className={`cx-status is-${o.status}`}>{o.status}</span>{o.failure_message && <small>{o.failure_message}</small>}</td><td>{fmtDate(o.created_at, true)}</td></tr>)} />
           </div>
-          <div className="cx-card"><h3 className="ad-card-title">Wallet transactions</h3>
+          <div className="cx-card"><h3 className="ap-card-title">Wallet transactions</h3>
             <Table head={["Description", "Type", "Amount", "Status", "Date"]} empty="No transactions."
-              rows={transactions.map((t) => <tr key={t.id}><td>{t.description}</td><td>{t.type}</td><td className={t.type === "credit" ? "ad-pos" : "ad-neg"}>{t.type === "credit" ? "+" : "−"}{inr(t.amount)}</td><td><span className={`cx-status is-${t.status === "completed" ? "active" : t.status}`}>{t.status}</span></td><td>{fmtDate(t.created_at, true)}</td></tr>)} />
+              rows={transactions.map((t) => <tr key={t.id}><td>{t.description}</td><td>{t.type}</td><td className={t.type === "credit" ? "ap-pos" : "ap-neg"}>{t.type === "credit" ? "+" : "−"}{inr(t.amount)}</td><td><span className={`cx-status is-${t.status === "completed" ? "active" : t.status}`}>{t.status}</span></td><td>{fmtDate(t.created_at, true)}</td></tr>)} />
           </div>
-          <div className="cx-card"><h3 className="ad-card-title">Invoices</h3>
+          <div className="cx-card"><h3 className="ap-card-title">Invoices</h3>
             <Table head={["Invoice", "Month", "Amount", "Status"]} empty="No invoices."
               rows={invoices.map((i) => <tr key={i.id}><td><code>{i.invoice_number}</code></td><td>{fmtDate(i.billing_month)}</td><td>{inr(i.total_amount)}</td><td>{i.status}</td></tr>)} />
           </div>
@@ -180,15 +180,15 @@ const CustomerDetail = ({ userId, can, onBack }) => {
       )}
 
       {tab === "activity" && (
-        <div className="ad-stack">
-          <div className="cx-card"><h3 className="ad-card-title">Recent sign-ins</h3>
+        <div className="ap-stack">
+          <div className="cx-card"><h3 className="ap-card-title">Recent sign-ins</h3>
             <Table head={["When", "IP", "Device"]} empty="No sign-ins recorded."
-              rows={sessions.map((s, i) => <tr key={i}><td>{fmtDate(s.login_time, true)}</td><td><code>{s.ip_address}</code></td><td className="ad-ellipsis">{s.user_agent}</td></tr>)} />
+              rows={sessions.map((s, i) => <tr key={i}><td>{fmtDate(s.login_time, true)}</td><td><code>{s.ip_address}</code></td><td className="ap-ellipsis">{s.user_agent}</td></tr>)} />
           </div>
           {can("view_audit_logs") && (
-            <div className="cx-card"><h3 className="ad-card-title">Admin actions on this customer</h3>
+            <div className="cx-card"><h3 className="ap-card-title">Admin actions on this customer</h3>
               <Table head={["When", "Admin", "Action", "Details"]} empty="No admin actions yet."
-                rows={audit.map((a) => <tr key={a.id}><td>{fmtDate(a.created_at, true)}</td><td>{a.admin_username}</td><td><code>{a.action}</code></td><td className="ad-ellipsis">{a.metadata && Object.keys(a.metadata).length ? JSON.stringify(a.metadata) : ""}</td></tr>)} />
+                rows={audit.map((a) => <tr key={a.id}><td>{fmtDate(a.created_at, true)}</td><td>{a.admin_username}</td><td><code>{a.action}</code></td><td className="ap-ellipsis">{a.metadata && Object.keys(a.metadata).length ? JSON.stringify(a.metadata) : ""}</td></tr>)} />
             </div>
           )}
         </div>
@@ -196,7 +196,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {modal === "wallet" && (
         <Modal title="Adjust wallet" onClose={() => setModal(null)}>
-          <div className="ad-seg">
+          <div className="ap-seg">
             {["credit", "debit"].map((t) => (
               <button key={t} type="button" className={form.type === t ? "is-active" : ""} onClick={() => setForm({ ...form, type: t })}>{t === "credit" ? "Credit (add)" : "Debit (remove)"}</button>
             ))}
@@ -207,7 +207,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
           <label className="cx-field"><span>Reason (shown on the customer's transaction)</span>
             <input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Goodwill credit for downtime on 3 Oct" maxLength={200} />
           </label>
-          <p className="ad-muted">Current balance {inr(wallet?.balance)}. Debits can't take the balance below zero.</p>
+          <p className="ap-muted">Current balance {inr(wallet?.balance)}. Debits can't take the balance below zero.</p>
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block" disabled={busy || !form.amount || form.reason.trim().length < 3}
             onClick={() => run(() => adminApi(`/users/${user.id}/wallet-adjust`, { method: "POST", body: { type: form.type, amount: Number(form.amount), reason: form.reason } }), `Wallet ${form.type === "credit" ? "credited" : "debited"}`)}>
             {form.type === "credit" ? "Credit" : "Debit"} ₹{form.amount || "0"}
@@ -217,11 +217,11 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {modal === "suspend" && (
         <Modal title={`Suspend ${user.name}?`} onClose={() => setModal(null)}>
-          <p className="ad-muted">They'll be signed out and blocked from the console and API until reinstated. Their services keep running.</p>
+          <p className="ap-muted">They'll be signed out and blocked from the console and API until reinstated. Their services keep running.</p>
           <label className="cx-field"><span>Reason</span>
             <input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Payment dispute / abuse report #123" maxLength={255} />
           </label>
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-block ad-danger-fill" disabled={busy || form.reason.trim().length < 3}
+          <button type="button" className="cx-btn cx-btn-primary cx-btn-block ap-danger-fill" disabled={busy || form.reason.trim().length < 3}
             onClick={() => run(() => adminApi(`/users/${user.id}/suspend`, { method: "POST", body: { reason: form.reason } }), "Customer suspended")}>
             Suspend customer
           </button>
@@ -230,11 +230,11 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {modal === "delete" && (
         <Modal title="Delete customer permanently?" onClose={() => setModal(null)}>
-          <p className="ad-muted">This deletes {user.email} and everything attached: wallet, servers, hosting records, domains, orders and invoices. It can't be undone.</p>
+          <p className="ap-muted">This deletes {user.email} and everything attached: wallet, servers, hosting records, domains, orders and invoices. It can't be undone.</p>
           <label className="cx-field"><span>Type the customer's email to confirm</span>
             <input value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder={user.email} />
           </label>
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-block ad-danger-fill" disabled={busy || form.confirm.trim().toLowerCase() !== (user.email || "").toLowerCase()}
+          <button type="button" className="cx-btn cx-btn-primary cx-btn-block ap-danger-fill" disabled={busy || form.confirm.trim().toLowerCase() !== (user.email || "").toLowerCase()}
             onClick={async () => {
               setBusy(true);
               try {

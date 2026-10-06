@@ -11,7 +11,7 @@ import Hosting from "../components/Hosting";
 
 /*
   The pre-existing admin views, each wrapped with its own data loading so
-  they slot into the new panel unchanged. Styling comes from .ad-legacy in
+  they slot into the new panel unchanged. Styling comes from .ap-legacy in
   AdminConsole.css.
 */
 
@@ -24,7 +24,7 @@ const Page = ({ title, subtitle, action, children }) => (
       <div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
       {action}
     </div>
-    <div className="ad-legacy">{children}</div>
+    <div className="ap-legacy">{children}</div>
   </div>
 );
 

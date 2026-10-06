@@ -117,7 +117,7 @@ const AdminDashboard = () => {
 
   return (
     <AdminProtectedRoute>
-      <div className="cx-shell ad-shell">
+      <div className="cx-shell ap-shell">
         {menuOpen && <div className="cx-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
         <aside className={`cx-sidebar${menuOpen ? " is-open" : ""}`}>
           <div className="cx-brand">
@@ -130,9 +130,9 @@ const AdminDashboard = () => {
             {visibleGroups.map((g, gi) => (
               <React.Fragment key={g.label}>
                 {gi > 0 && <span className="cx-nav-sep" aria-hidden="true" />}
-                <span className="ad-nav-label">{g.label}</span>
+                <span className="ap-nav-label">{g.label}</span>
                 {g.items.map(({ id, label, Icon }) => (
-                  <button key={id} type="button" className={`cx-nav-item ad-nav-btn${activeNav === id ? " is-active" : ""}`} onClick={() => go(id)}>
+                  <button key={id} type="button" className={`cx-nav-item ap-nav-btn${activeNav === id ? " is-active" : ""}`} onClick={() => go(id)}>
                     <Icon size={18} aria-hidden="true" /><span>{label}</span>
                   </button>
                 ))}
@@ -158,14 +158,14 @@ const AdminDashboard = () => {
             </h1>
             <div className="cx-topbar-actions">
               {me && <NotificationsBell openCustomer={openCustomer} />}
-              {me && <span className="cx-pill is-brand ad-role-pill">{ROLE_LABELS[me.role]}</span>}
+              {me && <span className="cx-pill is-brand ap-role-pill">{ROLE_LABELS[me.role]}</span>}
             </div>
           </header>
 
           <main className="cx-content">
             {error && <div className="cx-alert is-error">{error}</div>}
             {notice && (
-              <div className={`cx-alert is-${notice.type} ad-page-notice`} role="status">
+              <div className={`cx-alert is-${notice.type} ap-page-notice`} role="status">
                 {notice.text}
                 <button type="button" className="cx-icon-btn" onClick={() => setNotice(null)} aria-label="Dismiss"><X size={15} /></button>
               </div>
