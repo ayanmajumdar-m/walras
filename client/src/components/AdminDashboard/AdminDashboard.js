@@ -40,7 +40,7 @@ const GROUPS = [
       { id: "invoices", label: "Invoices", Icon: FileText, perm: "view_billing" },
       { id: "promo-codes", label: "Promo codes", Icon: Ticket, perm: ["manage_coupons", "view_billing"] },
       { id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" },
-      { id: "servers", label: "Cloud servers", Icon: Layers, perm: "view_services" },
+      { id: "servers", label: "Cloud Compute", Icon: Layers, perm: "view_services" },
       { id: "domains", label: "Domains", Icon: Globe, perm: "view_services" },
     ],
   },

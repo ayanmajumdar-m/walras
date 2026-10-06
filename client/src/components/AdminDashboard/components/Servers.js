@@ -6,7 +6,7 @@ const Servers = ({ servers, formatCurrency, formatDate }) => {
   return (
     <div className="servers-management">
       <div className="section-header">
-        <h3>Server Management</h3>
+        <h3>Cloud Compute</h3>
         <div className="servers-stats">
           <span>Total: {safeServers.length}</span>
         </div>

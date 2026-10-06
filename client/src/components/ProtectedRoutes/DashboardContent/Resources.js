@@ -7,7 +7,7 @@ import TransferDomainModal from "./TransferDomainModal";
 
 const TABS = [
   { id: "hosting", label: "Web Hosting", Icon: Server },
-  { id: "servers", label: "Cloud Servers", Icon: Layers },
+  { id: "servers", label: "Cloud Compute", Icon: Layers },
   { id: "domains", label: "Domains", Icon: Globe },
 ];
 
@@ -140,7 +140,7 @@ const ServersTab = ({ servers, reload, notify }) => {
   };
 
   if (servers.length === 0) {
-    return <Empty Icon={Layers} title="No cloud servers yet" text="Virtual machines for apps and workloads. New capacity is on its way."
+    return <Empty Icon={Layers} title="No Cloud Compute yet" text="Virtual machines for apps and workloads. New capacity is on its way."
       cta={<Link to="/dashboard/create?type=compute" className="cx-btn cx-btn-ghost">See Cloud Compute plans</Link>} />;
   }
 
