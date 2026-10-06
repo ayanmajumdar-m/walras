@@ -62,9 +62,9 @@ const ALL_SERVICES = [
     ref: "S-03",
     Icon: Cpu,
     title: "Cloud Compute",
-    description: "High-performance cloud compute with SSD storage. (Currently Out of Stock)",
+    description: "High-performance virtual machines with SSD storage, billed by the hour.",
     features: ["Instant Deployment", "SSD Storage", "Auto Scaling", "99.9% Uptime"],
-    action: { label: "Out of Stock", href: "/pricing#cloud-compute" }
+    action: { label: "View plans", href: "/pricing#cloud-compute" }
   }
 ];
 

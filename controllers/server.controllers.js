@@ -1,340 +1,243 @@
-const connection = require("../config/db");
-const crypto = require('crypto');
-const { getPlatform } = require('../utils/platformSettings');
+/**
+ * Cloud Compute: servers created on SolusVM (services/solusvm.js) and sold
+ * against the stock admins set per plan and location (utils/computeStock.js).
+ *
+ * Deploying is a chain of single, atomic steps rather than one transaction,
+ * because the middle step is a call to SolusVM: take a unit of stock, charge
+ * the first hour, create the server row, then create the VM. If a later step
+ * fails, the earlier ones are undone (stock returned, charge refunded).
+ */
+const connection = require('../config/db');
+const solusvm = require('../services/solusvm');
+const stock = require('../utils/computeStock');
+const taxService = require('../services/taxServices');
 
-// Helper: ensure wallet exists for a user
-async function ensureWallet(userId) {
-    return new Promise((resolve, reject) => {
-        connection.query("SELECT * FROM wallets WHERE user_id = ?", [userId], (err, rows) => {
-            if (err) return reject(err);
-            if (rows.length) return resolve(rows[0]);
+const q = (sql, params = []) => new Promise((resolve, reject) => {
+    connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+});
 
-            // create new wallet
-            connection.query(
-                "INSERT INTO wallets (user_id, balance) VALUES (?, 0)",
-                [userId],
-                (err2, res) => {
-                    if (err2) return reject(err2);
-                    connection.query("SELECT * FROM wallets WHERE id = ?", [res.insertId], (err3, newRows) => {
-                        if (err3) return reject(err3);
-                        resolve(newRows[0]);
-                    });
-                }
-            );
+class HttpError extends Error {
+    constructor(status, message, extra = {}) {
+        super(message);
+        this.status = status;
+        this.extra = extra;
+    }
+}
+
+const handle = (label, fn) => async (req, res) => {
+    try {
+        await fn(req, res);
+    } catch (err) {
+        if (err instanceof HttpError) return res.status(err.status).json({ error: err.message, ...err.extra });
+        if (err instanceof solusvm.SolusError) {
+            console.error(`${label} (SolusVM) failed:`, err.message);
+            return res.status(502).json({ error: 'Cloud Compute is temporarily unavailable. Please try again shortly.' });
+        }
+        console.error(`${label} failed:`, err);
+        res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    }
+};
+
+const ensureWallet = async (userId) => {
+    const [wallet] = await q('SELECT * FROM wallets WHERE user_id = ?', [userId]);
+    if (wallet) return wallet;
+    await q('INSERT INTO wallets (user_id, balance) VALUES (?, 0)', [userId]);
+    return (await q('SELECT * FROM wallets WHERE user_id = ?', [userId]))[0];
+};
+
+// RFC 1123 hostname: labels of letters, digits and hyphens (100 characters max, the column size).
+const HOSTNAME = /^(?=.{1,100}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+
+const validPassword = (p) =>
+    typeof p === 'string' && p.length >= 10 && p.length <= 72 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && !/\s/.test(p);
+
+// ── Catalogue ──────────────────────────────────────────────────────────────
+
+// GET /api/servers/catalog — plans with prices, where each is in stock, and the OS choices.
+exports.getCatalog = handle('Compute catalogue', async (req, res) => {
+    const availability = await stock.getAvailability();
+    const plans = stock.COMPUTE_PLANS.map((p) => ({
+        ...p,
+        hourly: stock.hourlyRupees(p),
+        locations: Object.keys(availability[p.name]).map(Number),
+    }));
+    let locations = [];
+    let os = [];
+    if (solusvm.solusConfigured()) {
+        try {
+            [locations, os] = await Promise.all([solusvm.listLocations(), solusvm.listOsVersions()]);
+        } catch (err) {
+            console.error('Compute catalogue (SolusVM) failed:', err.message);
+            return res.json({ enabled: false, plans: plans.map((p) => ({ ...p, locations: [] })), locations: [], os: [] });
+        }
+    }
+    res.json({ enabled: plans.some((p) => p.locations.length > 0), plans, locations, os });
+});
+
+// ── Deploy ─────────────────────────────────────────────────────────────────
+
+// POST /api/servers/deploy { plan, location, os, hostname, password }
+exports.deployServer = handle('Deploy server', async (req, res) => {
+    const userId = req.user.userId;
+    const planName = typeof req.body.plan === 'string' ? req.body.plan : req.body.plan?.name;
+    const locationId = Number(req.body.location);
+    const osId = Number(req.body.os);
+    const hostname = String(req.body.hostname || '').trim().toLowerCase();
+    const password = req.body.password;
+
+    const plan = stock.findPlan(planName);
+    if (!plan) throw new HttpError(400, 'Choose a plan.');
+    if (!Number.isInteger(locationId)) throw new HttpError(400, 'Choose a location.');
+    if (!Number.isInteger(osId)) throw new HttpError(400, 'Choose an operating system.');
+    if (!HOSTNAME.test(hostname)) throw new HttpError(400, 'Enter a valid hostname, e.g. web1 or app.example.com.');
+    if (!validPassword(password)) {
+        throw new HttpError(400, 'Use a root password of 10 to 72 characters with upper and lower case letters and a number, and no spaces.');
+    }
+
+    const outOfStock = () => new HttpError(409, `${plan.name} is out of stock in that location.`, { outOfStock: true });
+    if (!solusvm.solusConfigured()) throw outOfStock();
+    const solusPlanId = (await stock.getPlanMap())[plan.name];
+    if (!solusPlanId) throw outOfStock();
+
+    const [locations, osVersions] = await Promise.all([solusvm.listLocations(), solusvm.listOsVersions()]);
+    const location = locations.find((l) => l.id === locationId);
+    if (!location) throw new HttpError(400, 'Choose a location.');
+    if (!osVersions.some((o) => o.id === osId)) throw new HttpError(400, 'Choose an operating system.');
+
+    // First hour, charged now; the hourly billing job charges the rest.
+    const hourly = stock.hourlyRupees(plan);
+    const [user] = await q('SELECT id, address FROM users WHERE id = ?', [userId]);
+    const firstHour = taxService.calculateTax(user || {}, Math.round(hourly * 100)).totalAmount;
+    const wallet = await ensureWallet(userId);
+
+    // 1. Take a unit of stock.
+    if (!(await stock.reserve(plan.name, locationId))) throw outOfStock();
+
+    // 2. Charge the first hour, only if the balance covers it.
+    const debit = await q('UPDATE wallets SET balance = balance - ? WHERE id = ? AND balance >= ?', [firstHour, wallet.id, firstHour]);
+    if (!debit.affectedRows) {
+        await stock.release(plan.name, locationId);
+        throw new HttpError(400, 'Your account balance is too low for this server.', {
+            insufficient: true, required: firstHour / 100, available: Number(wallet.balance) / 100,
         });
+    }
+
+    const undo = async (serverId) => {
+        await q('UPDATE wallets SET balance = balance + ? WHERE id = ?', [firstHour, wallet.id]).catch((e) => console.error('Deploy refund failed:', e.message));
+        await stock.release(plan.name, locationId).catch((e) => console.error('Deploy stock return failed:', e.message));
+        if (serverId) await q('DELETE FROM servers WHERE id = ?', [serverId]).catch(() => {});
+    };
+
+    // 3. Our record of the server.
+    let serverId;
+    try {
+        const ins = await q(
+            `INSERT INTO servers (user_id, name, hostname, location, location_id, os, plan_name, monthly_cost, hourly_cost, currency, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'deploying')`,
+            [userId, hostname, hostname, location.name, locationId, ((osVersions.find((o) => o.id === osId) || {}).name || String(osId)).slice(0, 50), plan.name, plan.monthly, hourly],
+        );
+        serverId = ins.insertId;
+    } catch (err) {
+        await undo(null);
+        throw err;
+    }
+
+    // 4. The VM itself.
+    let vm;
+    try {
+        vm = await solusvm.createServer({ name: hostname, planId: solusPlanId, locationId, osVersionId: osId, password });
+    } catch (err) {
+        await undo(serverId);
+        if (err instanceof solusvm.SolusError && err.status === 422) {
+            throw new HttpError(400, `SolusVM refused the server: ${err.message}`);
+        }
+        console.error('SolusVM create failed:', err.message);
+        throw new HttpError(502, "We couldn't create your server right now. You haven't been charged; please try again shortly.");
+    }
+
+    await q('UPDATE servers SET solus_server_id = ?, status = ?, ip_address = ? WHERE id = ?',
+        [vm.id, solusvm.walrasStatus(vm), solusvm.primaryIp(vm), serverId]);
+    await q(
+        `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, razorpay_payment_id, razorpay_order_id, status)
+         VALUES (?, 'debit', ?, ?, ?, NULL, NULL, 'completed')`,
+        [wallet.id, firstHour, `Cloud Compute first hour - ${hostname} (${plan.name})`, `server_${serverId}`],
+    ).catch((e) => console.error('Deploy transaction record failed:', e.message));
+    await q(
+        `INSERT INTO billing_logs (user_id, server_id, amount, billing_period, description) VALUES (?, ?, ?, NOW(), ?)`,
+        [userId, serverId, firstHour, `Hourly charge for ${hostname} - ${plan.name}`],
+    ).catch((e) => console.error('Deploy billing log failed:', e.message));
+
+    res.status(201).json({ message: 'Server is being created', serverId, charge: firstHour / 100 });
+});
+
+// ── List / manage / delete ─────────────────────────────────────────────────
+
+// Refresh servers still being built from SolusVM (status and IP address).
+const syncDeploying = async (servers) => {
+    const pending = servers.filter((s) => s.solus_server_id && s.status === 'deploying');
+    await Promise.all(pending.map(async (s) => {
+        try {
+            const vm = await solusvm.getServer(s.solus_server_id);
+            const status = solusvm.walrasStatus(vm);
+            const ip = solusvm.primaryIp(vm) || s.ip_address;
+            if (status !== s.status || ip !== s.ip_address) {
+                await q('UPDATE servers SET status = ?, ip_address = ? WHERE id = ?', [status, ip, s.id]);
+                Object.assign(s, { status, ip_address: ip });
+            }
+        } catch (err) {
+            console.warn(`Server ${s.id} sync failed:`, err.message);
+        }
+    }));
+};
+
+// GET /api/servers
+exports.getUserServers = handle('List servers', async (req, res) => {
+    const rows = await q('SELECT * FROM servers WHERE user_id = ? ORDER BY created_at DESC', [req.user.userId]);
+    if (solusvm.solusConfigured()) await syncDeploying(rows);
+    res.json({
+        servers: rows.map(({ root_password, ...s }) => ({
+            ...s,
+            monthly_cost: parseFloat(s.monthly_cost),
+            hourly_cost: parseFloat(s.hourly_cost),
+        })),
     });
-}
+});
 
-// Calculate hourly cost with GST
-function calculateHourlyCost(monthlyCost) {
-    const hourlyBase = monthlyCost / (24 * 30); // Convert monthly to hourly
-    const gst = hourlyBase * 0.18; // 18% GST
-    return hourlyBase + gst;
-}
-
-// Generate random IP address for demo purposes
-function generateRandomIP() {
-    return `172.16.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
-}
-
-// 🟢 POST deploy server
-exports.deployServer = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const { plan, hostname, rootPassword, location, os, notes, currency } = req.body;
-
-        // Validate required fields
-        if (!plan || !hostname || !rootPassword || !location || !os) {
-            return res.status(400).json({ error: "Missing required fields" });
-        }
-
-        // The plan (and its price) comes from the browser, so only plans the
-        // platform says are on sale may be deployed. Cloud Compute is locked
-        // off while deployment is simulated; see utils/platformSettings.js.
-        const { planAvailability } = await getPlatform();
-        if (!planAvailability.compute[plan.name]) {
-            return res.status(400).json({ error: "This plan is not available right now" });
-        }
-
-        // Calculate costs
-        const monthlyCost = currency === "INR" ? plan.inr : plan.usd;
-        const hourlyCost = calculateHourlyCost(monthlyCost);
-        const hourlyCostPaise = Math.round(hourlyCost * 100);
-
-        // Check wallet balance
-        const wallet = await ensureWallet(userId);
-        if (wallet.balance < hourlyCostPaise) {
-            return res.status(400).json({ 
-                error: "Insufficient wallet balance", 
-                required: hourlyCostPaise / 100,
-                available: wallet.balance / 100
-            });
-        }
-
-        // Start transaction
-        connection.beginTransaction(async (txErr) => {
-            if (txErr) {
-                console.error("Transaction error:", txErr);
-                return res.status(500).json({ error: "Transaction error" });
-            }
-
-            try {
-                // Create server record
-                const serverData = {
-                    user_id: userId,
-                    name: hostname,
-                    hostname: hostname,
-                    root_password: rootPassword, // In production, this should be hashed
-                    location: location,
-                    os: os,
-                    plan_id: plan.id,
-                    plan_name: plan.name,
-                    monthly_cost: monthlyCost,
-                    hourly_cost: hourlyCost,
-                    currency: currency,
-                    ip_address: generateRandomIP(),
-                    status: 'deploying',
-                    notes: notes || ''
-                };
-
-                connection.query(
-                    `INSERT INTO servers (user_id, name, hostname, root_password, location, os, plan_id, plan_name, monthly_cost, hourly_cost, currency, ip_address, status, notes) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        serverData.user_id, serverData.name, serverData.hostname, 
-                        serverData.root_password, serverData.location, serverData.os,
-                        serverData.plan_id, serverData.plan_name, serverData.monthly_cost,
-                        serverData.hourly_cost, serverData.currency, serverData.ip_address,
-                        serverData.status, serverData.notes
-                    ],
-                    (serverErr, serverRes) => {
-                        if (serverErr) {
-                            return connection.rollback(() => {
-                                res.status(500).json({ error: "Failed to create server" });
-                            });
-                        }
-
-                        const serverId = serverRes.insertId;
-
-                        // Deduct first hour charge from wallet
-                        connection.query(
-                            "UPDATE wallets SET balance = balance - ? WHERE id = ?",
-                            [hourlyCostPaise, wallet.id],
-                            (walletErr) => {
-                                if (walletErr) {
-                                    return connection.rollback(() => {
-                                        res.status(500).json({ error: "Failed to deduct account balance" });
-                                    });
-                                }
-
-                                // Create wallet transaction record
-                                connection.query(
-                                    `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, razorpay_payment_id, razorpay_order_id, status) 
-                                     VALUES (?, 'debit', ?, ?, ?, NULL, NULL, 'completed')`,
-                                    [
-                                        wallet.id, 
-                                        hourlyCostPaise, 
-                                        `Server deployment charge - ${hostname} (${plan.name})`, 
-                                        `server_${serverId}`
-                                    ],
-                                    (txErr) => {
-                                        if (txErr) {
-                                            return connection.rollback(() => {
-                                                res.status(500).json({ error: "Failed to create transaction record" });
-                                            });
-                                        }
-
-                                        // Create billing log
-                                        connection.query(
-                                            `INSERT INTO billing_logs (user_id, server_id, amount, billing_period, description) 
-                                             VALUES (?, ?, ?, NOW(), ?)`,
-                                            [
-                                                userId, 
-                                                serverId, 
-                                                hourlyCostPaise, 
-                                                `Hourly charge for ${hostname} - ${plan.name}`
-                                            ],
-                                            (billingErr) => {
-                                                if (billingErr) {
-                                                    return connection.rollback(() => {
-                                                        res.status(500).json({ error: "Failed to create billing log" });
-                                                    });
-                                                }
-
-                                                connection.commit((cErr) => {
-                                                    if (cErr) {
-                                                        return connection.rollback(() => {
-                                                            res.status(500).json({ error: "Commit failed" });
-                                                        });
-                                                    }
-
-                                                    res.json({
-                                                        message: "Server deployed successfully",
-                                                        serverId: serverId,
-                                                        server: {
-                                                            ...serverData,
-                                                            id: serverId
-                                                        },
-                                                        charge: hourlyCostPaise / 100
-                                                    });
-                                                });
-                                            }
-                                        );
-                                    }
-                                );
-                            }
-                        );
-                    }
-                );
-            } catch (error) {
-                connection.rollback(() => {
-                    res.status(500).json({ error: "Deployment failed" });
-                });
-            }
-        });
-    } catch (err) {
-        console.error("Deploy server error:", err);
-        res.status(500).json({ error: "Failed to deploy server" });
-    }
+const ownServer = async (userId, id) => {
+    if (!/^\d{1,10}$/.test(String(id))) throw new HttpError(404, 'Server not found');
+    const [server] = await q('SELECT * FROM servers WHERE id = ? AND user_id = ?', [id, userId]);
+    if (!server) throw new HttpError(404, 'Server not found');
+    return server;
 };
 
-// 🟢 GET user servers
-exports.getUserServers = async (req, res) => {
-    try {
-        const userId = req.user.userId;
+// POST /api/servers/manage { serverId, action }
+exports.manageServer = handle('Manage server', async (req, res) => {
+    const { serverId, action } = req.body;
+    if (!['start', 'stop', 'restart'].includes(action)) throw new HttpError(400, 'Invalid action');
+    const server = await ownServer(req.user.userId, serverId);
+    if (server.status === 'deploying') throw new HttpError(409, 'The server is still being created.');
 
-        connection.query(
-            `SELECT * FROM servers WHERE user_id = ? ORDER BY created_at DESC`,
-            [userId],
-            (err, results) => {
-                if (err) {
-                    console.error("Get user servers error:", err);
-                    return res.status(500).json({ error: "Database error" });
-                }
-
-                const servers = results.map(server => ({
-                    ...server,
-                    monthly_cost: parseFloat(server.monthly_cost),
-                    hourly_cost: parseFloat(server.hourly_cost)
-                }));
-
-                res.json({ servers });
-            }
-        );
-    } catch (err) {
-        console.error("Get user servers error:", err);
-        res.status(500).json({ error: "Failed to get servers" });
-    }
-};
-
-// 🟢 POST stop/start server
-exports.manageServer = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const { serverId, action } = req.body;
-
-        if (!serverId || !action) {
-            return res.status(400).json({ error: "Missing server ID or action" });
+    if (action === 'start' && server.solus_server_id) {
+        // Billing stops servers when the balance runs out; don't restart them for free.
+        const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [req.user.userId]);
+        if (Number(wallet?.balance || 0) < Math.round(Number(server.hourly_cost) * 100)) {
+            throw new HttpError(400, 'Your account balance is too low to start this server.', { insufficient: true });
         }
-
-        if (!['start', 'stop', 'restart'].includes(action)) {
-            return res.status(400).json({ error: "Invalid action" });
-        }
-
-        // Check if server belongs to user
-        connection.query(
-            "SELECT * FROM servers WHERE id = ? AND user_id = ?",
-            [serverId, userId],
-            (err, results) => {
-                if (err) {
-                    console.error("Manage server error:", err);
-                    return res.status(500).json({ error: "Database error" });
-                }
-
-                if (results.length === 0) {
-                    return res.status(404).json({ error: "Server not found" });
-                }
-
-                const server = results[0];
-                let newStatus;
-
-                switch (action) {
-                    case 'start':
-                        newStatus = 'active';
-                        break;
-                    case 'stop':
-                        newStatus = 'stopped';
-                        break;
-                    case 'restart':
-                        newStatus = server.status === 'active' ? 'active' : server.status;
-                        break;
-                }
-
-                // Update server status
-                connection.query(
-                    "UPDATE servers SET status = ?, last_activity = NOW() WHERE id = ?",
-                    [newStatus, serverId],
-                    (updateErr) => {
-                        if (updateErr) {
-                            console.error("Update server status error:", updateErr);
-                            return res.status(500).json({ error: "Failed to update server" });
-                        }
-
-                        res.json({
-                            message: `Server ${action} successful`,
-                            server: {
-                                ...server,
-                                status: newStatus,
-                                last_activity: new Date()
-                            }
-                        });
-                    }
-                );
-            }
-        );
-    } catch (err) {
-        console.error("Manage server error:", err);
-        res.status(500).json({ error: "Failed to manage server" });
     }
-};
+    if (server.solus_server_id) await solusvm.serverAction(server.solus_server_id, action);
 
-// 🟢 DELETE server
-exports.deleteServer = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const { serverId } = req.params;
+    const status = action === 'stop' ? 'stopped' : 'active';
+    await q('UPDATE servers SET status = ?, last_activity = NOW() WHERE id = ?', [status, server.id]);
+    res.json({ message: `Server ${action} requested`, status });
+});
 
-        // Check if server belongs to user
-        connection.query(
-            "SELECT * FROM servers WHERE id = ? AND user_id = ?",
-            [serverId, userId],
-            (err, results) => {
-                if (err) {
-                    console.error("Delete server error:", err);
-                    return res.status(500).json({ error: "Database error" });
-                }
-
-                if (results.length === 0) {
-                    return res.status(404).json({ error: "Server not found" });
-                }
-
-                // Delete server
-                connection.query(
-                    "DELETE FROM servers WHERE id = ? AND user_id = ?",
-                    [serverId, userId],
-                    (deleteErr) => {
-                        if (deleteErr) {
-                            console.error("Delete server error:", deleteErr);
-                            return res.status(500).json({ error: "Failed to delete server" });
-                        }
-
-                        res.json({ message: "Server deleted successfully" });
-                    }
-                );
-            }
-        );
-    } catch (err) {
-        console.error("Delete server error:", err);
-        res.status(500).json({ error: "Failed to delete server" });
+// DELETE /api/servers/:serverId — destroys the VM and returns its unit of stock.
+exports.deleteServer = handle('Delete server', async (req, res) => {
+    const server = await ownServer(req.user.userId, req.params.serverId);
+    if (server.solus_server_id) await solusvm.deleteServer(server.solus_server_id);
+    await q('DELETE FROM servers WHERE id = ?', [server.id]);
+    if (server.solus_server_id && server.location_id && stock.findPlan(server.plan_name)) {
+        await stock.release(server.plan_name, server.location_id).catch((e) => console.error('Stock return failed:', e.message));
     }
-};
+    res.json({ message: 'Server deleted' });
+});

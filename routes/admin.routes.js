@@ -47,6 +47,10 @@ router.post('/notifications/seen', Platform.markNotificationsSeen);
 // ── Dashboard ──────────────────────────────────────────────────────────────
 router.get('/dashboardStats', can('view_dashboard'), AdminController.getDashboardStats);
 router.get('/support/summary', can('view_dashboard'), Platform.supportSummary);
+
+// Cloud Compute stock (per plan per SolusVM location)
+router.get('/compute/stock', can('view_services'), Platform.getComputeStock);
+router.put('/compute/stock', can('manage_services'), Platform.updateComputeStock);
 router.get('/getTotalUsers', can('view_dashboard'), AdminController.getTotalUsers);
 router.get('/getTotalServers', can('view_dashboard'), AdminController.getTotalServers);
 router.get('/getTotalRevenue', can('view_dashboard'), AdminController.getTotalRevenue);

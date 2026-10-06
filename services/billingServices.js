@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const connection = require('../config/db');
 const taxService = require('./taxServices');
 const cpanelService = require('./cpanelService');
+const solusvm = require('./solusvm');
 
 class BillingService {
     constructor() {
@@ -128,7 +129,7 @@ class BillingService {
 
                     if (wallet.balance < totalChargeAmount) {
                         console.log(`⚠️ Insufficient balance for user ${server.user_id}. Stopping server.`);
-                        await this.stopServer(server.id);
+                        await this.stopServer(server);
                         return resolve({ insufficient: true });
                     }
 
@@ -233,11 +234,16 @@ class BillingService {
         });
     }
 
-    async stopServer(serverId) {
+    // Out of balance: stop the VM on SolusVM too, so it isn't left running unbilled.
+    async stopServer(server) {
+        if (server.solus_server_id) {
+            await solusvm.serverAction(server.solus_server_id, 'stop')
+                .catch((err) => console.error(`SolusVM stop failed for server ${server.id}:`, err.message));
+        }
         return new Promise((resolve, reject) => {
             connection.query(
-                'UPDATE servers SET status = "stopped" WHERE id = ?',
-                [serverId],
+                "UPDATE servers SET status = 'stopped' WHERE id = ?",
+                [server.id],
                 (err) => {
                     if (err) reject(err);
                     else resolve();

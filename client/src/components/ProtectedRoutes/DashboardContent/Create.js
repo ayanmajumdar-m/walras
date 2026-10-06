@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock, MapPin, Eye, EyeOff, KeyRound } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
@@ -160,43 +160,182 @@ const HostingConfigurator = () => {
 };
 
 // ── Cloud Compute ──────────────────────────────────────────────────────────
+const HOSTNAME_RE = /^(?=.{1,100}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+const passwordOk = (p) => p.length >= 10 && p.length <= 72 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && !/\s/.test(p);
+
+// 16 characters from the browser's CSPRNG, always with upper, lower and a digit.
+const generatePassword = () => {
+  const sets = ["ABCDEFGHJKLMNPQRSTUVWXYZ", "abcdefghijkmnopqrstuvwxyz", "23456789", "!@#%^*-_=+"];
+  const all = sets.join("");
+  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  const chars = [...sets.map((s) => s[rand(s.length)]), ...Array.from({ length: 12 }, () => all[rand(all.length)])];
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = rand(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+};
+
 const ComputeConfigurator = () => {
+  const navigate = useNavigate();
+  const { balance, refreshBalance } = useConsole();
+  const [catalog, setCatalog] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [locationId, setLocationId] = useState(null);
   const [selected, setSelected] = useState(COMPUTE_PLANS.find((p) => p.popular)?.name || COMPUTE_PLANS[0].name);
-  const plan = COMPUTE_PLANS.find((p) => p.name === selected);
-  const available = COMPUTE_PLANS.some((p) => p.inStock);
+  const [osId, setOsId] = useState("");
+  const [hostname, setHostname] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [deploying, setDeploying] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api("/api/servers/catalog")
+      .then((c) => {
+        setCatalog(c);
+        // Start on a location with stock, and a plan in stock there.
+        const loc = c.locations.find((l) => c.plans.some((p) => p.locations.includes(l.id))) || c.locations[0];
+        if (loc) {
+          setLocationId(loc.id);
+          const pick = c.plans.find((p) => p.popular && p.locations.includes(loc.id)) || c.plans.find((p) => p.locations.includes(loc.id));
+          if (pick) setSelected(pick.name);
+        }
+        if (c.os[0]) setOsId(String((c.os.find((o) => /ubuntu/i.test(o.name)) || c.os[0]).id));
+      })
+      .catch((e) => setLoadError(e.message));
+  }, []);
+
+  const plans = catalog?.plans || COMPUTE_PLANS;
+  const plan = plans.find((p) => p.name === selected) || plans[0];
+  const inStock = (p) => Boolean(catalog && locationId != null && (p.locations || []).includes(locationId));
+  const anyStock = Boolean(catalog?.enabled);
+  const hasLocations = catalog?.locations.length > 0;
+  const hostnameOk = HOSTNAME_RE.test(hostname.trim());
+  const canDeploy = inStock(plan) && osId && hostnameOk && passwordOk(password) && !deploying;
+
+  const pickLocation = (id) => {
+    setLocationId(id);
+    if (!(plan.locations || []).includes(id)) {
+      const next = plans.find((p) => (p.locations || []).includes(id));
+      if (next) setSelected(next.name);
+    }
+  };
+
+  const deploy = async () => {
+    setError("");
+    setDeploying(true);
+    try {
+      await api("/api/servers/deploy", {
+        method: "POST",
+        body: { plan: plan.name, location: locationId, os: Number(osId), hostname: hostname.trim().toLowerCase(), password },
+      });
+      refreshBalance();
+      navigate("/dashboard/resources?tab=servers&created=1");
+    } catch (err) {
+      if (err.message !== "Session expired") setError(err.message);
+      setDeploying(false);
+    }
+  };
 
   return (
     <div className="cx-create-body">
       <div className="cx-config">
-        {!available && (
+        {loadError && <div className="cx-alert is-error">{loadError}</div>}
+        {catalog && !anyStock && (
           <div className="cx-alert is-info">
             Cloud Compute is fully booked right now. New capacity is on its way; you can still compare plans below.
           </div>
         )}
+
+        {hasLocations && (
+          <section className="cx-card cx-step">
+            <h3><span className="cx-step-num">1</span> Location</h3>
+            <div className="cx-choice-grid">
+              {catalog.locations.map((l) => {
+                const hasStock = catalog.plans.some((p) => p.locations.includes(l.id));
+                return (
+                  <label key={l.id} className={`cx-term${locationId === l.id ? " is-selected" : ""}${hasStock ? "" : " is-muted"}`}>
+                    <input type="radio" name="compute-location" className="cx-visually-hidden" checked={locationId === l.id} onChange={() => pickLocation(l.id)} />
+                    <MapPin size={18} aria-hidden="true" />
+                    <span>
+                      <strong>{l.name}</strong>
+                      <small>{hasStock ? "Available" : "Out of stock"}</small>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section className="cx-card cx-step">
-          <h3><span className="cx-step-num">1</span> Choose a plan</h3>
+          <h3><span className="cx-step-num">{hasLocations ? 2 : 1}</span> Choose a plan</h3>
           <div className="cx-table-wrap">
             <table className="cx-table cx-table-select">
               <thead>
                 <tr><th /><th>Plan</th><th>vCPUs</th><th>Memory</th><th>SSD</th><th>Bandwidth</th><th>Price</th></tr>
               </thead>
               <tbody>
-                {COMPUTE_PLANS.map((p) => (
-                  <tr key={p.name} className={p.name === selected ? "is-selected" : ""} onClick={() => setSelected(p.name)}>
-                    <td><input type="radio" name="compute-plan" checked={p.name === selected} onChange={() => setSelected(p.name)} aria-label={p.name} /></td>
-                    <td><strong>{p.name}</strong>{p.popular && <span className="cx-tag">Popular</span>}</td>
-                    <td>{p.vcpu}</td>
-                    <td>{p.ram} GB</td>
-                    <td>{p.storage} GB</td>
-                    <td>{p.bandwidth} TB</td>
-                    <td><strong>{formatINR(p.monthly)}</strong><small>/mo</small></td>
-                  </tr>
-                ))}
+                {plans.map((p) => {
+                  const available = inStock(p);
+                  return (
+                    <tr key={p.name} className={`${p.name === plan.name ? "is-selected" : ""}${available ? "" : " is-off"}`}
+                      onClick={() => available && setSelected(p.name)}>
+                      <td><input type="radio" name="compute-plan" checked={p.name === plan.name} disabled={!available} onChange={() => setSelected(p.name)} aria-label={p.name} /></td>
+                      <td>
+                        <strong>{p.name}</strong>
+                        {!available ? <span className="cx-tag is-off">Out of stock</span> : p.popular && <span className="cx-tag">Popular</span>}
+                      </td>
+                      <td>{p.vcpu}</td>
+                      <td>{p.ram} GB</td>
+                      <td>{p.storage} GB</td>
+                      <td>{p.bandwidth} TB</td>
+                      <td><strong>{formatINR(p.monthly)}</strong><small>/mo</small></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
           <p className="cx-step-help">Every plan includes one IPv4 address and transfer at 10 Gbps (1 Gbps in Asian locations).</p>
         </section>
+
+        {anyStock && (
+          <section className="cx-card cx-step">
+            <h3><span className="cx-step-num">{hasLocations ? 3 : 2}</span> Operating system and access</h3>
+            <div className="cx-form-grid">
+              <label className="cx-field">
+                <span>Operating system</span>
+                <select value={osId} onChange={(e) => setOsId(e.target.value)}>
+                  {catalog.os.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+              </label>
+              <label className="cx-field">
+                <span>Hostname</span>
+                <input type="text" value={hostname} onChange={(e) => setHostname(e.target.value)} placeholder="web1.mybusiness.com"
+                  autoComplete="off" spellCheck="false" maxLength={100} />
+                {hostname && !hostnameOk && <small className="cx-field-error">Letters, numbers, hyphens and dots only, e.g. web1 or app.example.com</small>}
+              </label>
+              <div className="cx-field cx-field-wide">
+                <label htmlFor="compute-password">Root password</label>
+                <span className="cx-input-row">
+                  <input id="compute-password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password" spellCheck="false" maxLength={72} />
+                  <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => setShowPassword((v) => !v)}>
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />} {showPassword ? "Hide" : "Show"}
+                  </button>
+                  <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => { setPassword(generatePassword()); setShowPassword(true); }}>
+                    <KeyRound size={14} /> Generate
+                  </button>
+                </span>
+                <small className={password && !passwordOk(password) ? "cx-field-error" : "cx-field-hint"}>
+                  10 to 72 characters with upper and lower case letters and a number. We don't store it, so keep a copy.
+                </small>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
 
       <aside className="cx-summary">
@@ -206,15 +345,20 @@ const ComputeConfigurator = () => {
             <div><dt>Product</dt><dd>Cloud Compute</dd></div>
             <div><dt>Plan</dt><dd>{plan.name}</dd></div>
             <div><dt>Resources</dt><dd>{plan.vcpu} vCPU · {plan.ram} GB</dd></div>
+            {hasLocations && <div><dt>Location</dt><dd>{catalog.locations.find((l) => l.id === locationId)?.name || "—"}</dd></div>}
           </dl>
           <dl className="cx-summary-money">
             <div><dt>Hourly</dt><dd>{formatINR(plan.hourly, 2)}</dd></div>
             <div className="cx-summary-total"><dt>Monthly</dt><dd>{formatINR(plan.monthly)}</dd></div>
           </dl>
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" disabled>
-            {plan.inStock ? "Deploy server" : "Out of stock"}
+          {error && <p className="cx-alert is-error" role="alert">{error}</p>}
+          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={deploy} disabled={!canDeploy}>
+            {deploying ? <><Loader2 size={18} className="cx-spin" /> Creating server…</>
+              : inStock(plan) ? "Deploy server" : "Out of stock"}
           </button>
-          <p className="cx-summary-note">Prices exclude tax. <a href="/contact">Contact us</a> to reserve capacity.</p>
+          <p className="cx-summary-note">
+            Billed hourly from your account balance ({formatINR(balance, 2)} available). Prices exclude GST; the first hour is charged now.
+          </p>
         </div>
       </aside>
     </div>

@@ -1337,3 +1337,46 @@
   .cx-msg { max-width: 100%; }
   .cx-ticket-form { padding: 16px; }
 }
+
+/* ── Cloud Compute order form ── */
+.cx-choice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.cx-choice-grid .cx-term {
+  cursor: pointer;
+  border-color: var(--color-divider);
+  background: #ffffff;
+  position: relative;
+}
+.cx-choice-grid .cx-term:hover { border-color: var(--color-accent-300); }
+.cx-choice-grid .cx-term.is-selected { border-color: var(--color-brand-500); background: color-mix(in srgb, var(--color-accent-100) 50%, #ffffff); }
+.cx-choice-grid .cx-term.is-muted svg,
+.cx-choice-grid .cx-term.is-muted small { color: var(--text-muted); }
+.cx-choice-grid .cx-term:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent); }
+.cx-visually-hidden { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+
+.cx-table-select tbody tr.is-off { cursor: not-allowed; color: var(--text-muted); }
+.cx-table-select tbody tr.is-off:hover { background: transparent; }
+.cx-tag.is-off { background: var(--color-neutral-200); color: var(--color-neutral-700); }
+
+.cx-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.cx-field-wide { grid-column: 1 / -1; }
+.cx-field > label { font-size: 13.5px; font-weight: 600; }
+.cx-field select {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, #1d1f20 18%, transparent);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text);
+  background: #ffffff;
+}
+.cx-field select:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent); }
+.cx-field-hint { font-size: 12.5px; color: var(--text-muted); }
+.cx-field .cx-field-error { margin: 0; }
+.cx-input-row { display: flex; gap: 8px; align-items: center; }
+.cx-input-row input { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+@media (max-width: 640px) {
+  .cx-form-grid { grid-template-columns: 1fr; }
+  .cx-input-row { flex-wrap: wrap; }
+  .cx-input-row input { flex-basis: 100%; }
+}

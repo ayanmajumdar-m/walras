@@ -3,6 +3,7 @@ const router = express.Router();
 const authenticateToken = require("../utils/auth.middleware");
 const { requireSalesOpen } = require("../utils/platformSettings");
 const {
+    getCatalog,
     deployServer,
     getUserServers,
     manageServer,
@@ -13,6 +14,7 @@ const {
 router.use(authenticateToken);
 
 // Server management routes
+router.get("/catalog", getCatalog);
 router.post("/deploy", requireSalesOpen, deployServer);
 router.get("/", getUserServers);
 router.post("/manage", manageServer);

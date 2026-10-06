@@ -263,7 +263,10 @@ const Resources = () => {
   const [servers, setServers] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState(null);
+  // Arriving from Create after ordering a server.
+  const [message, setMessage] = useState(() => params.get("created")
+    ? { text: "Your server is being created. It shows as Deploying here and is usually ready in a few minutes.", type: "success" }
+    : null);
 
   const notify = (text, type) => setMessage({ text, type });
 
@@ -277,6 +280,16 @@ const Resources = () => {
   }, []);
 
   useEffect(load, [load]);
+
+  // While a server is being built, check its status every 10 seconds.
+  const building = servers.some((s) => s.status === "deploying");
+  useEffect(() => {
+    if (!building) return undefined;
+    const timer = setInterval(() => {
+      api("/api/servers").then((d) => setServers(d.servers || [])).catch(() => {});
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [building]);
 
   const counts = { hosting: hosting.length, servers: servers.length, domains: domains.length };
 

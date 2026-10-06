@@ -208,6 +208,24 @@ CREATE TABLE IF NOT EXISTS servers (
 )
 `;
 
+// Cloud Compute on SolusVM: each server row remembers its SolusVM server and
+// location so it can be managed, and so deleting it returns the stock.
+const migrateServers = [
+    'ALTER TABLE servers ADD COLUMN IF NOT EXISTS solus_server_id BIGINT',
+    'ALTER TABLE servers ADD COLUMN IF NOT EXISTS location_id INT',
+];
+
+// Quantity of each Cloud Compute plan an admin allows to be sold, per SolusVM
+// location. Deploying takes one; deleting a server gives it back.
+const createComputeStockTable = `
+CREATE TABLE IF NOT EXISTS compute_stock (
+    plan VARCHAR(40) NOT NULL,
+    location_id INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (plan, location_id)
+)`;
+
 const createPromoCodesTable = `
 CREATE TABLE IF NOT EXISTS promo_codes (
     id SERIAL PRIMARY KEY,
@@ -446,6 +464,8 @@ connection.connect((err) => {
         ['Billing logs', createBillingLogsTable],
         ['Invoices', createInvoicesTable],
         ['Server', createServerTable],
+        ...migrateServers.map((sql, i) => [`servers migration ${i + 1}`, sql]),
+        ['Compute stock', createComputeStockTable],
         ['User sessions', createUserSessionsTable],
         ['Transactions', createTransactionsTable],
         ['Promo codes', createPromoCodesTable],

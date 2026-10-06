@@ -355,3 +355,18 @@
   .ap-bell-panel { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; }
   .ap-profile-main h2 { font-size: 22px; }
 }
+
+/* Compute stock */
+.ap-stock-table td { vertical-align: top; }
+.ap-stock-table .ap-select { min-width: 170px; }
+.ap-stock-input {
+  width: 92px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, #1d1f20 18%, transparent);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 15px;
+  background: #ffffff;
+}
+.ap-stock-input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent); }
+.ap-stock-input:disabled { background: #f4f6f5; color: var(--text-muted); }

@@ -66,6 +66,15 @@ const Pricing = () => {
   const location = useLocation();
   const [active, setActive] = useState(SECTIONS[0].id);
   const [sort, setSort] = useState({ key: "monthly", dir: "asc" });
+  // Which Cloud Compute plans are in stock somewhere (set by admins).
+  const [computeStock, setComputeStock] = useState({});
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => r.json())
+      .then((d) => setComputeStock(d?.planAvailability?.compute || {}))
+      .catch(() => {});
+  }, []);
 
   // Land on the right section when arriving via /pricing#domains etc. On a
   // fresh page load (e.g. the /domains redirect) the browser resets scroll
@@ -228,7 +237,9 @@ const Pricing = () => {
                         );
                       })}
                       <td data-label="Availability">
-                        <span className="pr-stock">Out of stock</span>
+                        {computeStock[plan.name]
+                          ? <a href="/dashboard/create?type=compute" className="pr-stock is-in">Available</a>
+                          : <span className="pr-stock">Out of stock</span>}
                       </td>
                     </tr>
                   ))}

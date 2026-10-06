@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
-  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X,
+  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes,
 } from "lucide-react";
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import { adminApi, adminLogout } from "./adminApi";
@@ -12,6 +12,7 @@ import Orders from "./sections/Orders";
 import Administrators from "./sections/Administrators";
 import AuditLogs from "./sections/AuditLogs";
 import PlatformSettings from "./sections/PlatformSettings";
+import ComputeStock from "./sections/ComputeStock";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
   DashboardSection, TransactionsSection, InvoicesSection, PromoCodesSection,
@@ -41,6 +42,7 @@ const GROUPS = [
       { id: "promo-codes", label: "Promo codes", Icon: Ticket, perm: ["manage_coupons", "view_billing"] },
       { id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" },
       { id: "servers", label: "Cloud Compute", Icon: Layers, perm: "view_services" },
+      { id: "compute-stock", label: "Compute stock", Icon: Boxes, perm: "view_services" },
       { id: "domains", label: "Domains", Icon: Globe, perm: "view_services" },
     ],
   },
@@ -105,6 +107,7 @@ const AdminDashboard = () => {
       case "promo-codes": return <PromoCodesSection notify={notify} />;
       case "hosting": return <HostingSection notify={notify} />;
       case "servers": return <ServersSection />;
+      case "compute-stock": return <ComputeStock can={can} />;
       case "domains": return <DomainsSection />;
       case "admins": return <Administrators me={me} />;
       case "audit": return <AuditLogs openCustomer={openCustomer} />;

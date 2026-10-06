@@ -1,19 +1,18 @@
 const appSettings = require('./appSettings');
+const computeStock = require('./computeStock');
 
 /**
  * Platform switches admins control from Settings, stored in app_settings.
  * Defaults reproduce how the platform behaved before these switches existed.
  */
 
-// Cloud Compute can't be switched on from the admin: deployServer only
-// simulates a server (random IP, no real VM) while charging the wallet, so
-// selling it would bill customers for machines that don't exist.
+// A family listed here can't be sold. Cloud Compute is not listed: it is on
+// sale wherever its stock allows (utils/computeStock.js).
 // Web Hosting is withdrawn for now: no new hosting can be bought. Existing
 // hosting accounts keep running and stay manageable. Delete the entry to
 // sell it again (the per-plan switches in Settings then apply).
 const LOCKED_FAMILIES = {
     hosting: 'Web Hosting is withdrawn for now, so no new hosting can be bought. Existing hosting accounts keep running.',
-    compute: 'Cloud Compute deployments are simulated (no real VM is created), so it stays unavailable until real provisioning is connected.',
 };
 
 const PLAN_DEFAULTS = {
@@ -55,7 +54,9 @@ const getPlatform = async () => {
             hosting: LOCKED_FAMILIES.hosting
                 ? Object.fromEntries(Object.keys(PLAN_DEFAULTS.hosting).map((name) => [name, false]))
                 : { ...PLAN_DEFAULTS.hosting, ...(plans.hosting || {}) },
-            compute: { ...PLAN_DEFAULTS.compute }, // locked, see LOCKED_FAMILIES
+            // In stock in at least one location (stock and SolusVM in Settings → Compute stock).
+            compute: Object.fromEntries(Object.entries(await computeStock.getAvailability())
+                .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
         },
         lockedFamilies: LOCKED_FAMILIES,
         invoice: { ...INVOICE_DEFAULTS, ...parseJson(s['invoice.details'], {}) },

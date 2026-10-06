@@ -11,6 +11,8 @@ const rbac = require('../utils/adminRbac');
 const platform = require('../utils/platformSettings');
 const { forgetUserStatus } = require('../utils/auth.middleware');
 const zendesk = require('../services/zendesk');
+const solusvm = require('../services/solusvm');
+const computeStock = require('../utils/computeStock');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -387,6 +389,72 @@ const PlatformController = {
     markNotificationsSeen: handle(async (req, res) => {
         await q('UPDATE admins SET notifications_seen_at = NOW() WHERE id = ?', [req.admin.adminId]);
         res.json({ message: 'ok' });
+    }),
+
+    // ── Cloud Compute stock ──────────────────────────────────────────────
+    /**
+     * Stock per plan per SolusVM location, each plan's linked SolusVM plan,
+     * and how many servers of each are running now. Lists from SolusVM are
+     * fetched fresh so new plans and locations show up straight away.
+     */
+    getComputeStock: handle(async (req, res) => {
+        const configured = solusvm.solusConfigured();
+        let locations = [];
+        let solusPlans = [];
+        let solusError = null;
+        if (configured) {
+            solusvm.forgetCatalog();
+            try {
+                [locations, solusPlans] = await Promise.all([solusvm.listLocations(), solusvm.listPlans()]);
+            } catch (err) {
+                solusError = err.message;
+            }
+        }
+        const [stockMap, planMap, running] = await Promise.all([
+            computeStock.getStock(),
+            computeStock.getPlanMap(),
+            q(`SELECT plan_name, location_id, COUNT(*) AS n FROM servers
+               WHERE solus_server_id IS NOT NULL GROUP BY plan_name, location_id`),
+        ]);
+        const inUse = {};
+        for (const r of running) (inUse[r.plan_name] ||= {})[r.location_id] = Number(r.n);
+        res.json({
+            configured,
+            solusError,
+            locations,
+            solusPlans,
+            plans: computeStock.COMPUTE_PLANS.map((p) => ({
+                ...p,
+                solusPlanId: planMap[p.name] || null,
+                stock: stockMap[p.name],
+                inUse: inUse[p.name] || {},
+            })),
+        });
+    }),
+
+    // PUT { plans: [{ name, solusPlanId, stock: { [locationId]: quantity } }] }
+    updateComputeStock: handle(async (req, res) => {
+        const list = Array.isArray(req.body.plans) ? req.body.plans : [];
+        const before = { stock: await computeStock.getStock(), planMap: await computeStock.getPlanMap() };
+        const entries = [];
+        const map = {};
+        for (const p of list) {
+            if (!computeStock.findPlan(p?.name)) continue;
+            if (p.solusPlanId !== undefined) map[p.name] = p.solusPlanId;
+            for (const [loc, qty] of Object.entries(p.stock || {})) {
+                const locationId = Number(loc);
+                const quantity = Number(qty);
+                if (!Number.isInteger(locationId) || !Number.isInteger(quantity) || quantity < 0 || quantity > 100000) {
+                    throw new HttpError(400, `Stock for ${p.name} must be a whole number from 0 to 100000.`);
+                }
+                entries.push({ plan: p.name, locationId, quantity });
+            }
+        }
+        await computeStock.setStock(entries);
+        await computeStock.setPlanMap({ ...before.planMap, ...map });
+        const after = { stock: await computeStock.getStock(), planMap: await computeStock.getPlanMap() };
+        audit(req, 'compute.stock', 'settings', 'compute', { before, after });
+        res.json({ message: 'Cloud Compute stock saved' });
     }),
 
     // ── Support (Zendesk) ────────────────────────────────────────────────

@@ -1519,3 +1519,7 @@
   .pr-search .pr-btn { padding: 11px 16px; }
   .pr-cta h2 { font-size: 26px; }
 }
+
+/* In stock: links to the console to deploy */
+.pr-stock.is-in { background: var(--color-accent-100, #e6f6f2); color: var(--color-accent-700, #037566); border-color: transparent; text-decoration: none; }
+.pr-stock.is-in:hover { text-decoration: underline; }
