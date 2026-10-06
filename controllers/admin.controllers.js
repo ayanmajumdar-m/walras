@@ -9,6 +9,7 @@ const dotenv = require('dotenv');
 const audit = require('../utils/audit');
 const { permissionsFor } = require('../utils/adminRbac');
 const { getPlatform } = require('../utils/platformSettings');
+const { drawBrandHeader } = require('../utils/invoiceBrand');
 dotenv.config();
 
 
@@ -775,43 +776,44 @@ const AdminController = {
                     // Pipe PDF to response
                     doc.pipe(res);
 
-                    // Invoice Header
-                    doc.fontSize(24).text('INVOICE', 50, 50);
-                    doc.fontSize(12).text(`Invoice Number: ${invoice.invoice_number}`, 50, 85);
-                    doc.text(`Date: ${new Date(invoice.generated_at).toLocaleDateString()}`, 50, 100);
-                    doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 50, 115);
-                    doc.text(`Status: ${invoice.status.toUpperCase()}`, 50, 130);
-
-                    // Company Info (admin Settings → Invoice details)
+                    // Brand header, then invoice + company details (admin Settings → Invoice details)
                     const { invoice: company } = await getPlatform();
-                    doc.text(company.legalName, 330, 85, { width: 220 })
-                        .text(`GSTIN: ${company.gstin}`, 330, 115, { width: 220 })
-                        .text(company.email, 330, 130, { width: 220 })
-                        .text(company.phone, 330, 145, { width: 220 });
+                    const top = drawBrandHeader(doc, { title: 'INVOICE', subtitle: `Status: ${invoice.status.toUpperCase()}` });
+                    doc.fontSize(10).fillColor('#000000');
+                    doc.text(`Invoice Number: ${invoice.invoice_number}`, 50, top);
+                    doc.text(`Date: ${new Date(invoice.generated_at).toLocaleDateString()}`, 50, top + 15);
+                    doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 50, top + 30);
+
+                    doc.text(company.legalName, 330, top, { width: 220 })
+                        .text(`GSTIN: ${company.gstin}`, 330, top + 28, { width: 220 })
+                        .text(company.email, 330, top + 43, { width: 220 })
+                        .text(company.phone, 330, top + 58, { width: 220 });
 
                     // Customer Info
-                    doc.text('Bill To:', 50, 180)
-                        .text(invoice.user_name || 'N/A', 50, 195)
-                        .text(invoice.company || 'N/A', 50, 210)
-                        .text(invoice.user_email || 'N/A', 50, 225)
-                        .text(invoice.address || 'N/A', 50, 240, { width: 200 });
+                    const billTo = top + 90;
+                    doc.text('Bill To:', 50, billTo)
+                        .text(invoice.user_name || 'N/A', 50, billTo + 15)
+                        .text(invoice.company || 'N/A', 50, billTo + 30)
+                        .text(invoice.user_email || 'N/A', 50, billTo + 45)
+                        .text(invoice.address || 'N/A', 50, billTo + 60, { width: 200 });
 
-                    // Billing Period
-                    doc.text('Billing Period:', 50, 280)
-                        .text(new Date(invoice.billing_month).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), 50, 295);
+                    // Billing Period (below the address, however many lines it took)
+                    const periodY = Math.max(doc.y + 15, billTo + 100);
+                    doc.text('Billing Period:', 50, periodY)
+                        .text(new Date(invoice.billing_month).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), 50, periodY + 15);
 
                     // Invoice Details
-                    let yPosition = 340;
+                    let yPosition = periodY + 55;
 
                     // Table Header
-                    doc.fillColor('#000000')
+                    doc.fillColor('#0b2622')
                         .rect(50, yPosition, 500, 25)
                         .fill()
                         .fillColor('#ffffff')
                         .fontSize(10)
                         .text('Description', 60, yPosition + 8)
                         .text('Period', 300, yPosition + 8)
-                        .text('Amount (₹)', 450, yPosition + 8);
+                        .text('Amount (INR)', 450, yPosition + 8);
 
                     yPosition += 30;
 
@@ -830,7 +832,7 @@ const AdminController = {
                     const taxData = taxService.calculateTax(user, estimatedBaseAmount);
 
                     // Invoice Row
-                    doc.fillColor('#ffffff')
+                    doc.fillColor('#1d1f20')
                         .text('Monthly Server Usage', 60, yPosition)
                         .text(new Date(invoice.billing_month).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }), 300, yPosition)
                         .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
@@ -861,19 +863,21 @@ const AdminController = {
                         .text('TOTAL', 60, yPosition + 8)
                         .text((taxData.totalAmount / 100).toFixed(2), 450, yPosition + 8);
 
-                    // Payment Information
+                    // Payment Information: only real details from Settings, never placeholders
                     yPosition += 60;
-                    doc.fontSize(10)
-                        .text('Payment Information:', 50, yPosition)
-                        .text('Bank: State Bank of India', 50, yPosition + 20)
-                        .text('Account: 1234567890123456', 50, yPosition + 35)
-                        .text('IFSC: SBIN0001234', 50, yPosition + 50)
-                        .text('UPI: ioogn@paytm', 50, yPosition + 65);
+                    if (company.bankName && company.accountNumber) {
+                        doc.fontSize(10)
+                            .text('Payment Information:', 50, yPosition)
+                            .text(`Bank: ${company.bankName}`, 50, yPosition + 20)
+                            .text(`Account: ${company.accountNumber}`, 50, yPosition + 35)
+                            .text(`IFSC: ${company.ifsc}`, 50, yPosition + 50);
+                        yPosition += 70;
+                    }
 
                     // Footer
-                    yPosition += 100;
-                    doc.text('Thank you for your business!', 50, yPosition)
-                        .text('For any queries, contact us at support@ioogn.com', 50, yPosition + 20)
+                    yPosition += 30;
+                    doc.fontSize(10).text('Thank you for your business!', 50, yPosition)
+                        .text(`For any queries, contact us at ${company.email}`, 50, yPosition + 20)
                         .text('This is a computer-generated invoice.', 50, yPosition + 40);
 
                     // Finalize PDF
@@ -903,6 +907,7 @@ const AdminController = {
 
             // Pipe PDF to response
             doc.pipe(res);
+            const { invoice: company } = await getPlatform();
 
             // Sample data for different scenarios
             const sampleScenarios = [
@@ -932,25 +937,26 @@ const AdminController = {
                     doc.addPage();
                 }
 
-                // Invoice Header
-                doc.fontSize(24).text('SAMPLE INVOICE', 50, 50);
-                doc.fontSize(12).text(`Invoice Number: SAMPLE-${index + 1}-${new Date().getFullYear()}`, 50, 85);
-                doc.text(`Date: ${new Date().toLocaleDateString()}`, 50, 100);
-                doc.text(`Type: ${scenario.description}`, 50, 115);
+                // Brand header + invoice details
+                const top = drawBrandHeader(doc, { title: 'SAMPLE INVOICE', subtitle: 'Not a tax invoice' });
+                doc.fontSize(10).fillColor('#000000');
+                doc.text(`Invoice Number: SAMPLE-${index + 1}-${new Date().getFullYear()}`, 50, top);
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, 50, top + 15);
+                doc.text(`Type: ${scenario.description}`, 50, top + 30);
 
-                // Company Info
-                doc.text('IOOGN Services', 400, 85)
-                    .text('Cloud Infrastructure Provider', 400, 100)
-                    .text('Billing Department', 400, 115)
-                    .text('contact@ioogn.com', 400, 130)
-                    .text('+91-9876543210', 400, 145);
+                // Company Info (admin Settings → Invoice details)
+                doc.text(company.legalName, 330, top, { width: 220 })
+                    .text(`GSTIN: ${company.gstin}`, 330, top + 28, { width: 220 })
+                    .text(company.email, 330, top + 43, { width: 220 })
+                    .text(company.phone, 330, top + 58, { width: 220 });
 
                 // Customer Info
-                doc.text('Bill To:', 50, 180)
-                    .text(scenario.name, 50, 195)
-                    .text('Sample Company Ltd.', 50, 210)
-                    .text('sample@email.com', 50, 225)
-                    .text(scenario.address, 50, 240, { width: 200 });
+                const billTo = top + 90;
+                doc.text('Bill To:', 50, billTo)
+                    .text(scenario.name, 50, billTo + 15)
+                    .text('Sample Company Ltd.', 50, billTo + 30)
+                    .text('sample@email.com', 50, billTo + 45)
+                    .text(scenario.address, 50, billTo + 60, { width: 200 });
 
                 // Calculate taxes
                 const user = {
@@ -961,22 +967,22 @@ const AdminController = {
                 };
                 const taxData = taxService.calculateTax(user, scenario.baseAmount);
 
-                // Billing Table
-                let yPosition = 340;
+                // Billing Table (below the address, however many lines it took)
+                let yPosition = Math.max(doc.y + 25, billTo + 110);
 
                 // Table Header
-                doc.fillColor('#000000')
+                doc.fillColor('#0b2622')
                     .rect(50, yPosition, 500, 25)
                     .fill()
                     .fillColor('#ffffff')
                     .fontSize(10)
                     .text('Description', 60, yPosition + 8)
-                    .text('Amount (₹)', 450, yPosition + 8);
+                    .text('Amount (INR)', 450, yPosition + 8);
 
                 yPosition += 30;
 
                 // Service Row
-                doc.fillColor('#ffffff')
+                doc.fillColor('#1d1f20')
                     .text('Monthly Server Usage', 60, yPosition)
                     .text((taxData.baseAmount / 100).toFixed(2), 450, yPosition);
 
@@ -994,13 +1000,13 @@ const AdminController = {
                 // Tax rows
                 if (taxData.taxAmount > 0) {
                     taxData.taxBreakdown.forEach(tax => {
-                        doc.fillColor('#ffffff')
+                        doc.fillColor('#1d1f20')
                             .text(tax.description, 60, yPosition)
                             .text((tax.amount / 100).toFixed(2), 450, yPosition);
                         yPosition += 20;
                     });
                 } else {
-                    doc.fillColor('#ffffff')
+                    doc.fillColor('#1d1f20')
                         .text('No taxes applicable', 60, yPosition)
                         .text('0.00', 450, yPosition);
                     yPosition += 20;
@@ -1026,7 +1032,7 @@ const AdminController = {
                 // Footer
                 yPosition += 100;
                 doc.text('This is a sample invoice for demonstration purposes.', 50, yPosition)
-                    .text('For any queries, contact us at support@ioogn.com', 50, yPosition + 20);
+                    .text(`For any queries, contact us at ${company.email}`, 50, yPosition + 20);
             });
 
             // Finalize PDF

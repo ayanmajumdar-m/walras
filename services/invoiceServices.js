@@ -4,6 +4,7 @@ const path = require('path');
 const connection = require('../config/db');
 const taxService = require('./taxServices');
 const { getPlatform } = require('../utils/platformSettings');
+const { drawBrandHeader } = require('../utils/invoiceBrand');
 
 class InvoiceService {
     async generateInvoice(user, month) {
@@ -28,39 +29,41 @@ class InvoiceService {
 
             doc.pipe(fs.createWriteStream(filePath));
 
-            // Company Header with GST Details (admin Settings → Invoice details)
+            // Brand header (logo, name, website, title), then seller and
+            // invoice details below it. Company details: admin Settings → Invoice details.
             const { invoice: company } = await getPlatform();
-            doc.fontSize(16).font('Helvetica-Bold')
-               .text(company.legalName, 50, 50, { width: 330 })
+            const top = drawBrandHeader(doc, { title: 'TAX INVOICE', subtitle: 'Original for recipient' });
+
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+               .text(company.legalName, 50, top, { width: 300 })
                .fontSize(8).font('Helvetica')
-               .text(`Registered Address: ${company.registeredAddress}`, 50, 72, { width: 330 })
-               .text(`GST Registered Address: ${company.gstAddress}`, 50, 96, { width: 330 })
-               .text(`GSTIN: ${company.gstin}`, 50, 120);
+               .text(`Registered Address: ${company.registeredAddress}`, 50, top + 18, { width: 300 })
+               .text(`GST Registered Address: ${company.gstAddress}`, 50, top + 42, { width: 300 })
+               .text(`GSTIN: ${company.gstin}`, 50, top + 66);
 
             // Invoice Details
-            doc.fontSize(16).font('Helvetica-Bold')
-               .text('TAX INVOICE', 400, 50)
-               .fontSize(10).font('Helvetica')
-               .text(`Invoice Number: ${invoiceNumber}`, 400, 80)
-               .text(`Invoice Date: ${new Date().toLocaleDateString()}`, 400, 95)
-               .text(`Period: ${this.formatMonth(month)}`, 400, 110)
-               .text(`Place of Supply: ${this.getStateFromAddress(user.address)}`, 400, 125);
+            doc.fontSize(10).font('Helvetica')
+               .text(`Invoice Number: ${invoiceNumber}`, 370, top)
+               .text(`Invoice Date: ${new Date().toLocaleDateString()}`, 370, top + 15)
+               .text(`Period: ${this.formatMonth(month)}`, 370, top + 30)
+               .text(`Place of Supply: ${this.getStateFromAddress(user.address)}`, 370, top + 45, { width: 180 });
 
             // Customer Info Section
+            const billTo = top + 95;
             doc.fontSize(12).font('Helvetica-Bold')
-               .text('Bill To:', 50, 160)
+               .text('Bill To:', 50, billTo)
                .fontSize(10).font('Helvetica')
-               .text(user.name, 50, 180);
+               .text(user.name, 50, billTo + 20);
 
             if (user.company) {
-                doc.text(user.company, 50, 195);
+                doc.text(user.company, 50, billTo + 35);
             }
 
-            doc.text(user.email, 50, user.company ? 210 : 195)
-               .text(this.formatAddress(user.address), 50, user.company ? 225 : 210, { width: 200 });
+            doc.text(user.email, 50, user.company ? billTo + 50 : billTo + 35)
+               .text(this.formatAddress(user.address), 50, user.company ? billTo + 65 : billTo + 50, { width: 200 });
 
-            // Add GSTIN for business customers if available
-            let customerYPosition = user.company ? 240 : 225;
+            // Add GSTIN for business customers if available (below the address)
+            let customerYPosition = Math.max(doc.y + 5, user.company ? billTo + 80 : billTo + 65);
             if (user.gstin) {
                 doc.text(`GSTIN: ${user.gstin}`, 50, customerYPosition);
                 customerYPosition += 15;
@@ -71,24 +74,24 @@ class InvoiceService {
             doc.text(`State: ${customerState}`, 50, customerYPosition);
 
             // Billing Table
-            let yPosition = 300;
+            let yPosition = Math.max(customerYPosition + 30, billTo + 140);
             
             // Table Header
-            doc.fillColor('#2c3e50')
+            doc.fillColor('#0b2622')
                .rect(50, yPosition, 500, 25)
                .fill()
                .fillColor('#ffffff')
                .fontSize(10)
                .text('Description', 60, yPosition + 8)
                .text('HSN/SAC', 250, yPosition + 8)
-               .text('Amount (₹)', 450, yPosition + 8);
+               .text('Amount (INR)', 450, yPosition + 8);
 
             yPosition += 30;
 
             // Table Rows - Using standard HSN 9984 for IT services
             const hsnCode = '9984'; // IT services HSN code
             billingData.items.forEach(item => {
-                doc.fillColor('#ffffff')
+                doc.fillColor('#1d1f20')
                    .text(item.description, 60, yPosition, { width: 180 })
                    .text(hsnCode, 250, yPosition)
                    .text(this.formatCurrency(item.amount), 450, yPosition);
@@ -113,7 +116,7 @@ class InvoiceService {
             // Tax Breakdown
             if (taxData.taxAmount > 0) {
                 taxData.taxBreakdown.forEach(tax => {
-                    doc.fillColor('#ffffff')
+                    doc.fillColor('#1d1f20')
                        .font('Helvetica')
                        .text(tax.description, 350, yPosition)
                        .text(this.formatCurrency(tax.amount), 450, yPosition);
@@ -122,7 +125,7 @@ class InvoiceService {
             }
 
             // Total
-            doc.fillColor('#2c3e50')
+            doc.fillColor('#0b2622')
                .rect(50, yPosition, 500, 30)
                .fill()
                .fillColor('#ffffff')
