@@ -160,7 +160,7 @@ const ServersTab = ({ servers, reload, notify }) => {
               <td data-label="Plan">{s.plan_name}</td>
               <td data-label="Location">{s.location}</td>
               <td data-label="Status"><span className={`cx-status is-${s.status}`}>{s.status}</span></td>
-              <td data-label="Cost">₹{Number(s.hourly_cost || 0).toFixed(2)}/hr</td>
+              <td data-label="Cost">₹{Number(s.monthly_cost || 0).toLocaleString("en-IN")}/mo</td>
               <td className="cx-actions">
                 {s.status === "active" && (<>
                   <button type="button" className="cx-icon-btn" onClick={() => manage(s.id, "stop")} title="Stop"><Square size={15} /></button>

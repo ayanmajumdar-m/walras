@@ -13,7 +13,6 @@ import Homepage from './components/Homepage';
 import Navbar from './components/Constants/Navbar';
 import AdminLogin from './components/AdminDashboard/AdminLogin';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
-import DeployDetails from './components/ProtectedRoutes/DashboardContent/DeployDetails';
 // The Domains and Bare Metal pages are folded into /pricing, but their
 // stylesheets carry global rules other pages (and the /domains/buy flow)
 // still use, so they stay loaded in their original order.
@@ -84,7 +83,8 @@ function App() {
         <Route path="/dashboard/*" element={<DashboardLayout />} />
         {/* Cart route - protected */}
         <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-        <Route path='/deploy-details' element={<DeployDetails />} />
+        {/* Old deploy page (old plans, hourly prices) → the Virtual Machine order form. */}
+        <Route path='/deploy-details' element={<Navigate to="/dashboard/create?type=compute" replace />} />
 
         {/* Admin routes */}
         <Route path="/vadmin-1997" element={<AdminLogin />} />

@@ -401,7 +401,6 @@ const ComputeConfigurator = () => {
             {hasLocations && <div><dt>Location</dt><dd>{catalog.locations.find((l) => l.id === locationId)?.name || "—"}</dd></div>}
           </dl>
           <dl className="cx-summary-money">
-            <div><dt>Hourly</dt><dd>{plan ? formatINR(plan.hourly, 2) : "—"}</dd></div>
             <div className="cx-summary-total"><dt>Monthly</dt><dd>{plan ? formatINR(plan.monthly) : "—"}</dd></div>
           </dl>
           {error && <p className="cx-alert is-error" role="alert">{error}</p>}
@@ -410,7 +409,7 @@ const ComputeConfigurator = () => {
               : !plan ? "Coming soon" : inStock(plan) ? "Deploy server" : "Out of stock"}
           </button>
           <p className="cx-summary-note">
-            Billed hourly from your account balance ({formatINR(balance, 2)} available). Prices exclude GST; the first hour is charged now.
+            Paid from your account balance ({formatINR(balance, 2)} available) while the server runs. Prices exclude GST.
           </p>
         </div>
       </aside>

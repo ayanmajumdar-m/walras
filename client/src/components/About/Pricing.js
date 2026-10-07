@@ -21,8 +21,7 @@ const PLAN_COLUMNS = [
   { key: "ram", label: "Memory", show: (p) => splitUnit(formatRam(p.ram)) },
   { key: "storage", label: "NVMe SSD", show: (p) => [p.storage, "GB"] },
   { key: "bandwidth", label: "Bandwidth", show: (p) => splitUnit(formatBandwidth(p.bandwidth)) },
-  { key: "monthly", label: "Monthly", price: true },
-  { key: "hourly", label: "Hourly", price: true }
+  { key: "monthly", label: "Monthly", price: true }
 ];
 
 const COMPUTE_INCLUDES = [
@@ -32,10 +31,7 @@ const COMPUTE_INCLUDES = [
   { Icon: HardDrive, text: "NVMe SSD storage" }
 ];
 
-const formatPrice = (key, value) =>
-  key === "monthly"
-    ? { amount: `₹${value.toLocaleString("en-IN")}`, per: "/mo" }
-    : { amount: `₹${value.toFixed(2)}`, per: "/hr" };
+const formatPrice = (key, value) => ({ amount: `₹${value.toLocaleString("en-IN")}`, per: "/mo" });
 
 // ── Domains (coming soon) ─────────────────────────────────────────────────
 const DOMAIN_INCLUDES = [
