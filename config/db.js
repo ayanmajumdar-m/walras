@@ -230,6 +230,27 @@ CREATE TABLE IF NOT EXISTS team_members (
     UNIQUE (owner_id, email)
 )`;
 
+// Bulk email campaigns sent from the admin panel (services/bulkEmail.js).
+// last_user_id lets an interrupted campaign resume without repeats.
+const createBulkEmailsTable = `
+CREATE TABLE IF NOT EXISTS bulk_emails (
+    id SERIAL PRIMARY KEY,
+    subject VARCHAR(200) NOT NULL,
+    body TEXT NOT NULL,
+    category VARCHAR(20) NOT NULL CHECK (category IN ('announcement', 'marketing')),
+    audience VARCHAR(20) NOT NULL,
+    status VARCHAR(15) NOT NULL CHECK (status IN ('sending', 'sent', 'interrupted', 'cancelled')),
+    total INT NOT NULL DEFAULT 0,
+    sent INT NOT NULL DEFAULT 0,
+    failed INT NOT NULL DEFAULT 0,
+    last_user_id INT NOT NULL DEFAULT 0,
+    last_error VARCHAR(300),
+    created_by INT,
+    created_by_name VARCHAR(100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMPTZ
+)`;
+
 // Quantity of each Cloud Compute plan an admin allows to be sold, per SolusVM
 // location. Deploying takes one; deleting a server gives it back.
 const createComputeStockTable = `
@@ -482,6 +503,8 @@ connection.connect((err) => {
         ...migrateServers.map((sql, i) => [`servers migration ${i + 1}`, sql]),
         ['Compute stock', createComputeStockTable],
         ['Team members', createTeamMembersTable],
+        ['Bulk emails', createBulkEmailsTable],
+        ['users marketing opt-out', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_out BOOLEAN NOT NULL DEFAULT FALSE'],
         ['team members index', 'CREATE INDEX IF NOT EXISTS team_members_member_idx ON team_members (member_user_id)'],
         ['team invites index', 'CREATE INDEX IF NOT EXISTS team_members_email_idx ON team_members (LOWER(email))'],
         ['User sessions', createUserSessionsTable],

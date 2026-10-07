@@ -48,6 +48,14 @@ router.post('/notifications/seen', Platform.markNotificationsSeen);
 router.get('/dashboardStats', can('view_dashboard'), AdminController.getDashboardStats);
 router.get('/support/summary', can('view_dashboard'), Platform.supportSummary);
 
+// Email customers (bulk)
+const BulkEmail = require('../controllers/bulkEmail.controllers');
+router.get('/bulk-email', can('send_bulk_email'), BulkEmail.overview);
+router.post('/bulk-email/test', can('send_bulk_email'), BulkEmail.test);
+router.post('/bulk-email', can('send_bulk_email'), BulkEmail.send);
+router.post('/bulk-email/:id/cancel', can('send_bulk_email'), BulkEmail.cancel);
+router.post('/bulk-email/:id/resume', can('send_bulk_email'), BulkEmail.resume);
+
 // Cloud Compute stock (per plan per SolusVM location)
 router.get('/compute/stock', can('view_services'), Platform.getComputeStock);
 router.put('/compute/stock', can('manage_services'), Platform.updateComputeStock);

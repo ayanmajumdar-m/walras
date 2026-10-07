@@ -66,6 +66,12 @@ app.get("/api/settings/public", async (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/team", require("./routes/team.routes"));
+// Unsubscribe link in "News & offers" bulk emails (GET from the link, POST for one-click).
+const { unsubscribe } = require("./controllers/bulkEmail.controllers");
+app.get("/api/email/unsubscribe", unsubscribe);
+app.post("/api/email/unsubscribe", unsubscribe);
+// A bulk email left "sending" by a restart is marked interrupted, to resume from admin.
+setTimeout(() => require("./services/bulkEmail").markInterrupted(), 15000);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);

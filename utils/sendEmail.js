@@ -303,7 +303,20 @@ If you weren't expecting this, you can ignore this email.`,
     return info;
 };
 
+/** One prepared message (bulk email). Throws so the caller can count failures. */
+const sendRawEmail = async ({ to, subject, html, text, headers }) => {
+    if (process.env.MAIL_DEV_LOG === 'true' && process.env.NODE_ENV !== 'production') {
+        console.log(`📧 [MAIL_DEV_LOG] "${subject}" to ${to}`);
+        return { messageId: 'dev-log' };
+    }
+    if (!emailConfigured) throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
+    return transporter.sendMail({ from: await resolveSender(), to, subject, html, text, headers });
+};
+
 module.exports = {
+    sendRawEmail,
+    emailConfigured,
+    escapeHtml,
     sendTeamInviteEmail,
     resolveSender,
     sendTestEmail,

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
-  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes,
+  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail,
 } from "lucide-react";
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import { adminApi, adminLogout } from "./adminApi";
@@ -13,6 +13,7 @@ import Administrators from "./sections/Administrators";
 import AuditLogs from "./sections/AuditLogs";
 import PlatformSettings from "./sections/PlatformSettings";
 import ComputeStock from "./sections/ComputeStock";
+import BulkEmail from "./sections/BulkEmail";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
   DashboardSection, TransactionsSection, InvoicesSection, PromoCodesSection,
@@ -36,6 +37,7 @@ const GROUPS = [
     items: [
       { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard, perm: "view_dashboard" },
       { id: "customers", label: "Customers", Icon: Users, perm: "view_users" },
+      { id: "bulk-email", label: "Email customers", Icon: Mail, perm: "send_bulk_email" },
       { id: "orders", label: "Orders", Icon: Receipt, perm: "view_billing" },
       { id: "transactions", label: "Transactions", Icon: ArrowLeftRight, perm: "view_billing" },
       { id: "invoices", label: "Invoices", Icon: FileText, perm: "view_billing" },
@@ -108,6 +110,7 @@ const AdminDashboard = () => {
       case "hosting": return <HostingSection notify={notify} />;
       case "servers": return <ServersSection />;
       case "compute-stock": return <ComputeStock can={can} />;
+      case "bulk-email": return <BulkEmail />;
       case "domains": return <DomainsSection />;
       case "admins": return <Administrators me={me} />;
       case "audit": return <AuditLogs openCustomer={openCustomer} />;
