@@ -17,6 +17,9 @@
   text-align: left;
   cursor: pointer;
 }
+/* No outline after a mouse click; keyboard focus still shows one. */
+.ap-nav-btn:focus { outline: none; }
+.ap-nav-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.5); outline-offset: -2px; }
 
 .ap-role-pill { font-size: 12px; }
 .ap-page-notice { margin-bottom: 18px; }
