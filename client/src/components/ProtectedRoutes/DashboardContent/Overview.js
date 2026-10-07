@@ -32,7 +32,7 @@ const Overview = () => {
 
   const STATS = [
     ...(hasServers ? [
-    { label: "Cloud Compute", value: servers.length, note: `${activeServers} running`, Icon: Layers, to: "/dashboard/resources?tab=servers" },
+    { label: "Virtual Machines", value: servers.length, note: `${activeServers} running`, Icon: Layers, to: "/dashboard/resources?tab=servers" },
     ...(WEB_HOSTING_ENABLED || hosting.length > 0
       ? [{ label: "Web hosting", value: hosting.length, note: `${activeHosting} active`, Icon: Server, to: "/dashboard/resources?tab=hosting" }]
       : []),
@@ -44,7 +44,7 @@ const Overview = () => {
   // Newest first, across every kind of resource.
   const recent = [
     ...hosting.map((h) => ({ key: `h${h.id}`, Icon: Server, name: h.domain, kind: `Web Hosting · ${h.plan_name}`, status: h.status, date: h.created_at, tab: "hosting" })),
-    ...servers.map((s) => ({ key: `s${s.id}`, Icon: Cpu, name: s.name, kind: `Cloud Compute · ${s.plan_name}`, status: s.status, date: s.created_at, tab: "servers" })),
+    ...servers.map((s) => ({ key: `s${s.id}`, Icon: Cpu, name: s.name, kind: `Virtual Machine · ${s.plan_name}`, status: s.status, date: s.created_at, tab: "servers" })),
     ...domains.map((d) => ({ key: `d${d.id}`, Icon: Globe, name: d.full_domain || d.domain_name, kind: "Domain", status: d.status, date: d.created_at || d.registration_date, tab: "domains" })),
   ]
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))

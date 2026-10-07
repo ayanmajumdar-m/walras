@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Save, RefreshCw, AlertTriangle } from "lucide-react";
 import { adminApi } from "../adminApi";
+import { formatRam } from "../../../data/plans";
 
 /*
-  Cloud Compute stock: how many of each plan may be sold in each SolusVM
+  Virtual Machine stock: how many of each plan may be sold in each SolusVM
   location, and which SolusVM plan each Walras plan creates. Deploying takes
   one unit; deleting a server gives it back. "Running" counts live servers.
 */
@@ -66,7 +67,7 @@ const ComputeStock = ({ can }) => {
     <div className="cx-page">
       <div className="cx-page-head cx-page-head-row">
         <div>
-          <h2>Compute stock</h2>
+          <h2>Virtual Machine stock</h2>
           <p>How many servers of each plan can be sold in each location. Deploying uses one; deleting a server returns it.</p>
         </div>
         <button type="button" className="cx-btn cx-btn-ghost" onClick={load}><RefreshCw size={15} /> Refresh</button>
@@ -76,7 +77,7 @@ const ComputeStock = ({ can }) => {
 
       {!data.configured ? (
         <div className="cx-alert is-error">
-          <AlertTriangle size={16} /> SolusVM isn't connected. Set <code>SOLUSVM_URL</code> and <code>SOLUSVM_API_TOKEN</code> on the server and restart it. Until then Cloud Compute shows Out of stock everywhere.
+          <AlertTriangle size={16} /> SolusVM isn't connected. Set <code>SOLUSVM_URL</code> and <code>SOLUSVM_API_TOKEN</code> on the server and restart it. Until then Virtual Machines show Out of stock everywhere.
         </div>
       ) : data.solusError ? (
         <div className="cx-alert is-error"><AlertTriangle size={16} /> Couldn't load locations and plans from SolusVM: {data.solusError}</div>
@@ -103,7 +104,7 @@ const ComputeStock = ({ can }) => {
                   <tr key={p.name}>
                     <td data-label="Plan">
                       <strong>{p.name}</strong>
-                      <small>{p.vcpu} vCPU · {p.ram} GB · {p.storage} GB · ₹{p.monthly}/mo</small>
+                      <small>{p.cpu === "amd" ? "AMD" : "Intel"} · {p.vcpu} vCPU · {formatRam(p.ram)} · {p.storage} GB NVMe · ₹{p.monthly.toLocaleString("en-IN")}/mo</small>
                     </td>
                     <td data-label="SolusVM plan">
                       <select className="ap-select" value={draft[p.name].solusPlanId} disabled={!editable}

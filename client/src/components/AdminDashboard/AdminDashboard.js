@@ -45,8 +45,8 @@ const GROUPS = [
       { id: "promo-codes", label: "Promo codes", Icon: Ticket, perm: ["manage_coupons", "view_billing"] },
       // Hidden while Web Hosting is withdrawn (data/plans.js WEB_HOSTING_ENABLED).
       ...(WEB_HOSTING_ENABLED ? [{ id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" }] : []),
-      { id: "servers", label: "Cloud Compute", Icon: Layers, perm: "view_services" },
-      { id: "compute-stock", label: "Compute stock", Icon: Boxes, perm: "view_services" },
+      { id: "servers", label: "Virtual Machines", Icon: Layers, perm: "view_services" },
+      { id: "compute-stock", label: "VM stock", Icon: Boxes, perm: "view_services" },
       { id: "domains", label: "Domains", Icon: Globe, perm: "view_services" },
     ],
   },

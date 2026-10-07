@@ -98,7 +98,7 @@ const accountNote = async (userId) => {
         'Web hosting:',
         ...(hosting.length ? hosting.map((h) => `- ${h.domain} (${h.plan_name}): ${h.status}, expires ${date(h.expires_at)}`) : ['- none']),
         '',
-        'Cloud Compute:',
+        'Virtual Machines:',
         ...(servers.length ? servers.map((s) => `- ${s.name} (${s.plan_name}): ${s.status}`) : ['- none']),
     ].join('\n');
 };

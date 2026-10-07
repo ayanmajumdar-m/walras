@@ -61,10 +61,10 @@ const ALL_SERVICES = [
   {
     ref: "S-03",
     Icon: Cpu,
-    title: "Cloud Compute",
-    description: "High-performance virtual machines with SSD storage, billed by the hour.",
-    features: ["Instant Deployment", "SSD Storage", "Auto Scaling", "99.9% Uptime"],
-    action: { label: "View plans", href: "/pricing#cloud-compute" }
+    title: "Virtual Machine",
+    description: "General purpose virtual machines on Intel or AMD, with NVMe SSD storage, billed by the hour.",
+    features: ["Intel or AMD CPUs", "NVMe SSD Storage", "Instant Deployment", "99.9% Uptime"],
+    action: { label: "View plans", href: "/pricing#virtual-machine" }
   }
 ];
 

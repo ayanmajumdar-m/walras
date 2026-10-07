@@ -9,7 +9,7 @@ import TransferDomainModal from "./TransferDomainModal";
 
 const TABS = [
   { id: "hosting", label: "Web Hosting", Icon: Server },
-  { id: "servers", label: "Cloud Compute", Icon: Layers },
+  { id: "servers", label: "Virtual Machines", Icon: Layers },
   { id: "domains", label: "Domains", Icon: Globe },
 ];
 
@@ -144,8 +144,8 @@ const ServersTab = ({ servers, reload, notify }) => {
   };
 
   if (servers.length === 0) {
-    return <Empty Icon={Layers} title="No Cloud Compute yet" text="Virtual machines for apps and workloads. New capacity is on its way."
-      cta={<Link to="/dashboard/create?type=compute" className="cx-btn cx-btn-ghost">See Cloud Compute plans</Link>} />;
+    return <Empty Icon={Layers} title="No virtual machines yet" text="General purpose VMs for apps and workloads, on Intel or AMD."
+      cta={<Link to="/dashboard/create?type=compute" className="cx-btn cx-btn-ghost">See Virtual Machine plans</Link>} />;
   }
 
   return (

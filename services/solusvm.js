@@ -1,5 +1,5 @@
 /**
- * SolusVM 2 REST API client (Cloud Compute provisioning).
+ * SolusVM 2 REST API client (Virtual Machine provisioning).
  *
  * SOLUSVM_URL       — the panel address, e.g. https://cloud.example.com
  * SOLUSVM_API_TOKEN — an API token from the panel (Account → API Tokens),

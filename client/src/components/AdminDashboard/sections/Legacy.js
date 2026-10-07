@@ -138,7 +138,7 @@ export const PromoCodesSection = ({ notify }) => {
 export const ServersSection = () => {
   const { data, error } = useLoad(() => adminApi("/getAllServers"));
   return (
-    <Page title="Cloud Compute" subtitle="Every customer Cloud Compute server.">
+    <Page title="Virtual Machines" subtitle="Every customer virtual machine.">
       <ErrorNote error={error} />
       <Servers servers={data || []} formatCurrency={formatCurrency} formatDate={formatDate} />
     </Page>

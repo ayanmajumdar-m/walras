@@ -1,5 +1,5 @@
 /**
- * Cloud Compute catalogue and stock.
+ * Virtual Machine catalogue and stock.
  *
  * Plans and prices live here, on the server: the price a customer pays never
  * comes from the browser. Stock is a quantity per plan per SolusVM location
@@ -11,12 +11,22 @@ const connection = require('../config/db');
 const appSettings = require('./appSettings');
 const solusvm = require('../services/solusvm');
 
-// Same plans and prices as client/src/data/plans.js (prices exclude GST).
+// Virtual Machine → General Purpose. Same plans and prices as
+// client/src/data/plans.js (rupees, excluding GST; usd for reference).
+// ram and bandwidth in GB (ram 0.5 = 512 MB). network in Gbps.
+const CPU_TYPES = { intel: 'Intel', amd: 'AMD' };
+const vm = (name, cpu, vcpu, ram, storage, bandwidth, monthly, usd) =>
+    ({ name, cpu, vcpu, ram, storage, bandwidth, network: 1, monthly, usd });
 const COMPUTE_PLANS = [
-    { name: 'WSC-4GB', vcpu: 2, ram: 4, storage: 60, bandwidth: 2, monthly: 900 },
-    { name: 'SFC-8GB', vcpu: 4, ram: 8, storage: 120, bandwidth: 4, monthly: 1800 },
-    { name: 'SFC-16GB', vcpu: 6, ram: 16, storage: 240, bandwidth: 6, monthly: 3600 },
-    { name: 'SFC-32GB', vcpu: 10, ram: 32, storage: 480, bandwidth: 10, monthly: 5400 },
+    vm('VMgIN_0.5', 'intel', 1, 0.5, 10, 256, 350, 3.5),
+    vm('VMgIN_1', 'intel', 1, 1, 20, 512, 450, 4.5),
+    vm('VMgIN_2', 'intel', 1, 2, 40, 1024, 980, 10),
+    vm('VMgIN_4', 'intel', 2, 4, 60, 2048, 1400, 15),
+    vm('VMgIN_8', 'intel', 4, 8, 80, 4096, 2400, 25),
+    vm('VMgIN_16', 'intel', 6, 16, 120, 5120, 4000, 40),
+    vm('VMgIN_24', 'intel', 8, 24, 160, 8192, 6000, 65),
+    vm('VMgIN_32', 'intel', 10, 32, 200, 10240, 9000, 95),
+    vm('VMgIN_64', 'intel', 14, 64, 400, 20480, 12000, 125),
 ];
 const HOURS_PER_MONTH = 720;
 
@@ -111,6 +121,7 @@ const getAvailability = async () => {
 };
 
 module.exports = {
+    CPU_TYPES,
     COMPUTE_PLANS,
     findPlan,
     hourlyRupees,

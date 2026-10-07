@@ -90,9 +90,9 @@ const PlatformSettings = () => {
 
         <section className="cx-card ap-card">
           <h3>Plan availability</h3>
-          <h4 className="ap-subhead">Cloud Compute</h4>
+          <h4 className="ap-subhead">Virtual Machines</h4>
           <p className="ap-muted">
-            Set per plan and location in <a className="cx-link" href="?section=compute-stock">Compute stock</a>.
+            Set per plan and location in <a className="cx-link" href="?section=compute-stock">VM stock</a>.
             "All plans out of stock" above still overrides it.
           </p>
           {WEB_HOSTING_ENABLED && (<>

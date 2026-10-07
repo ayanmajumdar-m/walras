@@ -4,7 +4,7 @@ import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock, MapPin, Eye, EyeO
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
-import { COMPUTE_PLANS, HOSTING_PLANS, HOSTING_PRICES, formatINR } from "../../../data/plans";
+import { COMPUTE_PLANS, CPU_TYPES, HOSTING_PLANS, HOSTING_PRICES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
 
 /*
   One page to create anything, CloudPe style: pick the product at the top,
@@ -159,7 +159,7 @@ const HostingConfigurator = () => {
   );
 };
 
-// ── Cloud Compute ──────────────────────────────────────────────────────────
+// ── Virtual Machine ────────────────────────────────────────────────────────
 const HOSTNAME_RE = /^(?=.{1,100}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
 const passwordOk = (p) => p.length >= 10 && p.length <= 72 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && !/\s/.test(p);
 
@@ -182,7 +182,8 @@ const ComputeConfigurator = () => {
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [locationId, setLocationId] = useState(null);
-  const [selected, setSelected] = useState(COMPUTE_PLANS.find((p) => p.popular)?.name || COMPUTE_PLANS[0].name);
+  const [cpu, setCpu] = useState(CPU_TYPES[0].id);
+  const [selected, setSelected] = useState(COMPUTE_PLANS[0].name);
   const [osId, setOsId] = useState("");
   const [hostname, setHostname] = useState("");
   const [password, setPassword] = useState("");
@@ -199,7 +200,7 @@ const ComputeConfigurator = () => {
         if (loc) {
           setLocationId(loc.id);
           const pick = c.plans.find((p) => p.popular && p.locations.includes(loc.id)) || c.plans.find((p) => p.locations.includes(loc.id));
-          if (pick) setSelected(pick.name);
+          if (pick) { setSelected(pick.name); setCpu(pick.cpu || "intel"); }
         }
         if (c.os[0]) setOsId(String((c.os.find((o) => /ubuntu/i.test(o.name)) || c.os[0]).id));
       })
@@ -207,19 +208,29 @@ const ComputeConfigurator = () => {
   }, []);
 
   const plans = catalog?.plans || COMPUTE_PLANS;
-  const plan = plans.find((p) => p.name === selected) || plans[0];
+  // Plans for the chosen CPU type. None yet for a type = "coming soon", no plan.
+  const cpuPlans = plans.filter((p) => (p.cpu || "intel") === cpu);
+  const plan = cpuPlans.find((p) => p.name === selected) || cpuPlans[0] || null;
   const inStock = (p) => Boolean(catalog && locationId != null && (p.locations || []).includes(locationId));
   const anyStock = Boolean(catalog?.enabled);
   const hasLocations = catalog?.locations.length > 0;
   const hostnameOk = HOSTNAME_RE.test(hostname.trim());
-  const canDeploy = inStock(plan) && osId && hostnameOk && passwordOk(password) && !deploying;
+  const canDeploy = plan && inStock(plan) && osId && hostnameOk && passwordOk(password) && !deploying;
 
   const pickLocation = (id) => {
     setLocationId(id);
-    if (!(plan.locations || []).includes(id)) {
-      const next = plans.find((p) => (p.locations || []).includes(id));
+    if (!plan || !(plan.locations || []).includes(id)) {
+      const next = cpuPlans.find((p) => (p.locations || []).includes(id));
       if (next) setSelected(next.name);
     }
+  };
+
+  // Switching CPU type: keep the choice if it fits, else the first plan in stock.
+  const pickCpu = (id) => {
+    setCpu(id);
+    const list = plans.filter((p) => (p.cpu || "intel") === id);
+    const next = list.find((p) => inStock(p)) || list[0];
+    if (next) setSelected(next.name);
   };
 
   const deploy = async () => {
@@ -244,7 +255,7 @@ const ComputeConfigurator = () => {
         {loadError && <div className="cx-alert is-error">{loadError}</div>}
         {catalog && !anyStock && (
           <div className="cx-alert is-info">
-            Cloud Compute is fully booked right now. New capacity is on its way; you can still compare plans below.
+            Virtual Machines are fully booked right now. New capacity is on its way; you can still compare plans below.
           </div>
         )}
 
@@ -271,15 +282,32 @@ const ComputeConfigurator = () => {
 
         <section className="cx-card cx-step">
           <h3><span className="cx-step-num">{hasLocations ? 2 : 1}</span> Choose a plan</h3>
-          <h4 className="cx-plan-family">Shared CPU</h4>
+          <div className="cx-family-head">
+            <h4 className="cx-plan-family">General Purpose</h4>
+            <div className="cx-seg" role="tablist" aria-label="CPU type">
+              <span className="cx-seg-label">CPU type</span>
+              {CPU_TYPES.map((c) => (
+                <button key={c.id} type="button" role="tab" aria-selected={cpu === c.id}
+                  className={cpu === c.id ? "is-active" : ""} onClick={() => pickCpu(c.id)}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {cpuPlans.length === 0 ? (
+            <div className="cx-soon-inline">
+              <strong>{CPU_TYPES.find((c) => c.id === cpu)?.label} plans are coming soon.</strong>
+              <span>Choose another CPU type to see the plans available now.</span>
+            </div>
+          ) : (<>
           {/* Wide screens: a comparison table. Phones: one card per plan (below). */}
           <div className="cx-table-wrap cx-plan-table">
             <table className="cx-table cx-table-select">
               <thead>
-                <tr><th /><th>Plan</th><th>vCPUs</th><th>Memory</th><th>SSD</th><th>Bandwidth</th><th>Price</th></tr>
+                <tr><th /><th>Plan</th><th>vCPUs</th><th>Memory</th><th>NVMe SSD</th><th>Bandwidth</th><th>Price</th></tr>
               </thead>
               <tbody>
-                {plans.map((p) => {
+                {cpuPlans.map((p) => {
                   const available = inStock(p);
                   return (
                     <tr key={p.name} className={`${p.name === plan.name && available ? "is-selected" : ""}${available ? "" : " is-off"}`}
@@ -290,9 +318,9 @@ const ComputeConfigurator = () => {
                         {!available ? <span className="cx-tag is-off">Out of stock</span> : p.popular && <span className="cx-tag">Popular</span>}
                       </td>
                       <td>{p.vcpu}</td>
-                      <td>{p.ram} GB</td>
+                      <td>{formatRam(p.ram)}</td>
                       <td>{p.storage} GB</td>
-                      <td>{p.bandwidth} TB</td>
+                      <td>{formatBandwidth(p.bandwidth)}</td>
                       <td><strong>{formatINR(p.monthly)}</strong><small>/mo</small></td>
                     </tr>
                   );
@@ -301,7 +329,7 @@ const ComputeConfigurator = () => {
             </table>
           </div>
           <div className="cx-plan-cards" role="radiogroup" aria-label="Plan">
-            {plans.map((p) => {
+            {cpuPlans.map((p) => {
               const available = inStock(p);
               const selected = p.name === plan.name && available;
               return (
@@ -312,7 +340,7 @@ const ComputeConfigurator = () => {
                       <strong>{p.name}</strong>
                       {!available ? <span className="cx-tag is-off">Out of stock</span> : p.popular && <span className="cx-tag">Popular</span>}
                     </span>
-                    <small>{p.vcpu} vCPU · {p.ram} GB RAM · {p.storage} GB SSD · {p.bandwidth} TB</small>
+                    <small>{p.vcpu} vCPU · {formatRam(p.ram)} RAM · {p.storage} GB NVMe SSD · {formatBandwidth(p.bandwidth)} bandwidth</small>
                   </span>
                   <span className="cx-plan-card-price">
                     <strong>{formatINR(p.monthly)}</strong><small>/mo</small>
@@ -321,7 +349,8 @@ const ComputeConfigurator = () => {
               );
             })}
           </div>
-          <p className="cx-step-help">Every plan includes one IPv4 address and transfer at 10 Gbps (1 Gbps in Asian locations).</p>
+          </>)}
+          <p className="cx-step-help">Every plan includes one IPv4 address and a 1 Gbps network port.</p>
         </section>
 
         {anyStock && (
@@ -365,19 +394,20 @@ const ComputeConfigurator = () => {
         <div className="cx-card cx-summary-card">
           <h3>Order summary</h3>
           <dl>
-            <div><dt>Product</dt><dd>Cloud Compute</dd></div>
-            <div><dt>Plan</dt><dd>{plan.name}</dd></div>
-            <div><dt>Resources</dt><dd>{plan.vcpu} vCPU · {plan.ram} GB</dd></div>
+            <div><dt>Product</dt><dd>Virtual Machine</dd></div>
+            <div><dt>Type</dt><dd>General Purpose · {CPU_TYPES.find((c) => c.id === cpu)?.label}</dd></div>
+            <div><dt>Plan</dt><dd>{plan ? plan.name : "—"}</dd></div>
+            {plan && <div><dt>Resources</dt><dd>{plan.vcpu} vCPU · {formatRam(plan.ram)}</dd></div>}
             {hasLocations && <div><dt>Location</dt><dd>{catalog.locations.find((l) => l.id === locationId)?.name || "—"}</dd></div>}
           </dl>
           <dl className="cx-summary-money">
-            <div><dt>Hourly</dt><dd>{formatINR(plan.hourly, 2)}</dd></div>
-            <div className="cx-summary-total"><dt>Monthly</dt><dd>{formatINR(plan.monthly)}</dd></div>
+            <div><dt>Hourly</dt><dd>{plan ? formatINR(plan.hourly, 2) : "—"}</dd></div>
+            <div className="cx-summary-total"><dt>Monthly</dt><dd>{plan ? formatINR(plan.monthly) : "—"}</dd></div>
           </dl>
           {error && <p className="cx-alert is-error" role="alert">{error}</p>}
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={deploy} disabled={!canDeploy}>
             {deploying ? <><Loader2 size={18} className="cx-spin" /> Creating server…</>
-              : inStock(plan) ? "Deploy server" : "Out of stock"}
+              : !plan ? "Coming soon" : inStock(plan) ? "Deploy server" : "Out of stock"}
           </button>
           <p className="cx-summary-note">
             Billed hourly from your account balance ({formatINR(balance, 2)} available). Prices exclude GST; the first hour is charged now.

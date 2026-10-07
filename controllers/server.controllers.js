@@ -1,5 +1,5 @@
 /**
- * Cloud Compute: servers created on SolusVM (services/solusvm.js) and sold
+ * Virtual Machines: servers created on SolusVM (services/solusvm.js) and sold
  * against the stock admins set per plan and location (utils/computeStock.js).
  *
  * Deploying is a chain of single, atomic steps rather than one transaction,
@@ -31,7 +31,7 @@ const handle = (label, fn) => async (req, res) => {
         if (err instanceof HttpError) return res.status(err.status).json({ error: err.message, ...err.extra });
         if (err instanceof solusvm.SolusError) {
             console.error(`${label} (SolusVM) failed:`, err.message);
-            return res.status(502).json({ error: 'Cloud Compute is temporarily unavailable. Please try again shortly.' });
+            return res.status(502).json({ error: 'Virtual Machines are temporarily unavailable. Please try again shortly.' });
         }
         console.error(`${label} failed:`, err);
         res.status(500).json({ error: 'Something went wrong. Please try again.' });
@@ -160,7 +160,7 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     await q(
         `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, razorpay_payment_id, razorpay_order_id, status)
          VALUES (?, 'debit', ?, ?, ?, NULL, NULL, 'completed')`,
-        [wallet.id, firstHour, `Cloud Compute first hour - ${hostname} (${plan.name})`, `server_${serverId}`],
+        [wallet.id, firstHour, `Virtual Machine first hour - ${hostname} (${plan.name})`, `server_${serverId}`],
     ).catch((e) => console.error('Deploy transaction record failed:', e.message));
     await q(
         `INSERT INTO billing_logs (user_id, server_id, amount, billing_period, description) VALUES (?, ?, ?, NOW(), ?)`,

@@ -59,7 +59,7 @@ router.post('/bulk-email', can('send_bulk_email'), BulkEmail.send);
 router.post('/bulk-email/:id/cancel', can('send_bulk_email'), BulkEmail.cancel);
 router.post('/bulk-email/:id/resume', can('send_bulk_email'), BulkEmail.resume);
 
-// Cloud Compute stock (per plan per SolusVM location)
+// Virtual Machine stock (per plan per SolusVM location)
 router.get('/compute/stock', can('view_services'), Platform.getComputeStock);
 router.put('/compute/stock', can('manage_services'), Platform.updateComputeStock);
 router.get('/getTotalUsers', can('view_dashboard'), AdminController.getTotalUsers);

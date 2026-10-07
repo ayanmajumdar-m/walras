@@ -392,7 +392,7 @@ const PlatformController = {
         res.json({ message: 'ok' });
     }),
 
-    // ── Cloud Compute stock ──────────────────────────────────────────────
+    // ── Virtual Machine stock ──────────────────────────────────────────────
     /**
      * Stock per plan per SolusVM location, each plan's linked SolusVM plan,
      * and how many servers of each are running now. Lists from SolusVM are
@@ -455,7 +455,7 @@ const PlatformController = {
         await computeStock.setPlanMap({ ...before.planMap, ...map });
         const after = { stock: await computeStock.getStock(), planMap: await computeStock.getPlanMap() };
         audit(req, 'compute.stock', 'settings', 'compute', { before, after });
-        res.json({ message: 'Cloud Compute stock saved' });
+        res.json({ message: 'Virtual Machine stock saved' });
     }),
 
     // ── Support departments (Zendesk groups customers can choose) ────────

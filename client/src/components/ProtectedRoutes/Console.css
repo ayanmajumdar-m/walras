@@ -1337,7 +1337,7 @@
   .cx-ticket-form { padding: 16px; }
 }
 
-/* ── Cloud Compute order form ── */
+/* ── Virtual Machine order form ── */
 .cx-choice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 .cx-choice-grid .cx-term {
   cursor: pointer;
@@ -1380,7 +1380,7 @@
   .cx-input-row input { flex-basis: 100%; }
 }
 
-/* Plan family heading inside the plan step (e.g. "Shared CPU") */
+/* Plan family heading inside the plan step (e.g. "General Purpose") */
 .cx-plan-family { margin: 0 0 10px; font-family: var(--font-heading); font-size: 17px; font-weight: 700; }
 
 /* ── Team accounts ── */
@@ -1517,3 +1517,19 @@
   .cx-plan-table { display: none; }
   .cx-plan-cards { display: flex; flex-direction: column; gap: 10px; }
 }
+
+/* Virtual Machine: General Purpose + CPU type switch */
+.cx-family-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; }
+.cx-family-head .cx-plan-family { margin: 0; }
+.cx-seg { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; background: var(--color-neutral-200); }
+.cx-seg-label { padding: 0 6px 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.cx-seg button {
+  border: 0; border-radius: 7px; padding: 7px 16px; background: transparent; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--text-secondary);
+}
+.cx-seg button.is-active { background: #ffffff; color: var(--color-text); box-shadow: var(--shadow-sm); }
+.cx-soon-inline {
+  display: flex; flex-direction: column; gap: 4px; padding: 22px; text-align: center;
+  border: 1px dashed var(--color-divider); border-radius: 12px;
+}
+.cx-soon-inline span { font-size: 14px; color: var(--text-muted); }

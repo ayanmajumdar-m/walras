@@ -6,7 +6,7 @@ const computeStock = require('./computeStock');
  * Defaults reproduce how the platform behaved before these switches existed.
  */
 
-// A family listed here can't be sold. Cloud Compute is not listed: it is on
+// A family listed here can't be sold. Virtual Machines are not listed: they are on
 // sale wherever its stock allows (utils/computeStock.js).
 // Web Hosting is withdrawn for now: no new hosting can be bought. Existing
 // hosting accounts keep running and stay manageable. Delete the entry to
@@ -17,7 +17,7 @@ const LOCKED_FAMILIES = {
 
 const PLAN_DEFAULTS = {
     hosting: { Seed: true, Tree: true },
-    compute: { 'WSC-4GB': false, 'SFC-8GB': false, 'SFC-16GB': false, 'SFC-32GB': false },
+    compute: {}, // from stock, see utils/computeStock.js
 };
 
 // What invoices showed when these details were hard-coded.
@@ -54,7 +54,7 @@ const getPlatform = async () => {
             hosting: LOCKED_FAMILIES.hosting
                 ? Object.fromEntries(Object.keys(PLAN_DEFAULTS.hosting).map((name) => [name, false]))
                 : { ...PLAN_DEFAULTS.hosting, ...(plans.hosting || {}) },
-            // In stock in at least one location (stock and SolusVM in Settings → Compute stock).
+            // In stock in at least one location (stock and SolusVM in Admin → Virtual Machine stock).
             compute: Object.fromEntries(Object.entries(await computeStock.getAvailability())
                 .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
         },

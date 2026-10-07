@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Pricing.css';
-import { COMPUTE_PLANS } from '../../data/plans';
+import { COMPUTE_PLANS, CPU_TYPES, formatRam, formatBandwidth } from '../../data/plans';
 import {
   Layers, Server, Globe, ChevronUp, ChevronDown, ArrowRight, Check, Cpu, MemoryStick,
   HardDrive, Network, Shield, Clock, BookOpen
@@ -13,21 +13,23 @@ import {
   /domains, /bare-metal and /about/pricing redirect here with a hash.
 */
 
-// ── Cloud Compute ───────────────────────────────────────────────────────────
+// ── Virtual Machine ────────────────────────────────────────────────────────
+// Columns sort on the raw number; `show` formats it (e.g. 0.5 GB → 512 MB).
+const splitUnit = (s) => { const [v, ...u] = s.split(" "); return [v, u.join(" ")]; };
 const PLAN_COLUMNS = [
-  { key: "vcpu", label: "vCPUs", unit: (p) => (p.vcpu === 1 ? "vCPU" : "vCPUs") },
-  { key: "ram", label: "Memory", unit: () => "GB" },
-  { key: "bandwidth", label: "Bandwidth", unit: () => "TB" },
-  { key: "storage", label: "SSD Storage", unit: () => "GB" },
+  { key: "vcpu", label: "vCPUs", show: (p) => [p.vcpu, p.vcpu === 1 ? "vCPU" : "vCPUs"] },
+  { key: "ram", label: "Memory", show: (p) => splitUnit(formatRam(p.ram)) },
+  { key: "storage", label: "NVMe SSD", show: (p) => [p.storage, "GB"] },
+  { key: "bandwidth", label: "Bandwidth", show: (p) => splitUnit(formatBandwidth(p.bandwidth)) },
   { key: "monthly", label: "Monthly", price: true },
   { key: "hourly", label: "Hourly", price: true }
 ];
 
 const COMPUTE_INCLUDES = [
   { Icon: Network, text: "1 IPv4 address" },
-  { Icon: Cpu, text: "10 Gbps network" },
-  { Icon: MemoryStick, text: "DDR4 memory" },
-  { Icon: HardDrive, text: "SSD storage" }
+  { Icon: Cpu, text: "1 Gbps network" },
+  { Icon: MemoryStick, text: "Intel or AMD CPUs" },
+  { Icon: HardDrive, text: "NVMe SSD storage" }
 ];
 
 const formatPrice = (key, value) =>
@@ -44,7 +46,7 @@ const DOMAIN_INCLUDES = [
 
 // ── Rail ───────────────────────────────────────────────────────────────────
 const SECTIONS = [
-  { id: "cloud-compute", Icon: Layers, title: "Cloud Compute", desc: "Virtual machines for everyday workloads.", from: "from ₹900/mo" },
+  { id: "virtual-machine", Icon: Layers, title: "Virtual Machine", desc: "General purpose VMs on Intel or AMD.", from: "from ₹350/mo" },
   { id: "bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon" }
 ];
@@ -66,8 +68,9 @@ const Pricing = () => {
   const location = useLocation();
   const [active, setActive] = useState(SECTIONS[0].id);
   const [sort, setSort] = useState({ key: "monthly", dir: "asc" });
-  // Which Cloud Compute plans are in stock somewhere (set by admins).
+  // Which Virtual Machine plans are in stock somewhere (set by admins).
   const [computeStock, setComputeStock] = useState({});
+  const [cpu, setCpu] = useState(CPU_TYPES[0].id);
 
   useEffect(() => {
     fetch("/api/settings/public")
@@ -80,7 +83,9 @@ const Pricing = () => {
   // fresh page load (e.g. the /domains redirect) the browser resets scroll
   // when loading finishes, so scroll again once it has.
   useEffect(() => {
-    const id = location.hash.replace("#", "");
+    const hash = location.hash.replace("#", "");
+    // Old links used #cloud-compute.
+    const id = hash === "cloud-compute" ? "virtual-machine" : hash;
     if (!id) return;
     const go = () => scrollToSection(id, false);
     requestAnimationFrame(go);
@@ -113,7 +118,7 @@ const Pricing = () => {
     window.history.replaceState(null, "", `#${id}`);
   };
 
-  const sortedPlans = [...COMPUTE_PLANS].sort((a, b) =>
+  const sortedPlans = COMPUTE_PLANS.filter((p) => p.cpu === cpu).sort((a, b) =>
     sort.dir === "asc" ? a[sort.key] - b[sort.key] : b[sort.key] - a[sort.key]
   );
 
@@ -164,15 +169,15 @@ const Pricing = () => {
         </nav>
 
         <main className="pr-content">
-          {/* ── Cloud Compute ── */}
-          <section className="pr-section" id="cloud-compute">
+          {/* ── Virtual Machine ── */}
+          <section className="pr-section" id="virtual-machine">
             <div className="pr-section-head">
               <span className="pr-section-icon"><Layers aria-hidden="true" /></span>
               <div>
-                <h2 className="pr-section-title">Cloud Compute</h2>
+                <h2 className="pr-section-title">Virtual Machine</h2>
                 <p className="pr-section-lede">
-                  Virtual machines with a balanced mix of CPU, memory and SSD storage, suitable for
-                  websites, apps and everyday workloads.
+                  Virtual machines with a balanced mix of CPU, memory and NVMe SSD storage, on Intel or
+                  AMD, suitable for websites, apps and everyday workloads.
                 </p>
               </div>
             </div>
@@ -183,7 +188,24 @@ const Pricing = () => {
               ))}
             </ul>
 
-            <h3 className="pr-subtitle">Shared CPU</h3>
+            <div className="pr-family-head">
+              <h3 className="pr-subtitle">General Purpose</h3>
+              <div className="pr-seg" role="tablist" aria-label="CPU type">
+                <span className="pr-seg-label">CPU type</span>
+                {CPU_TYPES.map((c) => (
+                  <button key={c.id} type="button" role="tab" aria-selected={cpu === c.id}
+                    className={cpu === c.id ? "is-active" : ""} onClick={() => setCpu(c.id)}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {sortedPlans.length === 0 ? (
+              <div className="pr-card pr-soon-card">
+                <strong>{CPU_TYPES.find((c) => c.id === cpu)?.label} plans are coming soon.</strong>
+                <span>Choose Intel to see the plans available now.</span>
+              </div>
+            ) : (
             <div className="pr-card pr-table-card">
               <table className="pr-table">
                 <thead>
@@ -221,7 +243,7 @@ const Pricing = () => {
                         {plan.name}
                         {plan.popular && <span className="pr-tag">Popular</span>}
                       </td>
-                      {PLAN_COLUMNS.map(({ key, label, unit, price }) => {
+                      {PLAN_COLUMNS.map(({ key, label, show, price }) => {
                         const cls = sort.key === key ? "is-sorted" : "";
                         if (price) {
                           const { amount, per } = formatPrice(key, plan[key]);
@@ -231,9 +253,10 @@ const Pricing = () => {
                             </td>
                           );
                         }
+                        const [value, unit] = show(plan);
                         return (
                           <td key={key} data-label={label} className={cls}>
-                            <strong>{plan[key]}</strong> <span className="pr-unit">{unit(plan)}</span>
+                            <strong>{value}</strong> <span className="pr-unit">{unit}</span>
                           </td>
                         );
                       })}
@@ -247,10 +270,11 @@ const Pricing = () => {
                 </tbody>
               </table>
             </div>
+            )}
 
             <p className="pr-footnote">
-              Prices exclude tax; the final amount is shown at checkout. Transfer runs at 10 Gbps,
-              or 1 Gbps in Asian locations.
+              Prices exclude tax; the final amount is shown at checkout. Every plan includes one IPv4
+              address and a 1 Gbps network port.
             </p>
           </section>
 

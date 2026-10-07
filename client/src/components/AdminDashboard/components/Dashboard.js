@@ -9,7 +9,7 @@ import { Users, Server, DollarSign, BarChart3, Hash, Clock } from 'lucide-react'
 
 const STAT_DEFS = [
   { ref: 'S-01', Icon: Users,    key: 'total_users',        label: 'Total Users',        fmt: v => v },
-  { ref: 'S-02', Icon: Server,   key: 'active_servers',     label: 'Active Cloud Compute',fmt: v => v },
+  { ref: 'S-02', Icon: Server,   key: 'active_servers',     label: 'Active VMs',fmt: v => v },
   { ref: 'S-03', Icon: DollarSign, key: 'total_revenue',    label: 'Total Revenue',      fmt: null },
   { ref: 'S-04', Icon: BarChart3, key: 'total_transactions',label: 'Transactions',       fmt: v => v },
   { ref: 'S-05', Icon: Hash,     key: 'unique_ips',         label: 'Unique IPs',         fmt: v => v },
