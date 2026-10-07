@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const connection = require('../config/db');
 const { JWT_SECRET } = process.env;
-const { accessFor, membership } = require('./team');
+const { accessFor, membership, AREAS } = require('./team');
 
 /*
   Suspended customers are refused on every request, not just at sign-in.
@@ -56,15 +56,18 @@ const authenticateToken = (req, res, next) => {
             if (!needed) {
                 return res.status(403).json({ error: "This isn't available while working in a team account.", teamAccessDenied: true });
             }
-            const role = await membership(ownerId, user.userId);
-            if (!role) {
+            const access = await membership(ownerId, user.userId);
+            if (!access) {
                 return res.status(403).json({ error: 'You no longer have access to that account.', teamAccessRevoked: true });
             }
-            if (needed === 'admin' && role !== 'admin') {
+            if (needed === 'team' && access.role !== 'admin') {
                 return res.status(403).json({ error: 'Only account admins can do this.', teamAccessDenied: true });
             }
-            // Write: use everything, delete nothing.
-            if (role === 'write' && req.method === 'DELETE') {
+            if (needed !== 'team' && !access.areas.includes(needed)) {
+                return res.status(403).json({ error: `You don't have ${AREAS[needed].label} access in this account.`, teamAccessDenied: true });
+            }
+            // Write: use their areas, delete nothing.
+            if (access.role === 'write' && req.method === 'DELETE') {
                 return res.status(403).json({ error: "Your Write access can't delete. Ask an account admin.", teamAccessDenied: true });
             }
             const ownerStatus = await userStatus(ownerId);
@@ -72,7 +75,7 @@ const authenticateToken = (req, res, next) => {
                 return res.status(403).json({ error: 'That account is suspended.', teamAccessRevoked: true });
             }
             // Everything downstream scopes by userId, so it now acts on the owner's account.
-            req.user = { ...user, userId: ownerId, actorId: user.userId, teamRole: role };
+            req.user = { ...user, userId: ownerId, actorId: user.userId, teamRole: access.role, teamAreas: access.areas };
             return next();
         }
 

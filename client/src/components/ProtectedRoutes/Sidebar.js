@@ -27,6 +27,7 @@ const initials = (name) =>
 
 // Which account the console works in: your own, or a team you belong to.
 const ROLE_LABELS = { write: "Write", admin: "Admin" };
+const AREA_LABELS = { servers: "Servers", billing: "Billing", support: "Support" };
 
 const AccountSwitcher = ({ profile, account, memberships }) => {
   const [open, setOpen] = useState(false);
@@ -46,7 +47,7 @@ const AccountSwitcher = ({ profile, account, memberships }) => {
     ...memberships.map((m) => ({
       id: String(m.ownerId),
       name: m.company || m.ownerName || m.ownerEmail,
-      sub: `Team · ${ROLE_LABELS[m.role] || "Write"}`,
+      sub: `${ROLE_LABELS[m.role] || "Write"} · ${(m.areas || []).map((a) => AREA_LABELS[a] || a).join(", ")}`,
     })),
   ];
   const current = options.find((o) => o.id === (account ? String(account.ownerId) : null)) || options[0];

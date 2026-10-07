@@ -4,8 +4,9 @@ import { api, switchAccount } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 
 /*
-  Account → Team. Invite up to 5 people by email, each as Write (use
-  everything, delete nothing) or Admin (everything, including the team).
+  Account → Team. Invite up to 5 people by email, each as Write (use their
+  areas, delete nothing) or Admin (everything in their areas, plus the
+  team), with the areas they can use: Servers, Billing, Support.
   In your own account this manages your team; working in a team account as
   an Admin, it manages that account's team. Invitations waiting for you and
   teams you belong to are always your own. The server enforces all of it
@@ -29,16 +30,43 @@ const RolePicker = ({ roles, value, onChange, disabled, name }) => (
   </div>
 );
 
-const MemberRow = ({ member, roles, onSaved, notify, me }) => {
-  const [role, setRole] = useState(member.role);
+const AreaPicker = ({ areas, value, onChange, disabled }) => (
+  <div className="cx-areas">
+    {Object.entries(areas).map(([key, { label, desc }]) => (
+      <label key={key} className={`cx-area${value.includes(key) ? " is-on" : ""}`} title={desc}>
+        <input type="checkbox" checked={value.includes(key)} disabled={disabled}
+          onChange={(e) => onChange(e.target.checked ? [...value, key] : value.filter((v) => v !== key))} />
+        <span><strong>{label}</strong><small>{desc}</small></span>
+      </label>
+    ))}
+  </div>
+);
+
+const ALL_AREAS = ["servers", "billing", "support"];
+
+// Role, then the areas it applies to. Choosing Admin ticks every area.
+const AccessEditor = ({ roles, areas, value, onChange, disabled, name }) => (
+  <>
+    <RolePicker roles={roles} value={value.role} disabled={disabled} name={name}
+      onChange={(role) => onChange({ role, areas: role === "admin" ? ALL_AREAS.filter((a) => areas[a]) : value.areas })} />
+    <span className="cx-areas-label">Can use</span>
+    <AreaPicker areas={areas} value={value.areas} disabled={disabled} onChange={(list) => onChange({ ...value, areas: list })} />
+  </>
+);
+
+const sameAccess = (a, b) => a.role === b.role && [...a.areas].sort().join() === [...b.areas].sort().join();
+const areaText = (areas, list) => (list || []).map((a) => areas[a]?.label || a).join(", ");
+
+const MemberRow = ({ member, roles, areas, onSaved, notify, me }) => {
+  const [access, setAccess] = useState({ role: member.role, areas: member.areas || [] });
   const [busy, setBusy] = useState(false);
   const isMe = me && member.userId === me;
 
   const save = async () => {
-    if (isMe && role !== "admin" && !window.confirm("Change your own role to Write? You won't be able to manage this team any more.")) return;
+    if (isMe && access.role !== "admin" && !window.confirm("Change your own role to Write? You won't be able to manage this team any more.")) return;
     setBusy(true);
     try {
-      const d = await api(`/api/team/members/${member.id}`, { method: "PUT", body: { role } });
+      const d = await api(`/api/team/members/${member.id}`, { method: "PUT", body: access });
       notify(d.message, "success");
       onSaved();
     } catch (e) { notify(e.message, "error"); } finally { setBusy(false); }
@@ -64,7 +92,7 @@ const MemberRow = ({ member, roles, onSaved, notify, me }) => {
           <strong>{member.name || member.email}{isMe ? " (you)" : ""}</strong>
           <small>{member.name ? member.email : ""}</small>
         </span>
-        <span className="cx-pill is-brand">{roles[member.role]?.label}</span>
+        <span className="cx-pill is-brand" title={areaText(areas, member.areas)}>{roles[member.role]?.label}</span>
         <span className={`cx-status ${member.status === "active" ? "is-active" : "is-pending"}`}>
           {member.status === "active" ? "Active" : "Invited"}
         </span>
@@ -72,13 +100,14 @@ const MemberRow = ({ member, roles, onSaved, notify, me }) => {
       <p className="cx-member-meta">
         {member.status === "active" ? `Joined ${formatDate(member.acceptedAt)}` : `Invited ${formatDate(member.invitedAt)} · waiting for them to sign in and accept`}
       </p>
-      <RolePicker roles={roles} value={role} onChange={setRole} disabled={busy} name={`role-${member.id}`} />
+      <AccessEditor roles={roles} areas={areas} value={access} onChange={setAccess} disabled={busy} name={`role-${member.id}`} />
       <div className="cx-member-actions">
         <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm is-danger" onClick={remove} disabled={busy}>
           <Trash2 size={14} /> {member.status === "invited" ? "Cancel invitation" : "Remove"}
         </button>
-        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" onClick={save} disabled={busy || role === member.role}>
-          <Save size={14} /> Save role
+        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" onClick={save}
+          disabled={busy || access.areas.length === 0 || sameAccess(access, { role: member.role, areas: member.areas || [] })}>
+          <Save size={14} /> Save access
         </button>
       </div>
     </div>
@@ -91,7 +120,7 @@ const ManageTeam = ({ notify, me }) => {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("write");
+  const [access, setAccess] = useState({ role: "write", areas: ["servers"] });
   const [inviting, setInviting] = useState(false);
 
   const load = useCallback(() => {
@@ -103,7 +132,7 @@ const ManageTeam = ({ notify, me }) => {
     e.preventDefault();
     setInviting(true);
     try {
-      const d = await api("/api/team/members", { method: "POST", body: { email: email.trim(), role } });
+      const d = await api("/api/team/members", { method: "POST", body: { email: email.trim(), ...access } });
       notify(d.message, "success");
       setEmail("");
       load();
@@ -136,11 +165,11 @@ const ManageTeam = ({ notify, me }) => {
         </label>
         <div className="cx-field">
           <span>Role</span>
-          <RolePicker roles={data.roles} value={role} onChange={setRole} disabled={full} name="invite-role" />
+          <AccessEditor roles={data.roles} areas={data.areas} value={access} onChange={setAccess} disabled={full} name="invite-role" />
         </div>
         <div className="cx-ticket-actions">
           {full && <span className="cx-field-hint">The team is full. Remove someone to invite another person.</span>}
-          <button type="submit" className="cx-btn cx-btn-primary" disabled={full || inviting || !email.trim()}>
+          <button type="submit" className="cx-btn cx-btn-primary" disabled={full || inviting || !email.trim() || access.areas.length === 0}>
             <UserPlus size={15} /> {inviting ? "Sending…" : "Send invitation"}
           </button>
         </div>
@@ -148,7 +177,9 @@ const ManageTeam = ({ notify, me }) => {
 
       {data.members.length > 0 && (
         <div className="cx-member-list">
-          {data.members.map((m) => <MemberRow key={`${m.id}-${m.role}`} member={m} roles={data.roles} onSaved={load} notify={notify} me={me} />)}
+          {data.members.map((m) => (
+            <MemberRow key={`${m.id}-${m.role}-${(m.areas || []).join()}`} member={m} roles={data.roles} areas={data.areas} onSaved={load} notify={notify} me={me} />
+          ))}
         </div>
       )}
     </section>
@@ -190,7 +221,7 @@ const Team = () => {
   if (error) return <div className="cx-alert is-error">{error}</div>;
   if (!data) return <div className="cx-card cx-empty"><p>Loading your team…</p></div>;
 
-  const roleLabel = (r) => data.roles[r]?.label || "Write";
+  const roleLabel = (x) => `${data.roles[x.role]?.label || "Write"} · ${areaText(data.areas, x.areas)}`;
 
   return (
     <div className="cx-team">
@@ -209,7 +240,7 @@ const Team = () => {
               <Mail size={18} aria-hidden="true" />
               <span className="cx-invite-text">
                 <strong>{inv.ownerName || inv.ownerEmail}</strong> invited you to their account
-                <small>Role: {roleLabel(inv.role)} · {formatDate(inv.invitedAt)}</small>
+                <small>Access: {roleLabel(inv)} · {formatDate(inv.invitedAt)}</small>
               </span>
               <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => respond(inv, false)}><X size={14} /> Decline</button>
               <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" onClick={() => respond(inv, true)}><Check size={14} /> Accept</button>
@@ -237,7 +268,7 @@ const Team = () => {
               <Users size={18} aria-hidden="true" />
               <span className="cx-invite-text">
                 <strong>{m.company || m.ownerName || m.ownerEmail}</strong>
-                <small>{m.ownerEmail} · Role: {roleLabel(m.role)}</small>
+                <small>{m.ownerEmail} · Access: {roleLabel(m)}</small>
               </span>
               <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => leave(m)}><LogOut size={14} /> Leave</button>
               {String(account?.ownerId) !== String(m.ownerId) && (

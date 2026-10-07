@@ -48,12 +48,14 @@ const DashboardLayout = () => {
   const actingId = actingAccount();
   const account = actingId && memberships ? memberships.find((m) => String(m.ownerId) === actingId) || null : null;
   const teamReady = !actingId || memberships !== null;
-  // Your own account: everything. In a team account both roles use
-  // everything; only Admin may delete or manage the team.
+  // Your own account: everything. In a team account: the areas the owner
+  // gave you (servers / billing / support); only Admin may delete or manage
+  // the team.
   const can = useCallback((perm) => {
     if (!actingId) return true;
     if (!account) return false;
-    return ["delete", "team"].includes(perm) ? account.role === "admin" : true;
+    if (perm === "delete" || perm === "team") return account.role === "admin";
+    return (account.areas || []).includes(perm);
   }, [actingId, account]);
 
   const refreshBalance = useCallback(() => {
@@ -84,7 +86,7 @@ const DashboardLayout = () => {
     <div className="cx-card cx-empty">
       <span className="cx-empty-icon"><Lock size={26} aria-hidden="true" /></span>
       <h4>You don't have access to this</h4>
-      <p>Ask {account?.ownerName || "the account owner"} for access to this in their account.</p>
+      <p>You don't have {perm} access in {account?.ownerName || "this"}'s account. Ask an account admin for it.</p>
       <Link to="/dashboard/home" className="cx-btn cx-btn-ghost">Back to overview</Link>
     </div>
   ));

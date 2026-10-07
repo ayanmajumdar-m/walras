@@ -57,7 +57,7 @@ const listMembers = async (ownerId) => {
     );
     return rows.map((m) => ({
         id: m.id, email: m.email, name: m.name || null, status: m.status, userId: m.member_user_id || null,
-        role: team.parseRole(m.permissions), invitedAt: m.invited_at, acceptedAt: m.accepted_at,
+        ...team.parseAccess(m.permissions), invitedAt: m.invited_at, acceptedAt: m.accepted_at,
     }));
 };
 
@@ -78,14 +78,15 @@ const TeamController = {
         res.json({
             limit: team.TEAM_LIMIT,
             roles: team.ROLES,
+            areas: team.AREAS,
             members,
             invitations: invitations.map((i) => ({
                 id: i.id, ownerName: i.owner_name, ownerEmail: i.owner_email,
-                role: team.parseRole(i.permissions), invitedAt: i.invited_at,
+                ...team.parseAccess(i.permissions), invitedAt: i.invited_at,
             })),
             memberships: memberships.map((m) => ({
                 ownerId: m.owner_id, ownerName: m.owner_name, ownerEmail: m.owner_email, company: m.company || null,
-                role: team.parseRole(m.permissions),
+                ...team.parseAccess(m.permissions),
             })),
         });
     }),
@@ -96,19 +97,20 @@ const TeamController = {
         res.json({
             limit: team.TEAM_LIMIT,
             roles: team.ROLES,
+            areas: team.AREAS,
             owner: { name: owner.name, email: owner.email },
             members: await listMembers(owner.id),
         });
     }),
 
-    // POST /api/team/members { email, role }
+    // POST /api/team/members { email, role, areas }
     invite: handle(async (req, res) => {
         const owner = await findUser(req.user.userId);
         const email = normEmail(req.body.email);
-        const role = team.cleanRole(req.body.role);
+        const access = team.cleanAccess(req.body.role, req.body.areas);
         if (!EMAIL.test(email) || email.length > 255) throw new HttpError(400, 'Enter a valid email address.');
         if (email === normEmail(owner.email)) throw new HttpError(400, "That's the account owner's own email address.");
-        if (!role) throw new HttpError(400, 'Choose a role: Write or Admin.');
+        if (!access) throw new HttpError(400, 'Choose a role and at least one area: Servers, Billing or Support.');
 
         const [{ n }] = await q('SELECT COUNT(*) AS n FROM team_members WHERE owner_id = ?', [owner.id]);
         if (Number(n) >= team.TEAM_LIMIT) {
@@ -117,10 +119,11 @@ const TeamController = {
         const [existing] = await q('SELECT id FROM team_members WHERE owner_id = ? AND LOWER(email) = ?', [owner.id, email]);
         if (existing) throw new HttpError(409, 'That person is already on the team.');
 
-        const ins = await q('INSERT INTO team_members (owner_id, email, permissions) VALUES (?, ?, ?)', [owner.id, email, role]);
+        const ins = await q('INSERT INTO team_members (owner_id, email, permissions) VALUES (?, ?, ?)', [owner.id, email, team.formatAccess(access)]);
         let emailed = true;
         try {
-            await sendTeamInviteEmail(email, owner.name || owner.email, [team.ROLES[role].label]);
+            await sendTeamInviteEmail(email, owner.name || owner.email,
+                [`${team.ROLES[access.role].label} (${access.areas.map((a) => team.AREAS[a].label).join(', ')})`]);
         } catch (err) {
             emailed = false;
             console.error('Team invite email failed:', err.message);
@@ -133,14 +136,14 @@ const TeamController = {
         });
     }),
 
-    // PUT /api/team/members/:id { role }
+    // PUT /api/team/members/:id { role, areas }
     updateMember: handle(async (req, res) => {
         const id = idParam(req.params.id);
-        const role = team.cleanRole(req.body.role);
-        if (!role) throw new HttpError(400, 'Choose a role: Write or Admin.');
-        const r = await q('UPDATE team_members SET permissions = ? WHERE id = ? AND owner_id = ?', [role, id, req.user.userId]);
+        const access = team.cleanAccess(req.body.role, req.body.areas);
+        if (!access) throw new HttpError(400, 'Choose a role and at least one area, or remove the person instead.');
+        const r = await q('UPDATE team_members SET permissions = ? WHERE id = ? AND owner_id = ?', [team.formatAccess(access), id, req.user.userId]);
         if (!r.affectedRows) throw new HttpError(404, 'Not found.');
-        res.json({ message: `Role changed to ${team.ROLES[role].label}.` });
+        res.json({ message: 'Access updated.' });
     }),
 
     // DELETE /api/team/members/:id — remove a member or cancel an invitation. Takes effect at once.
