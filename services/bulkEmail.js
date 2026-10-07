@@ -37,22 +37,41 @@ const AUDIENCES = {
     },
     business: { label: 'Business accounts', where: "u.account_type = 'business'" },
     personal: { label: 'Personal accounts', where: "u.account_type = 'personal'" },
+    // One chosen customer (target_user_id). Reaches them whatever their
+    // verification or suspension, so an admin can always write to that
+    // person; "News & offers" still respects their unsubscribe.
+    single: { label: 'A specific customer', single: true },
 };
 
 const DELAY_MS = 150; // ≈ 6 a second
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const recipientsWhere = (audience, category) => [
-    'u.isemailverified = TRUE',
-    'u.suspended_at IS NULL',
-    "u.email IS NOT NULL AND u.email <> ''",
-    ...(category === 'marketing' ? ['u.marketing_opt_out = FALSE'] : []),
-    AUDIENCES[audience].where,
-].join(' AND ');
+// targetUserId is only used for "single" and is checked to be an integer, so
+// it is safe to place in the SQL; everything else comes from AUDIENCES.
+const recipientsWhere = (audience, category, targetUserId) => {
+    const single = AUDIENCES[audience].single;
+    if (single && !(Number.isInteger(targetUserId) && targetUserId > 0)) return 'FALSE';
+    return [
+        ...(single ? [] : ['u.isemailverified = TRUE', 'u.suspended_at IS NULL']),
+        "u.email IS NOT NULL AND u.email <> ''",
+        ...(category === 'marketing' ? ['u.marketing_opt_out = FALSE'] : []),
+        single ? `u.id = ${targetUserId}` : AUDIENCES[audience].where,
+    ].join(' AND ');
+};
 
-const countRecipients = async (audience, category) => {
-    const [{ n }] = await q(`SELECT COUNT(*) AS n FROM users u WHERE ${recipientsWhere(audience, category)}`);
+const countRecipients = async (audience, category, targetUserId) => {
+    const [{ n }] = await q(`SELECT COUNT(*) AS n FROM users u WHERE ${recipientsWhere(audience, category, targetUserId)}`);
     return Number(n);
+};
+
+/** Customers matching a name or email, for picking one recipient. */
+const findCustomers = (term) => {
+    const like = `%${String(term).toLowerCase().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    return q(
+        `SELECT id, name, email, isemailverified, suspended_at, marketing_opt_out FROM users
+         WHERE LOWER(email) LIKE ? OR LOWER(name) LIKE ? ORDER BY name LIMIT 8`,
+        [like, like],
+    );
 };
 
 // ── Unsubscribe links ──────────────────────────────────────────────────────
@@ -130,7 +149,7 @@ const run = async (id) => {
             if (!c || c.status !== 'sending') return;
             const batch = await q(
                 `SELECT u.id, u.name, u.email FROM users u
-                 WHERE ${recipientsWhere(c.audience, c.category)} AND u.id > ?
+                 WHERE ${recipientsWhere(c.audience, c.category, c.target_user_id)} AND u.id > ?
                  ORDER BY u.id LIMIT 25`,
                 [c.last_user_id],
             );
@@ -173,12 +192,13 @@ const isBusy = async () => {
 };
 
 /** Starts a campaign. Returns its id. */
-const start = async ({ subject, body, category, audience, admin }) => {
-    const total = await countRecipients(audience, category);
+const start = async ({ subject, body, category, audience, targetUserId, admin }) => {
+    const target = AUDIENCES[audience].single ? targetUserId : null;
+    const total = await countRecipients(audience, category, target);
     const ins = await q(
-        `INSERT INTO bulk_emails (subject, body, category, audience, status, total, created_by, created_by_name)
-         VALUES (?, ?, ?, ?, 'sending', ?, ?, ?)`,
-        [subject, body, category, audience, total, admin.id, admin.name],
+        `INSERT INTO bulk_emails (subject, body, category, audience, target_user_id, status, total, created_by, created_by_name)
+         VALUES (?, ?, ?, ?, ?, 'sending', ?, ?, ?)`,
+        [subject, body, category, audience, target, total, admin.id, admin.name],
     );
     setImmediate(() => run(ins.insertId));
     return { id: ins.insertId, total };
@@ -209,6 +229,7 @@ module.exports = {
     CATEGORIES,
     AUDIENCES,
     countRecipients,
+    findCustomers,
     start,
     resume,
     cancel,

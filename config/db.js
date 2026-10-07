@@ -504,6 +504,7 @@ connection.connect((err) => {
         ['Compute stock', createComputeStockTable],
         ['Team members', createTeamMembersTable],
         ['Bulk emails', createBulkEmailsTable],
+        ['bulk emails target', 'ALTER TABLE bulk_emails ADD COLUMN IF NOT EXISTS target_user_id INT'],
         ['users marketing opt-out', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_out BOOLEAN NOT NULL DEFAULT FALSE'],
         ['team members index', 'CREATE INDEX IF NOT EXISTS team_members_member_idx ON team_members (member_user_id)'],
         ['team invites index', 'CREATE INDEX IF NOT EXISTS team_members_email_idx ON team_members (LOWER(email))'],

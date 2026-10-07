@@ -404,3 +404,35 @@
 .ap-progress span { display: block; height: 100%; background: var(--color-brand-500); transition: width 0.4s ease; }
 .ap-bulk-actions { display: flex; gap: 8px; }
 @media (max-width: 1000px) { .ap-bulk-grid, .ap-choice { grid-template-columns: 1fr; } }
+
+/* Email one customer: search + picked */
+.ap-picker { position: relative; }
+.ap-picker-input {
+  display: flex; align-items: center; gap: 8px; padding: 0 12px;
+  border: 1px solid color-mix(in srgb, #1d1f20 18%, transparent); border-radius: 10px; background: #ffffff;
+}
+.ap-picker-input svg { color: var(--text-muted); }
+.ap-picker-input input { flex: 1; min-width: 0; border: 0; padding: 11px 0; font: inherit; font-size: 15px; background: transparent; }
+.ap-picker-input input:focus { outline: none; }
+.ap-picker-input:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent); }
+.ap-picker-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+  margin: 0; padding: 6px; list-style: none; max-height: 280px; overflow-y: auto;
+  background: #ffffff; border: 1px solid var(--color-divider); border-radius: 12px; box-shadow: var(--shadow-md, 0 12px 30px rgba(0,0,0,.12));
+}
+.ap-picker-list li.ap-muted { padding: 10px; }
+.ap-picker-list button {
+  width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  padding: 8px 10px; border: 0; border-radius: 8px; background: none; font: inherit; text-align: left; cursor: pointer;
+}
+.ap-picker-list button:hover { background: var(--color-accent-100); }
+.ap-picker-list small { color: var(--text-muted); font-size: 12.5px; }
+.ap-picked {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border: 1.5px solid var(--color-brand-500); border-radius: 12px; background: color-mix(in srgb, var(--color-accent-100) 50%, #ffffff);
+}
+.ap-picked-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ap-picked-text strong { overflow-wrap: anywhere; }
+.ap-picked-text small { font-size: 12.5px; color: var(--text-muted); overflow-wrap: anywhere; }
+.ap-picked-text small.is-warn { color: #b45309; }
+.ap-picked-text small.is-danger { color: #b91c1c; }

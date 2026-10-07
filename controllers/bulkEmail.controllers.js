@@ -39,7 +39,11 @@ const readCampaign = (body) => {
     if (text.length < 10 || text.length > 20000) throw new HttpError(400, 'Message must be 10 to 20,000 characters.');
     if (!bulk.CATEGORIES[category]) throw new HttpError(400, 'Choose the kind of email.');
     if (audience !== undefined && !bulk.AUDIENCES[audience]) throw new HttpError(400, 'Choose who receives it.');
-    return { subject, body: text, category, audience };
+    const targetUserId = Number(body.targetUserId);
+    if (audience && bulk.AUDIENCES[audience].single && !(Number.isInteger(targetUserId) && targetUserId > 0)) {
+        throw new HttpError(400, 'Choose the customer to email.');
+    }
+    return { subject, body: text, category, audience, targetUserId: Number.isInteger(targetUserId) ? targetUserId : null };
 };
 
 const idParam = (raw) => {
@@ -52,14 +56,17 @@ const BulkEmailController = {
     overview: handle(async (req, res) => {
         const counts = {};
         for (const audience of Object.keys(bulk.AUDIENCES)) {
+            if (bulk.AUDIENCES[audience].single) continue; // counted per customer
             counts[audience] = {};
             for (const category of Object.keys(bulk.CATEGORIES)) {
                 counts[audience][category] = await bulk.countRecipients(audience, category);
             }
         }
         const campaigns = await q(
-            `SELECT id, subject, category, audience, status, total, sent, failed, last_error, created_by_name, created_at, finished_at
-             FROM bulk_emails ORDER BY created_at DESC LIMIT 20`,
+            `SELECT b.id, b.subject, b.category, b.audience, b.status, b.total, b.sent, b.failed, b.last_error,
+                    b.created_by_name, b.created_at, b.finished_at, u.email AS target_email
+             FROM bulk_emails b LEFT JOIN users u ON u.id = b.target_user_id
+             ORDER BY b.created_at DESC LIMIT 20`,
         );
         res.json({
             emailConfigured,
@@ -93,8 +100,12 @@ const BulkEmailController = {
         const busy = await bulk.isBusy();
         if (busy) throw new HttpError(409, 'Another bulk email is still sending. Wait for it to finish or cancel it.');
         // The admin confirmed a number; don't send if the audience changed since.
-        const count = await bulk.countRecipients(campaign.audience, campaign.category);
-        if (count === 0) throw new HttpError(400, 'Nobody in that audience can receive this email.');
+        const count = await bulk.countRecipients(campaign.audience, campaign.category, campaign.targetUserId);
+        if (count === 0) {
+            throw new HttpError(400, bulk.AUDIENCES[campaign.audience].single
+                ? (campaign.category === 'marketing' ? 'That customer has unsubscribed from news and offers.' : 'That customer has no email address.')
+                : 'Nobody in that audience can receive this email.');
+        }
         if (Number(req.body.expectedCount) !== count) {
             throw new HttpError(409, `The audience is now ${count} people. Check the number and confirm again.`);
         }
@@ -102,8 +113,23 @@ const BulkEmailController = {
             ...campaign,
             admin: { id: req.admin.adminId, name: req.admin.fullName || req.admin.username },
         });
-        audit(req, 'email.bulk_send', 'bulk_email', id, { subject: campaign.subject, category: campaign.category, audience: campaign.audience, total });
+        audit(req, 'email.bulk_send', 'bulk_email', id, {
+            subject: campaign.subject, category: campaign.category, audience: campaign.audience, targetUserId: campaign.targetUserId, total,
+        });
         res.status(201).json({ id, total, message: `Sending to ${total} customers.` });
+    }),
+
+    // GET /api/admin/bulk-email/customers?q= — pick one recipient.
+    customers: handle(async (req, res) => {
+        const term = String(req.query.q || '').trim();
+        if (term.length < 2) return res.json({ customers: [] });
+        const rows = await bulk.findCustomers(term.slice(0, 100));
+        res.json({
+            customers: rows.map((u) => ({
+                id: u.id, name: u.name, email: u.email,
+                verified: Boolean(u.isemailverified), suspended: Boolean(u.suspended_at), unsubscribed: Boolean(u.marketing_opt_out),
+            })),
+        });
     }),
 
     cancel: handle(async (req, res) => {

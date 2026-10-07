@@ -51,6 +51,7 @@ router.get('/support/summary', can('view_dashboard'), Platform.supportSummary);
 // Email customers (bulk)
 const BulkEmail = require('../controllers/bulkEmail.controllers');
 router.get('/bulk-email', can('send_bulk_email'), BulkEmail.overview);
+router.get('/bulk-email/customers', can('send_bulk_email'), BulkEmail.customers);
 router.post('/bulk-email/test', can('send_bulk_email'), BulkEmail.test);
 router.post('/bulk-email', can('send_bulk_email'), BulkEmail.send);
 router.post('/bulk-email/:id/cancel', can('send_bulk_email'), BulkEmail.cancel);
