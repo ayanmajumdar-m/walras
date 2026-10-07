@@ -3,3 +3,4 @@ node_modules/
 .kiro/
 readmeFIle/
 create-admin.js
+.env.backup
