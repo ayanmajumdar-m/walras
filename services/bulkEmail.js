@@ -68,9 +68,9 @@ const countRecipients = async (audience, category, targetUserId) => {
 const findCustomers = (term) => {
     const like = `%${String(term).toLowerCase().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
     return q(
-        `SELECT id, name, email, isemailverified, suspended_at, marketing_opt_out FROM users
-         WHERE LOWER(email) LIKE ? OR LOWER(name) LIKE ? ORDER BY name LIMIT 8`,
-        [like, like],
+        `SELECT id, waladmin_id, name, email, isemailverified, suspended_at, marketing_opt_out FROM users
+         WHERE LOWER(email) LIKE ? OR LOWER(name) LIKE ? OR LOWER(waladmin_id) LIKE ? ORDER BY name LIMIT 8`,
+        [like, like, like],
     );
 };
 

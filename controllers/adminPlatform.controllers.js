@@ -228,7 +228,7 @@ const PlatformController = {
     getUserOverview: handle(async (req, res) => {
         const id = toInt(req.params.id);
         const [user] = await q(
-            `SELECT id, account_type, name, email, phone, company, gstin, role, address,
+            `SELECT id, waladmin_id, account_type, name, email, phone, company, gstin, role, address,
                     isverified, isemailverified, suspended_at, suspension_reason,
                     lastloginat, lastloginip, createdat
              FROM users WHERE id = ?`,

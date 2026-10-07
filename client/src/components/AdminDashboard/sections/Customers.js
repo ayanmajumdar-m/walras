@@ -32,7 +32,7 @@ const Customers = ({ openCustomer }) => {
       if (filter === "unverified" && (u.isemailverified ?? u.isEmailVerified)) return false;
       if (filter === "suspended" && !u.suspended_at) return false;
       if (!q) return true;
-      return [u.name, u.email, u.phone, u.company, String(u.id)].some((v) => (v || "").toLowerCase().includes(q));
+      return [u.name, u.email, u.phone, u.company, u.waladmin_id, String(u.id)].some((v) => (v || "").toLowerCase().includes(q));
     });
   }, [users, query, filter]);
 
@@ -48,7 +48,7 @@ const Customers = ({ openCustomer }) => {
       <div className="ap-toolbar">
         <label className="ap-search">
           <Search size={16} aria-hidden="true" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, phone, company or ID" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, phone, company or WALADMIN ID" />
         </label>
         <div className="ap-chips">
           {FILTERS.map((f) => (
@@ -72,7 +72,7 @@ const Customers = ({ openCustomer }) => {
         <div className="cx-card cx-table-wrap">
           <table className="cx-table ap-click-rows">
             <thead>
-              <tr><th>Customer</th><th>Type</th><th>Status</th><th>Account balance</th><th>Cloud Compute</th><th>Joined</th><th /></tr>
+              <tr><th>Customer</th><th>WALADMIN ID</th><th>Type</th><th>Status</th><th>Account balance</th><th>Cloud Compute</th><th>Joined</th><th /></tr>
             </thead>
             <tbody>
               {shown.map((u) => {
@@ -80,6 +80,7 @@ const Customers = ({ openCustomer }) => {
                 return (
                   <tr key={u.id} onClick={() => openCustomer(u.id)}>
                     <td data-label="Customer"><strong>{u.name}</strong><small>{u.email}</small></td>
+                    <td data-label="WALADMIN ID"><code className="ap-wid">{u.waladmin_id || "—"}</code></td>
                     <td data-label="Type">
                       <span className="cx-pill">{u.account_type === "business" ? "Business" : "Personal"}</span>
                       {u.company && <small>{u.company}</small>}

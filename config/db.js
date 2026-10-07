@@ -230,6 +230,44 @@ CREATE TABLE IF NOT EXISTS team_members (
     UNIQUE (owner_id, email)
 )`;
 
+// WALADMIN ID: a customer reference shown in the admin panel, e.g.
+// WALADMIN2026483920 = "WALADMIN" + the year the account was created + 6
+// random digits. A trigger assigns it on every insert, whatever creates the
+// user; existing users are filled in once. The unique index guarantees no
+// two customers share one (the generator also checks before using it).
+const migrateWaladminIds = [
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS waladmin_id VARCHAR(24)',
+    'CREATE UNIQUE INDEX IF NOT EXISTS users_waladmin_id_key ON users (waladmin_id)',
+    `CREATE OR REPLACE FUNCTION walras_new_waladmin_id(created TIMESTAMPTZ) RETURNS VARCHAR AS $$
+     DECLARE candidate VARCHAR;
+     BEGIN
+       LOOP
+         candidate := 'WALADMIN' || to_char(COALESCE(created, NOW()), 'YYYY')
+                      || lpad(floor(random() * 1000000)::int::text, 6, '0');
+         EXIT WHEN NOT EXISTS (SELECT 1 FROM users WHERE waladmin_id = candidate);
+       END LOOP;
+       RETURN candidate;
+     END $$ LANGUAGE plpgsql`,
+    `CREATE OR REPLACE FUNCTION walras_assign_waladmin_id() RETURNS TRIGGER AS $$
+     BEGIN
+       IF NEW.waladmin_id IS NULL THEN
+         NEW.waladmin_id := walras_new_waladmin_id(NEW.createdat);
+       END IF;
+       RETURN NEW;
+     END $$ LANGUAGE plpgsql`,
+    'DROP TRIGGER IF EXISTS users_waladmin_id ON users',
+    `CREATE TRIGGER users_waladmin_id BEFORE INSERT ON users
+     FOR EACH ROW EXECUTE FUNCTION walras_assign_waladmin_id()`,
+    // Existing customers, one at a time so each sees the IDs already given out.
+    `DO $$
+     DECLARE r RECORD;
+     BEGIN
+       FOR r IN SELECT id, createdat FROM users WHERE waladmin_id IS NULL ORDER BY id LOOP
+         UPDATE users SET waladmin_id = walras_new_waladmin_id(r.createdat) WHERE id = r.id;
+       END LOOP;
+     END $$`,
+];
+
 // Bulk email campaigns sent from the admin panel (services/bulkEmail.js).
 // last_user_id lets an interrupted campaign resume without repeats.
 const createBulkEmailsTable = `
@@ -503,6 +541,7 @@ connection.connect((err) => {
         ...migrateServers.map((sql, i) => [`servers migration ${i + 1}`, sql]),
         ['Compute stock', createComputeStockTable],
         ['Team members', createTeamMembersTable],
+        ...migrateWaladminIds.map((sql, i) => [`WALADMIN ID ${i + 1}`, sql]),
         ['Bulk emails', createBulkEmailsTable],
         ['bulk emails target', 'ALTER TABLE bulk_emails ADD COLUMN IF NOT EXISTS target_user_id INT'],
         ['users marketing opt-out', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_out BOOLEAN NOT NULL DEFAULT FALSE'],

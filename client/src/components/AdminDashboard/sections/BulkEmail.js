@@ -44,7 +44,7 @@ const CustomerPicker = ({ value, onChange, category }) => {
         <span className="cx-avatar" aria-hidden="true">{(value.name || value.email)[0].toUpperCase()}</span>
         <span className="ap-picked-text">
           <strong>{value.name || value.email}</strong>
-          <small>{value.email}</small>
+          <small>{value.email}{value.waladminId ? ` · ${value.waladminId}` : ""}</small>
           {value.suspended && <small className="is-warn">Suspended account</small>}
           {!value.verified && <small className="is-warn">Email address not verified</small>}
           {category === "marketing" && value.unsubscribed && <small className="is-danger">Unsubscribed from news and offers: won't receive this kind</small>}
@@ -58,7 +58,7 @@ const CustomerPicker = ({ value, onChange, category }) => {
     <div className="ap-picker">
       <span className="ap-picker-input">
         <Search size={15} aria-hidden="true" />
-        <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Search by name or email" autoComplete="off" aria-label="Find a customer" />
+        <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Search by name, email or WALADMIN ID" autoComplete="off" aria-label="Find a customer" />
       </span>
       {term.trim().length >= 2 && (
         <ul className="ap-picker-list">
@@ -68,7 +68,7 @@ const CustomerPicker = ({ value, onChange, category }) => {
             <li key={u.id}>
               <button type="button" onClick={() => { onChange(u); setTerm(""); }}>
                 <strong>{u.name || u.email}</strong>
-                <small>{u.email}{u.suspended ? " · suspended" : ""}{!u.verified ? " · unverified" : ""}</small>
+                <small>{u.email}{u.waladminId ? ` · ${u.waladminId}` : ""}{u.suspended ? " · suspended" : ""}{!u.verified ? " · unverified" : ""}</small>
               </button>
             </li>
           ))}

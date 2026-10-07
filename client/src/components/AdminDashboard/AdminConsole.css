@@ -458,3 +458,15 @@
 .ap-dept-label:disabled { background: #f4f6f5; }
 .ap-dept-foot { gap: 8px; flex-wrap: wrap; }
 @media (max-width: 700px) { .ap-dept { grid-template-columns: 1fr; } }
+
+/* WALADMIN ID */
+.ap-wid { font-size: 12.5px; letter-spacing: 0.02em; white-space: nowrap; }
+.ap-wid-chip {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 10px;
+  padding: 6px 10px; border: 1px solid var(--color-divider); border-radius: 8px;
+  background: #ffffff; font: inherit; color: var(--color-text); cursor: pointer;
+}
+.ap-wid-chip:hover { border-color: var(--color-accent); }
+.ap-wid-chip span { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--text-muted); }
+.ap-wid-chip code { font-size: 13.5px; font-weight: 600; background: none; padding: 0; }
+.ap-wid-chip svg { color: var(--text-muted); }

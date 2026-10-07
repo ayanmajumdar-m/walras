@@ -126,7 +126,7 @@ const BulkEmailController = {
         const rows = await bulk.findCustomers(term.slice(0, 100));
         res.json({
             customers: rows.map((u) => ({
-                id: u.id, name: u.name, email: u.email,
+                id: u.id, waladminId: u.waladmin_id || null, name: u.name, email: u.email,
                 verified: Boolean(u.isemailverified), suspended: Boolean(u.suspended_at), unsubscribed: Boolean(u.marketing_opt_out),
             })),
         });

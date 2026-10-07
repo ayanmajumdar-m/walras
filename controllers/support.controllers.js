@@ -81,7 +81,7 @@ const ownTicket = async (userId, id) => {
 
 /** Account summary for the agent, added to each new ticket as an internal note. */
 const accountNote = async (userId) => {
-    const [u] = await q('SELECT id, name, email, phone, account_type, company, gstin, createdat FROM users WHERE id = ?', [userId]);
+    const [u] = await q('SELECT id, waladmin_id, name, email, phone, account_type, company, gstin, createdat FROM users WHERE id = ?', [userId]);
     const hosting = await q('SELECT domain, plan_name, status, expires_at FROM hosting_accounts WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [userId]).catch(() => []);
     const servers = await q('SELECT name, plan_name, status FROM servers WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [userId]).catch(() => []);
     const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [userId]).catch(() => []);
@@ -90,6 +90,7 @@ const accountNote = async (userId) => {
     return [
         'Walras Cloud account (added automatically)',
         `Customer: ${u?.name || '-'} <${u?.email || '-'}> · ${u?.phone || 'no phone'}`,
+        `WALADMIN ID: ${u?.waladmin_id || '-'}`,
         `Type: ${u?.account_type || 'personal'}${u?.company ? ` · ${u.company}` : ''}${u?.gstin ? ` · GSTIN ${u.gstin}` : ''}`,
         `Joined ${date(u?.createdat)} · Account balance ₹${(Number(wallet?.balance || 0) / 100).toFixed(2)}`,
         `Admin: ${base}/vadmin-1997/dashboard?section=customer&id=${userId}`,

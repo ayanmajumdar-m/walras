@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Wallet, ShieldOff, ShieldCheck, Trash2, BadgeCheck, X, Mail, Phone, Building2, MapPin } from "lucide-react";
+import { ArrowLeft, Wallet, ShieldOff, ShieldCheck, Trash2, BadgeCheck, X, Mail, Phone, Building2, MapPin, Copy, Check } from "lucide-react";
 import { adminApi, inr, fmtDate } from "../adminApi";
 import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 
@@ -32,6 +32,25 @@ const Table = ({ head, rows, empty }) =>
       </table>
     </div>
   );
+
+// WALADMIN ID with a copy button (e.g. to paste into Zendesk or a chat).
+const WaladminId = ({ value }) => {
+  const [copied, setCopied] = useState(false);
+  if (!value) return null;
+  const copy = () => {
+    navigator.clipboard?.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  };
+  return (
+    <button type="button" className="ap-wid-chip" onClick={copy} title="Copy WALADMIN ID">
+      <span>WALADMIN ID</span>
+      <code>{value}</code>
+      {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+    </button>
+  );
+};
 
 const CustomerDetail = ({ userId, can, onBack }) => {
   const [data, setData] = useState(null);
@@ -89,8 +108,9 @@ const CustomerDetail = ({ userId, can, onBack }) => {
               {suspended ? <span className="cx-status is-suspended">suspended</span>
                 : verified ? <span className="cx-status is-active">verified</span>
                 : <span className="cx-status is-pending">email unverified</span>}
-              <span className="ap-muted">#{user.id} · joined {fmtDate(user.createdat)}</span>
+              <span className="ap-muted">Joined {fmtDate(user.createdat)}</span>
             </div>
+            <WaladminId value={user.waladmin_id} />
           </div>
         </div>
         <div className="ap-profile-actions">
