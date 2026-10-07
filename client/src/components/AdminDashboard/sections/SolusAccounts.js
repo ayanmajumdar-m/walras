@@ -221,7 +221,7 @@ const SolusAccounts = ({ can }) => {
       </div>
 
       {notice && <div className={`cx-alert is-${notice.type}`} role="status">{notice.text}</div>}
-      {!editable && <div className="cx-alert is-info">You can view accounts. Changing them needs the "Manage SolusVM accounts and integration keys" permission.</div>}
+      {!editable && <div className="cx-alert is-info">You can view accounts. Changing them needs the "Manage SolusVM accounts" permission.</div>}
 
       <p className="ap-muted">
         {data.accounts.length} account{data.accounts.length === 1 ? "" : "s"} · {totalServers} server{totalServers === 1 ? "" : "s"}

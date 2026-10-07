@@ -31,7 +31,7 @@ const PERMISSIONS = [
     { id: 'send_bulk_email', label: 'Email all customers', group: 'Customers' },
     { id: 'view_audit_logs', label: 'View audit logs', group: 'Governance' },
     { id: 'manage_settings', label: 'Change platform settings', group: 'Governance' },
-    { id: 'manage_integrations', label: 'Manage SolusVM accounts and integration keys', group: 'Governance' },
+    { id: 'manage_integrations', label: 'Manage SolusVM accounts', group: 'Governance' },
     { id: 'manage_admins', label: 'Manage administrators and roles', group: 'Governance' },
 ];
 

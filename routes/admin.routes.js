@@ -66,8 +66,7 @@ router.post('/vm-plans', can('manage_plans'), VmPlans.create);
 router.put('/vm-plans/:id', can('manage_plans'), VmPlans.update);
 router.delete('/vm-plans/:id', can('manage_plans'), VmPlans.remove);
 
-// SolusVM accounts (several panels, each with a server limit) and the
-// integration keys that used to live only in the server environment.
+// SolusVM accounts (several panels, each with a server limit).
 const SolusAccounts = require('../controllers/solusAccounts.controllers');
 router.get('/solus-accounts', can('view_services'), SolusAccounts.list);
 router.get('/solus-accounts/:id/catalog', can('manage_integrations'), SolusAccounts.catalog);
@@ -75,9 +74,6 @@ router.post('/solus-accounts', can('manage_integrations'), SolusAccounts.create)
 router.put('/solus-accounts/:id', can('manage_integrations'), SolusAccounts.update);
 router.post('/solus-accounts/:id/test', can('manage_integrations'), SolusAccounts.test);
 router.delete('/solus-accounts/:id', can('manage_integrations'), SolusAccounts.remove);
-const Integrations = require('../controllers/integrations.controllers');
-router.get('/integrations', can('manage_integrations'), Integrations.get);
-router.put('/integrations', can('manage_integrations'), Integrations.update);
 
 // Server locations
 const Locations = require('../controllers/serverLocations.controllers');

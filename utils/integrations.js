@@ -1,9 +1,10 @@
 /**
- * Integration settings managed in Admin → Integrations: the keys, passwords
- * and addresses that used to be set only as environment variables.
+ * Integration settings: the keys, passwords and addresses for email,
+ * Zendesk, payments and domains, read from the server environment.
  *
- * A value saved in admin wins; otherwise the server's environment variable of
- * the same name is used, so existing setups keep working. Secrets are stored
+ * (The Admin → Integrations page was removed; a value saved in app_settings
+ * under integration.NAME would still win over the environment, but nothing
+ * writes those any more.) Secrets are stored
  * encrypted (utils/secrets.js) and never sent back to the browser, only their
  * last four characters.
  *

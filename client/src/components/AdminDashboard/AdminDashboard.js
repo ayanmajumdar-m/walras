@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
-  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail, Tags, MapPin, Cloud, KeyRound,
+  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail, Tags, MapPin, Cloud,
 } from "lucide-react";
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import { adminApi, adminLogout } from "./adminApi";
@@ -16,7 +16,6 @@ import ComputeStock from "./sections/ComputeStock";
 import VmPlans from "./sections/VmPlans";
 import Locations from "./sections/Locations";
 import SolusAccounts from "./sections/SolusAccounts";
-import Integrations from "./sections/Integrations";
 import { WEB_HOSTING_ENABLED } from "../../data/plans";
 import BulkEmail from "./sections/BulkEmail";
 import NotificationsBell from "./sections/NotificationsBell";
@@ -63,7 +62,6 @@ const GROUPS = [
       { id: "admins", label: "Administrators", Icon: UserCog, perm: "manage_admins" },
       { id: "audit", label: "Audit logs", Icon: ScrollText, perm: "view_audit_logs" },
       { id: "settings", label: "Settings", Icon: SettingsIcon, perm: "manage_settings" },
-      { id: "integrations", label: "Integrations", Icon: KeyRound, perm: "manage_integrations" },
     ],
   },
 ];
@@ -123,7 +121,6 @@ const AdminDashboard = () => {
       case "locations": return <Locations can={can} />;
       case "compute-stock": return <ComputeStock can={can} />;
       case "solus-accounts": return <SolusAccounts can={can} />;
-      case "integrations": return <Integrations />;
       case "bulk-email": return <BulkEmail />;
       case "domains": return <DomainsSection />;
       case "admins": return <Administrators me={me} />;
