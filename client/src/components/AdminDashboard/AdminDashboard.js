@@ -13,6 +13,7 @@ import Administrators from "./sections/Administrators";
 import AuditLogs from "./sections/AuditLogs";
 import PlatformSettings from "./sections/PlatformSettings";
 import ComputeStock from "./sections/ComputeStock";
+import { WEB_HOSTING_ENABLED } from "../../data/plans";
 import BulkEmail from "./sections/BulkEmail";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
@@ -42,7 +43,8 @@ const GROUPS = [
       { id: "transactions", label: "Transactions", Icon: ArrowLeftRight, perm: "view_billing" },
       { id: "invoices", label: "Invoices", Icon: FileText, perm: "view_billing" },
       { id: "promo-codes", label: "Promo codes", Icon: Ticket, perm: ["manage_coupons", "view_billing"] },
-      { id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" },
+      // Hidden while Web Hosting is withdrawn (data/plans.js WEB_HOSTING_ENABLED).
+      ...(WEB_HOSTING_ENABLED ? [{ id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" }] : []),
       { id: "servers", label: "Cloud Compute", Icon: Layers, perm: "view_services" },
       { id: "compute-stock", label: "Compute stock", Icon: Boxes, perm: "view_services" },
       { id: "domains", label: "Domains", Icon: Globe, perm: "view_services" },

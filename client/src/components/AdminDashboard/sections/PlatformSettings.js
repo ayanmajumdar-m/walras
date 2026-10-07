@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Power, PackageX, Package, FileText, Lock, Save, WalletCards } from "lucide-react";
 import { adminApi } from "../adminApi";
 import EmailSender from "../components/Settings";
+import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 import SupportDepartments from "./SupportDepartments";
 
 const INVOICE_FIELDS = [
@@ -89,6 +90,12 @@ const PlatformSettings = () => {
 
         <section className="cx-card ap-card">
           <h3>Plan availability</h3>
+          <h4 className="ap-subhead">Cloud Compute</h4>
+          <p className="ap-muted">
+            Set per plan and location in <a className="cx-link" href="?section=compute-stock">Compute stock</a>.
+            "All plans out of stock" above still overrides it.
+          </p>
+          {WEB_HOSTING_ENABLED && (<>
           <p className="ap-muted">Turn a plan off to mark it Out of stock. Customers who already have it aren't affected.</p>
           {s.lockedFamilies?.hosting ? (<>
             <h4 className="ap-subhead">Web Hosting <Lock size={13} /></h4>
@@ -100,14 +107,13 @@ const PlatformSettings = () => {
               onChange={(v) => setS({ ...s, planAvailability: { ...s.planAvailability, hosting: { ...s.planAvailability.hosting, [plan]: v } } })} />
           ))}
           </>)}
-          <h4 className="ap-subhead">Cloud Compute <Lock size={13} /></h4>
-          <p className="ap-locked">{s.lockedFamilies?.compute}</p>
           <div className="ap-card-foot">
             <button type="button" className="cx-btn cx-btn-primary" disabled={busy === "plans"}
               onClick={() => save("plans", "/settings/plans", { planAvailability: s.planAvailability }, "Plan availability saved")}>
               <Save size={15} /> Save
             </button>
           </div>
+          </>)}
         </section>
       </div>
 

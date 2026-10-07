@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Wallet, ShieldOff, ShieldCheck, Trash2, BadgeCheck, X, Mail, Phone, Building2, MapPin } from "lucide-react";
 import { adminApi, inr, fmtDate } from "../adminApi";
+import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 
 const TABS = [
   { id: "services", label: "Services" },
@@ -147,10 +148,13 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {tab === "services" && (
         <div className="ap-stack">
+          {/* Web Hosting is withdrawn: only shown for customers who still have it. */}
+          {(WEB_HOSTING_ENABLED || hosting.length > 0) && (
           <div className="cx-card"><h3 className="ap-card-title">Web hosting ({hosting.length})</h3>
             <Table head={["Domain", "Plan", "cPanel user", "Status", "Expires"]} empty="No hosting accounts."
               rows={hosting.map((h) => <tr key={h.id}><td><strong>{h.domain}</strong></td><td>{h.plan_name}</td><td><code>{h.cpanel_username}</code></td><td><span className={`cx-status is-${h.status}`}>{h.status}</span></td><td>{fmtDate(h.expires_at)}</td></tr>)} />
           </div>
+          )}
           <div className="cx-card"><h3 className="ap-card-title">Cloud Compute ({servers.length})</h3>
             <Table head={["Name", "IP", "Plan", "Location", "Status"]} empty="No servers."
               rows={servers.map((s) => <tr key={s.id}><td><strong>{s.name}</strong></td><td><code>{s.ip_address || "—"}</code></td><td>{s.plan_name}</td><td>{s.location}</td><td><span className={`cx-status is-${s.status}`}>{s.status}</span></td></tr>)} />

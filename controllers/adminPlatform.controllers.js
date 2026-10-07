@@ -462,8 +462,8 @@ const PlatformController = {
     getSupportDepartments: handle(async (req, res) => {
         if (!zendesk.zendeskConfigured()) return res.json({ configured: false, groups: [], choice: null });
         try {
-            const { groups, choice } = await supportDepartments.getAdminView();
-            res.json({ configured: true, groups, choice });
+            const { groups, choice, defaultIds } = await supportDepartments.getAdminView();
+            res.json({ configured: true, groups, choice, defaultIds });
         } catch (err) {
             res.json({ configured: true, error: `Couldn't load groups from Zendesk: ${err.message}`, groups: [], choice: null });
         }
@@ -473,11 +473,11 @@ const PlatformController = {
     updateSupportDepartments: handle(async (req, res) => {
         const list = req.body.departments;
         if (list !== null && (!Array.isArray(list) || list.length === 0)) {
-            throw new HttpError(400, 'Choose at least one department, or offer all Zendesk groups.');
+            throw new HttpError(400, 'Choose at least one department, or go back to the default.');
         }
         await supportDepartments.setChoice(list);
         audit(req, 'settings.support_departments', 'settings', 'support', { departments: list });
-        res.json({ message: list === null ? 'Customers can choose any Zendesk group.' : 'Support departments saved.' });
+        res.json({ message: list === null ? 'Back to the default departments.' : 'Support departments saved.' });
     }),
 
     // ── Support (Zendesk) ────────────────────────────────────────────────

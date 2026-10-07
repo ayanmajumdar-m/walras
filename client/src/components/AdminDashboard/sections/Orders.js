@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Receipt, RefreshCw } from "lucide-react";
 import { adminApi, inr, fmtDate } from "../adminApi";
+import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 
 const STATUSES = ["all", "completed", "pending", "failed", "cancelled"];
+// Earlier hosting orders still appear under "All orders" while Web Hosting is withdrawn.
 const TYPES = [
   { id: "all", label: "All orders" },
-  { id: "hosting", label: "Web hosting" },
+  ...(WEB_HOSTING_ENABLED ? [{ id: "hosting", label: "Web hosting" }] : []),
   { id: "wallet", label: "Account balance top-ups" },
 ];
 
@@ -37,7 +39,7 @@ const Orders = ({ openCustomer }) => {
       <div className="cx-page-head cx-page-head-row">
         <div>
           <h2>Orders</h2>
-          <p>Hosting purchases and account balance top-ups. {orders.length} shown · {inr(paid)} paid</p>
+          <p>{WEB_HOSTING_ENABLED ? "Hosting purchases and account balance top-ups." : "Account balance top-ups and earlier hosting orders."} {orders.length} shown · {inr(paid)} paid</p>
         </div>
         <button type="button" className="cx-btn cx-btn-ghost" onClick={load} disabled={loading}><RefreshCw size={15} className={loading ? "cx-spin" : ""} /> Refresh</button>
       </div>

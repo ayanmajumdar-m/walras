@@ -6,7 +6,8 @@ import { adminApi } from "../adminApi";
   Settings → Support departments. The departments customers choose from
   when opening a ticket are Zendesk agent groups, read live from Zendesk.
   Tick the groups customers may pick and, optionally, give each a friendlier
-  name. "Offer all groups" goes back to every group under its Zendesk name.
+  name. "Use default" goes back to General Queries, Sales & Billing, Tech
+  Support and Abuse (utils/supportDepartments.js).
 */
 const SupportDepartments = () => {
   const [data, setData] = useState(null);
@@ -19,8 +20,9 @@ const SupportDepartments = () => {
       .then((d) => {
         setData(d);
         const chosen = new Map((d.choice || []).map((c) => [c.groupId, c.label]));
+        const defaults = new Set(d.defaultIds || []);
         setRows(Object.fromEntries(d.groups.map((g) => [g.id, {
-          on: d.choice ? chosen.has(g.id) : true,
+          on: d.choice ? chosen.has(g.id) : defaults.has(g.id),
           label: chosen.get(g.id) || "",
         }])));
       })
@@ -69,7 +71,9 @@ const SupportDepartments = () => {
       ) : (
         <>
           <p className="ap-muted">
-            {data.choice ? `${data.choice.length} of ${data.groups.length} groups are offered.` : `All ${data.groups.length} groups are offered under their Zendesk names.`}
+            {data.choice
+              ? `${data.choice.length} of ${data.groups.length} groups are offered.`
+              : `Default: ${(data.defaultIds || []).length} of ${data.groups.length} groups are offered under their Zendesk names.`}
           </p>
           <div className="ap-dept-list">
             {data.groups.map((g) => (
@@ -85,7 +89,7 @@ const SupportDepartments = () => {
           </div>
           <div className="ap-card-foot ap-dept-foot">
             <button type="button" className="cx-btn cx-btn-ghost" onClick={load} disabled={busy}><RefreshCw size={15} /> Refresh</button>
-            <button type="button" className="cx-btn cx-btn-ghost" onClick={() => save(true)} disabled={busy || !data.choice}>Offer all groups</button>
+            <button type="button" className="cx-btn cx-btn-ghost" onClick={() => save(true)} disabled={busy || !data.choice}>Use default</button>
             <button type="button" className="cx-btn cx-btn-primary" onClick={() => save(false)} disabled={busy || onCount === 0}>
               <Save size={15} /> Save departments
             </button>
