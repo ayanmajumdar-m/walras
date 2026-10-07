@@ -7,7 +7,7 @@ const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png"
 
 const POINTS = [
   "Cloud servers billed in rupees",
-  "Data centers in Mumbai and London",
+  "Data centers in Mumbai, London and Los Angeles",
   "24/7 email and ticket support",
 ];
 

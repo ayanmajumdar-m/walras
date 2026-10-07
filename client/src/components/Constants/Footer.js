@@ -40,7 +40,7 @@ const Footer = () => {
           <p className="copyright">
             © 2025 IOOGN TECHNOLOGIES OPC PVT LTD. All rights reserved.
           </p>
-          <p className="copyright">Mumbai, India · London, UK</p>
+          <p className="copyright">Mumbai, India · London, UK · Los Angeles, US</p>
         </div>
       </div>
     </footer>

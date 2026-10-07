@@ -31,7 +31,15 @@ const COMPUTE_INCLUDES = [
   { Icon: HardDrive, text: "NVMe SSD storage" }
 ];
 
-const formatPrice = (key, value) => ({ amount: `₹${value.toLocaleString("en-IN")}`, per: "/mo" });
+// Monthly price in the chosen currency. USD is shown for reference; plans
+// without a $ price show a dash.
+const CURRENCIES = [{ id: "inr", label: "₹ INR" }, { id: "usd", label: "$ USD" }];
+const CURRENCY_KEY = "walrasCurrency";
+const priceOf = (plan, currency) => (currency === "usd" ? plan.usd : plan.monthly);
+const formatMoney = (value, currency) =>
+  value === null || value === undefined ? "—"
+    : currency === "usd" ? `$${Number(value).toLocaleString("en-US", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`
+    : `₹${Number(value).toLocaleString("en-IN")}`;
 
 // ── Domains (coming soon) ─────────────────────────────────────────────────
 const DOMAIN_INCLUDES = [
@@ -67,14 +75,22 @@ const Pricing = () => {
   // Which Virtual Machine plans are in stock somewhere (set by admins).
   const [computeStock, setComputeStock] = useState({});
   const [cpu, setCpu] = useState(CPU_TYPES[0].id);
+  // ₹ or $, remembered for next time.
+  const [currency, setCurrency] = useState(() => {
+    try { return localStorage.getItem(CURRENCY_KEY) === "usd" ? "usd" : "inr"; } catch { return "inr"; }
+  });
+  const chooseCurrency = (c) => {
+    setCurrency(c);
+    try { localStorage.setItem(CURRENCY_KEY, c); } catch { /* not remembered */ }
+  };
   // Plans and prices are managed in admin; null while loading.
   const [vmPlans, setVmPlans] = useState(null);
 
   useEffect(() => {
     fetch("/api/plans/vm")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((d) => setVmPlans(d.plans || []))
-      .catch(() => setVmPlans([]));
+      .catch(() => setVmPlans(false)); // false = couldn't load (not "no plans")
   }, []);
 
   useEffect(() => {
@@ -123,8 +139,9 @@ const Pricing = () => {
     window.history.replaceState(null, "", `#${id}`);
   };
 
+  const sortValue = (p) => (sort.key === "monthly" ? (priceOf(p, currency) ?? Infinity) : p[sort.key]);
   const sortedPlans = (vmPlans || []).filter((p) => p.cpu === cpu).sort((a, b) =>
-    sort.dir === "asc" ? a[sort.key] - b[sort.key] : b[sort.key] - a[sort.key]
+    sort.dir === "asc" ? sortValue(a) - sortValue(b) : sortValue(b) - sortValue(a)
   );
 
   const toggleSort = (key) =>
@@ -146,8 +163,8 @@ const Pricing = () => {
                 <Icon className="pr-hero-tile-icon" aria-hidden="true" />
                 <span className="pr-hero-tile-title">{title}</span>
                 <span className="pr-hero-tile-from">
-                  {id === "virtual-machine" && vmPlans?.length
-                    ? `from ₹${Math.min(...vmPlans.map((p) => p.monthly)).toLocaleString("en-IN")}/mo`
+                  {id === "virtual-machine" && vmPlans?.length && vmPlans.some((p) => priceOf(p, currency) != null)
+                    ? `from ${formatMoney(Math.min(...vmPlans.map((p) => priceOf(p, currency)).filter((v) => v != null)), currency)}/mo`
                     : from}
                 </span>
                 <ArrowRight className="pr-hero-tile-arrow" aria-hidden="true" />
@@ -208,9 +225,22 @@ const Pricing = () => {
                   </button>
                 ))}
               </div>
+              <div className="pr-seg" role="group" aria-label="Currency">
+                {CURRENCIES.map((c) => (
+                  <button key={c.id} type="button" aria-pressed={currency === c.id}
+                    className={currency === c.id ? "is-active" : ""} onClick={() => chooseCurrency(c.id)}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
             </div>
             {vmPlans === null ? (
               <div className="pr-card pr-soon-card"><span>Loading plans…</span></div>
+            ) : vmPlans === false ? (
+              <div className="pr-card pr-soon-card">
+                <strong>Plans couldn't be loaded right now.</strong>
+                <span>Please refresh the page in a moment.</span>
+              </div>
             ) : sortedPlans.length === 0 ? (
               <div className="pr-card pr-soon-card">
                 <strong>{CPU_TYPES.find((c) => c.id === cpu)?.label} plans are coming soon.</strong>
@@ -257,7 +287,8 @@ const Pricing = () => {
                       {PLAN_COLUMNS.map(({ key, label, show, price }) => {
                         const cls = sort.key === key ? "is-sorted" : "";
                         if (price) {
-                          const { amount, per } = formatPrice(key, plan[key]);
+                          const amount = formatMoney(priceOf(plan, currency), currency);
+                          const per = "/mo";
                           return (
                             <td key={key} data-label={`${label} price`} className={`pr-price ${cls}`}>
                               <strong>{amount}</strong> <span className="pr-unit">{per}</span>
@@ -284,8 +315,9 @@ const Pricing = () => {
             )}
 
             <p className="pr-footnote">
-              Prices exclude tax; the final amount is shown at checkout. Every plan includes one IPv4
-              address and a 1 Gbps network port.
+              Prices exclude tax; the final amount is shown at checkout.
+              {currency === "usd" && " US dollar prices are for reference; your account is billed in Indian rupees."}
+              {" "}Every plan includes one IPv4 address and a 1 Gbps network port.
             </p>
           </section>
 

@@ -4,7 +4,7 @@ import { Shield, Zap, Server, Clock, Wallet, Globe, MapPin, ArrowRight, Headphon
 
 const STATS = [
   { value: "99.9%", label: "Uptime guarantee" },
-  { value: "2", label: "Regions: Mumbai and London" },
+  { value: "3", label: "Regions: Mumbai, London and Los Angeles" },
   { value: "24/7", label: "Email and ticket support" },
   { value: "₹", label: "Local pricing, billed in rupees" }
 ];
@@ -44,7 +44,8 @@ const FEATURES = [
 
 const REGIONS = [
   { city: "Mumbai", country: "India", note: "Our home region, close to customers across India." },
-  { city: "London", country: "United Kingdom", note: "Our region for customers in the UK and Europe." }
+  { city: "London", country: "United Kingdom", note: "Our region for customers in the UK and Europe." },
+  { city: "Los Angeles", country: "United States", note: "Our region for customers across the Americas." }
 ];
 
 const About = () => (

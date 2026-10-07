@@ -187,7 +187,7 @@ const VmPlans = ({ can }) => {
                       <td data-label="Bandwidth">{formatBandwidth(p.bandwidth)}</td>
                       <td data-label="Network">{p.network} Gbps</td>
                       <td data-label="₹ / month"><strong>₹{p.monthly.toLocaleString("en-IN")}</strong></td>
-                      <td data-label="$ / month">{p.usd === null ? "—" : `$${p.usd}`}</td>
+                      <td data-label="$ / month">{p.usd === null ? "—" : `$${p.usd.toLocaleString("en-US", { minimumFractionDigits: p.usd % 1 ? 2 : 0, maximumFractionDigits: 2 })}`}</td>
                       <td data-label="Servers">{p.servers}</td>
                       <td data-label="Status">
                         <span className={`cx-status ${p.active ? "is-active" : "is-stopped"}`}>{p.active ? "On sale" : "Hidden"}</span>

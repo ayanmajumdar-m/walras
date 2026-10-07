@@ -77,7 +77,7 @@ const SPEC_ROWS = [
   { k: "Uptime guarantee", v: "99.9%" },
   { k: "Support response", v: "60 min" },
   { k: "Free trial", v: "168 hrs" },
-  { k: "Regions", v: "Mumbai · London" },
+  { k: "Regions", v: "Mumbai · London · Los Angeles" },
   { k: "Entry plan", v: "₹900/mo" }
 ];
 
