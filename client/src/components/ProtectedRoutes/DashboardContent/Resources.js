@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Server, Layers, Globe, ExternalLink, KeyRound, Copy, Check, Play, Square, RotateCcw, Trash2, RefreshCw, Plus, X } from "lucide-react";
 import { api } from "../consoleApi";
+import { useConsole } from "../ConsoleContext";
 import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 import EditNSModal from "./EditNSModal";
 import TransferDomainModal from "./TransferDomainModal";
@@ -124,6 +125,8 @@ const HostingTab = ({ accounts, notify }) => {
 };
 
 const ServersTab = ({ servers, reload, notify }) => {
+  // Team members with Write access can't delete.
+  const canDelete = useConsole().can("delete");
   const manage = async (serverId, action) => {
     try {
       await api("/api/servers/manage", { method: "POST", body: { serverId, action } });
@@ -166,7 +169,7 @@ const ServersTab = ({ servers, reload, notify }) => {
                 {s.status === "stopped" && (
                   <button type="button" className="cx-icon-btn" onClick={() => manage(s.id, "start")} title="Start"><Play size={15} /></button>
                 )}
-                <button type="button" className="cx-icon-btn is-danger" onClick={() => remove(s.id, s.name)} title="Delete"><Trash2 size={15} /></button>
+                {canDelete && <button type="button" className="cx-icon-btn is-danger" onClick={() => remove(s.id, s.name)} title="Delete"><Trash2 size={15} /></button>}
               </td>
             </tr>
           ))}

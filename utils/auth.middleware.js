@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const connection = require('../config/db');
 const { JWT_SECRET } = process.env;
-const { accessFor, membership, ACCESS } = require('./team');
+const { accessFor, membership } = require('./team');
 
 /*
   Suspended customers are refused on every request, not just at sign-in.
@@ -56,19 +56,23 @@ const authenticateToken = (req, res, next) => {
             if (!needed) {
                 return res.status(403).json({ error: "This isn't available while working in a team account.", teamAccessDenied: true });
             }
-            const permissions = await membership(ownerId, user.userId);
-            if (!permissions) {
+            const role = await membership(ownerId, user.userId);
+            if (!role) {
                 return res.status(403).json({ error: 'You no longer have access to that account.', teamAccessRevoked: true });
             }
-            if (!permissions.includes(needed)) {
-                return res.status(403).json({ error: `You don't have ${ACCESS[needed].label.toLowerCase()} access in this account.`, teamAccessDenied: true });
+            if (needed === 'admin' && role !== 'admin') {
+                return res.status(403).json({ error: 'Only account admins can do this.', teamAccessDenied: true });
+            }
+            // Write: use everything, delete nothing.
+            if (role === 'write' && req.method === 'DELETE') {
+                return res.status(403).json({ error: "Your Write access can't delete. Ask an account admin.", teamAccessDenied: true });
             }
             const ownerStatus = await userStatus(ownerId);
             if (ownerStatus.suspended) {
                 return res.status(403).json({ error: 'That account is suspended.', teamAccessRevoked: true });
             }
             // Everything downstream scopes by userId, so it now acts on the owner's account.
-            req.user = { ...user, userId: ownerId, actorId: user.userId, teamPermissions: permissions };
+            req.user = { ...user, userId: ownerId, actorId: user.userId, teamRole: role };
             return next();
         }
 

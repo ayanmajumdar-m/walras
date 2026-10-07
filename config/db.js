@@ -503,6 +503,8 @@ connection.connect((err) => {
         ...migrateServers.map((sql, i) => [`servers migration ${i + 1}`, sql]),
         ['Compute stock', createComputeStockTable],
         ['Team members', createTeamMembersTable],
+        // Team access became a role (write / admin); older access lists become write.
+        ['team roles', "UPDATE team_members SET permissions = 'write' WHERE permissions NOT IN ('write', 'admin')"],
         ['Bulk emails', createBulkEmailsTable],
         ['users marketing opt-out', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_out BOOLEAN NOT NULL DEFAULT FALSE'],
         ['team members index', 'CREATE INDEX IF NOT EXISTS team_members_member_idx ON team_members (member_user_id)'],

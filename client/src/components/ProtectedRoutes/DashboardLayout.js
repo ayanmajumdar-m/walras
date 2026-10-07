@@ -48,8 +48,13 @@ const DashboardLayout = () => {
   const actingId = actingAccount();
   const account = actingId && memberships ? memberships.find((m) => String(m.ownerId) === actingId) || null : null;
   const teamReady = !actingId || memberships !== null;
-  // Your own account: everything. A team account: what the owner granted.
-  const can = useCallback((perm) => !actingId || Boolean(account?.permissions.includes(perm)), [actingId, account]);
+  // Your own account: everything. In a team account both roles use
+  // everything; only Admin may delete or manage the team.
+  const can = useCallback((perm) => {
+    if (!actingId) return true;
+    if (!account) return false;
+    return ["delete", "team"].includes(perm) ? account.role === "admin" : true;
+  }, [actingId, account]);
 
   const refreshBalance = useCallback(() => {
     api("/api/wallet").then((d) => setBalance(rupees(d.balance))).catch(() => {});
@@ -79,7 +84,7 @@ const DashboardLayout = () => {
     <div className="cx-card cx-empty">
       <span className="cx-empty-icon"><Lock size={26} aria-hidden="true" /></span>
       <h4>You don't have access to this</h4>
-      <p>{account?.ownerName || "The account owner"} hasn't given you {perm} access in this account.</p>
+      <p>Ask {account?.ownerName || "the account owner"} for access to this in their account.</p>
       <Link to="/dashboard/home" className="cx-btn cx-btn-ghost">Back to overview</Link>
     </div>
   ));

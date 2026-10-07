@@ -14,8 +14,10 @@ const sessionExpired = (message) => {
 // When a team member works in someone else's account, the owner's id is kept
 // here and sent as X-Walras-Account. The server decides what that allows
 // (utils/team.js); these calls always act on the signed-in person instead.
+// /api/team/members is the exception: it manages the account being worked in.
 export const ACCOUNT_KEY = "walrasAccount";
 const OWN_ONLY = ["/api/team", "/api/users/profile", "/api/auth"];
+const ownOnly = (path) => !path.startsWith("/api/team/members") && OWN_ONLY.some((p) => path.startsWith(p));
 
 export const actingAccount = () => {
   try {
@@ -37,7 +39,7 @@ export const switchAccount = (ownerId) => {
 /** Headers for a raw fetch to a console API path. */
 export const authHeaders = (path = "") => {
   const token = localStorage.getItem("token");
-  const account = OWN_ONLY.some((p) => path.startsWith(p)) ? null : actingAccount();
+  const account = ownOnly(path) ? null : actingAccount();
   return {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(account ? { "X-Walras-Account": account } : {}),
