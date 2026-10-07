@@ -1479,3 +1479,14 @@
 .cx-area strong { font-size: 14px; }
 .cx-area small { font-size: 12px; line-height: 1.4; color: var(--text-secondary); }
 @media (max-width: 700px) { .cx-areas { grid-template-columns: 1fr; } }
+
+/* Support: department choice on a new ticket */
+.cx-dept-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.cx-dept {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 9px 14px; border: 1.5px solid var(--color-divider); border-radius: 999px; background: #ffffff;
+  font-size: 14.5px; font-weight: 600;
+}
+.cx-dept:hover { border-color: var(--color-accent-300); }
+.cx-dept.is-on { border-color: var(--color-brand-500); background: color-mix(in srgb, var(--color-accent-100) 60%, #ffffff); color: var(--color-accent-800); }
+.cx-dept input { accent-color: var(--color-accent-700); margin: 0; }

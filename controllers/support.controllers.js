@@ -5,6 +5,7 @@
  */
 const connection = require('../config/db');
 const zendesk = require('../services/zendesk');
+const departments = require('../utils/supportDepartments');
 
 const SUPPORT_EMAIL = 'support@walras.net';
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf', 'application/zip', 'application/x-zip-compressed', 'text/plain'];
@@ -105,24 +106,32 @@ const SupportController = {
     // GET /api/support/status
     status: (req, res) => res.json({ configured: zendesk.zendeskConfigured(), email: SUPPORT_EMAIL }),
 
+    // GET /api/support/departments — Zendesk groups a ticket can go to.
+    departments: handle(async (req, res) => {
+        res.json({ departments: await departments.getDepartments() });
+    }),
+
     // GET /api/support/tickets
     list: handle(async (req, res) => {
         if (!zendesk.zendeskConfigured()) return res.json({ configured: false, tickets: [] });
         const me = await zendesk.zendeskUserFor(req.user.userId);
-        const tickets = await zendesk.listZendeskTicketsFor(me);
+        const [tickets, depts] = await Promise.all([zendesk.listZendeskTicketsFor(me), departments.getDepartments()]);
+        // Only customer-facing department names; internal groups stay hidden.
+        const deptName = new Map(depts.map((d) => [d.id, d.name]));
         res.json({
             configured: true,
             tickets: tickets.map((t) => ({
                 id: String(t.id),
                 subject: t.subject || '(no subject)',
                 status: customerStatus(t.status),
+                department: deptName.get(t.group_id) || null,
                 created_at: t.created_at,
                 updated_at: t.updated_at,
             })),
         });
     }),
 
-    // POST /api/support/tickets { subject, description, attachments? }
+    // POST /api/support/tickets { subject, description, departmentId?, attachments? }
     create: handle(async (req, res) => {
         if (!zendesk.zendeskConfigured()) throw unavailable();
         const subject = String(req.body.subject || '').trim();
@@ -131,6 +140,11 @@ const SupportController = {
         if (description.length < 10 || description.length > 4000) throw new SupportError(400, 'Describe the problem in 10 to 4000 characters.');
         const files = validateAttachments(req.body.attachments);
 
+        // A department is required whenever there are any to choose from.
+        const depts = await departments.getDepartments();
+        const department = depts.find((d) => d.id === Number(req.body.departmentId)) || null;
+        if (depts.length && !department) throw new SupportError(400, 'Choose the department you need help from.');
+
         const requesterId = await zendesk.zendeskUserFor(req.user.userId);
         const ticket = await zendesk.createZendeskTicket({
             requesterId,
@@ -138,8 +152,10 @@ const SupportController = {
             body: description,
             uploads: await uploadAll(files),
             tags: ['walras_console'],
+            groupId: department?.id,
         });
         let note = await accountNote(req.user.userId);
+        if (department) note = `Department chosen by the customer: ${department.name}\n\n${note}`;
         if (req.user.actorId) {
             const [actor] = await q('SELECT name, email FROM users WHERE id = ?', [req.user.actorId]).catch(() => []);
             note = `Opened by team member: ${actor?.name || '-'} <${actor?.email || '-'}>\n\n${note}`;
@@ -153,11 +169,13 @@ const SupportController = {
     get: handle(async (req, res) => {
         if (!zendesk.zendeskConfigured()) throw unavailable();
         const { me, ticket, comments } = await ownTicket(req.user.userId, ticketId(req.params.id));
+        const dept = (await departments.getDepartments()).find((d) => d.id === ticket.group_id);
         res.json({
             ticket: {
                 id: String(ticket.id),
                 subject: ticket.subject || '(no subject)',
                 status: customerStatus(ticket.status),
+                department: dept ? dept.name : null,
                 canReply: ticket.status !== 'closed',
                 created_at: ticket.created_at,
             },

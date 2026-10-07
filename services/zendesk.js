@@ -136,7 +136,23 @@ const uploadToZendesk = async ({ fileName, mimeType, data }) => {
     return res.upload.token;
 };
 
-const createZendeskTicket = async ({ requesterId, subject, body, uploads, tags }) => {
+// Agent groups: what customers pick as a "department" (utils/supportDepartments.js).
+// Cached for 10 minutes; groups change rarely.
+let groupsCache = null;
+const listZendeskGroups = async ({ fresh = false } = {}) => {
+    if (!fresh && groupsCache && groupsCache.until > Date.now()) return groupsCache.groups;
+    const groups = [];
+    let path = '/api/v2/groups.json?per_page=100';
+    for (let page = 0; path && page < 10; page++) {
+        const res = await zd(path, { timeoutMs: 8000 });
+        groups.push(...(res.groups || []).filter((g) => !g.deleted).map((g) => ({ id: g.id, name: g.name })));
+        path = res.next_page ? res.next_page.replace(baseUrl(), '') : null;
+    }
+    groupsCache = { groups, until: Date.now() + 10 * 60 * 1000 };
+    return groups;
+};
+
+const createZendeskTicket = async ({ requesterId, subject, body, uploads, tags, groupId }) => {
     const brand = zendeskBrandId();
     const res = await zd('/api/v2/tickets.json', {
         method: 'POST',
@@ -145,6 +161,7 @@ const createZendeskTicket = async ({ requesterId, subject, body, uploads, tags }
                 subject,
                 requester_id: requesterId,
                 ...(brand ? { brand_id: brand } : {}),
+                ...(groupId ? { group_id: groupId } : {}),
                 tags,
                 comment: { body, author_id: requesterId, public: true, uploads },
             },
@@ -223,4 +240,5 @@ module.exports = {
     downloadZendeskAttachment,
     countOpenZendeskTickets,
     zendeskAgentUrl,
+    listZendeskGroups,
 };

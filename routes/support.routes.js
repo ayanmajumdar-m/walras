@@ -16,6 +16,7 @@ const createLimit = rateLimit({ windowMs: 60 * MINUTE, max: 10, keyFn: userKey('
 const replyLimit = rateLimit({ windowMs: 15 * MINUTE, max: 30, keyFn: userKey('support-reply') });
 
 supportRouter.get('/status', SupportController.status);
+supportRouter.get('/departments', readLimit, SupportController.departments);
 supportRouter.get('/tickets', readLimit, SupportController.list);
 supportRouter.post('/tickets', createLimit, SupportController.create);
 supportRouter.get('/tickets/:id', readLimit, SupportController.get);

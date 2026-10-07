@@ -47,6 +47,8 @@ router.post('/notifications/seen', Platform.markNotificationsSeen);
 // ── Dashboard ──────────────────────────────────────────────────────────────
 router.get('/dashboardStats', can('view_dashboard'), AdminController.getDashboardStats);
 router.get('/support/summary', can('view_dashboard'), Platform.supportSummary);
+router.get('/settings/support-departments', can('manage_settings'), Platform.getSupportDepartments);
+router.put('/settings/support-departments', can('manage_settings'), Platform.updateSupportDepartments);
 
 // Email customers (bulk)
 const BulkEmail = require('../controllers/bulkEmail.controllers');

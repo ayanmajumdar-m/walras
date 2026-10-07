@@ -68,20 +68,34 @@ const FilePicker = ({ files, setFiles, onError }) => {
 
 // ── New ticket ────────────────────────────────────────────────────────────
 const NewTicket = ({ onCancel, onCreated, notify }) => {
+  // Departments are Zendesk groups the admin offers; null while loading.
+  const [departments, setDepartments] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState([]);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    api("/api/support/departments")
+      .then((d) => {
+        const list = d.departments || [];
+        setDepartments(list);
+        if (list.length === 1) setDepartmentId(list[0].id);
+      })
+      .catch(() => setDepartments([]));
+  }, []);
+
   const submit = async (e) => {
     e.preventDefault();
+    if (departments?.length && !departmentId) return notify("Choose the department you need help from.", "error");
     if (subject.trim().length < 3) return notify("Give your ticket a short subject.", "error");
     if (description.trim().length < 10) return notify("Describe the problem in a little more detail (at least 10 characters).", "error");
     setBusy(true);
     try {
       const d = await api("/api/support/tickets", {
         method: "POST",
-        body: { subject: subject.trim(), description: description.trim(), attachments: await encodeFiles(files) },
+        body: { subject: subject.trim(), description: description.trim(), departmentId, attachments: await encodeFiles(files) },
       });
       notify("Ticket opened. We'll reply here and by email.", "success");
       onCreated(d.id);
@@ -95,6 +109,19 @@ const NewTicket = ({ onCancel, onCreated, notify }) => {
   return (
     <form className="cx-card cx-ticket-form" onSubmit={submit}>
       <h3>New ticket</h3>
+      {departments?.length > 1 && (
+        <div className="cx-field">
+          <span>Department</span>
+          <div className="cx-dept-grid" role="radiogroup" aria-label="Department">
+            {departments.map((d) => (
+              <label key={d.id} className={`cx-dept${departmentId === d.id ? " is-on" : ""}`}>
+                <input type="radio" name="ticket-department" checked={departmentId === d.id} onChange={() => setDepartmentId(d.id)} />
+                <span>{d.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
       <label className="cx-field">
         <span>Subject</span>
         <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={160} placeholder="e.g. Can't reach cPanel for example.com" autoFocus />
@@ -183,7 +210,7 @@ const TicketView = ({ id, onBack, notify }) => {
         <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={onBack}><ArrowLeft size={15} /> All tickets</button>
         <div className="cx-ticket-title">
           <h3>{ticket.subject}</h3>
-          <span className="cx-ticket-meta">#{ticket.id} · opened {formatDate(ticket.created_at)}</span>
+          <span className="cx-ticket-meta">#{ticket.id}{ticket.department ? ` · ${ticket.department}` : ""} · opened {formatDate(ticket.created_at)}</span>
         </div>
         <span className={`cx-status is-ticket-${ticket.status}`}>{STATUS_LABEL[ticket.status]}</span>
       </div>
@@ -309,12 +336,13 @@ const Support = () => {
       ) : (
         <div className="cx-card cx-table-wrap">
           <table className="cx-table cx-table-select">
-            <thead><tr><th>Subject</th><th>Ticket</th><th>Status</th><th>Last update</th></tr></thead>
+            <thead><tr><th>Subject</th><th>Department</th><th>Ticket</th><th>Status</th><th>Last update</th></tr></thead>
             <tbody>
               {tickets.map((t) => (
                 <tr key={t.id} tabIndex={0} onClick={() => go({ ticket: t.id })}
                   onKeyDown={(e) => { if (e.key === "Enter") go({ ticket: t.id }); }}>
                   <td data-label="Subject"><strong>{t.subject}</strong></td>
+                  <td data-label="Department">{t.department || "—"}</td>
                   <td data-label="Ticket"><code>#{t.id}</code></td>
                   <td data-label="Status"><span className={`cx-status is-ticket-${t.status}`}>{STATUS_LABEL[t.status]}</span></td>
                   <td data-label="Last update">{formatDate(t.updated_at)}</td>

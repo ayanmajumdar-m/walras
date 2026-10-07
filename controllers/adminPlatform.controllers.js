@@ -11,6 +11,7 @@ const rbac = require('../utils/adminRbac');
 const platform = require('../utils/platformSettings');
 const { forgetUserStatus } = require('../utils/auth.middleware');
 const zendesk = require('../services/zendesk');
+const supportDepartments = require('../utils/supportDepartments');
 const solusvm = require('../services/solusvm');
 const computeStock = require('../utils/computeStock');
 
@@ -455,6 +456,28 @@ const PlatformController = {
         const after = { stock: await computeStock.getStock(), planMap: await computeStock.getPlanMap() };
         audit(req, 'compute.stock', 'settings', 'compute', { before, after });
         res.json({ message: 'Cloud Compute stock saved' });
+    }),
+
+    // ── Support departments (Zendesk groups customers can choose) ────────
+    getSupportDepartments: handle(async (req, res) => {
+        if (!zendesk.zendeskConfigured()) return res.json({ configured: false, groups: [], choice: null });
+        try {
+            const { groups, choice } = await supportDepartments.getAdminView();
+            res.json({ configured: true, groups, choice });
+        } catch (err) {
+            res.json({ configured: true, error: `Couldn't load groups from Zendesk: ${err.message}`, groups: [], choice: null });
+        }
+    }),
+
+    // PUT { departments: [{ groupId, label }] } or { departments: null } for "all groups".
+    updateSupportDepartments: handle(async (req, res) => {
+        const list = req.body.departments;
+        if (list !== null && (!Array.isArray(list) || list.length === 0)) {
+            throw new HttpError(400, 'Choose at least one department, or offer all Zendesk groups.');
+        }
+        await supportDepartments.setChoice(list);
+        audit(req, 'settings.support_departments', 'settings', 'support', { departments: list });
+        res.json({ message: list === null ? 'Customers can choose any Zendesk group.' : 'Support departments saved.' });
     }),
 
     // ── Support (Zendesk) ────────────────────────────────────────────────

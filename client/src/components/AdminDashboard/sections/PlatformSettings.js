@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Power, PackageX, Package, FileText, Lock, Save, WalletCards } from "lucide-react";
 import { adminApi } from "../adminApi";
 import EmailSender from "../components/Settings";
+import SupportDepartments from "./SupportDepartments";
 
 const INVOICE_FIELDS = [
   { key: "legalName", label: "Legal name", wide: true },
@@ -128,6 +129,8 @@ const PlatformSettings = () => {
           </button>
         </div>
       </section>
+
+      <SupportDepartments />
 
       <EmailSender />
     </div>
