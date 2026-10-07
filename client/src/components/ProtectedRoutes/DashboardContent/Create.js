@@ -4,7 +4,7 @@ import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock, MapPin, Eye, EyeO
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
-import { COMPUTE_PLANS, CPU_TYPES, HOSTING_PLANS, HOSTING_PRICES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
+import { CPU_TYPES, HOSTING_PLANS, HOSTING_PRICES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
 
 /*
   One page to create anything, CloudPe style: pick the product at the top,
@@ -183,7 +183,7 @@ const ComputeConfigurator = () => {
   const [loadError, setLoadError] = useState("");
   const [locationId, setLocationId] = useState(null);
   const [cpu, setCpu] = useState(CPU_TYPES[0].id);
-  const [selected, setSelected] = useState(COMPUTE_PLANS[0].name);
+  const [selected, setSelected] = useState(null);
   const [osId, setOsId] = useState("");
   const [hostname, setHostname] = useState("");
   const [password, setPassword] = useState("");
@@ -207,7 +207,7 @@ const ComputeConfigurator = () => {
       .catch((e) => setLoadError(e.message));
   }, []);
 
-  const plans = catalog?.plans || COMPUTE_PLANS;
+  const plans = catalog?.plans || [];
   // Plans for the chosen CPU type. None yet for a type = "coming soon", no plan.
   const cpuPlans = plans.filter((p) => (p.cpu || "intel") === cpu);
   const plan = cpuPlans.find((p) => p.name === selected) || cpuPlans[0] || null;
@@ -294,7 +294,9 @@ const ComputeConfigurator = () => {
               ))}
             </div>
           </div>
-          {cpuPlans.length === 0 ? (
+          {!catalog ? (
+            <div className="cx-soon-inline"><span>{loadError ? "Plans couldn't be loaded." : "Loading plans…"}</span></div>
+          ) : cpuPlans.length === 0 ? (
             <div className="cx-soon-inline">
               <strong>{CPU_TYPES.find((c) => c.id === cpu)?.label} plans are coming soon.</strong>
               <span>Choose another CPU type to see the plans available now.</span>

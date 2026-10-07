@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
-  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail,
+  UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail, Tags,
 } from "lucide-react";
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import { adminApi, adminLogout } from "./adminApi";
@@ -13,6 +13,7 @@ import Administrators from "./sections/Administrators";
 import AuditLogs from "./sections/AuditLogs";
 import PlatformSettings from "./sections/PlatformSettings";
 import ComputeStock from "./sections/ComputeStock";
+import VmPlans from "./sections/VmPlans";
 import { WEB_HOSTING_ENABLED } from "../../data/plans";
 import BulkEmail from "./sections/BulkEmail";
 import NotificationsBell from "./sections/NotificationsBell";
@@ -46,6 +47,7 @@ const GROUPS = [
       // Hidden while Web Hosting is withdrawn (data/plans.js WEB_HOSTING_ENABLED).
       ...(WEB_HOSTING_ENABLED ? [{ id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" }] : []),
       { id: "servers", label: "Virtual Machines", Icon: Layers, perm: "view_services" },
+      { id: "vm-plans", label: "VM plans", Icon: Tags, perm: "view_services" },
       { id: "compute-stock", label: "VM stock", Icon: Boxes, perm: "view_services" },
       { id: "domains", label: "Domains", Icon: Globe, perm: "view_services" },
     ],
@@ -111,6 +113,7 @@ const AdminDashboard = () => {
       case "promo-codes": return <PromoCodesSection notify={notify} />;
       case "hosting": return <HostingSection notify={notify} />;
       case "servers": return <ServersSection />;
+      case "vm-plans": return <VmPlans can={can} />;
       case "compute-stock": return <ComputeStock can={can} />;
       case "bulk-email": return <BulkEmail />;
       case "domains": return <DomainsSection />;

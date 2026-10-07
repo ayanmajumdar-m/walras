@@ -470,3 +470,18 @@
 .ap-wid-chip span { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--text-muted); }
 .ap-wid-chip code { font-size: 13.5px; font-weight: 600; background: none; padding: 0; }
 .ap-wid-chip svg { color: var(--text-muted); }
+
+/* VM plans */
+.ap-plan-table tr.is-hidden-plan td { color: var(--text-muted); }
+.ap-plan-modal { max-width: 640px; }
+.ap-plan-form { display: flex; flex-direction: column; gap: 14px; }
+.ap-plan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.ap-plan-grid .cx-field input, .ap-plan-grid .cx-field select { width: 100%; box-sizing: border-box; }
+.ap-plan-grid .cx-field input:disabled { background: #f4f6f5; color: var(--text-muted); }
+.ap-plan-active { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--color-divider); border-radius: 10px; cursor: pointer; }
+.ap-plan-active input { margin-top: 3px; accent-color: var(--color-accent-700); width: 16px; height: 16px; }
+.ap-plan-active span { display: flex; flex-direction: column; gap: 2px; }
+.ap-plan-active small { font-size: 12.5px; color: var(--text-muted); }
+.ap-plan-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ap-plan-spacer { flex: 1; }
+@media (max-width: 600px) { .ap-plan-grid { grid-template-columns: 1fr; } }

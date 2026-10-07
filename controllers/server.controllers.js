@@ -55,11 +55,11 @@ const validPassword = (p) =>
 
 // GET /api/servers/catalog — plans with prices, where each is in stock, and the OS choices.
 exports.getCatalog = handle('Compute catalogue', async (req, res) => {
-    const availability = await stock.getAvailability();
-    const plans = stock.COMPUTE_PLANS.map((p) => ({
+    const [availability, active] = await Promise.all([stock.getAvailability(), stock.getPlans()]);
+    const plans = active.map(({ id, active: _a, sortOrder: _s, ...p }) => ({
         ...p,
         hourly: stock.hourlyRupees(p),
-        locations: Object.keys(availability[p.name]).map(Number),
+        locations: Object.keys(availability[p.name] || {}).map(Number),
     }));
     let locations = [];
     let os = [];
@@ -85,7 +85,8 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     const hostname = String(req.body.hostname || '').trim().toLowerCase();
     const password = req.body.password;
 
-    const plan = stock.findPlan(planName);
+    // Active plans only: a hidden plan can't be bought, whatever the browser sends.
+    const plan = typeof planName === 'string' ? await stock.findPlan(planName) : null;
     if (!plan) throw new HttpError(400, 'Choose a plan.');
     if (!Number.isInteger(locationId)) throw new HttpError(400, 'Choose a location.');
     if (!Number.isInteger(osId)) throw new HttpError(400, 'Choose an operating system.');
@@ -236,7 +237,7 @@ exports.deleteServer = handle('Delete server', async (req, res) => {
     const server = await ownServer(req.user.userId, req.params.serverId);
     if (server.solus_server_id) await solusvm.deleteServer(server.solus_server_id);
     await q('DELETE FROM servers WHERE id = ?', [server.id]);
-    if (server.solus_server_id && server.location_id && stock.findPlan(server.plan_name)) {
+    if (server.solus_server_id && server.location_id && (await stock.findPlan(server.plan_name, { all: true }))) {
         await stock.release(server.plan_name, server.location_id).catch((e) => console.error('Stock return failed:', e.message));
     }
     res.json({ message: 'Server deleted' });

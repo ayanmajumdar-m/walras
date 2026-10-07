@@ -23,6 +23,8 @@ export const productStatus = (product, platform) => {
   if (product.id === "compute") {
     const compute = platform?.planAvailability?.compute;
     if (!compute || !Object.values(compute).some(Boolean)) return { label: "Out of stock", available: false };
+    // Cheapest active plan (plans and prices are managed in admin).
+    if (platform?.vmFromPrice) return { label: `from ₹${Number(platform.vmFromPrice).toLocaleString("en-IN")}/mo`, available: true };
   }
   return { label: product.from, available: product.status === "available" };
 };

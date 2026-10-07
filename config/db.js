@@ -215,6 +215,44 @@ const migrateServers = [
     'ALTER TABLE servers ADD COLUMN IF NOT EXISTS location_id INT',
 ];
 
+// Virtual Machine plans, managed in Admin → VM plans (utils/computeStock.js).
+// Names are permanent once created (stock, SolusVM links and servers refer to
+// them). ram/bandwidth in GB (ram 0.5 = 512 MB), prices excluding GST.
+const createVmPlansTable = `
+CREATE TABLE IF NOT EXISTS vm_plans (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(40) NOT NULL UNIQUE,
+    cpu VARCHAR(10) NOT NULL CHECK (cpu IN ('intel', 'amd')),
+    vcpu INT NOT NULL CHECK (vcpu > 0),
+    ram_gb NUMERIC(8,2) NOT NULL CHECK (ram_gb > 0),
+    storage_gb INT NOT NULL CHECK (storage_gb > 0),
+    bandwidth_gb INT NOT NULL CHECK (bandwidth_gb >= 0),
+    network_gbps NUMERIC(6,2) NOT NULL DEFAULT 1,
+    price_inr NUMERIC(12,2) NOT NULL CHECK (price_inr > 0),
+    price_usd NUMERIC(12,2),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// The first plans (Intel, General Purpose). Only when the table is empty, so
+// plans an admin deletes later don't come back on restart.
+const seedVmPlans = `
+INSERT INTO vm_plans (name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, price_usd, sort_order)
+SELECT * FROM (VALUES
+    ('VMgIN_0.5', 'intel', 1, 0.5, 10, 256, 1, 350, 3.5, 10),
+    ('VMgIN_1', 'intel', 1, 1, 20, 512, 1, 450, 4.5, 20),
+    ('VMgIN_2', 'intel', 1, 2, 40, 1024, 1, 980, 10, 30),
+    ('VMgIN_4', 'intel', 2, 4, 60, 2048, 1, 1400, 15, 40),
+    ('VMgIN_8', 'intel', 4, 8, 80, 4096, 1, 2400, 25, 50),
+    ('VMgIN_16', 'intel', 6, 16, 120, 5120, 1, 4000, 40, 60),
+    ('VMgIN_24', 'intel', 8, 24, 160, 8192, 1, 6000, 65, 70),
+    ('VMgIN_32', 'intel', 10, 32, 200, 10240, 1, 9000, 95, 80),
+    ('VMgIN_64', 'intel', 14, 64, 400, 20480, 1, 12000, 125, 90)
+) AS seed(name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, price_usd, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM vm_plans)`;
+
 // Team members: people an account owner has invited (by email) and the
 // access they have in the owner's account. See utils/team.js.
 const createTeamMembersTable = `
@@ -540,6 +578,8 @@ connection.connect((err) => {
         ['Server', createServerTable],
         ...migrateServers.map((sql, i) => [`servers migration ${i + 1}`, sql]),
         ['Compute stock', createComputeStockTable],
+        ['VM plans', createVmPlansTable],
+        ['VM plans seed', seedVmPlans],
         ['Team members', createTeamMembersTable],
         ...migrateWaladminIds.map((sql, i) => [`WALADMIN ID ${i + 1}`, sql]),
         ['Bulk emails', createBulkEmailsTable],

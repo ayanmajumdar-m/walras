@@ -59,6 +59,13 @@ router.post('/bulk-email', can('send_bulk_email'), BulkEmail.send);
 router.post('/bulk-email/:id/cancel', can('send_bulk_email'), BulkEmail.cancel);
 router.post('/bulk-email/:id/resume', can('send_bulk_email'), BulkEmail.resume);
 
+// Virtual Machine plans and prices
+const VmPlans = require('../controllers/vmPlans.controllers');
+router.get('/vm-plans', can('view_services'), VmPlans.list);
+router.post('/vm-plans', can('manage_plans'), VmPlans.create);
+router.put('/vm-plans/:id', can('manage_plans'), VmPlans.update);
+router.delete('/vm-plans/:id', can('manage_plans'), VmPlans.remove);
+
 // Virtual Machine stock (per plan per SolusVM location)
 router.get('/compute/stock', can('view_services'), Platform.getComputeStock);
 router.put('/compute/stock', can('manage_services'), Platform.updateComputeStock);

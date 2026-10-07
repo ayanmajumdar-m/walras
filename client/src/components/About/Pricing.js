@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Pricing.css';
-import { COMPUTE_PLANS, CPU_TYPES, formatRam, formatBandwidth } from '../../data/plans';
+import { CPU_TYPES, formatRam, formatBandwidth } from '../../data/plans';
 import {
   Layers, Server, Globe, ChevronUp, ChevronDown, ArrowRight, Check, Cpu, MemoryStick,
   HardDrive, Network, Shield, Clock, BookOpen
@@ -67,6 +67,15 @@ const Pricing = () => {
   // Which Virtual Machine plans are in stock somewhere (set by admins).
   const [computeStock, setComputeStock] = useState({});
   const [cpu, setCpu] = useState(CPU_TYPES[0].id);
+  // Plans and prices are managed in admin; null while loading.
+  const [vmPlans, setVmPlans] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/plans/vm")
+      .then((r) => r.json())
+      .then((d) => setVmPlans(d.plans || []))
+      .catch(() => setVmPlans([]));
+  }, []);
 
   useEffect(() => {
     fetch("/api/settings/public")
@@ -114,7 +123,7 @@ const Pricing = () => {
     window.history.replaceState(null, "", `#${id}`);
   };
 
-  const sortedPlans = COMPUTE_PLANS.filter((p) => p.cpu === cpu).sort((a, b) =>
+  const sortedPlans = (vmPlans || []).filter((p) => p.cpu === cpu).sort((a, b) =>
     sort.dir === "asc" ? a[sort.key] - b[sort.key] : b[sort.key] - a[sort.key]
   );
 
@@ -136,7 +145,11 @@ const Pricing = () => {
               <a key={id} href={`#${id}`} className="pr-hero-tile" onClick={(e) => jumpTo(e, id)}>
                 <Icon className="pr-hero-tile-icon" aria-hidden="true" />
                 <span className="pr-hero-tile-title">{title}</span>
-                <span className="pr-hero-tile-from">{from}</span>
+                <span className="pr-hero-tile-from">
+                  {id === "virtual-machine" && vmPlans?.length
+                    ? `from ₹${Math.min(...vmPlans.map((p) => p.monthly)).toLocaleString("en-IN")}/mo`
+                    : from}
+                </span>
                 <ArrowRight className="pr-hero-tile-arrow" aria-hidden="true" />
               </a>
             ))}
@@ -196,7 +209,9 @@ const Pricing = () => {
                 ))}
               </div>
             </div>
-            {sortedPlans.length === 0 ? (
+            {vmPlans === null ? (
+              <div className="pr-card pr-soon-card"><span>Loading plans…</span></div>
+            ) : sortedPlans.length === 0 ? (
               <div className="pr-card pr-soon-card">
                 <strong>{CPU_TYPES.find((c) => c.id === cpu)?.label} plans are coming soon.</strong>
                 <span>Choose Intel to see the plans available now.</span>

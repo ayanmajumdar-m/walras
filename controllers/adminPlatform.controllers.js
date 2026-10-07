@@ -424,7 +424,7 @@ const PlatformController = {
             solusError,
             locations,
             solusPlans,
-            plans: computeStock.COMPUTE_PLANS.map((p) => ({
+            plans: (await computeStock.getPlans({ all: true })).map((p) => ({
                 ...p,
                 solusPlanId: planMap[p.name] || null,
                 stock: stockMap[p.name],
@@ -439,8 +439,9 @@ const PlatformController = {
         const before = { stock: await computeStock.getStock(), planMap: await computeStock.getPlanMap() };
         const entries = [];
         const map = {};
+        const known = new Set((await computeStock.getPlans({ all: true })).map((p) => p.name));
         for (const p of list) {
-            if (!computeStock.findPlan(p?.name)) continue;
+            if (!known.has(p?.name)) continue;
             if (p.solusPlanId !== undefined) map[p.name] = p.solusPlanId;
             for (const [loc, qty] of Object.entries(p.stock || {})) {
                 const locationId = Number(loc);

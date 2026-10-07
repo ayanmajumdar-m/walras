@@ -49,6 +49,9 @@ const paymentRouter = require("./routes/payment.routes");
 // What the website and console need to know about the platform's state:
 // maintenance, paused payments and which plans are on sale. No secrets here.
 const { getPlatform } = require("./utils/platformSettings");
+// Virtual Machine plans for the Pricing page (active plans only).
+app.get("/api/plans/vm", require("./controllers/vmPlans.controllers").publicList);
+
 app.get("/api/settings/public", async (req, res) => {
   try {
     const { maintenanceMode, paymentsPaused, topUpsPaused, planAvailability } = await getPlatform();
@@ -57,7 +60,10 @@ app.get("/api/settings/public", async (req, res) => {
       ? Object.fromEntries(Object.entries(planAvailability).map(([family, plans]) =>
           [family, Object.fromEntries(Object.keys(plans).map((name) => [name, false]))]))
       : planAvailability;
-    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, planAvailability: effective });
+    // Cheapest active VM plan, for "from ₹…/mo" labels.
+    const vmPlans = await require("./utils/computeStock").getPlans().catch(() => []);
+    const vmFromPrice = vmPlans.length ? Math.min(...vmPlans.map((p) => p.monthly)) : null;
+    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, planAvailability: effective, vmFromPrice });
   } catch (err) {
     console.error("Public settings failed:", err.message);
     res.json({ maintenanceMode: false, paymentsPaused: false, topUpsPaused: true, planAvailability: null });
