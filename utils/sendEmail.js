@@ -244,7 +244,67 @@ If you received this, the sender settings work.`,
     return { messageId: info.messageId, from };
 };
 
+/**
+ * Tells someone they've been invited to a Walras Cloud account. There is no
+ * link token: they accept in the console after signing in (or signing up)
+ * with this email address, which is what proves the invite is theirs.
+ */
+const sendTeamInviteEmail = async (to, ownerName, accessLabels) => {
+    const base = (process.env.CLIENT_URL || 'https://www.walras.net').replace(/\/+$/, '');
+    const acceptUrl = `${base}/dashboard/profile?tab=team`;
+    const signupUrl = `${base}/signup`;
+    const access = accessLabels.join(', ');
+    if (process.env.MAIL_DEV_LOG === 'true' && process.env.NODE_ENV !== 'production') {
+        console.log(`📧 [MAIL_DEV_LOG] team invite for ${to} from ${ownerName} (${access})`);
+        return { messageId: 'dev-log' };
+    }
+    if (!emailConfigured) throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
+    const info = await transporter.sendMail({
+        from: await resolveSender(),
+        to,
+        subject: `${ownerName} invited you to their Walras Cloud account`,
+        text: `${ownerName} invited you to their Walras Cloud account with access to: ${access}.
+
+To accept, sign in with this email address and open Account > Team:
+${acceptUrl}
+
+New to Walras Cloud? Create an account with this email address first:
+${signupUrl}
+
+If you weren't expecting this, you can ignore this email.`,
+        html: `
+<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f2f2f3;font-family:Arial,Helvetica,sans-serif;color:#1d1f20;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f3;padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e3e5e4;">
+          <tr><td style="background:#0b2622;padding:22px 28px;">
+            <span style="font-size:18px;font-weight:700;letter-spacing:0.08em;color:#ffffff;">WALRAS CLOUD</span>
+          </td></tr>
+          <tr><td style="padding:28px;">
+            <h1 style="margin:0 0 12px;font-size:22px;">You've been invited to a team</h1>
+            <p style="margin:0 0 14px;font-size:15px;line-height:1.6;"><strong>${escapeHtml(ownerName)}</strong> invited you to their Walras Cloud account.</p>
+            <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">Your access: <strong>${escapeHtml(access)}</strong></p>
+            <p style="margin:0 0 22px;"><a href="${acceptUrl}" style="display:inline-block;padding:12px 22px;background:#1fc3a0;color:#0a0a0c;font-weight:700;text-decoration:none;border-radius:10px;">Sign in to accept</a></p>
+            <p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#5d5d60;">Sign in with this email address (${escapeHtml(to)}). New to Walras Cloud? <a href="${signupUrl}" style="color:#037566;">Create an account</a> with this address first.</p>
+            <p style="margin:0;font-size:14px;line-height:1.6;color:#5d5d60;">If you weren't expecting this, you can ignore this email.</p>
+          </td></tr>
+          <tr><td style="padding:18px 28px;border-top:1px solid #e3e5e4;font-size:12px;color:#7a7a7d;">
+            &copy; ${new Date().getFullYear()} Walras Cloud. This is an automated message; please do not reply.
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`,
+    });
+    console.log('Team invite email sent:', info.messageId);
+    return info;
+};
+
 module.exports = {
+    sendTeamInviteEmail,
     resolveSender,
     sendTestEmail,
     sendAuthCodeEmail,

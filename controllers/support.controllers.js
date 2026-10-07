@@ -139,7 +139,12 @@ const SupportController = {
             uploads: await uploadAll(files),
             tags: ['walras_console'],
         });
-        await zendesk.addZendeskNote(ticket.id, await accountNote(req.user.userId))
+        let note = await accountNote(req.user.userId);
+        if (req.user.actorId) {
+            const [actor] = await q('SELECT name, email FROM users WHERE id = ?', [req.user.actorId]).catch(() => []);
+            note = `Opened by team member: ${actor?.name || '-'} <${actor?.email || '-'}>\n\n${note}`;
+        }
+        await zendesk.addZendeskNote(ticket.id, note)
             .catch((err) => console.warn(`Support note failed on ticket ${ticket.id}:`, err.message));
         res.status(201).json({ id: String(ticket.id) });
     }),

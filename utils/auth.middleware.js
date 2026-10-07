@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const connection = require('../config/db');
 const { JWT_SECRET } = process.env;
+const { accessFor, membership, ACCESS } = require('./team');
 
 /*
   Suspended customers are refused on every request, not just at sign-in.
@@ -42,6 +43,33 @@ const authenticateToken = (req, res, next) => {
                 error: `Your account is suspended${status.reason ? `: ${status.reason}` : ''}. Contact support@walras.net.`,
                 suspended: true,
             });
+        }
+
+        // Working in a team owner's account (utils/team.js).
+        const header = req.headers['x-walras-account'];
+        if (header !== undefined && header !== '' && Number(header) !== Number(user.userId)) {
+            const ownerId = Number(header);
+            const needed = accessFor(req.originalUrl);
+            if (!Number.isInteger(ownerId) || ownerId <= 0) {
+                return res.status(400).json({ error: 'Invalid account.' });
+            }
+            if (!needed) {
+                return res.status(403).json({ error: "This isn't available while working in a team account.", teamAccessDenied: true });
+            }
+            const permissions = await membership(ownerId, user.userId);
+            if (!permissions) {
+                return res.status(403).json({ error: 'You no longer have access to that account.', teamAccessRevoked: true });
+            }
+            if (!permissions.includes(needed)) {
+                return res.status(403).json({ error: `You don't have ${ACCESS[needed].label.toLowerCase()} access in this account.`, teamAccessDenied: true });
+            }
+            const ownerStatus = await userStatus(ownerId);
+            if (ownerStatus.suspended) {
+                return res.status(403).json({ error: 'That account is suspended.', teamAccessRevoked: true });
+            }
+            // Everything downstream scopes by userId, so it now acts on the owner's account.
+            req.user = { ...user, userId: ownerId, actorId: user.userId, teamPermissions: permissions };
+            return next();
         }
 
         req.user = user;

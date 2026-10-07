@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { authHeaders } from "../consoleApi";
 import "./Dashboard.css";
 import { useConsole } from "../ConsoleContext";
 
@@ -69,7 +70,7 @@ const Wallet = () => {
       const res = await fetch(`${API_URL}/api/user/profile/${userId}`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
         },
       });
       const data = await res.json();
@@ -90,7 +91,7 @@ const Wallet = () => {
       const res = await fetch(`${API_URL}/api/wallet`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
         },
       });
       const data = await res.json();
@@ -129,7 +130,7 @@ const Wallet = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
         },
         body: JSON.stringify({ amount: amt }),
       });
@@ -175,7 +176,7 @@ const Wallet = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
         },
         body: JSON.stringify({ amount: amt }),
       });
@@ -201,7 +202,7 @@ const Wallet = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              ...authHeaders(),
             },
             body: JSON.stringify({
               ...response,
@@ -250,7 +251,7 @@ const Wallet = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
         },
         body: JSON.stringify({ 
           amount: usdAmount,
@@ -282,7 +283,7 @@ const Wallet = () => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
+                ...authHeaders(),
               },
               body: JSON.stringify({
                 orderID: data.orderID,
@@ -368,7 +369,7 @@ const Wallet = () => {
       const response = await fetch(`${API_URL}/api/wallet/apply-promo`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          ...authHeaders(),
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ promoCode: promoCode.trim() })
@@ -398,7 +399,7 @@ const Wallet = () => {
       const response = await fetch(`${API_URL}/api/wallet/apply-promo`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          ...authHeaders(),
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ promoCode: appliedPromoCode.trim().toUpperCase() })

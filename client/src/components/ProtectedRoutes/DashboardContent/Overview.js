@@ -10,31 +10,35 @@ const formatDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 const Overview = () => {
-  const { profile, balance, platform } = useConsole();
+  const { profile, balance, platform, account, can } = useConsole();
+  const hasServers = can("servers");
   const [servers, setServers] = useState([]);
   const [hosting, setHosting] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!hasServers) { setLoading(false); return; }
     Promise.allSettled([
       api("/api/servers").then((d) => setServers(d.servers || [])),
       api("/api/hosting").then((d) => setHosting(d.hostingAccounts || [])),
       api("/api/users/domains/purchased").then((d) => setDomains(d.domains || [])),
     ]).finally(() => setLoading(false));
-  }, []);
+  }, [hasServers]);
 
   const firstName = (profile?.name || "").split(" ")[0];
   const activeServers = servers.filter((s) => s.status === "active").length;
   const activeHosting = hosting.filter((h) => h.status === "active").length;
 
   const STATS = [
+    ...(hasServers ? [
     { label: "Cloud Compute", value: servers.length, note: `${activeServers} running`, Icon: Layers, to: "/dashboard/resources?tab=servers" },
     ...(WEB_HOSTING_ENABLED || hosting.length > 0
       ? [{ label: "Web hosting", value: hosting.length, note: `${activeHosting} active`, Icon: Server, to: "/dashboard/resources?tab=hosting" }]
       : []),
     { label: "Domains", value: domains.length, note: "registered", Icon: Globe, to: "/dashboard/resources?tab=domains" },
-    { label: "Account balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: platform?.topUpsPaused ? "View billing" : "Add funds", Icon: Wallet, to: "/dashboard/billing" },
+    ] : []),
+    ...(can("billing") ? [{ label: "Account balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: platform?.topUpsPaused ? "View billing" : "Add funds", Icon: Wallet, to: "/dashboard/billing" }] : []),
   ];
 
   // Newest first, across every kind of resource.
@@ -52,17 +56,17 @@ const Overview = () => {
         <div>
           <span className="cx-eyebrow cx-eyebrow-light">Welcome back</span>
           <h2>{firstName ? `Hi ${firstName}, what are we building today?` : "What are we building today?"}</h2>
-          <p>Create cloud resources and manage everything from one place.</p>
+          <p>{account ? `You're working in ${account.ownerName || account.ownerEmail}'s account.` : "Create cloud resources and manage everything from one place."}</p>
         </div>
         <div className="cx-welcome-actions">
-          <Link to="/dashboard/create" className="cx-btn cx-btn-primary cx-btn-lg"><Plus size={18} /> Create resource</Link>
-          {!platform?.topUpsPaused && (
+          {hasServers && <Link to="/dashboard/create" className="cx-btn cx-btn-primary cx-btn-lg"><Plus size={18} /> Create resource</Link>}
+          {!platform?.topUpsPaused && can("billing") && (
             <Link to="/dashboard/billing" className="cx-btn cx-btn-ghost-light cx-btn-lg"><Wallet size={18} /> Add funds</Link>
           )}
         </div>
       </section>
 
-      <section className="cx-stats" style={{ "--cx-stat-cols": STATS.length }}>
+      {STATS.length > 0 && <section className="cx-stats" style={{ "--cx-stat-cols": STATS.length }}>
         {STATS.map(({ label, value, note, Icon, to }) => (
           <Link to={to} className="cx-stat" key={label}>
             <span className="cx-stat-icon"><Icon size={20} aria-hidden="true" /></span>
@@ -71,8 +75,9 @@ const Overview = () => {
             <span className="cx-stat-note">{note}</span>
           </Link>
         ))}
-      </section>
+      </section>}
 
+      {hasServers && (<>
       <section className="cx-section">
         <div className="cx-section-head">
           <h3>Create a new resource</h3>
@@ -126,6 +131,7 @@ const Overview = () => {
           </div>
         )}
       </section>
+      </>)}
     </div>
   );
 };

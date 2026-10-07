@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { LifeBuoy, Plus, RefreshCw, ArrowLeft, Paperclip, Send, X, Download, Mail } from "lucide-react";
-import { api } from "../consoleApi";
+import { api, authHeaders } from "../consoleApi";
 
 /*
   Support tickets, backed by Zendesk through /api/support (like Fantom).
@@ -135,8 +135,7 @@ const TicketView = ({ id, onBack, notify }) => {
 
   const download = async (att) => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/support/tickets/${id}/attachments/${att.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/support/tickets/${id}/attachments/${att.id}`, { headers: authHeaders() });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Download failed");
       const url = URL.createObjectURL(await res.blob());
       const a = document.createElement("a");

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { authHeaders } from "../consoleApi";
 import "./Logs.css";
 
 const Logs = () => {
@@ -31,7 +32,7 @@ const Logs = () => {
       const res = await fetch(`${API_URL}/api/wallet`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
         },
       });
       const data = await res.json();
@@ -56,13 +57,13 @@ const Logs = () => {
         fetch(`${API_URL}/api/users/wallet/billing-history`, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...authHeaders(),
           },
         }),
         fetch("${API_URL}/api/wallet/transactions", {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            ...authHeaders(),
           },
         })
       ]);

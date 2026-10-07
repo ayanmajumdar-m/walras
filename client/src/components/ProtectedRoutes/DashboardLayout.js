@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
-import { Menu, Plus, Wallet as WalletIcon, Wrench } from "lucide-react";
+import { Menu, Plus, Wallet as WalletIcon, Wrench, Users, Lock, X } from "lucide-react";
 import ProtectedRoute from "./PrivateRoutes";
 import Sidebar from "./Sidebar";
 import Overview from "./DashboardContent/Overview";
@@ -9,7 +9,7 @@ import Resources from "./DashboardContent/Resources";
 import Billing from "./DashboardContent/Billing";
 import Profile from "./DashboardContent/Profile";
 import Support from "./DashboardContent/Support";
-import { api, rupees } from "./consoleApi";
+import { api, rupees, actingAccount, switchAccount, ACCOUNT_KEY } from "./consoleApi";
 import { ConsoleContext } from "./ConsoleContext";
 // The retired Home and HostingConsole pages' stylesheets carry generic global
 // classes (.message, .primary, .featured, …) that other pages still lean on,
@@ -36,6 +36,20 @@ const DashboardLayout = () => {
   const [profile, setProfile] = useState(null);
   const [balance, setBalance] = useState(0);
   const [platform, setPlatform] = useState(null);
+  // Teams I'm in (for the account switcher) and, when working in one, which.
+  const [memberships, setMemberships] = useState(null);
+  const [teamNotice, setTeamNotice] = useState(() => {
+    try {
+      const n = localStorage.getItem("teamNotice");
+      localStorage.removeItem("teamNotice");
+      return n;
+    } catch { return null; }
+  });
+  const actingId = actingAccount();
+  const account = actingId && memberships ? memberships.find((m) => String(m.ownerId) === actingId) || null : null;
+  const teamReady = !actingId || memberships !== null;
+  // Your own account: everything. A team account: what the owner granted.
+  const can = useCallback((perm) => !actingId || Boolean(account?.permissions.includes(perm)), [actingId, account]);
 
   const refreshBalance = useCallback(() => {
     api("/api/wallet").then((d) => setBalance(rupees(d.balance))).catch(() => {});
@@ -46,7 +60,29 @@ const DashboardLayout = () => {
     if (userId) api(`/api/users/profile/${userId}`).then(setProfile).catch(() => {});
     refreshBalance();
     fetch("/api/settings/public").then((r) => r.json()).then(setPlatform).catch(() => {});
+    api("/api/team").then((d) => setMemberships(d.memberships || [])).catch(() => setMemberships([]));
   }, [refreshBalance]);
+
+  // Stored team account I'm no longer in: back to my own.
+  useEffect(() => {
+    if (actingId && memberships && !account) {
+      try {
+        localStorage.removeItem(ACCOUNT_KEY);
+        localStorage.setItem("teamNotice", "You no longer have access to that account, so you're back in your own.");
+      } catch { /* ignore */ }
+      window.location.reload();
+    }
+  }, [actingId, memberships, account]);
+
+  // Pages need servers / billing / support access when in a team account.
+  const need = (perm, element) => (can(perm) ? element : (
+    <div className="cx-card cx-empty">
+      <span className="cx-empty-icon"><Lock size={26} aria-hidden="true" /></span>
+      <h4>You don't have access to this</h4>
+      <p>{account?.ownerName || "The account owner"} hasn't given you {perm} access in this account.</p>
+      <Link to="/dashboard/home" className="cx-btn cx-btn-ghost">Back to overview</Link>
+    </div>
+  ));
 
   // Close the mobile drawer whenever the page changes.
   useEffect(() => setSidebarOpen(false), [location.pathname]);
@@ -56,9 +92,9 @@ const DashboardLayout = () => {
 
   return (
     <ProtectedRoute>
-      <ConsoleContext.Provider value={{ profile, balance, refreshBalance, platform }}>
+      <ConsoleContext.Provider value={{ profile, balance, refreshBalance, platform, account, memberships: memberships || [], can }}>
         <div className="cx-shell">
-          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} profile={profile} />
+          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} profile={profile} account={account} memberships={memberships || []} can={can} />
 
           <div className="cx-main">
             <header className="cx-topbar">
@@ -67,18 +103,37 @@ const DashboardLayout = () => {
               </button>
               <h1 className="cx-topbar-title">{title}</h1>
               <div className="cx-topbar-actions">
-                <Link to="/dashboard/billing" className="cx-balance" title="Account balance">
-                  <WalletIcon size={16} />
-                  <span>₹{balance.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </Link>
-                <Link to="/dashboard/create" className="cx-btn cx-btn-primary">
-                  <Plus size={16} /> <span className="cx-hide-sm">Create</span>
-                </Link>
+                {can("billing") && (
+                  <Link to="/dashboard/billing" className="cx-balance" title="Account balance">
+                    <WalletIcon size={16} />
+                    <span>₹{balance.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </Link>
+                )}
+                {can("servers") && (
+                  <Link to="/dashboard/create" className="cx-btn cx-btn-primary">
+                    <Plus size={16} /> <span className="cx-hide-sm">Create</span>
+                  </Link>
+                )}
               </div>
             </header>
 
             <main className="cx-content">
-              {platform?.maintenanceMode ? (
+              {account && (
+                <div className="cx-team-banner" role="status">
+                  <Users size={16} aria-hidden="true" />
+                  <span>You're working in <strong>{account.ownerName || account.ownerEmail}</strong>'s account.</span>
+                  <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => switchAccount(null)}>Back to my account</button>
+                </div>
+              )}
+              {teamNotice && (
+                <div className="cx-alert is-info" role="status">
+                  <span>{teamNotice}</span>
+                  <button type="button" className="cx-icon-btn" onClick={() => setTeamNotice(null)} aria-label="Dismiss"><X size={15} /></button>
+                </div>
+              )}
+              {!teamReady ? (
+                <div className="cx-card cx-empty"><p>Loading account…</p></div>
+              ) : platform?.maintenanceMode ? (
                 <div className="cx-card cx-empty cx-maintenance">
                   <span className="cx-empty-icon"><Wrench size={26} aria-hidden="true" /></span>
                   <h4>We're doing some maintenance</h4>
@@ -89,11 +144,11 @@ const DashboardLayout = () => {
               <Routes>
                 <Route path="/" element={<Navigate to="home" replace />} />
                 <Route path="/home" element={<Overview />} />
-                <Route path="/create" element={<Create />} />
-                <Route path="/resources" element={<Resources />} />
-                <Route path="/billing" element={<Billing />} />
+                <Route path="/create" element={need("servers", <Create />)} />
+                <Route path="/resources" element={need("servers", <Resources />)} />
+                <Route path="/billing" element={need("billing", <Billing />)} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/support" element={<Support />} />
+                <Route path="/support" element={need("support", <Support />)} />
 
                 {/* Old per-service pages fold into Create / Resources / Billing. */}
                 <Route path="/deploy" element={<Navigate to="/dashboard/create?type=compute" replace />} />
@@ -102,8 +157,8 @@ const DashboardLayout = () => {
                 <Route path="/submitTicket" element={<Navigate to="/dashboard/support" replace />} />
                 <Route path="/notifications" element={<Navigate to="/dashboard/home" replace />} />
                 {/* Payment gateways return to /dashboard/wallet?payment_status=… — keep the query. */}
-                <Route path="/wallet" element={<Billing initialTab="wallet" />} />
-                <Route path="/logs" element={<Billing initialTab="usage" />} />
+                <Route path="/wallet" element={need("billing", <Billing initialTab="wallet" />)} />
+                <Route path="/logs" element={need("billing", <Billing initialTab="usage" />)} />
                 <Route path="*" element={<Navigate to="/dashboard/home" replace />} />
               </Routes>
               )}

@@ -215,6 +215,21 @@ const migrateServers = [
     'ALTER TABLE servers ADD COLUMN IF NOT EXISTS location_id INT',
 ];
 
+// Team members: people an account owner has invited (by email) and the
+// access they have in the owner's account. See utils/team.js.
+const createTeamMembersTable = `
+CREATE TABLE IF NOT EXISTS team_members (
+    id SERIAL PRIMARY KEY,
+    owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    member_user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    permissions VARCHAR(100) NOT NULL DEFAULT '',
+    status VARCHAR(10) NOT NULL DEFAULT 'invited' CHECK (status IN ('invited', 'active')),
+    invited_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    accepted_at TIMESTAMPTZ,
+    UNIQUE (owner_id, email)
+)`;
+
 // Quantity of each Cloud Compute plan an admin allows to be sold, per SolusVM
 // location. Deploying takes one; deleting a server gives it back.
 const createComputeStockTable = `
@@ -466,6 +481,9 @@ connection.connect((err) => {
         ['Server', createServerTable],
         ...migrateServers.map((sql, i) => [`servers migration ${i + 1}`, sql]),
         ['Compute stock', createComputeStockTable],
+        ['Team members', createTeamMembersTable],
+        ['team members index', 'CREATE INDEX IF NOT EXISTS team_members_member_idx ON team_members (member_user_id)'],
+        ['team invites index', 'CREATE INDEX IF NOT EXISTS team_members_email_idx ON team_members (LOWER(email))'],
         ['User sessions', createUserSessionsTable],
         ['Transactions', createTransactionsTable],
         ['Promo codes', createPromoCodesTable],

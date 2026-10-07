@@ -1,18 +1,19 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X } from "lucide-react";
+import { switchAccount, ACCOUNT_KEY } from "./consoleApi";
 
 const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
 
 const NAV = [
   { to: "/dashboard/home", label: "Overview", Icon: LayoutGrid },
-  { to: "/dashboard/create", label: "Create", Icon: PlusSquare },
-  { to: "/dashboard/resources", label: "Resources", Icon: Boxes },
-  { to: "/dashboard/billing", label: "Billing", Icon: CreditCard },
+  { to: "/dashboard/create", label: "Create", Icon: PlusSquare, perm: "servers" },
+  { to: "/dashboard/resources", label: "Resources", Icon: Boxes, perm: "servers" },
+  { to: "/dashboard/billing", label: "Billing", Icon: CreditCard, perm: "billing" },
 ];
 
 const NAV_SECONDARY = [
-  { to: "/dashboard/support", label: "Support", Icon: LifeBuoy },
+  { to: "/dashboard/support", label: "Support", Icon: LifeBuoy, perm: "support" },
   { to: "/dashboard/profile", label: "Account", Icon: UserCircle },
 ];
 
@@ -24,10 +25,11 @@ const initials = (name) =>
     .map((p) => p[0].toUpperCase())
     .join("") || "W";
 
-const Sidebar = ({ open, onClose, profile }) => {
+const Sidebar = ({ open, onClose, profile, account, memberships = [], can = () => true }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    localStorage.removeItem(ACCOUNT_KEY);
     window.location.href = "/login";
   };
 
@@ -53,10 +55,22 @@ const Sidebar = ({ open, onClose, profile }) => {
         </div>
         <span className="cx-kicker">Console</span>
 
+        {memberships.length > 0 && (
+          <label className="cx-account-switch">
+            <span>Account</span>
+            <select value={account ? String(account.ownerId) : ""} onChange={(e) => switchAccount(e.target.value || null)}>
+              <option value="">My account</option>
+              {memberships.map((m) => (
+                <option key={m.ownerId} value={m.ownerId}>{m.company || m.ownerName || m.ownerEmail}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <nav className="cx-nav" aria-label="Console">
-          {NAV.map(link)}
+          {NAV.filter((n) => !n.perm || can(n.perm)).map(link)}
           <span className="cx-nav-sep" aria-hidden="true" />
-          {NAV_SECONDARY.map(link)}
+          {NAV_SECONDARY.filter((n) => !n.perm || can(n.perm)).map(link)}
         </nav>
 
         <div className="cx-user">

@@ -23,6 +23,7 @@ app.use(
       "Cache-Control",
       "Pragma",
       "X-Requested-With",
+      "X-Walras-Account",
     ],
   })
 );
@@ -64,6 +65,7 @@ app.get("/api/settings/public", async (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/team", require("./routes/team.routes"));
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);

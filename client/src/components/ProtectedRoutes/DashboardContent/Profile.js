@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { UserCircle, Users } from "lucide-react";
+import Team from "./Team";
 import "./Profile.css";
 
-const Profile = () => {
+const ProfileDetails = () => {
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
@@ -350,6 +353,30 @@ const Profile = () => {
         </form>
       </div>
 
+    </div>
+  );
+};
+
+// Account: your profile, and your team (sub-users) on a second tab.
+const TABS = [
+  { id: "profile", label: "Profile", Icon: UserCircle },
+  { id: "team", label: "Team", Icon: Users },
+];
+
+const Profile = () => {
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") === "team" ? "team" : "profile";
+  return (
+    <div className="cx-page">
+      <div className="cx-tabs" role="tablist">
+        {TABS.map(({ id, label, Icon }) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id}
+            className={`cx-tab${tab === id ? " is-active" : ""}`} onClick={() => setParams(id === "team" ? { tab: "team" } : {}, { replace: true })}>
+            <Icon size={16} aria-hidden="true" /> {label}
+          </button>
+        ))}
+      </div>
+      {tab === "team" ? <Team /> : <ProfileDetails />}
     </div>
   );
 };
