@@ -27,7 +27,7 @@ const PERMISSIONS = [
     { id: 'manage_coupons', label: 'Manage promo codes', group: 'Billing' },
     { id: 'view_services', label: 'View servers, hosting and domains', group: 'Services' },
     { id: 'manage_services', label: 'Suspend, delete and log in to services', group: 'Services' },
-    { id: 'manage_plans', label: 'Change plans and prices', group: 'Services' },
+    { id: 'manage_plans', label: 'Change plans, prices and locations', group: 'Services' },
     { id: 'send_bulk_email', label: 'Email all customers', group: 'Customers' },
     { id: 'view_audit_logs', label: 'View audit logs', group: 'Governance' },
     { id: 'manage_settings', label: 'Change platform settings', group: 'Governance' },

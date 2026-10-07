@@ -485,3 +485,6 @@
 .ap-plan-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ap-plan-spacer { flex: 1; }
 @media (max-width: 600px) { .ap-plan-grid { grid-template-columns: 1fr; } }
+
+/* Locations form: full-width description */
+.ap-plan-grid .ap-wide { grid-column: 1 / -1; }

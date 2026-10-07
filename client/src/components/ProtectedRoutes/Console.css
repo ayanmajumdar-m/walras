@@ -1533,3 +1533,6 @@
   border: 1px dashed var(--color-divider); border-radius: 12px;
 }
 .cx-soon-inline span { font-size: 14px; color: var(--text-muted); }
+
+/* Location not linked to SolusVM yet */
+.cx-choice-grid .cx-term.is-soon { cursor: not-allowed; opacity: 0.75; }

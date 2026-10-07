@@ -82,7 +82,9 @@ const ComputeStock = ({ can }) => {
       ) : data.solusError ? (
         <div className="cx-alert is-error"><AlertTriangle size={16} /> Couldn't load locations and plans from SolusVM: {data.solusError}</div>
       ) : data.locations.length === 0 ? (
-        <div className="cx-alert is-info">SolusVM has no visible locations yet. Add one in SolusVM, then refresh.</div>
+        <div className="cx-alert is-info">
+          No locations are linked to SolusVM yet. In <a className="cx-link" href="?section=locations">Locations</a>, link each location to its SolusVM location, then come back here to set stock.
+        </div>
       ) : (
         <>
           {unlinked.length > 0 && (

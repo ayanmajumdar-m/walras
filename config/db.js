@@ -253,6 +253,30 @@ SELECT * FROM (VALUES
 ) AS seed(name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, price_usd, sort_order)
 WHERE NOT EXISTS (SELECT 1 FROM vm_plans)`;
 
+// Server locations, managed in Admin → Locations (utils/serverLocations.js).
+// solus_location_id links a location to SolusVM; stock and servers use it.
+const createServerLocationsTable = `
+CREATE TABLE IF NOT EXISTS server_locations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(60) NOT NULL,
+    country VARCHAR(60) NOT NULL,
+    note VARCHAR(160) NOT NULL DEFAULT '',
+    solus_location_id INT UNIQUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// First locations, only while the table is empty (deleted ones stay deleted).
+const seedServerLocations = `
+INSERT INTO server_locations (name, country, note, sort_order)
+SELECT * FROM (VALUES
+    ('Mumbai', 'India', 'Our home region, close to customers across India.', 10),
+    ('Los Angeles', 'United States', 'Our region for customers across the Americas.', 20)
+) AS seed(name, country, note, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM server_locations)`;
+
 // Team members: people an account owner has invited (by email) and the
 // access they have in the owner's account. See utils/team.js.
 const createTeamMembersTable = `
@@ -580,6 +604,8 @@ connection.connect((err) => {
         ['Compute stock', createComputeStockTable],
         ['VM plans', createVmPlansTable],
         ['VM plans seed', seedVmPlans],
+        ['Server locations', createServerLocationsTable],
+        ['Server locations seed', seedServerLocations],
         ['Team members', createTeamMembersTable],
         ...migrateWaladminIds.map((sql, i) => [`WALADMIN ID ${i + 1}`, sql]),
         ['Bulk emails', createBulkEmailsTable],

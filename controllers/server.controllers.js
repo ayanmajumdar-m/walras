@@ -11,6 +11,7 @@ const connection = require('../config/db');
 const solusvm = require('../services/solusvm');
 const stock = require('../utils/computeStock');
 const taxService = require('../services/taxServices');
+const serverLocations = require('../utils/serverLocations');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -55,20 +56,23 @@ const validPassword = (p) =>
 
 // GET /api/servers/catalog — plans with prices, where each is in stock, and the OS choices.
 exports.getCatalog = handle('Compute catalogue', async (req, res) => {
-    const [availability, active] = await Promise.all([stock.getAvailability(), stock.getPlans()]);
+    const [availability, active, places] = await Promise.all([stock.getAvailability(), stock.getPlans(), serverLocations.getLocations()]);
+    // Locations from Admin → Locations. id is the SolusVM location (what stock
+    // and deploy use); null = not linked yet, shown as "coming soon".
+    const locations = places.map((l) => ({ id: l.solusLocationId, name: l.name, country: l.country }));
+    const sellable = new Set(locations.filter((l) => l.id).map((l) => l.id));
     const plans = active.map(({ id, active: _a, sortOrder: _s, ...p }) => ({
         ...p,
         hourly: stock.hourlyRupees(p),
-        locations: Object.keys(availability[p.name] || {}).map(Number),
+        locations: Object.keys(availability[p.name] || {}).map(Number).filter((id) => sellable.has(id)),
     }));
-    let locations = [];
     let os = [];
     if (solusvm.solusConfigured()) {
         try {
-            [locations, os] = await Promise.all([solusvm.listLocations(), solusvm.listOsVersions()]);
+            os = await solusvm.listOsVersions();
         } catch (err) {
             console.error('Compute catalogue (SolusVM) failed:', err.message);
-            return res.json({ enabled: false, plans: plans.map((p) => ({ ...p, locations: [] })), locations: [], os: [] });
+            return res.json({ enabled: false, plans: plans.map((p) => ({ ...p, locations: [] })), locations, os: [] });
         }
     }
     res.json({ enabled: plans.some((p) => p.locations.length > 0), plans, locations, os });
@@ -100,8 +104,8 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     const solusPlanId = (await stock.getPlanMap())[plan.name];
     if (!solusPlanId) throw outOfStock();
 
-    const [locations, osVersions] = await Promise.all([solusvm.listLocations(), solusvm.listOsVersions()]);
-    const location = locations.find((l) => l.id === locationId);
+    // Only active locations linked to SolusVM in Admin → Locations.
+    const [location, osVersions] = await Promise.all([serverLocations.findBySolusId(locationId), solusvm.listOsVersions()]);
     if (!location) throw new HttpError(400, 'Choose a location.');
     if (!osVersions.some((o) => o.id === osId)) throw new HttpError(400, 'Choose an operating system.');
 

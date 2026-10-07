@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Footer.css';
+import { useLocations, shortCountry } from '../../data/locations';
 
 const Footer = () => {
+  const locations = useLocations();
   return (
     <footer className="footer">
       <div className="container">
@@ -40,7 +42,7 @@ const Footer = () => {
           <p className="copyright">
             © 2025 IOOGN TECHNOLOGIES OPC PVT LTD. All rights reserved.
           </p>
-          <p className="copyright">Mumbai, India · London, UK · Los Angeles, US</p>
+          <p className="copyright">{locations.map((l) => `${l.name}, ${shortCountry(l.country)}`).join(" · ")}</p>
         </div>
       </div>
     </footer>

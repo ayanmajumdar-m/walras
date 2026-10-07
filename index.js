@@ -51,6 +51,8 @@ const paymentRouter = require("./routes/payment.routes");
 const { getPlatform } = require("./utils/platformSettings");
 // Virtual Machine plans for the Pricing page (active plans only).
 app.get("/api/plans/vm", require("./controllers/vmPlans.controllers").publicList);
+// Server locations shown on the site (active ones).
+app.get("/api/locations", require("./controllers/serverLocations.controllers").publicList);
 
 app.get("/api/settings/public", async (req, res) => {
   try {

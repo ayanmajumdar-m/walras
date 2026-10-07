@@ -1,10 +1,12 @@
 import React from 'react';
 import './About.css';
 import { Shield, Zap, Server, Clock, Wallet, Globe, MapPin, ArrowRight, Headphones } from 'lucide-react';
+import { useLocations, joinNames } from '../../data/locations';
 
+// The regions stat is filled in from Admin → Locations.
 const STATS = [
   { value: "99.9%", label: "Uptime guarantee" },
-  { value: "3", label: "Regions: Mumbai, London and Los Angeles" },
+  { id: "regions" },
   { value: "24/7", label: "Email and ticket support" },
   { value: "₹", label: "Local pricing, billed in rupees" }
 ];
@@ -42,13 +44,13 @@ const FEATURES = [
   }
 ];
 
-const REGIONS = [
-  { city: "Mumbai", country: "India", note: "Our home region, close to customers across India." },
-  { city: "London", country: "United Kingdom", note: "Our region for customers in the UK and Europe." },
-  { city: "Los Angeles", country: "United States", note: "Our region for customers across the Americas." }
-];
 
-const About = () => (
+const About = () => {
+  const locations = useLocations();
+  const stats = STATS.map((s) => (s.id === "regions"
+    ? { value: String(locations.length), label: `Region${locations.length === 1 ? "" : "s"}: ${joinNames(locations.map((l) => l.name))}` }
+    : s));
+  return (
   <div className="ab-page">
     {/* Hero */}
     <header className="ab-hero">
@@ -61,7 +63,7 @@ const About = () => (
         </p>
 
         <dl className="ab-stats">
-          {STATS.map(({ value, label }) => (
+          {stats.map(({ value, label }) => (
             <div className="ab-stat" key={label}>
               <dt>{value}</dt>
               <dd>{label}</dd>
@@ -123,7 +125,7 @@ const About = () => (
         </div>
 
         <div className="ab-region-grid">
-          {REGIONS.map(({ city, country, note }) => (
+          {locations.map(({ name: city, country, note }) => (
             <div className="ab-card ab-region" key={city}>
               <span className="ab-icon"><MapPin aria-hidden="true" /></span>
               <div>
@@ -154,6 +156,7 @@ const About = () => (
       </div>
     </section>
   </div>
-);
+  );
+};
 
 export default About;

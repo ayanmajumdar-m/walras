@@ -1,5 +1,6 @@
 import React from "react";
 import "./Homepage.css";
+import { useLocations } from "../data/locations";
 import { WEB_HOSTING_ENABLED } from "../data/plans";
 import { Zap, Clock, Gauge, Globe, Server, Cpu, Check } from "lucide-react";
 
@@ -77,7 +78,7 @@ const SPEC_ROWS = [
   { k: "Uptime guarantee", v: "99.9%" },
   { k: "Support response", v: "60 min" },
   { k: "Free trial", v: "168 hrs" },
-  { k: "Regions", v: "Mumbai · London · Los Angeles" },
+  { k: "Regions", v: null }, // from Admin → Locations
   { k: "Entry plan", v: "₹900/mo" }
 ];
 
@@ -106,7 +107,10 @@ const Corners = () => (
   </>
 );
 
-const Homepage = () => (
+const Homepage = () => {
+  const locations = useLocations();
+  const regions = locations.map((l) => l.name).join(" · ");
+  return (
   <div className="homepage">
     <section className="section hero">
       <div className="container hero-grid">
@@ -139,7 +143,7 @@ const Homepage = () => (
             {SPEC_ROWS.map((row) => (
               <div className="plate-row" key={row.k}>
                 <span className="plate-key">{row.k}</span>
-                <span className="plate-value">{row.v}</span>
+                <span className="plate-value">{row.k === "Regions" ? regions : row.v}</span>
               </div>
             ))}
             <figcaption className="plate-caption">
@@ -278,6 +282,7 @@ const Homepage = () => (
       </div>
     </section>
   </div>
-);
+  );
+};
 
 export default Homepage;

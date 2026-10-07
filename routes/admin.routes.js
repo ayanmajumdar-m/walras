@@ -66,6 +66,13 @@ router.post('/vm-plans', can('manage_plans'), VmPlans.create);
 router.put('/vm-plans/:id', can('manage_plans'), VmPlans.update);
 router.delete('/vm-plans/:id', can('manage_plans'), VmPlans.remove);
 
+// Server locations
+const Locations = require('../controllers/serverLocations.controllers');
+router.get('/locations', can('view_services'), Locations.list);
+router.post('/locations', can('manage_plans'), Locations.create);
+router.put('/locations/:id', can('manage_plans'), Locations.update);
+router.delete('/locations/:id', can('manage_plans'), Locations.remove);
+
 // Virtual Machine stock (per plan per SolusVM location)
 router.get('/compute/stock', can('view_services'), Platform.getComputeStock);
 router.put('/compute/stock', can('manage_services'), Platform.updateComputeStock);

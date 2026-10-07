@@ -14,6 +14,7 @@ const zendesk = require('../services/zendesk');
 const supportDepartments = require('../utils/supportDepartments');
 const solusvm = require('../services/solusvm');
 const computeStock = require('../utils/computeStock');
+const serverLocations = require('../utils/serverLocations');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -400,13 +401,16 @@ const PlatformController = {
      */
     getComputeStock: handle(async (req, res) => {
         const configured = solusvm.solusConfigured();
-        let locations = [];
+        // Columns: locations from Admin → Locations that are linked to SolusVM.
+        const locations = (await serverLocations.getLocations({ all: true }))
+            .filter((l) => l.solusLocationId)
+            .map((l) => ({ id: l.solusLocationId, name: l.active ? l.name : `${l.name} (hidden)` }));
         let solusPlans = [];
         let solusError = null;
         if (configured) {
             solusvm.forgetCatalog();
             try {
-                [locations, solusPlans] = await Promise.all([solusvm.listLocations(), solusvm.listPlans()]);
+                solusPlans = await solusvm.listPlans();
             } catch (err) {
                 solusError = err.message;
             }
