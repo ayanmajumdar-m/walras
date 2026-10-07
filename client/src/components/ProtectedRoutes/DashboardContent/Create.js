@@ -196,8 +196,8 @@ const ComputeConfigurator = () => {
       .then((c) => {
         setCatalog(c);
         // Start on a location with stock, and a plan in stock there.
-        // Prefer a location with stock; never one that isn't linked yet (id null).
-        const loc = c.locations.find((l) => l.id && c.plans.some((p) => p.locations.includes(l.id))) || c.locations.find((l) => l.id);
+        // Prefer a location with stock; never one no SolusVM account serves yet.
+        const loc = c.locations.find((l) => !l.comingSoon && c.plans.some((p) => p.locations.includes(l.id))) || c.locations.find((l) => !l.comingSoon);
         if (loc) {
           setLocationId(loc.id);
           const pick = c.plans.find((p) => p.popular && p.locations.includes(loc.id)) || c.plans.find((p) => p.locations.includes(loc.id));
@@ -265,12 +265,12 @@ const ComputeConfigurator = () => {
             <h3><span className="cx-step-num">1</span> Location</h3>
             <div className="cx-choice-grid">
               {catalog.locations.map((l) => {
-                // id null = location not linked to SolusVM yet (Admin → Locations).
-                const soon = !l.id;
+                // No SolusVM account serves this location yet (Admin → SolusVM accounts).
+                const soon = Boolean(l.comingSoon);
                 const hasStock = !soon && catalog.plans.some((p) => p.locations.includes(l.id));
                 const selected = !soon && locationId === l.id;
                 return (
-                  <label key={l.id ?? `soon-${l.name}`} className={`cx-term${selected ? " is-selected" : ""}${hasStock ? "" : " is-muted"}${soon ? " is-soon" : ""}`}>
+                  <label key={l.id} className={`cx-term${selected ? " is-selected" : ""}${hasStock ? "" : " is-muted"}${soon ? " is-soon" : ""}`}>
                     <input type="radio" name="compute-location" className="cx-visually-hidden" checked={selected} disabled={soon} onChange={() => pickLocation(l.id)} />
                     <MapPin size={18} aria-hidden="true" />
                     <span>

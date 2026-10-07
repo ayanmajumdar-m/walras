@@ -31,13 +31,14 @@ const PERMISSIONS = [
     { id: 'send_bulk_email', label: 'Email all customers', group: 'Customers' },
     { id: 'view_audit_logs', label: 'View audit logs', group: 'Governance' },
     { id: 'manage_settings', label: 'Change platform settings', group: 'Governance' },
+    { id: 'manage_integrations', label: 'Manage SolusVM accounts and integration keys', group: 'Governance' },
     { id: 'manage_admins', label: 'Manage administrators and roles', group: 'Governance' },
 ];
 
 const ALL = PERMISSIONS.map((p) => p.id);
 
 const DEFAULTS = {
-    admin: ALL.filter((p) => !['manage_admins', 'manage_settings', 'send_bulk_email', 'manage_plans'].includes(p)),
+    admin: ALL.filter((p) => !['manage_admins', 'manage_settings', 'send_bulk_email', 'manage_plans', 'manage_integrations'].includes(p)),
     support: ['view_dashboard', 'view_users', 'view_billing', 'view_services'],
     finance: ['view_dashboard', 'view_users', 'manage_wallets', 'view_billing', 'manage_billing', 'manage_coupons'],
     readonly: ['view_dashboard', 'view_users', 'view_billing', 'view_services', 'view_audit_logs'],

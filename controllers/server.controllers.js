@@ -12,6 +12,7 @@ const solusvm = require('../services/solusvm');
 const stock = require('../utils/computeStock');
 const taxService = require('../services/taxServices');
 const serverLocations = require('../utils/serverLocations');
+const solusAccounts = require('../utils/solusAccounts');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -54,28 +55,39 @@ const validPassword = (p) =>
 
 // ── Catalogue ──────────────────────────────────────────────────────────────
 
+// OS choices: every OS (by name, e.g. "Ubuntu 22.04") offered by an active
+// SolusVM account. Names, not ids: each panel numbers its images differently.
+const osNames = async () => {
+    const names = new Set();
+    for (const a of await solusAccounts.listAccounts()) {
+        if (a.status !== 'active' || !a.tokenEncrypted) continue;
+        try {
+            (await solusAccounts.clientForAccount(a).listOsVersions()).forEach((o) => names.add(o.name));
+        } catch (err) {
+            console.warn(`OS list from SolusVM account ${a.id} failed:`, err.message);
+        }
+    }
+    return [...names].sort();
+};
+
 // GET /api/servers/catalog — plans with prices, where each is in stock, and the OS choices.
 exports.getCatalog = handle('Compute catalogue', async (req, res) => {
-    const [availability, active, places] = await Promise.all([stock.getAvailability(), stock.getPlans(), serverLocations.getLocations()]);
-    // Locations from Admin → Locations. id is the SolusVM location (what stock
-    // and deploy use); null = not linked yet, shown as "coming soon".
-    const locations = places.map((l) => ({ id: l.solusLocationId, name: l.name, country: l.country }));
-    const sellable = new Set(locations.filter((l) => l.id).map((l) => l.id));
+    const [availability, active, places, os] = await Promise.all([
+        stock.getAvailability(), stock.getPlans(), serverLocations.getLocations(), osNames(),
+    ]);
+    // Locations from Admin → Locations; one no SolusVM account serves yet is
+    // marked comingSoon (listed, not orderable).
+    const served = new Set();
+    for (const a of await solusAccounts.listAccounts()) {
+        if (a.status === 'active') Object.keys(a.locations).forEach((id) => served.add(Number(id)));
+    }
+    const locations = places.map((l) => ({ id: l.id, name: l.name, country: l.country, comingSoon: !served.has(l.id) }));
     const plans = active.map(({ id, active: _a, sortOrder: _s, ...p }) => ({
         ...p,
         hourly: stock.hourlyRupees(p),
-        locations: Object.keys(availability[p.name] || {}).map(Number).filter((id) => sellable.has(id)),
+        locations: Object.keys(availability[p.name] || {}).map(Number),
     }));
-    let os = [];
-    if (solusvm.solusConfigured()) {
-        try {
-            os = await solusvm.listOsVersions();
-        } catch (err) {
-            console.error('Compute catalogue (SolusVM) failed:', err.message);
-            return res.json({ enabled: false, plans: plans.map((p) => ({ ...p, locations: [] })), locations, os: [] });
-        }
-    }
-    res.json({ enabled: plans.some((p) => p.locations.length > 0), plans, locations, os });
+    res.json({ enabled: plans.some((p) => p.locations.length > 0), plans, locations, os: os.map((name) => ({ id: name, name })) });
 });
 
 // ── Deploy ─────────────────────────────────────────────────────────────────
@@ -85,7 +97,7 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     const userId = req.user.userId;
     const planName = typeof req.body.plan === 'string' ? req.body.plan : req.body.plan?.name;
     const locationId = Number(req.body.location);
-    const osId = Number(req.body.os);
+    const osName = String(req.body.os || '').trim();
     const hostname = String(req.body.hostname || '').trim().toLowerCase();
     const password = req.body.password;
 
@@ -93,21 +105,23 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     const plan = typeof planName === 'string' ? await stock.findPlan(planName) : null;
     if (!plan) throw new HttpError(400, 'Choose a plan.');
     if (!Number.isInteger(locationId)) throw new HttpError(400, 'Choose a location.');
-    if (!Number.isInteger(osId)) throw new HttpError(400, 'Choose an operating system.');
+    if (!osName || osName.length > 80) throw new HttpError(400, 'Choose an operating system.');
     if (!HOSTNAME.test(hostname)) throw new HttpError(400, 'Enter a valid hostname, e.g. web1 or app.example.com.');
     if (!validPassword(password)) {
         throw new HttpError(400, 'Use a root password of 10 to 72 characters with upper and lower case letters and a number, and no spaces.');
     }
 
     const outOfStock = () => new HttpError(409, `${plan.name} is out of stock in that location.`, { outOfStock: true });
-    if (!solusvm.solusConfigured()) throw outOfStock();
-    const solusPlanId = (await stock.getPlanMap())[plan.name];
-    if (!solusPlanId) throw outOfStock();
-
-    // Only active locations linked to SolusVM in Admin → Locations.
-    const [location, osVersions] = await Promise.all([serverLocations.findBySolusId(locationId), solusvm.listOsVersions()]);
+    const location = await serverLocations.findLocation(locationId);
     if (!location) throw new HttpError(400, 'Choose a location.');
-    if (!osVersions.some((o) => o.id === osId)) throw new HttpError(400, 'Choose an operating system.');
+
+    // The SolusVM account it goes on: first active one, in fill order, that
+    // serves this location, has the plan linked and is under its limit.
+    const account = await solusAccounts.pickAccount(plan.name, location.id);
+    if (!account) throw outOfStock();
+    const client = solusAccounts.clientForAccount(account);
+    const osVersion = (await client.listOsVersions()).find((o) => o.name === osName);
+    if (!osVersion) throw new HttpError(400, `${osName} isn't available in ${location.name}. Choose another operating system.`);
 
     // First hour, charged now; the hourly billing job charges the rest.
     const hourly = stock.hourlyRupees(plan);
@@ -137,9 +151,9 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     let serverId;
     try {
         const ins = await q(
-            `INSERT INTO servers (user_id, name, hostname, location, location_id, os, plan_name, monthly_cost, hourly_cost, currency, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'deploying')`,
-            [userId, hostname, hostname, location.name, locationId, ((osVersions.find((o) => o.id === osId) || {}).name || String(osId)).slice(0, 50), plan.name, plan.monthly, hourly],
+            `INSERT INTO servers (user_id, name, hostname, location, location_id, solus_account_id, os, plan_name, monthly_cost, hourly_cost, currency, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'deploying')`,
+            [userId, hostname, hostname, location.name, location.id, account.id, osVersion.name.slice(0, 50), plan.name, plan.monthly, hourly],
         );
         serverId = ins.insertId;
     } catch (err) {
@@ -150,13 +164,15 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     // 4. The VM itself.
     let vm;
     try {
-        vm = await solusvm.createServer({ name: hostname, planId: solusPlanId, locationId, osVersionId: osId, password });
+        vm = await client.createServer({
+            name: hostname, planId: account.plans[plan.name], locationId: account.locations[location.id], osVersionId: osVersion.id, password,
+        });
     } catch (err) {
         await undo(serverId);
         if (err instanceof solusvm.SolusError && err.status === 422) {
             throw new HttpError(400, `SolusVM refused the server: ${err.message}`);
         }
-        console.error('SolusVM create failed:', err.message);
+        console.error(`SolusVM create failed on account ${account.id}:`, err.message);
         throw new HttpError(502, "We couldn't create your server right now. You haven't been charged; please try again shortly.");
     }
 
@@ -179,10 +195,10 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
 
 // Refresh servers still being built from SolusVM (status and IP address).
 const syncDeploying = async (servers) => {
-    const pending = servers.filter((s) => s.solus_server_id && s.status === 'deploying');
+    const pending = servers.filter((s) => s.solus_server_id && s.solus_account_id && s.status === 'deploying');
     await Promise.all(pending.map(async (s) => {
         try {
-            const vm = await solusvm.getServer(s.solus_server_id);
+            const vm = await (await solusAccounts.clientForAccountId(s.solus_account_id)).getServer(s.solus_server_id);
             const status = solusvm.walrasStatus(vm);
             const ip = solusvm.primaryIp(vm) || s.ip_address;
             if (status !== s.status || ip !== s.ip_address) {
@@ -198,7 +214,7 @@ const syncDeploying = async (servers) => {
 // GET /api/servers
 exports.getUserServers = handle('List servers', async (req, res) => {
     const rows = await q('SELECT * FROM servers WHERE user_id = ? ORDER BY created_at DESC', [req.user.userId]);
-    if (solusvm.solusConfigured()) await syncDeploying(rows);
+    await syncDeploying(rows);
     res.json({
         servers: rows.map(({ root_password, ...s }) => ({
             ...s,
@@ -229,7 +245,7 @@ exports.manageServer = handle('Manage server', async (req, res) => {
             throw new HttpError(400, 'Your account balance is too low to start this server.', { insufficient: true });
         }
     }
-    if (server.solus_server_id) await solusvm.serverAction(server.solus_server_id, action);
+    if (server.solus_server_id) await (await solusAccounts.clientForAccountId(server.solus_account_id)).serverAction(server.solus_server_id, action);
 
     const status = action === 'stop' ? 'stopped' : 'active';
     await q('UPDATE servers SET status = ?, last_activity = NOW() WHERE id = ?', [status, server.id]);
@@ -239,7 +255,7 @@ exports.manageServer = handle('Manage server', async (req, res) => {
 // DELETE /api/servers/:serverId — destroys the VM and returns its unit of stock.
 exports.deleteServer = handle('Delete server', async (req, res) => {
     const server = await ownServer(req.user.userId, req.params.serverId);
-    if (server.solus_server_id) await solusvm.deleteServer(server.solus_server_id);
+    if (server.solus_server_id) await (await solusAccounts.clientForAccountId(server.solus_account_id)).deleteServer(server.solus_server_id);
     await q('DELETE FROM servers WHERE id = ?', [server.id]);
     if (server.solus_server_id && server.location_id && (await stock.findPlan(server.plan_name, { all: true }))) {
         await stock.release(server.plan_name, server.location_id).catch((e) => console.error('Stock return failed:', e.message));

@@ -1,7 +1,8 @@
 const userRouter = require('express').Router();
 require('dotenv').config();
 const axios = require('axios');
-const WHOIS_API_KEY = process.env.WHOIS_API_KEY;
+const integrations = require('../utils/integrations');
+const whoisKey = () => integrations.get('WHOIS_API_KEY'); // Admin → Integrations, else env
 const UserController = require('../controllers/user.controllers');
 const WalletController = require('../controllers/wallet.controllers')
 const authenticateToken = require('../utils/auth.middleware');
@@ -44,8 +45,8 @@ userRouter.get("/domain-check", async (req, res) => {
     return res.status(400).json({ error: "Invalid domain format" });
   }
 
-  if (!WHOIS_API_KEY) {
-    console.error("WHOIS_API_KEY is not configured");
+  if (!whoisKey()) {
+    console.error("WHOIS API key is not configured (Admin → Integrations)");
     return res.status(500).json({ 
       error: "WHOIS service is temporarily unavailable. Please try again later." 
     });
@@ -57,7 +58,7 @@ userRouter.get("/domain-check", async (req, res) => {
       `https://domain-availability.whoisxmlapi.com/api/v1`,
       {
         params: {
-          apiKey: WHOIS_API_KEY,
+          apiKey: whoisKey(),
           domainName: domain,
           outputFormat: "JSON",
         },

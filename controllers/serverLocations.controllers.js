@@ -2,13 +2,13 @@
  * Server locations (utils/serverLocations.js, table server_locations).
  *
  * Public: GET /api/locations lists the active locations for the site.
- * Admin (Admin → Locations): list, add, edit, hide, delete, and link each to
- * a SolusVM location. A location with servers can't be deleted or re-linked,
- * only hidden: its servers and stock refer to its SolusVM location.
+ * Admin (Admin → Locations): list, add, edit, hide, delete. Which SolusVM
+ * accounts serve a location is set on each account (Admin → SolusVM
+ * accounts). A location with servers can't be deleted, only hidden.
  */
 const connection = require('../config/db');
 const locations = require('../utils/serverLocations');
-const solusvm = require('../services/solusvm');
+const solusAccounts = require('../utils/solusAccounts');
 const audit = require('../utils/audit');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
@@ -27,7 +27,6 @@ const handle = (fn) => async (req, res) => {
         await fn(req, res);
     } catch (err) {
         if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
-        if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'That SolusVM location is already linked to another location.' });
         console.error(`Locations ${req.method} ${req.path} failed:`, err.message);
         res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
@@ -47,14 +46,6 @@ const readLocation = (body, { partial = false } = {}) => {
     if (!partial || given('name')) out.name = text(body.name, 'City', { max: 60 });
     if (!partial || given('country')) out.country = text(body.country, 'Country', { max: 60 });
     if (!partial || given('note')) out.note = text(body.note, 'Description', { max: 160, required: false });
-    if (given('solusLocationId')) {
-        if (body.solusLocationId === null || body.solusLocationId === '') out.solusLocationId = null;
-        else {
-            const id = Number(body.solusLocationId);
-            if (!Number.isInteger(id) || id <= 0) throw new HttpError(400, 'Choose a SolusVM location, or none.');
-            out.solusLocationId = id;
-        }
-    }
     if (given('active')) out.active = Boolean(body.active);
     if (given('sortOrder') && body.sortOrder !== '') {
         const n = Number(body.sortOrder);
@@ -64,11 +55,10 @@ const readLocation = (body, { partial = false } = {}) => {
     return out;
 };
 
-const COLUMNS = { name: 'name', country: 'country', note: 'note', solusLocationId: 'solus_location_id', active: 'active', sortOrder: 'sort_order' };
+const COLUMNS = { name: 'name', country: 'country', note: 'note', active: 'active', sortOrder: 'sort_order' };
 
-const serversAt = async (solusId) => {
-    if (!solusId) return 0;
-    const [{ n }] = await q('SELECT COUNT(*) AS n FROM servers WHERE location_id = ?', [solusId]);
+const serversAt = async (locationId) => {
+    const [{ n }] = await q('SELECT COUNT(*) AS n FROM servers WHERE location_id = ?', [locationId]);
     return Number(n);
 };
 
@@ -78,22 +68,20 @@ const LocationsController = {
         res.json({ locations: (await locations.getLocations()).map(({ name, country, note }) => ({ name, country, note })) });
     }),
 
-    // GET /api/admin/locations — every location, the SolusVM list for linking, and server counts
+    // GET /api/admin/locations — every location, its server count and the accounts serving it
     list: handle(async (req, res) => {
-        const all = await locations.getLocations({ all: true });
-        let solusLocations = [];
-        let solusError = null;
-        if (solusvm.solusConfigured()) {
-            solusvm.forgetCatalog();
-            try { solusLocations = await solusvm.listLocations(); } catch (err) { solusError = err.message; }
-        }
-        const counts = await q('SELECT location_id, COUNT(*) AS n FROM servers WHERE location_id IS NOT NULL GROUP BY location_id');
+        const [all, accounts, counts] = await Promise.all([
+            locations.getLocations({ all: true }),
+            solusAccounts.listAccounts(),
+            q('SELECT location_id, COUNT(*) AS n FROM servers WHERE location_id IS NOT NULL GROUP BY location_id'),
+        ]);
         const byId = Object.fromEntries(counts.map((r) => [Number(r.location_id), Number(r.n)]));
         res.json({
-            solusConfigured: solusvm.solusConfigured(),
-            solusError,
-            solusLocations,
-            locations: all.map((l) => ({ ...l, servers: l.solusLocationId ? byId[l.solusLocationId] || 0 : 0 })),
+            locations: all.map((l) => ({
+                ...l,
+                servers: byId[l.id] || 0,
+                servedBy: accounts.filter((a) => a.locations[l.id]).map((a) => ({ id: a.id, name: a.name, status: a.status })),
+            })),
         });
     }),
 
@@ -101,8 +89,8 @@ const LocationsController = {
     create: handle(async (req, res) => {
         const l = readLocation(req.body);
         const ins = await q(
-            'INSERT INTO server_locations (name, country, note, solus_location_id, active, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
-            [l.name, l.country, l.note, l.solusLocationId ?? null, l.active ?? true, l.sortOrder ?? 0],
+            'INSERT INTO server_locations (name, country, note, active, sort_order) VALUES (?, ?, ?, ?, ?)',
+            [l.name, l.country, l.note, l.active ?? true, l.sortOrder ?? 0],
         );
         locations.forgetLocations();
         audit(req, 'locations.create', 'location', ins.insertId, l);
@@ -115,20 +103,12 @@ const LocationsController = {
         const before = (await locations.getLocations({ all: true })).find((l) => l.id === id);
         if (!before) throw new HttpError(404, 'Location not found.');
         const l = readLocation(req.body, { partial: true });
-        if ('solusLocationId' in l && l.solusLocationId !== before.solusLocationId) {
-            const n = await serversAt(before.solusLocationId);
-            if (n > 0) throw new HttpError(409, `${before.name} has ${n} server${n === 1 ? '' : 's'}, so its SolusVM link can't change. Hide it instead.`);
-        }
         const keys = Object.keys(l);
         if (!keys.length) throw new HttpError(400, 'Nothing to change.');
         await q(
             `UPDATE server_locations SET ${keys.map((k) => `${COLUMNS[k]} = ?`).join(', ')}, updated_at = NOW() WHERE id = ?`,
             [...keys.map((k) => l[k]), id],
         );
-        // Unlinked from a SolusVM location: its stock there no longer applies.
-        if ('solusLocationId' in l && before.solusLocationId && l.solusLocationId !== before.solusLocationId) {
-            await q('DELETE FROM compute_stock WHERE location_id = ?', [before.solusLocationId]);
-        }
         locations.forgetLocations();
         const changes = Object.fromEntries(keys.filter((k) => before[k] !== l[k]).map((k) => [k, { from: before[k], to: l[k] }]));
         audit(req, 'locations.update', 'location', id, { name: before.name, changes });
@@ -140,11 +120,12 @@ const LocationsController = {
         const id = Number(req.params.id);
         const loc = (await locations.getLocations({ all: true })).find((l) => l.id === id);
         if (!loc) throw new HttpError(404, 'Location not found.');
-        const n = await serversAt(loc.solusLocationId);
+        const n = await serversAt(id);
         if (n > 0) throw new HttpError(409, `${loc.name} has ${n} server${n === 1 ? '' : 's'}, so it can't be deleted. Hide it instead.`);
-        if (loc.solusLocationId) await q('DELETE FROM compute_stock WHERE location_id = ?', [loc.solusLocationId]);
-        await q('DELETE FROM server_locations WHERE id = ?', [id]);
+        await q('DELETE FROM compute_stock WHERE location_id = ?', [id]);
+        await q('DELETE FROM server_locations WHERE id = ?', [id]); // account links go with it (ON DELETE CASCADE)
         locations.forgetLocations();
+        solusAccounts.forgetAccounts();
         audit(req, 'locations.delete', 'location', id, { name: loc.name });
         res.json({ message: `${loc.name} deleted.` });
     }),

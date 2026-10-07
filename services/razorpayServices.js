@@ -1,17 +1,24 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
-// Initialize Razorpay with proper error handling
-let razorpay;
-try {
-    razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET
-    });
-    console.log('Razorpay initialized successfully');
-} catch (error) {
-    console.error('Razorpay initialization failed:', error);
-}
+const integrations = require('../utils/integrations');
+
+// Keys from Admin → Integrations (falling back to the env). The client is
+// rebuilt when they change; without keys, Razorpay calls fail clearly.
+let razorpay = null;
+const buildClient = () => {
+    const key_id = integrations.get('RAZORPAY_KEY_ID');
+    const key_secret = integrations.get('RAZORPAY_KEY_SECRET');
+    razorpay = null;
+    if (!key_id || !key_secret) return;
+    try {
+        razorpay = new Razorpay({ key_id, key_secret });
+    } catch (error) {
+        console.error('Razorpay initialization failed:', error.message);
+    }
+};
+buildClient();
+integrations.onChange(buildClient);
 
 exports.createOrder = async (options) => {
     try {
@@ -56,7 +63,7 @@ exports.verifyPaymentSignature = ({ order_id, payment_id, signature }) => {
     try {
         const body = order_id + '|' + payment_id;
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .createHmac('sha256', integrations.get('RAZORPAY_KEY_SECRET'))
             .update(body.toString())
             .digest('hex');
         
@@ -72,7 +79,7 @@ exports.verifyPaymentSignature = ({ order_id, payment_id, signature }) => {
 exports.verifyWebhookSignature = (body, signature) => {
     try {
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .createHmac('sha256', integrations.get('RAZORPAY_KEY_SECRET'))
             .update(body)
             .digest('hex');
         

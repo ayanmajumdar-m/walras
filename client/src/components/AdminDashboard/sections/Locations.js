@@ -1,16 +1,16 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Eye, EyeOff, RefreshCw, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { adminApi } from "../adminApi";
 
 /*
   Locations: the server locations customers see (order form, About page,
-  homepage, footer, sign-in page). Add, rename, hide or reorder them, and
-  link each to its SolusVM location so servers can be ordered there. An
-  active location without a link is listed on the site and shows "coming
-  soon" in the order form.
+  homepage, footer, sign-in page). Add, rename, hide or reorder them. Which
+  SolusVM panels serve a location is set on each account in SolusVM
+  accounts; a location no active account serves shows "coming soon" in the
+  order form.
 */
 
-const EMPTY = { name: "", country: "", note: "", solusLocationId: "", sortOrder: "", active: true };
+const EMPTY = { name: "", country: "", note: "", sortOrder: "", active: true };
 
 const Modal = ({ title, onClose, children }) => (
   <div className="cx-modal-scrim" onClick={onClose}>
@@ -32,26 +32,17 @@ const Field = ({ label, hint, wide, children }) => (
   </label>
 );
 
-const LocationForm = ({ initial, editing, data, onSaved, onClose }) => {
+const LocationForm = ({ initial, editing, onSaved, onClose }) => {
   const [f, setF] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
 
-  // SolusVM locations not already linked to another location.
-  const taken = new Set(data.locations.filter((l) => l.id !== initial.id && l.solusLocationId).map((l) => l.solusLocationId));
-  const options = data.solusLocations.filter((s) => !taken.has(s.id));
-  const linkLocked = editing && initial.servers > 0;
-
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const body = {
-      name: f.name, country: f.country, note: f.note, active: f.active,
-      ...(f.sortOrder !== "" ? { sortOrder: f.sortOrder } : {}),
-      ...(linkLocked ? {} : { solusLocationId: f.solusLocationId === "" ? null : Number(f.solusLocationId) }),
-    };
+    const body = { name: f.name, country: f.country, note: f.note, active: f.active, ...(f.sortOrder !== "" ? { sortOrder: f.sortOrder } : {}) };
     try {
       const d = editing
         ? await adminApi(`/locations/${initial.id}`, { method: "PUT", body })
@@ -64,7 +55,7 @@ const LocationForm = ({ initial, editing, data, onSaved, onClose }) => {
   };
 
   const remove = async () => {
-    if (!window.confirm(`Delete ${initial.name}? Its stock is removed too. This can't be undone.`)) return;
+    if (!window.confirm(`Delete ${initial.name}? Its stock and SolusVM links are removed too. This can't be undone.`)) return;
     setBusy(true);
     try {
       const d = await adminApi(`/locations/${initial.id}`, { method: "DELETE" });
@@ -85,22 +76,13 @@ const LocationForm = ({ initial, editing, data, onSaved, onClose }) => {
           <Field label="Description" hint="Shown on the About page." wide>
             <input value={f.note} onChange={set("note")} maxLength={160} placeholder="Our region for customers across the Americas." />
           </Field>
-          <Field label="SolusVM location"
-            hint={linkLocked ? "Has servers, so the link can't change." : !data.solusConfigured ? "SolusVM isn't connected yet." : "Needed to sell servers here. None = shown as coming soon."}>
-            <select className="ap-select" value={f.solusLocationId} onChange={set("solusLocationId")} disabled={linkLocked || !data.solusConfigured}>
-              <option value="">Not linked</option>
-              {f.solusLocationId !== "" && !options.some((s) => String(s.id) === String(f.solusLocationId)) && (
-                <option value={f.solusLocationId}>SolusVM location #{f.solusLocationId}</option>
-              )}
-              {options.map((s) => <option key={s.id} value={s.id}>{s.name} (#{s.id})</option>)}
-            </select>
-          </Field>
           <Field label="Order" hint="Lower shows first."><input type="number" step="1" value={f.sortOrder} onChange={set("sortOrder")} /></Field>
         </div>
         <label className="ap-plan-active">
           <input type="checkbox" checked={f.active} onChange={set("active")} />
           <span><strong>Shown to customers</strong><small>Hidden locations aren't listed or sold. Servers already there keep running.</small></span>
         </label>
+        {!editing && <p className="ap-muted">After adding it, link it to a SolusVM panel in SolusVM accounts so servers can be ordered here.</p>}
         <div className="ap-plan-actions">
           {editing && (
             <button type="button" className="cx-btn cx-btn-ghost is-danger" onClick={remove} disabled={busy || initial.servers > 0}
@@ -141,7 +123,6 @@ const Locations = ({ can }) => {
   if (!data) {
     return <div className="cx-page">{notice ? <div className="cx-alert is-error">{notice.text}</div> : <div className="cx-card cx-empty"><p>Loading locations…</p></div>}</div>;
   }
-  const solusName = (id) => data.solusLocations.find((s) => s.id === id)?.name;
 
   return (
     <div className="cx-page">
@@ -157,50 +138,51 @@ const Locations = ({ can }) => {
       </div>
 
       {notice && <div className={`cx-alert is-${notice.type}`} role="status">{notice.text}</div>}
-      {!data.solusConfigured && (
-        <div className="cx-alert is-info">SolusVM isn't connected, so locations can't be linked yet. They're still listed on the site.</div>
-      )}
-      {data.solusError && <div className="cx-alert is-error"><AlertTriangle size={16} /> Couldn't load SolusVM locations: {data.solusError}</div>}
 
       {data.locations.length === 0 ? (
         <div className="cx-card cx-empty"><p>No locations yet. Add one to show it on the site and in the order form.</p></div>
       ) : (
         <div className="cx-card cx-table-wrap">
           <table className="cx-table">
-            <thead><tr><th>Location</th><th>SolusVM link</th><th>Servers</th><th>Status</th><th /></tr></thead>
+            <thead><tr><th>Location</th><th>Served by</th><th>Servers</th><th>Status</th><th /></tr></thead>
             <tbody>
-              {data.locations.map((l) => (
-                <tr key={l.id} className={l.active ? "" : "is-hidden-plan"}>
-                  <td data-label="Location"><strong>{l.name}</strong><small>{l.country}{l.note ? ` · ${l.note}` : ""}</small></td>
-                  <td data-label="SolusVM link">
-                    {l.solusLocationId
-                      ? <>{solusName(l.solusLocationId) || "SolusVM location"} <code>#{l.solusLocationId}</code></>
-                      : <span className="ap-muted">Not linked: coming soon</span>}
-                  </td>
-                  <td data-label="Servers">{l.servers}</td>
-                  <td data-label="Status"><span className={`cx-status ${l.active ? "is-active" : "is-stopped"}`}>{l.active ? "Shown" : "Hidden"}</span></td>
-                  <td className="cx-actions">
-                    {editable && (<>
-                      <button type="button" className="cx-icon-btn" onClick={() => toggle(l)} title={l.active ? "Hide from customers" : "Show to customers"}>
-                        {l.active ? <EyeOff size={15} /> : <Eye size={15} />}
-                      </button>
-                      <button type="button" className="cx-icon-btn" onClick={() => setEditing(l)} title="Edit"><Pencil size={15} /></button>
-                    </>)}
-                  </td>
-                </tr>
-              ))}
+              {data.locations.map((l) => {
+                const activeServers = l.servedBy.filter((a) => a.status === "active");
+                return (
+                  <tr key={l.id} className={l.active ? "" : "is-hidden-plan"}>
+                    <td data-label="Location"><strong>{l.name}</strong><small>{l.country}{l.note ? ` · ${l.note}` : ""}</small></td>
+                    <td data-label="Served by">
+                      {l.servedBy.length
+                        ? l.servedBy.map((a) => `${a.name}${a.status === "paused" ? " (paused)" : ""}`).join(", ")
+                        : <span className="ap-muted">No SolusVM account: coming soon</span>}
+                      {l.servedBy.length > 0 && activeServers.length === 0 && <small className="is-warn">Every account here is paused</small>}
+                    </td>
+                    <td data-label="Servers">{l.servers}</td>
+                    <td data-label="Status"><span className={`cx-status ${l.active ? "is-active" : "is-stopped"}`}>{l.active ? "Shown" : "Hidden"}</span></td>
+                    <td className="cx-actions">
+                      {editable && (<>
+                        <button type="button" className="cx-icon-btn" onClick={() => toggle(l)} title={l.active ? "Hide from customers" : "Show to customers"}>
+                          {l.active ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                        <button type="button" className="cx-icon-btn" onClick={() => setEditing(l)} title="Edit"><Pencil size={15} /></button>
+                      </>)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      <p className="ap-muted">Servers can be ordered in a location when it's shown, linked to SolusVM, and has stock in VM stock.</p>
+      <p className="ap-muted">
+        Servers can be ordered in a location when it's shown, an active <a className="cx-link" href="?section=solus-accounts">SolusVM account</a> serves it with room to spare, and it has stock in VM stock.
+      </p>
 
       {editing && (
         <LocationForm
           editing={editing !== "new"}
-          initial={editing === "new" ? EMPTY : { ...editing, solusLocationId: editing.solusLocationId ?? "", sortOrder: editing.sortOrder }}
-          data={data}
+          initial={editing === "new" ? EMPTY : { ...editing, sortOrder: editing.sortOrder }}
           onSaved={done}
           onClose={() => setEditing(null)}
         />

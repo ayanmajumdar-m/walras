@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const connection = require('../config/db');
 const taxService = require('./taxServices');
 const cpanelService = require('./cpanelService');
-const solusvm = require('./solusvm');
+const solusAccounts = require('../utils/solusAccounts');
 
 class BillingService {
     constructor() {
@@ -237,7 +237,8 @@ class BillingService {
     // Out of balance: stop the VM on SolusVM too, so it isn't left running unbilled.
     async stopServer(server) {
         if (server.solus_server_id) {
-            await solusvm.serverAction(server.solus_server_id, 'stop')
+            await solusAccounts.clientForAccountId(server.solus_account_id)
+                .then((client) => client.serverAction(server.solus_server_id, 'stop'))
                 .catch((err) => console.error(`SolusVM stop failed for server ${server.id}:`, err.message));
         }
         return new Promise((resolve, reject) => {

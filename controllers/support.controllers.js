@@ -86,7 +86,7 @@ const accountNote = async (userId) => {
     const servers = await q('SELECT name, plan_name, status FROM servers WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [userId]).catch(() => []);
     const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [userId]).catch(() => []);
     const date = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '-');
-    const base = (process.env.CLIENT_URL || 'https://www.walras.net').replace(/\/+$/, '');
+    const base = (require('../utils/integrations').get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '');
     return [
         'Walras Cloud account (added automatically)',
         `Customer: ${u?.name || '-'} <${u?.email || '-'}> · ${u?.phone || 'no phone'}`,

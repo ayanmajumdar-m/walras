@@ -86,7 +86,7 @@ const checkUnsubscribeToken = (userId, token) => {
 };
 
 // The site and API share one origin (CLIENT_URL); API_URL may still name the old host.
-const apiBase = () => (process.env.CLIENT_URL || 'https://www.walras.net').replace(/\/+$/, '');
+const apiBase = () => (require('../utils/integrations').get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '');
 const unsubscribeUrl = (userId) => `${apiBase()}/api/email/unsubscribe?u=${userId}&t=${unsubscribeToken(userId)}`;
 
 // ── Message ────────────────────────────────────────────────────────────────

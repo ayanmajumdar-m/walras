@@ -2,11 +2,11 @@
  * Server locations, managed in Admin → Locations (table server_locations).
  *
  * Each location has a customer-facing name and country, a short note (shown
- * on the About page), whether it's shown at all (active) and its order. To
- * sell servers there it is linked to a SolusVM location: that link's id is
- * what stock (compute_stock.location_id) and servers (servers.location_id)
- * use. An active location without a link is listed on the site and shows
- * as "coming soon" in the order form.
+ * on the About page), whether it's shown at all (active) and its order. Its
+ * id is what stock (compute_stock.location_id) and servers
+ * (servers.location_id) use. SolusVM accounts say which locations they serve
+ * (Admin → SolusVM accounts); an active location no account serves is listed
+ * on the site and shows as "coming soon" in the order form.
  */
 const connection = require('../config/db');
 
@@ -19,7 +19,6 @@ const toLocation = (r) => ({
     name: r.name,
     country: r.country,
     note: r.note || '',
-    solusLocationId: r.solus_location_id === null || r.solus_location_id === undefined ? null : Number(r.solus_location_id),
     active: Boolean(r.active),
     sortOrder: Number(r.sort_order),
 });
@@ -39,8 +38,7 @@ const getLocations = async ({ all = false } = {}) => {
     return all ? list : list.filter((l) => l.active);
 };
 
-/** The active location linked to this SolusVM location id, if any. */
-const findBySolusId = async (solusId) =>
-    (await getLocations()).find((l) => l.solusLocationId === solusId) || null;
+/** An active location by id, if any. */
+const findLocation = async (id) => (await getLocations()).find((l) => l.id === Number(id)) || null;
 
-module.exports = { getLocations, findBySolusId, forgetLocations };
+module.exports = { getLocations, findLocation, forgetLocations };

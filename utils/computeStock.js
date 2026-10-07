@@ -8,14 +8,16 @@
  * Hidden plans (active = false) aren't shown or sold; servers already on them
  * keep running at the price they were bought at (stored on the server).
  *
- * Stock is a quantity per plan per SolusVM location (table compute_stock),
- * set in Admin → VM stock. Deploying takes one unit; deleting a server gives
- * it back. A plan is on sale in a location only while it is active, SolusVM
- * is configured, the plan is linked to a SolusVM plan, and stock is above zero.
+ * Stock is a quantity per plan per Walras location (table compute_stock,
+ * location_id = server_locations.id), set in Admin → VM stock. Deploying
+ * takes one unit; deleting a server gives it back. A plan is on sale in a
+ * location only while the plan and location are active, stock is above zero,
+ * and some active SolusVM account serves that location, has the plan linked
+ * and is under its server limit (utils/solusAccounts.js).
  */
 const connection = require('../config/db');
-const appSettings = require('./appSettings');
-const solusvm = require('../services/solusvm');
+const solusAccounts = require('./solusAccounts');
+const serverLocations = require('./serverLocations');
 
 const CPU_TYPES = { intel: 'Intel', amd: 'AMD' };
 const HOURS_PER_MONTH = 720;
@@ -63,31 +65,6 @@ const findPlan = async (name, opts) => (await getPlans(opts)).find((p) => p.name
 // Hourly price in rupees, rounded to the paisa (billing charges by the hour).
 const hourlyRupees = (plan) => Math.round((plan.monthly * 100) / HOURS_PER_MONTH) / 100;
 
-// ── SolusVM link ───────────────────────────────────────────────────────────
-
-const PLAN_MAP_KEY = 'compute.plan_map';
-
-/** { 'VMgIN_4': <SolusVM plan id>, … } */
-const getPlanMap = async () => {
-    try {
-        const names = new Set((await getPlans({ all: true })).map((p) => p.name));
-        const raw = (await appSettings.getAll())[PLAN_MAP_KEY];
-        const map = raw ? JSON.parse(raw) : {};
-        return Object.fromEntries(Object.entries(map).filter(([name, id]) => names.has(name) && Number.isInteger(id) && id > 0));
-    } catch {
-        return {};
-    }
-};
-
-const setPlanMap = async (map) => {
-    const clean = {};
-    for (const p of await getPlans({ all: true })) {
-        const id = Number(map?.[p.name]);
-        if (Number.isInteger(id) && id > 0) clean[p.name] = id;
-    }
-    return appSettings.setMany({ [PLAN_MAP_KEY]: JSON.stringify(clean) });
-};
-
 // ── Stock ──────────────────────────────────────────────────────────────────
 
 /** [{ plan, location_id, quantity }] */
@@ -134,22 +111,24 @@ const release = (plan, locationId) => q(
 
 /**
  * What customers may buy right now: { [plan]: { [locationId]: true } }, for
- * active plans. Never throws: on any error nothing is on sale.
+ * active plans and locations. Never throws: on any error nothing is on sale.
  */
 const getAvailability = async () => {
     let plans = [];
+    let locations = [];
     try {
-        plans = await getPlans();
+        [plans, locations] = await Promise.all([getPlans(), serverLocations.getLocations()]);
     } catch (err) {
-        console.error('VM plans unavailable:', err.message);
+        console.error('VM plans or locations unavailable:', err.message);
         return {};
     }
     const out = Object.fromEntries(plans.map((p) => [p.name, {}]));
-    if (!solusvm.solusConfigured()) return out;
     try {
-        const [map, rows] = await Promise.all([getPlanMap(), getStockRows()]);
+        const active = new Set(locations.map((l) => l.id));
+        const [capacity, rows] = await Promise.all([solusAccounts.capacityMap(), getStockRows()]);
         for (const r of rows) {
-            if (out[r.plan] && map[r.plan] && Number(r.quantity) > 0) out[r.plan][r.location_id] = true;
+            const loc = Number(r.location_id);
+            if (out[r.plan] && active.has(loc) && Number(r.quantity) > 0 && capacity[r.plan]?.has(loc)) out[r.plan][loc] = true;
         }
     } catch (err) {
         console.error('Compute availability failed:', err.message);
@@ -164,8 +143,6 @@ module.exports = {
     findPlan,
     forgetPlans,
     hourlyRupees,
-    getPlanMap,
-    setPlanMap,
     getStock,
     setStock,
     reserve,

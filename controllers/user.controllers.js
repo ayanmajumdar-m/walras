@@ -128,7 +128,7 @@ async function handleRazorpayPayment(userId, amountPaise, domainTransactionId, d
                             orderId: order.id,
                             amount: order.amount,
                             currency: order.currency,
-                            key: process.env.RAZORPAY_KEY_ID,
+                            key: require('../utils/integrations').get('RAZORPAY_KEY_ID'),
                             domainTransactionId
                         });
                     }

@@ -34,4 +34,9 @@ const setMany = async (entries) => {
     cache = null;
 };
 
-module.exports = { get, getAll, setMany };
+const removeMany = async (keys) => {
+    for (const key of keys) await query('DELETE FROM app_settings WHERE key = ?', [key]);
+    cache = null;
+};
+
+module.exports = { get, getAll, setMany, removeMany };

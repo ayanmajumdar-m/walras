@@ -14,10 +14,14 @@ dotenv.config();
  * at import time, which killed Express before it bound a port and looked like a
  * crash-loop with no explanation. Now mail simply no-ops with a warning.
  */
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
+// SMTP settings come from Admin → Integrations, falling back to the env.
+const integrations = require('./integrations');
+const smtp = () => ({
+    host: integrations.get('SMTP_HOST'),
+    port: Number(integrations.get('SMTP_PORT')) || 587,
+    user: integrations.get('SMTP_USER'),
+    pass: integrations.get('SMTP_PASS'),
+});
 
 const FROM_NAME = process.env.MAIL_FROM_NAME || 'Walras Cloud';
 const FROM_ADDR = process.env.MAIL_FROM_ADDR || 'noreply@walras.net';
@@ -43,23 +47,24 @@ const resolveSender = async () => {
     }
 };
 
-const emailConfigured = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
-
-if (!emailConfigured) {
-    console.warn('⚠️  SMTP_HOST / SMTP_USER / SMTP_PASS not set — transactional email is disabled.');
-}
-
 // Port 587 is STARTTLS: the connection opens in the clear and is upgraded, so
 // `secure` is false here and true only for implicit TLS on 465. Getting this
 // backwards is the classic "greeting never received" hang.
-const transporter = emailConfigured
-    ? nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        secure: SMTP_PORT === 465,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-    })
-    : null;
+// The transport is rebuilt whenever the SMTP settings change.
+let transport = null; // { key, transporter }
+const getTransporter = () => {
+    const s = smtp();
+    if (!(s.host && s.user && s.pass)) return null;
+    const key = JSON.stringify(s);
+    if (!transport || transport.key !== key) {
+        transport = {
+            key,
+            transporter: nodemailer.createTransport({ host: s.host, port: s.port, secure: s.port === 465, auth: { user: s.user, pass: s.pass } }),
+        };
+    }
+    return transport.transporter;
+};
+const isEmailConfigured = () => Boolean(getTransporter());
 
 /**
  * Confirms the relay is reachable and the credentials are accepted, without
@@ -67,10 +72,15 @@ const transporter = emailConfigured
  * rather than discovered by the first customer who buys a domain.
  */
 const verifyEmailTransport = async () => {
-    if (!transporter) return false;
+    const transporter = getTransporter();
+    if (!transporter) {
+        console.warn('⚠️  SMTP isn\'t set (Admin → Integrations, or SMTP_HOST / SMTP_USER / SMTP_PASS) — email is disabled.');
+        return false;
+    }
     try {
         await transporter.verify();
-        console.log(`✅ SMTP ready (${SMTP_USER} via ${SMTP_HOST}:${SMTP_PORT})`);
+        const s = smtp();
+        console.log(`✅ SMTP ready (${s.user} via ${s.host}:${s.port})`);
         return true;
     } catch (error) {
         console.error('⚠️  SMTP verification failed:', error.message);
@@ -182,11 +192,11 @@ const sendAuthCodeEmail = async (to, name, code, purpose, minutes) => {
         console.log(`📧 [MAIL_DEV_LOG] ${purpose} code for ${to}: ${code} (valid ${minutes} min)`);
         return { messageId: 'dev-log' };
     }
-    if (!emailConfigured) {
-        throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
+    if (!isEmailConfigured()) {
+        throw new Error('Email is not configured (Admin → Integrations → Email)');
     }
     const copy = AUTH_CODE_COPY[purpose];
-    const info = await transporter.sendMail({
+    const info = await getTransporter().sendMail({
         from: await resolveSender(),
         to,
         subject: copy.subject,
@@ -202,7 +212,7 @@ This code expires in ${minutes} minutes. If you didn't request this, ignore this
 };
 
 const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
-    if (!emailConfigured) {
+    if (!isEmailConfigured()) {
         console.warn(`Email disabled — not sending domain purchase confirmation to ${to}`);
         return;
     }
@@ -215,7 +225,7 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
     };
 
     try {
-        const info = await transporter.sendMail(message);
+        const info = await getTransporter().sendMail(message);
         console.log('Domain purchase email sent:', info.messageId);
         return info;
     } catch (error) {
@@ -229,9 +239,9 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
  * a new sender address is accepted by Brevo before customers depend on it.
  */
 const sendTestEmail = async (to) => {
-    if (!emailConfigured) throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
+    if (!isEmailConfigured()) throw new Error('Email is not configured (Admin → Integrations → Email)');
     const from = await resolveSender();
-    const info = await transporter.sendMail({
+    const info = await getTransporter().sendMail({
         from,
         to,
         subject: 'Walras Cloud test email',
@@ -250,7 +260,7 @@ If you received this, the sender settings work.`,
  * with this email address, which is what proves the invite is theirs.
  */
 const sendTeamInviteEmail = async (to, ownerName, accessLabels) => {
-    const base = (process.env.CLIENT_URL || 'https://www.walras.net').replace(/\/+$/, '');
+    const base = (require('./integrations').get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '');
     const acceptUrl = `${base}/dashboard/profile?tab=team`;
     const signupUrl = `${base}/signup`;
     const access = accessLabels.join(', ');
@@ -258,8 +268,8 @@ const sendTeamInviteEmail = async (to, ownerName, accessLabels) => {
         console.log(`📧 [MAIL_DEV_LOG] team invite for ${to} from ${ownerName} (${access})`);
         return { messageId: 'dev-log' };
     }
-    if (!emailConfigured) throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
-    const info = await transporter.sendMail({
+    if (!isEmailConfigured()) throw new Error('Email is not configured (Admin → Integrations → Email)');
+    const info = await getTransporter().sendMail({
         from: await resolveSender(),
         to,
         subject: `${ownerName} invited you to their Walras Cloud account`,
@@ -309,13 +319,13 @@ const sendRawEmail = async ({ to, subject, html, text, headers }) => {
         console.log(`📧 [MAIL_DEV_LOG] "${subject}" to ${to}`);
         return { messageId: 'dev-log' };
     }
-    if (!emailConfigured) throw new Error('Email is not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)');
-    return transporter.sendMail({ from: await resolveSender(), to, subject, html, text, headers });
+    if (!isEmailConfigured()) throw new Error('Email is not configured (Admin → Integrations → Email)');
+    return getTransporter().sendMail({ from: await resolveSender(), to, subject, html, text, headers });
 };
 
 module.exports = {
     sendRawEmail,
-    emailConfigured,
+    isEmailConfigured,
     escapeHtml,
     sendTeamInviteEmail,
     resolveSender,

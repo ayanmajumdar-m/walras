@@ -84,7 +84,7 @@ exports.createOrderController = async (req, res) => {
                     orderId: order.id,
                     amount: order.amount,
                     currency: order.currency,
-                    key: process.env.RAZORPAY_KEY_ID,
+                    key: require('../utils/integrations').get('RAZORPAY_KEY_ID'),
                 });
             }
         );

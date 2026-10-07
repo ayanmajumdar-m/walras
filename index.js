@@ -107,7 +107,11 @@ app.use((req, res) => {
 // ✅ Step 8: Start the server
 // Check the mail relay once at boot rather than finding out on the first
 // customer email.
-void verifyEmailTransport();
+// Integration settings from Admin → Integrations (env as fallback): load
+// them, then check email with whatever SMTP settings are in effect.
+const integrations = require("./utils/integrations");
+integrations.start();
+integrations.refresh().then(() => verifyEmailTransport());
 
 app.listen(port, () => {
   console.log(`🚀 Server is running at http://localhost:${port}`);

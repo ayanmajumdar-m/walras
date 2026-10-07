@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const integrations = require('../utils/integrations');
 
 /**
  * CCAvenue Payment Gateway Service
@@ -16,16 +17,16 @@ class CcavenueService {
      * Get CCAvenue environment configuration
      */
     getConfig() {
-        const merchantId = process.env.CCAVENUE_MERCHANT_ID || '';
-        const accessCode = process.env.CCAVENUE_ACCESS_CODE || '';
-        const workingKey = process.env.CCAVENUE_WORKING_KEY || '';
-        const isTest = (process.env.CCAVENUE_ENVIRONMENT || 'production').toLowerCase() === 'test';
+        const merchantId = integrations.get('CCAVENUE_MERCHANT_ID') || '';
+        const accessCode = integrations.get('CCAVENUE_ACCESS_CODE') || '';
+        const workingKey = integrations.get('CCAVENUE_WORKING_KEY') || '';
+        const isTest = (integrations.get('CCAVENUE_ENVIRONMENT') || 'production').toLowerCase() === 'test';
         
         const actionUrl = isTest
             ? 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction'
             : 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
 
-        const clientUrl = (process.env.CLIENT_URL || 'https://www.walras.net').replace(/\/+$/, '');
+        const clientUrl = (integrations.get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '');
 
         return {
             merchantId,

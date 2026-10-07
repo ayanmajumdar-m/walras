@@ -5,7 +5,7 @@
 const connection = require('../config/db');
 const bulk = require('../services/bulkEmail');
 const audit = require('../utils/audit');
-const { emailConfigured } = require('../utils/sendEmail');
+const { isEmailConfigured } = require('../utils/sendEmail');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -69,7 +69,7 @@ const BulkEmailController = {
              ORDER BY b.created_at DESC LIMIT 20`,
         );
         res.json({
-            emailConfigured,
+            emailConfigured: isEmailConfigured(),
             categories: bulk.CATEGORIES,
             audiences: Object.fromEntries(Object.entries(bulk.AUDIENCES).map(([k, v]) => [k, { label: v.label }])),
             counts,
@@ -94,7 +94,7 @@ const BulkEmailController = {
     send: handle(async (req, res) => {
         const campaign = readCampaign(req.body);
         if (!campaign.audience) throw new HttpError(400, 'Choose who receives it.');
-        if (!emailConfigured && !(process.env.MAIL_DEV_LOG === 'true' && process.env.NODE_ENV !== 'production')) {
+        if (!isEmailConfigured() && !(process.env.MAIL_DEV_LOG === 'true' && process.env.NODE_ENV !== 'production')) {
             throw new HttpError(503, 'Email is not configured on the server.');
         }
         const busy = await bulk.isBusy();
@@ -156,7 +156,7 @@ const BulkEmailController = {
             await q('UPDATE users SET marketing_opt_out = TRUE WHERE id = ?', [userId]).catch((e) => console.error('Unsubscribe failed:', e.message));
         }
         if (req.method === 'POST') return res.status(ok ? 200 : 400).end();
-        const site = (process.env.CLIENT_URL || 'https://www.walras.net').replace(/\/+$/, '');
+        const site = (require('../utils/integrations').get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '');
         res.status(ok ? 200 : 400).type('html').send(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${ok ? 'Unsubscribed' : 'Link not valid'} · Walras Cloud</title></head>

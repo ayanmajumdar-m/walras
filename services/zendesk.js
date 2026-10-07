@@ -7,18 +7,21 @@
  * them on 30 April 2027.
  */
 const connection = require('../config/db');
+const integrations = require('../utils/integrations');
+// Zendesk settings come from Admin → Integrations, falling back to the env.
+const setting = (name) => integrations.get(name)?.toString().trim() || '';
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
 });
 
 const zendeskConfigured = () => Boolean(
-    process.env.ZENDESK_SUBDOMAIN?.trim() && process.env.ZENDESK_CLIENT_ID?.trim() && process.env.ZENDESK_CLIENT_SECRET?.trim()
+    setting('ZENDESK_SUBDOMAIN') && setting('ZENDESK_CLIENT_ID') && setting('ZENDESK_CLIENT_SECRET')
 );
 
 // The Zendesk brand Walras tickets belong to. Unset = the default brand.
 const zendeskBrandId = () => {
-    const raw = process.env.ZENDESK_BRAND_ID?.trim();
+    const raw = setting('ZENDESK_BRAND_ID');
     return raw && /^\d+$/.test(raw) ? Number(raw) : null;
 };
 
@@ -32,11 +35,13 @@ class ZendeskError extends Error {
 
 // Accepts "walras", "walras.zendesk.com" or a full URL.
 const baseUrl = () => {
-    const raw = process.env.ZENDESK_SUBDOMAIN.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const raw = setting('ZENDESK_SUBDOMAIN').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
     return `https://${raw.includes('.') ? raw : `${raw}.zendesk.com`}`;
 };
 
 let cachedToken = null;
+// New credentials in admin: sign in again with them.
+integrations.onChange(() => { cachedToken = null; });
 
 /** OAuth access token (client-credentials), reused until 5 minutes before expiry. */
 const accessToken = async () => {
@@ -46,8 +51,8 @@ const accessToken = async () => {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
         body: new URLSearchParams({
             grant_type: 'client_credentials',
-            client_id: process.env.ZENDESK_CLIENT_ID.trim(),
-            client_secret: process.env.ZENDESK_CLIENT_SECRET.trim(),
+            client_id: setting('ZENDESK_CLIENT_ID'),
+            client_secret: setting('ZENDESK_CLIENT_SECRET'),
             scope: 'read write',
             expires_in: String(2 * 60 * 60),
         }),

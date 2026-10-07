@@ -12,7 +12,7 @@ const platform = require('../utils/platformSettings');
 const { forgetUserStatus } = require('../utils/auth.middleware');
 const zendesk = require('../services/zendesk');
 const supportDepartments = require('../utils/supportDepartments');
-const solusvm = require('../services/solusvm');
+const solusAccounts = require('../utils/solusAccounts');
 const computeStock = require('../utils/computeStock');
 const serverLocations = require('../utils/serverLocations');
 
@@ -395,71 +395,61 @@ const PlatformController = {
 
     // ── Virtual Machine stock ──────────────────────────────────────────────
     /**
-     * Stock per plan per SolusVM location, each plan's linked SolusVM plan,
-     * and how many servers of each are running now. Lists from SolusVM are
-     * fetched fresh so new plans and locations show up straight away.
+     * Stock per plan per Walras location, how many servers of each are on
+     * it, and which locations some active SolusVM account serves (stock in
+     * a location no account serves can't be sold yet).
      */
     getComputeStock: handle(async (req, res) => {
-        const configured = solusvm.solusConfigured();
-        // Columns: locations from Admin → Locations that are linked to SolusVM.
-        const locations = (await serverLocations.getLocations({ all: true }))
-            .filter((l) => l.solusLocationId)
-            .map((l) => ({ id: l.solusLocationId, name: l.active ? l.name : `${l.name} (hidden)` }));
-        let solusPlans = [];
-        let solusError = null;
-        if (configured) {
-            solusvm.forgetCatalog();
-            try {
-                solusPlans = await solusvm.listPlans();
-            } catch (err) {
-                solusError = err.message;
-            }
-        }
-        const [stockMap, planMap, running] = await Promise.all([
+        const [all, accounts, stockMap, running, plans] = await Promise.all([
+            serverLocations.getLocations({ all: true }),
+            solusAccounts.listAccounts(),
             computeStock.getStock(),
-            computeStock.getPlanMap(),
             q(`SELECT plan_name, location_id, COUNT(*) AS n FROM servers
                WHERE solus_server_id IS NOT NULL GROUP BY plan_name, location_id`),
+            computeStock.getPlans({ all: true }),
         ]);
+        const served = new Set();
+        const planLinked = {};
+        for (const a of accounts) {
+            if (a.status !== 'active') continue;
+            Object.keys(a.locations).forEach((id) => served.add(Number(id)));
+            Object.keys(a.plans).forEach((name) => { planLinked[name] = true; });
+        }
         const inUse = {};
         for (const r of running) (inUse[r.plan_name] ||= {})[r.location_id] = Number(r.n);
         res.json({
-            configured,
-            solusError,
-            locations,
-            solusPlans,
-            plans: (await computeStock.getPlans({ all: true })).map((p) => ({
+            accounts: accounts.length,
+            locations: all.map((l) => ({ id: l.id, name: l.active ? l.name : `${l.name} (hidden)`, served: served.has(l.id) })),
+            plans: plans.map((p) => ({
                 ...p,
-                solusPlanId: planMap[p.name] || null,
+                linked: Boolean(planLinked[p.name]),
                 stock: stockMap[p.name],
                 inUse: inUse[p.name] || {},
             })),
         });
     }),
 
-    // PUT { plans: [{ name, solusPlanId, stock: { [locationId]: quantity } }] }
+    // PUT { plans: [{ name, stock: { [locationId]: quantity } }] }
     updateComputeStock: handle(async (req, res) => {
         const list = Array.isArray(req.body.plans) ? req.body.plans : [];
-        const before = { stock: await computeStock.getStock(), planMap: await computeStock.getPlanMap() };
-        const entries = [];
-        const map = {};
+        const before = await computeStock.getStock();
         const known = new Set((await computeStock.getPlans({ all: true })).map((p) => p.name));
+        const locations = new Set((await serverLocations.getLocations({ all: true })).map((l) => l.id));
+        const entries = [];
         for (const p of list) {
             if (!known.has(p?.name)) continue;
-            if (p.solusPlanId !== undefined) map[p.name] = p.solusPlanId;
             for (const [loc, qty] of Object.entries(p.stock || {})) {
                 const locationId = Number(loc);
                 const quantity = Number(qty);
-                if (!Number.isInteger(locationId) || !Number.isInteger(quantity) || quantity < 0 || quantity > 100000) {
+                if (!locations.has(locationId)) continue;
+                if (!Number.isInteger(quantity) || quantity < 0 || quantity > 100000) {
                     throw new HttpError(400, `Stock for ${p.name} must be a whole number from 0 to 100000.`);
                 }
                 entries.push({ plan: p.name, locationId, quantity });
             }
         }
         await computeStock.setStock(entries);
-        await computeStock.setPlanMap({ ...before.planMap, ...map });
-        const after = { stock: await computeStock.getStock(), planMap: await computeStock.getPlanMap() };
-        audit(req, 'compute.stock', 'settings', 'compute', { before, after });
+        audit(req, 'compute.stock', 'settings', 'compute', { before, after: await computeStock.getStock() });
         res.json({ message: 'Virtual Machine stock saved' });
     }),
 

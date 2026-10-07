@@ -2,27 +2,32 @@ const axios = require('axios');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Using the production API URL that's working
-const OPENPROVIDER_API = process.env.OPENPROVIDER_API;
+const integrations = require('../utils/integrations');
 
-// Create axios instance with default config
+// From Admin → Integrations (falling back to the env); read on each use so
+// changes apply without a restart.
+const openProviderApi = () => integrations.get('OPENPROVIDER_API');
+
+// Create axios instance with default config; the base URL is read on each
+// request so a change in admin applies straight away.
 const apiClient = axios.create({
-    baseURL: OPENPROVIDER_API,
     headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
     }
 });
+apiClient.interceptors.request.use((config) => ({ ...config, baseURL: openProviderApi() }));
+
 
 async function getAuthToken() {
-    if (!process.env.OPENPROVIDER_USERNAME || !process.env.OPENPROVIDER_PASSWORD) {
+    if (!integrations.get('OPENPROVIDER_USERNAME') || !integrations.get('OPENPROVIDER_PASSWORD')) {
         throw new Error('OpenProvider credentials not configured. Please set OPENPROVIDER_USERNAME and OPENPROVIDER_PASSWORD environment variables.');
     }
 
     try {
-        const { data } = await axios.post(`${OPENPROVIDER_API}/auth/login`, {
-            username: process.env.OPENPROVIDER_USERNAME,
-            password: process.env.OPENPROVIDER_PASSWORD
+        const { data } = await axios.post(`${openProviderApi()}/auth/login`, {
+            username: integrations.get('OPENPROVIDER_USERNAME'),
+            password: integrations.get('OPENPROVIDER_PASSWORD')
         });
         return data.data.token;
     } catch (error) {
@@ -33,7 +38,7 @@ async function getAuthToken() {
 
 async function getDomains() {
     const token = await getAuthToken();
-    const { data } = await axios.get(`${OPENPROVIDER_API}/domains`, {
+    const { data } = await axios.get(`${openProviderApi()}/domains`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -66,7 +71,7 @@ async function searchDomain(domainName) {
         };
 
         const { data } = await axios.post(
-            `${OPENPROVIDER_API}/domains/check`,
+            `${openProviderApi()}/domains/check`,
             payload,
             {
                 headers: {
@@ -560,11 +565,11 @@ const updateDomainNameservers = async function (domainIdOrName, nameservers = []
 
         const token = await getAuthToken();
 
-        // Try to call the v1beta domain endpoint. Prefer OPENPROVIDER_API base if it contains v1beta path
+        // Try to call the v1beta domain endpoint. Prefer the API base if it contains v1beta path
         const domainPath = `/domains/${encodeURIComponent(domainIdOrName)}`;
 
         // Fetch current domain info (this endpoint exists on the sandbox internal API)
-        const getUrl = `${process.env.OPENPROVIDER_INTERNAL_URL || process.env.OPENPROVIDER_API}${domainPath}`;
+        const getUrl = `${integrations.get('OPENPROVIDER_INTERNAL_URL') || openProviderApi()}${domainPath}`;
         console.log('Fetching domain details from OpenProvider internal API:', getUrl);
 
         const current = await axios.get(getUrl, {
@@ -637,7 +642,7 @@ async function transferDomain(params = {}) {
 
         console.log('Transfer domain payload:', JSON.stringify(payload, null, 2));
 
-        // Use v1beta transfer endpoint on the OPENPROVIDER_API base
+        // Use v1beta transfer endpoint on the API base
         const { data } = await apiClient.post('/domains/transfer', payload, {
             headers: {
                 Authorization: `Bearer ${token}`,

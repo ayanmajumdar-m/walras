@@ -210,6 +210,8 @@ CREATE TABLE IF NOT EXISTS servers (
 
 // Cloud Compute on SolusVM: each server row remembers its SolusVM server and
 // location so it can be managed, and so deleting it returns the stock.
+// solus_server_id is the server on its SolusVM account (solus_account_id,
+// added further down); location_id is the Walras location (server_locations).
 const migrateServers = [
     'ALTER TABLE servers ADD COLUMN IF NOT EXISTS solus_server_id BIGINT',
     'ALTER TABLE servers ADD COLUMN IF NOT EXISTS location_id INT',
@@ -254,14 +256,14 @@ SELECT * FROM (VALUES
 WHERE NOT EXISTS (SELECT 1 FROM vm_plans)`;
 
 // Server locations, managed in Admin → Locations (utils/serverLocations.js).
-// solus_location_id links a location to SolusVM; stock and servers use it.
+// Stock (compute_stock.location_id) and servers (servers.location_id) use
+// these ids. Which SolusVM panels serve a location is set per SolusVM account.
 const createServerLocationsTable = `
 CREATE TABLE IF NOT EXISTS server_locations (
     id SERIAL PRIMARY KEY,
     name VARCHAR(60) NOT NULL,
     country VARCHAR(60) NOT NULL,
     note VARCHAR(160) NOT NULL DEFAULT '',
-    solus_location_id INT UNIQUE,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -276,6 +278,43 @@ SELECT * FROM (VALUES
     ('Los Angeles', 'United States', 'Our region for customers across the Americas.', 20)
 ) AS seed(name, country, note, sort_order)
 WHERE NOT EXISTS (SELECT 1 FROM server_locations)`;
+
+// SolusVM accounts (panels), managed in Admin → SolusVM accounts
+// (utils/solusAccounts.js). The API token is stored encrypted.
+const createSolusAccountsTable = `
+CREATE TABLE IF NOT EXISTS solus_accounts (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(80) NOT NULL,
+    api_url VARCHAR(255) NOT NULL,
+    token_encrypted TEXT,
+    token_last4 VARCHAR(8),
+    status VARCHAR(10) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused')),
+    max_servers INT CHECK (max_servers IS NULL OR max_servers >= 0),
+    priority INT NOT NULL DEFAULT 100,
+    last_test_at TIMESTAMPTZ,
+    last_test_ok BOOLEAN,
+    last_test_error VARCHAR(300),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// Which Walras locations an account serves, with that panel's location id.
+const createSolusAccountLocationsTable = `
+CREATE TABLE IF NOT EXISTS solus_account_locations (
+    account_id INT NOT NULL REFERENCES solus_accounts(id) ON DELETE CASCADE,
+    location_id INT NOT NULL REFERENCES server_locations(id) ON DELETE CASCADE,
+    solus_location_id INT NOT NULL,
+    PRIMARY KEY (account_id, location_id)
+)`;
+
+// Which SolusVM plan each Walras plan creates on an account.
+const createSolusAccountPlansTable = `
+CREATE TABLE IF NOT EXISTS solus_account_plans (
+    account_id INT NOT NULL REFERENCES solus_accounts(id) ON DELETE CASCADE,
+    plan_name VARCHAR(40) NOT NULL,
+    solus_plan_id INT NOT NULL,
+    PRIMARY KEY (account_id, plan_name)
+)`;
 
 // Team members: people an account owner has invited (by email) and the
 // access they have in the owner's account. See utils/team.js.
@@ -606,6 +645,10 @@ connection.connect((err) => {
         ['VM plans seed', seedVmPlans],
         ['Server locations', createServerLocationsTable],
         ['Server locations seed', seedServerLocations],
+        ['SolusVM accounts', createSolusAccountsTable],
+        ['SolusVM account locations', createSolusAccountLocationsTable],
+        ['SolusVM account plans', createSolusAccountPlansTable],
+        ['servers account', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS solus_account_id INT'],
         ['Team members', createTeamMembersTable],
         ...migrateWaladminIds.map((sql, i) => [`WALADMIN ID ${i + 1}`, sql]),
         ['Bulk emails', createBulkEmailsTable],
