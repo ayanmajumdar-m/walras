@@ -272,7 +272,8 @@ const ComputeConfigurator = () => {
         <section className="cx-card cx-step">
           <h3><span className="cx-step-num">{hasLocations ? 2 : 1}</span> Choose a plan</h3>
           <h4 className="cx-plan-family">Shared CPU</h4>
-          <div className="cx-table-wrap">
+          {/* Wide screens: a comparison table. Phones: one card per plan (below). */}
+          <div className="cx-table-wrap cx-plan-table">
             <table className="cx-table cx-table-select">
               <thead>
                 <tr><th /><th>Plan</th><th>vCPUs</th><th>Memory</th><th>SSD</th><th>Bandwidth</th><th>Price</th></tr>
@@ -281,9 +282,9 @@ const ComputeConfigurator = () => {
                 {plans.map((p) => {
                   const available = inStock(p);
                   return (
-                    <tr key={p.name} className={`${p.name === plan.name ? "is-selected" : ""}${available ? "" : " is-off"}`}
+                    <tr key={p.name} className={`${p.name === plan.name && available ? "is-selected" : ""}${available ? "" : " is-off"}`}
                       onClick={() => available && setSelected(p.name)}>
-                      <td><input type="radio" name="compute-plan" checked={p.name === plan.name} disabled={!available} onChange={() => setSelected(p.name)} aria-label={p.name} /></td>
+                      <td><input type="radio" name="compute-plan" checked={p.name === plan.name && available} disabled={!available} onChange={() => setSelected(p.name)} aria-label={p.name} /></td>
                       <td>
                         <strong>{p.name}</strong>
                         {!available ? <span className="cx-tag is-off">Out of stock</span> : p.popular && <span className="cx-tag">Popular</span>}
@@ -298,6 +299,27 @@ const ComputeConfigurator = () => {
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="cx-plan-cards" role="radiogroup" aria-label="Plan">
+            {plans.map((p) => {
+              const available = inStock(p);
+              const selected = p.name === plan.name && available;
+              return (
+                <label key={p.name} className={`cx-plan-card${selected ? " is-selected" : ""}${available ? "" : " is-off"}`}>
+                  <input type="radio" name="compute-plan-card" checked={selected} disabled={!available} onChange={() => setSelected(p.name)} />
+                  <span className="cx-plan-card-main">
+                    <span className="cx-plan-card-name">
+                      <strong>{p.name}</strong>
+                      {!available ? <span className="cx-tag is-off">Out of stock</span> : p.popular && <span className="cx-tag">Popular</span>}
+                    </span>
+                    <small>{p.vcpu} vCPU · {p.ram} GB RAM · {p.storage} GB SSD · {p.bandwidth} TB</small>
+                  </span>
+                  <span className="cx-plan-card-price">
+                    <strong>{formatINR(p.monthly)}</strong><small>/mo</small>
+                  </span>
+                </label>
+              );
+            })}
           </div>
           <p className="cx-step-help">Every plan includes one IPv4 address and transfer at 10 Gbps (1 Gbps in Asian locations).</p>
         </section>
