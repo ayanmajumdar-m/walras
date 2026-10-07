@@ -1385,19 +1385,47 @@
 .cx-plan-family { margin: 0 0 10px; font-family: var(--font-heading); font-size: 17px; font-weight: 700; }
 
 /* ── Team accounts ── */
-.cx-account-switch { display: flex; flex-direction: column; gap: 6px; margin: 0 6px 14px; }
-.cx-account-switch span { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
-.cx-account-switch select {
-  width: 100%;
-  padding: 9px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
-  font: inherit;
-  font-size: 14px;
+.cx-account { position: relative; margin: 0 2px 16px; }
+.cx-account-label {
+  display: block; margin: 0 4px 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
 }
-.cx-account-switch select option { color: #1d1f20; }
+.cx-account-btn {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff; font: inherit; text-align: left; cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cx-account-btn:hover, .cx-account-btn.is-open { background: rgba(255, 255, 255, 0.09); border-color: rgba(94, 235, 194, 0.45); }
+.cx-account-btn:focus-visible { outline: 2px solid #5eebc2; outline-offset: 2px; }
+.cx-account-btn > svg { color: rgba(255, 255, 255, 0.55); flex-shrink: 0; }
+.cx-account-avatar {
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px;
+  display: grid; place-items: center;
+  background: rgba(31, 196, 162, 0.2); color: #5eebc2;
+  font-size: 12px; font-weight: 700;
+}
+.cx-account-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
+.cx-account-text strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-account-text small { font-size: 11.5px; color: rgba(255, 255, 255, 0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-account-menu {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60;
+  margin: 0; padding: 6px; list-style: none;
+  border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0f302b;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+.cx-account-menu button {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 8px; border: 0; border-radius: 9px;
+  background: transparent; color: #ffffff; font: inherit; text-align: left; cursor: pointer;
+}
+.cx-account-menu button:hover, .cx-account-menu button:focus-visible { background: rgba(255, 255, 255, 0.07); outline: none; }
+.cx-account-menu button.is-current { background: rgba(31, 196, 162, 0.14); }
+.cx-account-menu button > svg { color: #5eebc2; flex-shrink: 0; }
 .cx-team-banner {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   margin: 0 0 18px; padding: 10px 14px;
