@@ -193,7 +193,7 @@ const sendAuthCodeEmail = async (to, name, code, purpose, minutes) => {
         return { messageId: 'dev-log' };
     }
     if (!isEmailConfigured()) {
-        throw new Error('Email is not configured (Admin → Integrations → Email)');
+        throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
     }
     const copy = AUTH_CODE_COPY[purpose];
     const info = await getTransporter().sendMail({
@@ -239,7 +239,7 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
  * a new sender address is accepted by Brevo before customers depend on it.
  */
 const sendTestEmail = async (to) => {
-    if (!isEmailConfigured()) throw new Error('Email is not configured (Admin → Integrations → Email)');
+    if (!isEmailConfigured()) throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
     const from = await resolveSender();
     const info = await getTransporter().sendMail({
         from,
@@ -268,7 +268,7 @@ const sendTeamInviteEmail = async (to, ownerName, accessLabels) => {
         console.log(`📧 [MAIL_DEV_LOG] team invite for ${to} from ${ownerName} (${access})`);
         return { messageId: 'dev-log' };
     }
-    if (!isEmailConfigured()) throw new Error('Email is not configured (Admin → Integrations → Email)');
+    if (!isEmailConfigured()) throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
     const info = await getTransporter().sendMail({
         from: await resolveSender(),
         to,
@@ -319,7 +319,7 @@ const sendRawEmail = async ({ to, subject, html, text, headers }) => {
         console.log(`📧 [MAIL_DEV_LOG] "${subject}" to ${to}`);
         return { messageId: 'dev-log' };
     }
-    if (!isEmailConfigured()) throw new Error('Email is not configured (Admin → Integrations → Email)');
+    if (!isEmailConfigured()) throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
     return getTransporter().sendMail({ from: await resolveSender(), to, subject, html, text, headers });
 };
 

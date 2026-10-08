@@ -316,6 +316,40 @@ CREATE TABLE IF NOT EXISTS solus_account_plans (
     PRIMARY KEY (account_id, plan_name)
 )`;
 
+// Auto top-up: when an account's balance falls to threshold, charge its
+// CCAvenue standing instruction up to target. See utils/autoTopup.js.
+// Amounts in paise.
+const createAutoTopupTable = `
+CREATE TABLE IF NOT EXISTS wallet_auto_topup (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    threshold BIGINT NOT NULL,
+    target BIGINT NOT NULL,
+    si_status VARCHAR(12) NOT NULL DEFAULT 'none' CHECK (si_status IN ('none', 'pending', 'active', 'cancelled')),
+    si_ref VARCHAR(100),
+    si_card_label VARCHAR(100),
+    setup_order_id VARCHAR(80),
+    failures INT NOT NULL DEFAULT 0,
+    last_error VARCHAR(255),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// Each automatic charge: scheduled (customer notified) → pending (sent to
+// CCAvenue) → success / failed. One open charge per account at a time.
+const createAutoTopupChargesTable = `
+CREATE TABLE IF NOT EXISTS wallet_auto_topup_charges (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    order_id VARCHAR(80) NOT NULL UNIQUE,
+    amount BIGINT NOT NULL,
+    status VARCHAR(10) NOT NULL CHECK (status IN ('scheduled', 'pending', 'success', 'failed', 'cancelled')),
+    due_at TIMESTAMPTZ NOT NULL,
+    tracking_id VARCHAR(100),
+    error VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
 // Team members: people an account owner has invited (by email) and the
 // access they have in the owner's account. See utils/team.js.
 const createTeamMembersTable = `
@@ -649,6 +683,10 @@ connection.connect((err) => {
         ['SolusVM account locations', createSolusAccountLocationsTable],
         ['SolusVM account plans', createSolusAccountPlansTable],
         ['servers account', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS solus_account_id INT'],
+        ['Auto top-up', createAutoTopupTable],
+        ['Auto top-up charges', createAutoTopupChargesTable],
+        // At most one open (scheduled/pending) charge per account.
+        ['auto top-up open charge', "CREATE UNIQUE INDEX IF NOT EXISTS wallet_auto_topup_open_idx ON wallet_auto_topup_charges (user_id) WHERE status IN ('scheduled', 'pending')"],
         ['Team members', createTeamMembersTable],
         ...migrateWaladminIds.map((sql, i) => [`WALADMIN ID ${i + 1}`, sql]),
         ['Bulk emails', createBulkEmailsTable],

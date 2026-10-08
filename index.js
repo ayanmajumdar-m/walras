@@ -56,7 +56,7 @@ app.get("/api/locations", require("./controllers/serverLocations.controllers").p
 
 app.get("/api/settings/public", async (req, res) => {
   try {
-    const { maintenanceMode, paymentsPaused, topUpsPaused, planAvailability } = await getPlatform();
+    const { maintenanceMode, paymentsPaused, topUpsPaused, autoTopupEnabled, autoTopupReady, planAvailability } = await getPlatform();
     // "All plans out of stock" (stored as paymentsPaused) overrides every plan.
     const effective = paymentsPaused
       ? Object.fromEntries(Object.entries(planAvailability).map(([family, plans]) =>
@@ -65,7 +65,7 @@ app.get("/api/settings/public", async (req, res) => {
     // Cheapest active VM plan, for "from ₹…/mo" labels.
     const vmPlans = await require("./utils/computeStock").getPlans().catch(() => []);
     const vmFromPrice = vmPlans.length ? Math.min(...vmPlans.map((p) => p.monthly)) : null;
-    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, planAvailability: effective, vmFromPrice });
+    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, autoTopup: autoTopupEnabled && autoTopupReady && !topUpsPaused, planAvailability: effective, vmFromPrice });
   } catch (err) {
     console.error("Public settings failed:", err.message);
     res.json({ maintenanceMode: false, paymentsPaused: false, topUpsPaused: true, planAvailability: null });

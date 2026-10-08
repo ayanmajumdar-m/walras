@@ -3,6 +3,7 @@ const connection = require('../config/db');
 const taxService = require('./taxServices');
 const cpanelService = require('./cpanelService');
 const solusAccounts = require('../utils/solusAccounts');
+const autoTopup = require('../utils/autoTopup');
 
 class BillingService {
     constructor() {
@@ -29,6 +30,10 @@ class BillingService {
             console.log('📅 Generating monthly invoices for previous month...');
             this.generateMonthlyInvoices();
         });
+
+        // Auto top-up: settle, send and schedule charges every 15 minutes
+        // (also right after each hourly billing run, below).
+        cron.schedule('5,20,35,50 * * * *', () => autoTopup.run());
 
         // Check for expired hosting accounts every hour at minute 30
         cron.schedule('30 * * * *', () => {
@@ -87,6 +92,8 @@ class BillingService {
             }
 
             console.log(`✅ Hourly billing completed for ${activeServers.length} servers`);
+            // Balances just dropped: top up the accounts that reached their threshold.
+            await autoTopup.run();
         } catch (error) {
             console.error('❌ Hourly billing error:', error);
         }

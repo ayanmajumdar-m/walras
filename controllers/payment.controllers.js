@@ -1,6 +1,8 @@
 const connection = require('../config/db');
 const ccavenueService = require('../services/ccavenueService');
 const cpanelService = require('../services/cpanelService');
+const { creditPendingTopup, failPendingTopup } = require('../utils/walletCredit');
+const autoTopup = require('../utils/autoTopup');
 
 /**
  * Ensure user has a wallet record
@@ -268,62 +270,33 @@ exports.handleCcavenueResponse = async (req, res) => {
         }
 
         // ==========================================
-        // 💰 2. WALLET TOP-UP FLOW (Untouched)
+        // 🔁 2. AUTO TOP-UP SETUP (first payment + standing instruction)
         // ==========================================
-        if (isSuccess) {
-            connection.query(
-                "SELECT * FROM wallet_transactions WHERE reference_id = ? AND status = 'pending'",
-                [order_id],
-                (err, txRows) => {
-                    if (err || !txRows || !txRows.length) {
-                        console.warn("[CCAvenue] Transaction not in pending state or not found:", order_id);
-                        return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=success&order_id=${order_id}&amount=${amount}`);
-                    }
-
-                    const tx = txRows[0];
-                    const amountPaise = tx.amount;
-                    const walletId = tx.wallet_id;
-
-                    connection.query(
-                        "UPDATE wallets SET balance = balance + ? WHERE id = ?",
-                        [amountPaise, walletId],
-                        (wErr) => {
-                            if (wErr) {
-                                console.error("[CCAvenue] Failed to increment wallet balance:", wErr);
-                            }
-
-                            connection.query(
-                                `UPDATE wallet_transactions 
-                                 SET status = 'completed', 
-                                     description = ?,
-                                     razorpay_payment_id = ?
-                                 WHERE id = ?`,
-                                [
-                                    `CCAvenue Top-up Success (Ref: ${tracking_id || bank_ref_no || order_id})`,
-                                    tracking_id || bank_ref_no,
-                                    tx.id
-                                ],
-                                () => {
-                                    return res.redirect(
-                                        `${config.clientUrl}/dashboard/wallet?payment_status=success&order_id=${encodeURIComponent(order_id)}&amount=${encodeURIComponent(amount)}&tracking_id=${encodeURIComponent(tracking_id || '')}`
-                                    );
-                                }
-                            );
-                        }
-                    );
-                }
-            );
-        } else {
-            connection.query(
-                "UPDATE wallet_transactions SET status = 'failed', description = ? WHERE reference_id = ?",
-                [`CCAvenue Failed: ${failure_message || order_status}`, order_id],
-                () => {
-                    return res.redirect(
-                        `${config.clientUrl}/dashboard/wallet?payment_status=failed&order_id=${encodeURIComponent(order_id)}&reason=${encodeURIComponent(failure_message || order_status || 'Payment failed')}`
-                    );
-                }
+        if ((order_id && order_id.startsWith('CCAS_')) || data.merchant_param2 === 'autotopup_setup') {
+            const result = await autoTopup.completeSetup(data);
+            return res.redirect(
+                `${config.clientUrl}/dashboard/billing?autotopup=${result.ok ? 'on' : 'failed'}&message=${encodeURIComponent(result.message)}`
             );
         }
+
+        // ==========================================
+        // 💰 3. WALLET TOP-UP FLOW
+        // ==========================================
+        if (isSuccess) {
+            // Exactly once, even if CCAvenue calls back twice for this order.
+            const result = await creditPendingTopup(order_id, {
+                description: `CCAvenue Top-up Success (Ref: ${tracking_id || bank_ref_no || order_id})`,
+                paymentRef: tracking_id || bank_ref_no || null,
+            });
+            if (!result.credited) console.warn("[CCAvenue] Transaction not in pending state or not found:", order_id);
+            return res.redirect(
+                `${config.clientUrl}/dashboard/wallet?payment_status=success&order_id=${encodeURIComponent(order_id)}&amount=${encodeURIComponent(amount)}&tracking_id=${encodeURIComponent(tracking_id || '')}`
+            );
+        }
+        await failPendingTopup(order_id, `CCAvenue Failed: ${failure_message || order_status}`);
+        return res.redirect(
+            `${config.clientUrl}/dashboard/wallet?payment_status=failed&order_id=${encodeURIComponent(order_id)}&reason=${encodeURIComponent(failure_message || order_status || 'Payment failed')}`
+        );
     } catch (error) {
         console.error("[CCAvenue] Response callback error:", error);
         return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=error&reason=${encodeURIComponent(error.message)}`);
@@ -339,6 +312,12 @@ exports.handleCcavenueCancel = async (req, res) => {
     const orderId = req.query?.order_id || req.body?.order_id || '';
     if (orderId && orderId.startsWith('CCAW_HOST_')) {
         return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=cancelled`);
+    }
+    if (orderId && orderId.startsWith('CCAS_')) {
+        // Auto top-up setup abandoned: nothing was charged or approved. (This
+        // endpoint is public, so it changes nothing; starting setup again
+        // replaces the unfinished one.)
+        return res.redirect(`${config.clientUrl}/dashboard/billing?autotopup=cancelled`);
     }
     if (orderId && orderId.startsWith('CCAW_')) {
         return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=cancelled`);

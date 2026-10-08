@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { authHeaders } from "../consoleApi";
 import "./Dashboard.css";
 import { useConsole } from "../ConsoleContext";
+import AutoTopup from "./AutoTopup";
 
 const Wallet = () => {
   // Admins can pause top-ups in Settings; the server refuses them too.
@@ -516,6 +517,8 @@ const Wallet = () => {
         )}
       </div>
       )}
+
+      <AutoTopup balance={balance} onChange={fetchWallet} />
     </div>
   );
 };

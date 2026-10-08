@@ -1,5 +1,6 @@
 const appSettings = require('./appSettings');
 const computeStock = require('./computeStock');
+const ccavenueSI = require('../services/ccavenueSI');
 
 /**
  * Platform switches admins control from Settings, stored in app_settings.
@@ -50,6 +51,10 @@ const getPlatform = async () => {
         // Account balance top-ups. Off until an admin turns them back on in
         // Settings (unset counts as paused, unlike the other switches).
         topUpsPaused: s['platform.topups_paused'] !== 'false',
+        // Auto top-up (CCAvenue standing instructions). Off by default, and
+        // can't run until the SI integration is confirmed (services/ccavenueSI.js).
+        autoTopupEnabled: s['platform.auto_topup'] === 'true',
+        autoTopupReady: ccavenueSI.SPEC_CONFIRMED,
         planAvailability: {
             hosting: LOCKED_FAMILIES.hosting
                 ? Object.fromEntries(Object.keys(PLAN_DEFAULTS.hosting).map((name) => [name, false]))
@@ -63,11 +68,12 @@ const getPlatform = async () => {
     };
 };
 
-const setPlatform = ({ maintenanceMode, paymentsPaused, topUpsPaused }) =>
+const setPlatform = ({ maintenanceMode, paymentsPaused, topUpsPaused, autoTopupEnabled }) =>
     appSettings.setMany({
         'platform.maintenance_mode': String(Boolean(maintenanceMode)),
         'platform.payments_paused': String(Boolean(paymentsPaused)),
         'platform.topups_paused': String(Boolean(topUpsPaused)),
+        'platform.auto_topup': String(Boolean(autoTopupEnabled)),
     });
 
 const setPlanAvailability = (availability) => {

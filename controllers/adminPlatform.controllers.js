@@ -202,9 +202,13 @@ const PlatformController = {
             maintenanceMode: req.body.maintenanceMode !== undefined ? Boolean(req.body.maintenanceMode) : before.maintenanceMode,
             paymentsPaused: req.body.paymentsPaused !== undefined ? Boolean(req.body.paymentsPaused) : before.paymentsPaused,
             topUpsPaused: req.body.topUpsPaused !== undefined ? Boolean(req.body.topUpsPaused) : before.topUpsPaused,
+            autoTopupEnabled: req.body.autoTopupEnabled !== undefined ? Boolean(req.body.autoTopupEnabled) : before.autoTopupEnabled,
         };
+        if (next.autoTopupEnabled && !before.autoTopupEnabled && !before.autoTopupReady) {
+            throw new HttpError(409, "Auto top-up can't be turned on until the CCAvenue Standing Instructions setup is finished.");
+        }
         await platform.setPlatform(next);
-        audit(req, 'settings.platform', 'settings', 'platform', { before: { maintenanceMode: before.maintenanceMode, paymentsPaused: before.paymentsPaused, topUpsPaused: before.topUpsPaused }, after: next });
+        audit(req, 'settings.platform', 'settings', 'platform', { before: { maintenanceMode: before.maintenanceMode, paymentsPaused: before.paymentsPaused, topUpsPaused: before.topUpsPaused, autoTopupEnabled: before.autoTopupEnabled }, after: next });
         res.json({ message: 'Platform settings saved', ...(await platform.getPlatform()) });
     }),
 

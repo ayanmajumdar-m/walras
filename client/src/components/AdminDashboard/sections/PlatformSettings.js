@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Power, PackageX, Package, FileText, Lock, Save, WalletCards } from "lucide-react";
+import { Power, PackageX, Package, FileText, Lock, Save, WalletCards, RefreshCw } from "lucide-react";
 import { adminApi } from "../adminApi";
 import EmailSender from "../components/Settings";
 import { WEB_HOSTING_ENABLED } from "../../../data/plans";
@@ -80,9 +80,22 @@ const PlatformSettings = () => {
           <Switch Icon={WalletCards} tone="warn" label="Pause account balance top-ups"
             hint="Customers can't add funds to their account balance. Their existing balance still works, and admins can still adjust balances."
             checked={s.topUpsPaused} onChange={(v) => setS({ ...s, topUpsPaused: v })} />
+          {s.autoTopupReady ? (
+            <Switch Icon={RefreshCw} label="Auto top-up"
+              hint="Customers can save a card or UPI with CCAvenue (Standing Instructions) and have their balance topped up automatically. Paused while top-ups are paused."
+              checked={s.autoTopupEnabled} onChange={(v) => setS({ ...s, autoTopupEnabled: v })} />
+          ) : (
+            <div className="ap-setting is-disabled">
+              <span className="ap-setting-icon"><RefreshCw size={18} /></span>
+              <span className="ap-setting-text">
+                <strong>Auto top-up</strong>
+                <small>Waiting for CCAvenue Standing Instructions to be enabled and the integration finished. It can be switched on here after that.</small>
+              </span>
+            </div>
+          )}
           <div className="ap-card-foot">
             <button type="button" className="cx-btn cx-btn-primary" disabled={busy === "platform"}
-              onClick={() => save("platform", "/settings/platform", { maintenanceMode: s.maintenanceMode, paymentsPaused: s.paymentsPaused, topUpsPaused: s.topUpsPaused }, "Platform settings saved")}>
+              onClick={() => save("platform", "/settings/platform", { maintenanceMode: s.maintenanceMode, paymentsPaused: s.paymentsPaused, topUpsPaused: s.topUpsPaused, autoTopupEnabled: s.autoTopupEnabled }, "Platform settings saved")}>
               <Save size={15} /> Save
             </button>
           </div>
