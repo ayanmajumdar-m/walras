@@ -4,14 +4,15 @@ import { adminApi } from "../adminApi";
 
 /*
   Billing → Invoices: prepaid invoices (utils/monthlyBilling.js): a new
-  server's (paid at purchase) and renewals issued on the 1st. Unpaid: 10% late fee after 48h,
-  servers suspended after 72h, deleted after 5 days. Admins can waive the
+  server's (paid at purchase) and renewals issued on the 1st, due that day.
+  Unpaid on the 3rd: 10% late fee on the unpaid amount + servers suspended;
+  on the 7th: deleted. Admins can waive the
   late fee and mark an invoice paid (money received outside Walras).
 */
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const monthName = (d) => new Date(d).toLocaleDateString("en-IN", { month: "short", year: "numeric", timeZone: "UTC" });
-const when = (d) => new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const when = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 const dateOnly = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
 const FILTERS = [
@@ -90,7 +91,7 @@ const MonthlyInvoices = ({ can, openCustomer }) => {
       <div className="cx-page-head cx-page-head-row">
         <div>
           <h2>Invoices</h2>
-          <p>Prepaid: a new server's invoice (rest of the month, pro rata) is paid at purchase; renewals are issued on the 1st for the month ahead. Unpaid: 10% late fee after 48 hours, servers suspended after 72 hours, deleted after 5 days.</p>
+          <p>Prepaid: a new server's invoice (rest of the month, pro rata) is paid at purchase; renewals are issued on the 1st for the month ahead. Renewals are due the same day. Unpaid on the 3rd: 10% late fee on the unpaid amount and servers suspended; on the 7th: deleted.</p>
         </div>
         <div className="cx-welcome-actions">
           <button type="button" className="cx-btn cx-btn-ghost" onClick={load}><RefreshCw size={15} /> Refresh</button>
@@ -145,7 +146,7 @@ const MonthlyInvoices = ({ can, openCustomer }) => {
                         </td>
                         <td data-label="Due">
                           {inr(inv.due)}
-                          {inv.status !== "paid" && inv.payBy && <small>{new Date() < new Date(inv.payBy) ? `pay by ${when(inv.payBy)}` : new Date() < new Date(inv.suspendAt) ? `suspends ${when(inv.suspendAt)}` : new Date() < new Date(inv.deleteAt) ? `deletes ${when(inv.deleteAt)}` : "servers deleted"}</small>}
+                          {inv.status !== "paid" && inv.payBy && <small>{new Date() < new Date(inv.payBy) ? "due today" : new Date() < new Date(inv.suspendAt) ? `fee + suspension ${when(inv.suspendAt)}` : new Date() < new Date(inv.deleteAt) ? `deletes ${when(inv.deleteAt)}` : "servers deleted"}</small>}
                         </td>
                         <td data-label="Status"><span className={`cx-status ${st.cls}`}>{st.label}</span></td>
                         <td className="cx-actions">

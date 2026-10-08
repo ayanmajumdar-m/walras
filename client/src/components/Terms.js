@@ -40,7 +40,7 @@ KYC verification may be required to comply with Indian regulations. Users must p
       icon: <CreditCard className="section-icon" />,
       title: "5. Payments & Billing",
       content: `Services such as Virtual Machines are prepaid monthly. When you buy a plan, the rest of the current month is charged from your account balance at once, pro rata per day (monthly price ÷ days in the month × days remaining, counting the day of purchase), plus applicable GST. On the 1st of each month (India time) we issue an invoice for that month in advance.
-Your account balance is applied to the invoice first. Any remaining amount must be paid within 48 hours of the invoice. If it is not, a late fee of 10% of the invoice value is added; services are suspended 72 hours after the invoice; and 5 days after the invoice the services and all their data are deleted permanently. The invoice remains payable after suspension or deletion.
+Your account balance is applied to the invoice first. Any remaining amount is due on the day the invoice is issued. If any amount is still unpaid on the 3rd of the month, a late fee of 10% of the unpaid amount is added and services are suspended; if it is still unpaid on the 7th, the services and all their data are deleted permanently. The invoice remains payable after suspension or deletion.
 A cancelled plan stays active until the end of the month it is paid for, is not renewed, and is deleted at the start of the next month. Amounts already paid for a month are not refunded.
 Domain registrations and other one-time purchases are payable in advance.
 Account balances can only be withdrawn to your bank if not credited via promotions or offers.

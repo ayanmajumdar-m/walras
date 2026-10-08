@@ -11,7 +11,9 @@ import { useConsole } from "../ConsoleContext";
 */
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const when = (d) => new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const day = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+// The day before an instant at midnight: "pay by 1 Dec" for a 2 Dec 00:00 deadline.
+const dayBefore = (d) => day(new Date(new Date(d).getTime() - 1));
 const dateOnly = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 const monthName = (d) => new Date(d).toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
 
@@ -54,9 +56,9 @@ const downloadPdf = async (inv) => {
 const nextStep = (inv, policy) => {
   if (inv.status === "paid" || inv.due <= 0 || !inv.payBy) return null;
   const now = Date.now();
-  if (now < new Date(inv.payBy)) return `Pay by ${when(inv.payBy)} to avoid a ${policy.lateFeePercent}% late fee.`;
-  if (now < new Date(inv.suspendAt)) return `Overdue. Your servers will be suspended on ${when(inv.suspendAt)} unless it's paid.`;
-  if (now < new Date(inv.deleteAt)) return `Your servers are suspended. They will be deleted on ${when(inv.deleteAt)} unless it's paid.`;
+  if (now < new Date(inv.payBy)) return `Due today (${dayBefore(inv.payBy)}). Unpaid on ${day(inv.suspendAt)}: ${policy.lateFeePercent}% late fee and your servers are suspended.`;
+  if (now < new Date(inv.suspendAt)) return `Overdue. Pay before ${day(inv.suspendAt)} to avoid a ${policy.lateFeePercent}% late fee and suspension.`;
+  if (now < new Date(inv.deleteAt)) return `Your servers are suspended. They will be deleted on ${day(inv.deleteAt)} unless it's paid.`;
   return "Your servers were deleted because this invoice wasn't paid. It is still due.";
 };
 
@@ -164,9 +166,9 @@ const Invoices = () => {
 
       <p className="cx-muted iv-policy">
         Plans are prepaid. A new server is paid for the rest of its first month (pro rata per day) when you create it; after
-        that, each month is invoiced on the 1st and paid from your account balance first. Anything left must be paid within
-        {policy.payWithinHours} hours, or a {policy.lateFeePercent}% late fee is added. Unpaid after {policy.suspendAfterHours} hours,
-        services are suspended; after {policy.deleteAfterDays} days they are deleted.
+        that, each month is invoiced on the 1st, due the same day, and paid from your account balance first. If anything is
+        still unpaid on the {policy.suspendDay}rd, a {policy.lateFeePercent}% late fee is added on the unpaid amount and services are
+        suspended; on the {policy.deleteDay}th they are deleted.
       </p>
 
       {invoices.length === 0 ? (

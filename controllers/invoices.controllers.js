@@ -39,10 +39,9 @@ module.exports = {
                 oldest,
             },
             policy: {
-                payWithinHours: billing.PAY_WITHIN_HOURS,
                 lateFeePercent: Math.round(billing.LATE_FEE_RATE * 100),
-                suspendAfterHours: billing.SUSPEND_AFTER_HOURS,
-                deleteAfterDays: billing.DELETE_AFTER_HOURS / 24,
+                suspendDay: billing.SUSPEND_DAY + 1, // the 3rd
+                deleteDay: billing.DELETE_DAY + 1,   // the 7th
             },
         });
     }),

@@ -10,12 +10,13 @@
  * On the 1st (00:00 IST) every server not yet paid for the new month is
  * renewed: one invoice per account for the full month ahead. The account
  * balance pays it first; the customer pays the rest through CCAvenue
- * (Billing → Invoices). Counted from when the invoice was issued, while
- * anything is still unpaid:
- *   48 hours  10% late fee added (of the invoice value; admins can waive it)
- *   72 hours  the account's servers are suspended (stopped)
- *   96 hours  warning email: services will be deleted in 24 hours
- *   5 days    the account's servers are deleted
+ * (Billing → Invoices). In calendar days (India time) from the day the
+ * invoice is issued (the 1st for renewals), while anything is still unpaid:
+ *   1st  issued, due the same day
+ *   3rd  10% late fee on the amount still unpaid (admins can waive it), and
+ *        the account's servers are suspended (stopped)
+ *   6th  final notice: services will be deleted tomorrow
+ *   7th  the account's servers are deleted
  * Paying in full restarts the servers that suspension stopped.
  *
  * Cancelling a plan takes effect at the end of the paid month: the server
@@ -32,11 +33,13 @@ const stock = require('./computeStock');
 const { sendRawEmail, escapeHtml } = require('./sendEmail');
 const integrations = require('./integrations');
 
-const PAY_WITHIN_HOURS = 48;
+// The overdue timeline, in days after the day an invoice is issued (India
+// time): issued on the 1st → due that day, late fee + suspension on the
+// 3rd, final notice on the 6th, deletion on the 7th.
 const LATE_FEE_RATE = 0.10;
-const SUSPEND_AFTER_HOURS = 72;
-const DELETE_WARNING_HOURS = 96;
-const DELETE_AFTER_HOURS = 5 * 24;
+const SUSPEND_DAY = 2;       // 1st + 2 = the 3rd (00:00 IST)
+const DELETE_WARNING_DAY = 5; // the 6th
+const DELETE_DAY = 6;        // the 7th
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -59,7 +62,7 @@ const daysInMonth = (y, m) => new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
 const istDay = (date) => Math.floor((new Date(date).getTime() + IST_MS) / DAY_MS);
 const istDate = (dayNumber) => new Date(dayNumber * DAY_MS).toISOString().slice(0, 10); // YYYY-MM-DD
 const monthLabel = (y, m) => new Date(Date.UTC(y, m, 1)).toLocaleString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-const fmtIst = (date) => new Date(date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const fmtDay = (date) => new Date(date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long' });
 
 /** The start of next month (India time): when a cancelled plan ends. */
 const nextMonthStart = (now = new Date()) => {
@@ -274,7 +277,6 @@ const freeNumber = async (base) => {
 
 /** Inserts an invoice and its lines; returns the invoice id. */
 const insertInvoice = async ({ userId, number, kind, y, m, lines, subtotal, tax, status, now, notes }) => {
-    const dueAt = new Date(now.getTime() + PAY_WITHIN_HOURS * 3600 * 1000);
     const paid = status === 'paid';
     const ins = rowsOf(await q(
         `INSERT INTO monthly_invoices (user_id, invoice_number, kind, billing_month, total_amount, subtotal, tax_amount, tax_breakdown,
@@ -282,7 +284,7 @@ const insertInvoice = async ({ userId, number, kind, y, m, lines, subtotal, tax,
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING id`,
         [userId, number, kind, billingMonthOf(y, m), tax.totalAmount, subtotal, tax.taxAmount, JSON.stringify(tax.taxBreakdown || []),
-            istDate(istDay(dueAt)), status, paid ? tax.totalAmount : 0, paid ? now : null, now, notes],
+            istDate(istDay(now)), status, paid ? tax.totalAmount : 0, paid ? now : null, now, notes],
     ));
     const invoiceId = ins[0].id;
     for (const l of lines) {
@@ -377,7 +379,7 @@ const renewMonth = async (now = new Date()) => {
 
             const paidFromBalance = await applyBalance(userId);
             const due = made.tax.totalAmount - paidFromBalance;
-            const payBy = new Date(now.getTime() + PAY_WITHIN_HOURS * 3600 * 1000);
+            const { suspendAt, deleteAt } = deadlines({ generated_at: now });
             await email(userId, due > 0
                 ? `Your Walras Cloud renewal for ${monthLabel(y, m)}: ${rupees(due)} due`
                 : `Your Walras Cloud renewal for ${monthLabel(y, m)} is paid`, [
@@ -385,8 +387,8 @@ const renewMonth = async (now = new Date()) => {
                 ...made.lines.map((l) => `• ${l.description}: ${rupees(l.amount)}`),
                 ...(paidFromBalance ? [`${rupees(paidFromBalance)} was paid from your account balance.`] : []),
                 ...(due > 0 ? [
-                    `Please pay the remaining ${rupees(due)} by ${fmtIst(payBy)} (IST).`,
-                    `After that a ${Math.round(LATE_FEE_RATE * 100)}% late fee is added; services are suspended ${SUSPEND_AFTER_HOURS} hours after the invoice and deleted after ${DELETE_AFTER_HOURS / 24} days if it's still unpaid.`,
+                    `Please pay the remaining ${rupees(due)} today.`,
+                    `If it's still unpaid on ${fmtDay(suspendAt)}, a ${Math.round(LATE_FEE_RATE * 100)}% late fee is added on the unpaid amount and your services are suspended; on ${fmtDay(deleteAt)} they are deleted.`,
                 ] : []),
             ]);
         } catch (err) {
@@ -426,54 +428,51 @@ const processCancellations = async (now = new Date()) => {
 
 // ── The overdue timeline ─────────────────────────────────────────────────
 
-const hoursSince = (date, now) => (now.getTime() - new Date(date).getTime()) / 3600000;
-
-const lateFeeFor = (inv) => Math.round((Number(inv.subtotal) + Number(inv.tax_amount)) * LATE_FEE_RATE);
+/** 10% of what's still unpaid when the fee is added. */
+const lateFeeFor = (inv) => Math.round(Math.max(0, Number(inv.total_amount) - Number(inv.amount_paid)) * LATE_FEE_RATE);
 
 const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
     const [cur] = await q('SELECT * FROM monthly_invoices WHERE id = ?', [inv.id]);
     if (!cur || cur.status === 'paid' || Number(cur.total_amount) <= Number(cur.amount_paid)) return;
-    const age = hoursSince(cur.generated_at, now);
+    const { suspendAt, warnAt, deleteAt } = deadlines(cur);
     const label = cur.invoice_number;
 
-    if (age >= PAY_WITHIN_HOURS && !cur.penalty_at) {
+    // The 3rd: late fee on what's unpaid, and suspension, together.
+    if (now >= suspendAt && !cur.penalty_at) {
         const fee = cur.penalty_waived ? 0 : lateFeeFor(cur);
         await q(
             `UPDATE monthly_invoices SET penalty_amount = ?, total_amount = subtotal + tax_amount + ?, penalty_at = ?, status = 'overdue'
               WHERE id = ? AND penalty_at IS NULL`,
             [fee, fee, now, cur.id],
         );
-        const due = Number(cur.subtotal) + Number(cur.tax_amount) + fee - Number(cur.amount_paid);
-        await email(cur.user_id, `Invoice ${label} is overdue`, [
-            fee ? `Invoice ${label} wasn't paid within ${PAY_WITHIN_HOURS} hours, so a ${Math.round(LATE_FEE_RATE * 100)}% late fee of ${rupees(fee)} has been added.`
-                : `Invoice ${label} wasn't paid within ${PAY_WITHIN_HOURS} hours.`,
-            `${rupees(due)} is now due. If it isn't paid within ${SUSPEND_AFTER_HOURS} hours of the invoice your servers will be suspended.`,
-        ], 'Pay your invoice');
-    }
-    if (age >= SUSPEND_AFTER_HOURS && !cur.suspended_at) {
-        await q('UPDATE monthly_invoices SET suspended_at = ? WHERE id = ?', [now, cur.id]);
+        const due = Number(cur.total_amount) + fee - Number(cur.amount_paid);
+        await q('UPDATE monthly_invoices SET suspended_at = ? WHERE id = ? AND suspended_at IS NULL', [now, cur.id]);
         const n = await suspendServers(cur.user_id);
-        await email(cur.user_id, 'Your Walras Cloud services are suspended', [
-            `Invoice ${label} is still unpaid, so your ${n === 1 ? 'server has' : 'servers have'} been suspended (stopped).`,
-            `Pay the invoice to start them again. If it's still unpaid ${DELETE_AFTER_HOURS / 24} days after the invoice, your servers and their data will be deleted permanently.`,
+        await email(cur.user_id, `Invoice ${label} is overdue: services suspended`, [
+            fee ? `Invoice ${label} wasn't paid on time, so a ${Math.round(LATE_FEE_RATE * 100)}% late fee of ${rupees(fee)} has been added on the unpaid amount.`
+                : `Invoice ${label} wasn't paid on time.`,
+            `${n ? `Your ${n === 1 ? 'server has' : `${n} servers have`} been suspended (stopped). ` : ''}${rupees(due)} is now due; paying it starts them again.`,
+            `If it's still unpaid on ${fmtDay(deleteAt)}, your servers and their data will be deleted permanently.`,
         ], 'Pay your invoice');
+    } else if (now >= suspendAt && !cur.suspended_at) {
+        await q('UPDATE monthly_invoices SET suspended_at = ? WHERE id = ?', [now, cur.id]);
+        await suspendServers(cur.user_id);
     }
-    if (age >= DELETE_WARNING_HOURS && !cur.delete_warned_at && age < DELETE_AFTER_HOURS) {
+    if (now >= warnAt && now < deleteAt && !cur.delete_warned_at) {
         await q('UPDATE monthly_invoices SET delete_warned_at = ? WHERE id = ?', [now, cur.id]);
-        const at = new Date(new Date(cur.generated_at).getTime() + DELETE_AFTER_HOURS * 3600 * 1000);
-        await email(cur.user_id, 'Final notice: your servers will be deleted in 24 hours', [
-            `Invoice ${label} is still unpaid. Your servers and all their data will be deleted permanently on ${fmtIst(at)} (IST).`,
+        await email(cur.user_id, 'Final notice: your servers will be deleted tomorrow', [
+            `Invoice ${label} is still unpaid. Your servers and all their data will be deleted permanently on ${fmtDay(deleteAt)}.`,
             'Pay the invoice before then to keep them; they start again as soon as it is paid.',
         ], 'Pay your invoice');
     }
-    if (age >= DELETE_AFTER_HOURS && !cur.services_deleted_at) {
+    if (now >= deleteAt && !cur.services_deleted_at) {
         const servers = await q('SELECT * FROM servers WHERE user_id = ?', [cur.user_id]);
         let deleted = 0;
         for (const s of servers) if (await destroyServer(s)) deleted += 1;
         if (deleted === servers.length) await q('UPDATE monthly_invoices SET services_deleted_at = ? WHERE id = ?', [now, cur.id]);
         if (deleted) {
             await email(cur.user_id, 'Your servers have been deleted', [
-                `Invoice ${label} was not paid within ${DELETE_AFTER_HOURS / 24} days, so your ${deleted === 1 ? 'server and its data have' : `${deleted} servers and their data have`} been deleted.`,
+                `Invoice ${label} was still unpaid, so your ${deleted === 1 ? 'server and its data have' : `${deleted} servers and their data have`} been deleted.`,
                 'The invoice is still due. Please pay it to keep using Walras Cloud.',
             ], 'Pay your invoice');
         }
@@ -502,7 +501,7 @@ const run = async (now = new Date()) => {
 
         const unpaid = await q(
             "SELECT id, user_id FROM monthly_invoices WHERE status <> 'paid' AND total_amount > amount_paid AND subtotal IS NOT NULL AND generated_at <= ?",
-            [new Date(now.getTime() - PAY_WITHIN_HOURS * 3600 * 1000)],
+            [new Date(now.getTime() - SUSPEND_DAY * DAY_MS + DAY_MS)], // issued at least a day ago; enforceInvoice checks the exact dates
         );
         for (const inv of unpaid) await enforceInvoice(inv, now).catch((e) => console.error(`[Billing] Overdue step for invoice ${inv.id} failed:`, e.message));
     } catch (err) {
@@ -568,9 +567,10 @@ const nextRenewal = async (userId, now = new Date()) => {
 
 /** Deadlines of an invoice, for display. */
 const deadlines = (inv) => {
-    const t = new Date(inv.generated_at).getTime();
-    const at = (h) => new Date(t + h * 3600 * 1000);
-    return { payBy: at(PAY_WITHIN_HOURS), suspendAt: at(SUSPEND_AFTER_HOURS), deleteAt: at(DELETE_AFTER_HOURS) };
+    // Midnight (India time) starting the day the invoice was issued.
+    const dayStart = istDay(inv.generated_at) * DAY_MS - IST_MS;
+    const day = (n) => new Date(dayStart + n * DAY_MS);
+    return { payBy: day(1), suspendAt: day(SUSPEND_DAY), warnAt: day(DELETE_WARNING_DAY), deleteAt: day(DELETE_DAY) };
 };
 
 const publicInvoice = (inv) => ({
@@ -589,11 +589,11 @@ const publicInvoice = (inv) => ({
     status: inv.status,
     paidAt: inv.paid_at,
     suspended: Boolean(inv.suspended_at) && inv.status !== 'paid',
-    ...(inv.subtotal === null ? {} : deadlines(inv)),
+    ...(inv.subtotal === null ? {} : (({ payBy, suspendAt, deleteAt }) => ({ payBy, suspendAt, deleteAt }))(deadlines(inv))),
 });
 
 module.exports = {
-    PAY_WITHIN_HOURS, LATE_FEE_RATE, SUSPEND_AFTER_HOURS, DELETE_AFTER_HOURS,
+    LATE_FEE_RATE, SUSPEND_DAY, DELETE_DAY, deadlines,
     // dates
     istParts, monthStart, daysInMonth, nextMonthStart, proRata,
     // servers
