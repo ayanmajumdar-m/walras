@@ -36,7 +36,7 @@ const COMMITMENTS = [
   {
     ref: "C-03",
     Icon: Gauge,
-    value: "168 Hours",
+    value: "24 Hours",
     title: "Free Trial",
     desc: "Enjoy a 24-hour free trial on our Virtual Machines, experience worry-free performance!"
   }
