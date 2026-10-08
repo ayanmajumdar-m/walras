@@ -410,7 +410,8 @@ const ComputeConfigurator = ({ mode = "monthly" }) => {
           <p className="cx-step-help">Every plan includes one IPv4 address and a 1 Gbps network port.</p>
         </section>
 
-        {anyStock && (
+        {/* Shown even when out of stock, so prices and savings can be compared. */}
+        {catalog && (
           <section className="cx-card cx-step">
             <h3><span className="cx-step-num">{hasLocations ? 3 : 2}</span> {reserveMode ? "Reservation term" : "Billing"}</h3>
             <div className="cx-choice-grid cx-term-grid" role="radiogroup" aria-label="Billing">
