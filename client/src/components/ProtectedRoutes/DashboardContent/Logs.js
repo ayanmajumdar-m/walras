@@ -1,328 +1,142 @@
-import React, { useEffect, useState, useRef } from "react";
-import { authHeaders } from "../consoleApi";
-import "./Logs.css";
+import React, { useCallback, useEffect, useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, Wallet as WalletIcon, CalendarClock, Receipt } from "lucide-react";
+import { api } from "../consoleApi";
+
+/*
+  Billing → Usage & activity: balance, next renewal, wallet transactions and
+  (for older accounts) usage charges. Refreshes by itself every 30 seconds
+  and whenever the tab comes back into view.
+*/
+
+const REFRESH_MS = 30 * 1000;
+
+const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const when = (d) => new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+
+const STATUS = {
+  completed: { label: "Completed", cls: "is-active" },
+  pending: { label: "Pending", cls: "is-pending" },
+  failed: { label: "Failed", cls: "is-failed" },
+  cancelled: { label: "Cancelled", cls: "is-stopped" },
+};
 
 const Logs = () => {
-  const [balance, setBalance] = useState(0);
-  const [nextInvoiceDate, setNextInvoiceDate] = useState("");
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [wallet, setWallet] = useState(null);
+  const [transactions, setTransactions] = useState(null);
+  const [usage, setUsage] = useState([]);
+  const [error, setError] = useState("");
 
-  const API_URL = ``
-  
-  const token = localStorage.getItem("token");
-  const logsEndRef = useRef(null);
-  const refreshIntervalRef = useRef(null);
-
-  // Scroll to bottom of logs
-  const scrollToBottom = () => {
-    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [logs]);
-
-  // ✅ FIXED: Correct wallet endpoint
-  const fetchWallet = async () => {
-    if (!token) return;
+  const load = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/wallet`, {
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders(),
-        },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setBalance(parseFloat(data.balance));
-        setNextInvoiceDate(data.nextInvoiceDate);
-      } else {
-        console.error("Wallet fetch failed:", data);
-      }
-    } catch (err) {
-      console.error("Error fetching wallet:", err);
-    }
-  };
-
-  // ✅ Fetch both billing history and wallet transactions
-  const fetchLogs = async () => {
-    if (!token) return;
-    try {
-      // Fetch billing history and wallet transactions in parallel
-      const [billingRes, transactionsRes] = await Promise.all([
-        fetch(`${API_URL}/api/users/wallet/billing-history`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeaders(),
-          },
-        }),
-        fetch("${API_URL}/api/wallet/transactions", {
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeaders(),
-          },
-        })
+      const [w, t, u] = await Promise.all([
+        api("/api/wallet"),
+        api("/api/wallet/transactions"),
+        api("/api/users/wallet/billing-history").catch(() => ({ billingHistory: [] })),
       ]);
-
-      const billingData = await billingRes.json();
-      const transactionsData = await transactionsRes.json();
-
-      if (billingRes.ok && transactionsRes.ok) {
-        // Combine and sort all logs by date
-        const allLogs = [
-          ...(billingData.billingHistory || []).map(log => ({
-            ...log,
-            type: 'billing',
-            amount: parseFloat(log.amount),
-            date: log.billing_period || log.created_at
-          })),
-          ...(transactionsData.transactions || []).map(tx => ({
-            ...tx,
-            type: 'wallet',
-            amount: tx.type === 'credit' ? parseFloat(tx.amount) : -parseFloat(tx.amount),
-            date: tx.created_at
-          }))
-        ];
-
-        // Sort by date (newest first)
-        allLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
-        setLogs(allLogs);
-      } else {
-        console.error("Logs fetch failed:", billingData, transactionsData);
-      }
-    } catch (err) {
-      console.error("Error fetching logs:", err);
+      setWallet(w);
+      setTransactions(t.transactions || []);
+      setUsage(u.billingHistory || []);
+      setError("");
+    } catch (e) {
+      if (e.message !== "Session expired") setError(e.message);
     }
-  };
+  }, []);
 
-  // Fetch all data
-  const fetchAllData = async () => {
-    setLoading(true);
-    await Promise.all([fetchWallet(), fetchLogs()]);
-    setLoading(false);
-  };
-
-  // Setup auto-refresh
   useEffect(() => {
-    fetchAllData();
+    load();
+    const timer = setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
+  }, [load]);
 
-    if (autoRefresh) {
-      refreshIntervalRef.current = setInterval(fetchAllData, 10000); // Refresh every 10 seconds
-    }
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    };
-  }, [autoRefresh, token]);
-
-  // Toggle auto-refresh
-  const toggleAutoRefresh = () => {
-    setAutoRefresh(!autoRefresh);
-  };
-
-  // Manually refresh
-  const handleManualRefresh = () => {
-    fetchAllData();
-  };
-
-  // Format date for display
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
-  // Calculate total deductions
-  const totalDeductions = logs
-    .filter(log => log.amount && parseFloat(log.amount) > 0)
-    .reduce((sum, log) => sum + parseFloat(log.amount), 0);
+  const credits = (transactions || []).filter((t) => t.type === "credit" && t.status === "completed").reduce((n, t) => n + parseFloat(t.amount), 0);
+  const debits = (transactions || []).filter((t) => t.type === "debit" && t.status === "completed").reduce((n, t) => n + parseFloat(t.amount), 0);
 
   return (
-    <div className="logs-container">
-      {/* Header */}
-      <div className="logs-header">
-        <h1>Billing & Usage Logs</h1>
-        <div className="refresh-controls">
-          <button 
-            className={`refresh-btn ${autoRefresh ? 'active' : ''}`}
-            onClick={toggleAutoRefresh}
-          >
-            Auto Refresh: {autoRefresh ? 'ON' : 'OFF'}
-          </button>
-          <button 
-            className="manual-refresh-btn"
-            onClick={handleManualRefresh}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing...' : 'Refresh Now'}
-          </button>
+    <div className="lg-page">
+      {error && <div className="cx-alert is-error">{error}</div>}
+
+      <div className="lg-stats">
+        <div className="cx-card lg-stat">
+          <span className="lg-stat-icon"><WalletIcon size={18} aria-hidden="true" /></span>
+          <small>Available balance</small>
+          <strong>{wallet ? inr(wallet.balance) : "—"}</strong>
+        </div>
+        <div className="cx-card lg-stat">
+          <span className="lg-stat-icon"><CalendarClock size={18} aria-hidden="true" /></span>
+          <small>Next renewal</small>
+          <strong>{wallet ? inr(wallet.nextRenewal) : "—"}</strong>
+          <span className="lg-stat-note">{wallet?.nextInvoiceDate ? `+ GST on ${wallet.nextInvoiceDate}` : ""}</span>
+        </div>
+        <div className="cx-card lg-stat">
+          <span className="lg-stat-icon"><ArrowDownLeft size={18} aria-hidden="true" /></span>
+          <small>Added (last 100)</small>
+          <strong>{inr(credits)}</strong>
+        </div>
+        <div className="cx-card lg-stat">
+          <span className="lg-stat-icon"><ArrowUpRight size={18} aria-hidden="true" /></span>
+          <small>Spent (last 100)</small>
+          <strong>{inr(debits)}</strong>
         </div>
       </div>
 
-      {/* Wallet Summary */}
-      <div className="wallet-summary-cards">
-        <div className="summary-card balance-card">
-          <div className="card-icon">💰</div>
-          <div className="card-content">
-            <h3>Available Balance</h3>
-            <p className="card-value">₹{balance.toFixed(2)}</p>
-            <div className="balance-update-time">
-              Last: {new Date().toLocaleTimeString()}
-            </div>
-          </div>
+      <section className="cx-card lg-section">
+        <div className="lg-section-head">
+          <h3>Wallet transactions</h3>
+          <small>Money added to and spent from your account balance.</small>
         </div>
-        
-        <div className="summary-card unbilled-card">
-          <div className="card-icon">📊</div>
-          <div className="card-content">
-            <h3>Total Deductions</h3>
-            <p className="card-value">₹{totalDeductions.toFixed(2)}</p>
-            <div className="deductions-count">
-              From {logs.length} transactions
-            </div>
+        {transactions === null ? (
+          <p className="lg-empty">Loading…</p>
+        ) : transactions.length === 0 ? (
+          <p className="lg-empty">No wallet transactions yet. Top-ups, purchases and invoice payments appear here.</p>
+        ) : (
+          <div className="cx-table-wrap">
+            <table className="cx-table">
+              <thead><tr><th>Date</th><th>Description</th><th>Status</th><th className="lg-num">Amount</th></tr></thead>
+              <tbody>
+                {transactions.map((t, i) => {
+                  const st = STATUS[t.status] || STATUS.completed;
+                  const credit = t.type === "credit";
+                  return (
+                    <tr key={`${t.created_at}-${i}`}>
+                      <td data-label="Date">{when(t.created_at)}</td>
+                      <td data-label="Description">{t.description}{t.payment_id && <small>Ref: {t.payment_id}</small>}</td>
+                      <td data-label="Status"><span className={`cx-status ${st.cls}`}>{st.label}</span></td>
+                      <td data-label="Amount" className={`lg-num ${t.status !== "completed" ? "is-void" : credit ? "is-credit" : "is-debit"}`}>{credit ? "+" : "−"}{inr(t.amount)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
-        
-        <div className="summary-card invoice-card">
-          <div className="card-icon">📅</div>
-          <div className="card-content">
-            <h3>Next renewal</h3>
-            <p className="card-value">{nextInvoiceDate || 'Not set'}</p>
-            <div className="invoice-note">
-              Renewed monthly, in advance
-            </div>
-          </div>
-        </div>
-      </div>
+        )}
+      </section>
 
-      {/* Stats Bar */}
-      <div className="stats-bar">
-        <div className="stat-item">
-          <span className="stat-label">Total Logs:</span>
-          <span className="stat-value">{logs.length}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Last Updated:</span>
-          <span className="stat-value">{new Date().toLocaleTimeString()}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Auto Refresh:</span>
-          <span className={`stat-value ${autoRefresh ? 'active' : 'inactive'}`}>
-            {autoRefresh ? 'ACTIVE' : 'INACTIVE'}
-          </span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Status:</span>
-          <span className="stat-value live">LIVE</span>
-        </div>
-      </div>
-
-      {/* Logs Section */}
-      <div className="logs-section">
-        <div className="logs-header-bar">
-          <h2>Real-time Billing Logs</h2>
-          <div className="logs-count">
-            Showing {logs.length} entries • Updates every 10 seconds
+      {usage.length > 0 && (
+        <section className="cx-card lg-section">
+          <div className="lg-section-head">
+            <h3><Receipt size={16} aria-hidden="true" /> Earlier usage charges</h3>
+            <small>Charges recorded before monthly billing. New charges are on your invoices.</small>
           </div>
-        </div>
-
-        <div className="logs-table-container">
-          {logs.length === 0 ? (
-            <div className="no-logs">
-              <div className="no-logs-icon">📝</div>
-              <h3>No billing logs yet</h3>
-              <p>Your server usage and billing logs will appear here every 10 seconds</p>
-              <div className="no-logs-hint">
-                ⚡ Make sure you have active servers and the billing service is running
-              </div>
-            </div>
-          ) : (
-            <div className="logs-table">
-              <div className="logs-table-header">
-                <div className="log-column time">Time</div>
-                <div className="log-column description">Description</div>
-                <div className="log-column amount">Amount</div>
-                <div className="log-column status">Status</div>
-              </div>
-              
-              <div className="logs-table-body">
-                {logs.map((log, index) => (
-                  <div key={index} className="log-row">
-                    <div className="log-column time">
-                      <div className="log-time">{formatDate(log.date || log.created_at)}</div>
-                      <div className="log-time-ago">
-                        {getTimeAgo(log.date || log.created_at)}
-                      </div>
-                    </div>
-                    <div className="log-column description">
-                      <div className="log-description">{log.description}</div>
-                      <div className="log-type">{log.type || 'billing'}</div>
-                    </div>
-                    <div className="log-column amount">
-                      <div className={`log-amount ${parseFloat(log.amount) > 0 ? 'debit' : 'credit'}`}>
-                        {parseFloat(log.amount) > 0 ? '-' : '+'}₹{Math.abs(parseFloat(log.amount)).toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="log-column status">
-                      <div className="log-status completed">
-                        <span className="status-dot"></span>
-                        Completed
-                      </div>
-                    </div>
-                  </div>
+          <div className="cx-table-wrap">
+            <table className="cx-table">
+              <thead><tr><th>Date</th><th>Description</th><th className="lg-num">Amount</th></tr></thead>
+              <tbody>
+                {usage.map((u, i) => (
+                  <tr key={i}>
+                    <td data-label="Date">{when(u.billing_period || u.created_at)}</td>
+                    <td data-label="Description">{u.description}</td>
+                    <td data-label="Amount" className="lg-num is-debit">−{inr(u.amount)}</td>
+                  </tr>
                 ))}
-                <div ref={logsEndRef} />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Live Indicator */}
-      {autoRefresh && (
-        <div className="live-indicator">
-          <div className="pulse-dot"></div>
-          <span>LIVE - Auto updating every 10 seconds</span>
-          <span className="update-count">
-            • Next update in: <CountdownTimer />
-          </span>
-        </div>
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
     </div>
   );
-};
-
-// ✅ ADD: Countdown timer component
-const CountdownTimer = () => {
-  const [seconds, setSeconds] = useState(3600);
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSeconds(prev => {
-        if (prev <= 1) return 3600;
-        return prev - 1;
-      });
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  return <span>{seconds}s</span>;
-};
-
-// ✅ ADD: Time ago function
-const getTimeAgo = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - date) / 1000);
-  
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hour ago`;
-  return `${Math.floor(diffInSeconds / 86400)} day ago`;
 };
 
 export default Logs;

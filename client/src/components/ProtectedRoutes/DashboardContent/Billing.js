@@ -39,9 +39,9 @@ const Billing = ({ initialTab }) => {
         ))}
       </div>
 
-      {tab === "invoices" ? <Invoices /> : (
+      {tab === "invoices" ? <Invoices /> : tab === "usage" ? <Logs /> : (
         <div className="cx-legacy">
-          {tab === "wallet" ? <Wallet /> : <Logs />}
+          <Wallet />
         </div>
       )}
     </div>
