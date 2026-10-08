@@ -109,7 +109,7 @@ const Corners = () => (
 
 const Homepage = () => {
   const locations = useLocations();
-  const regions = locations.map((l) => l.name).join(" · ");
+  const regions = String(locations.length); // how many, not their names
   return (
   <div className="homepage">
     <section className="section hero">
