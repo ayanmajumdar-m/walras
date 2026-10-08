@@ -751,7 +751,8 @@
 .cx-reserve-intro div { display: flex; flex-direction: column; gap: 3px; }
 .cx-reserve-intro strong { font-size: 15px; }
 .cx-reserve-intro span { font-size: 13.5px; color: var(--text-secondary); }
-.cx-reserve-nudge { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--color-accent-300, #8fd9c4); border-radius: 12px; background: #fff; font: inherit; font-size: 13.5px; text-align: left; color: var(--color-text); cursor: pointer; }
+.cx-step .cx-term-help, .cx-step .cx-term-help:last-child { margin: 14px 0 0; }
+.cx-reserve-nudge { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--color-accent-300, #8fd9c4); border-radius: 12px; background: #fff; font: inherit; font-size: 13.5px; text-align: left; color: var(--color-text); cursor: pointer; }
 .cx-reserve-nudge:hover { border-style: solid; background: var(--color-accent-100); }
 .cx-reserve-nudge svg { flex-shrink: 0; color: var(--color-accent-700); }
 .cx-reserve-nudge span { flex: 1; }

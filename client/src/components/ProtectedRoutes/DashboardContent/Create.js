@@ -432,10 +432,10 @@ const ComputeConfigurator = ({ mode = "monthly" }) => {
                 );
               })}
             </div>
-            <p className="cx-step-help">
+            <p className="cx-step-help cx-term-help">
               {reserved
                 ? `Reserved for ${term.months} months from today${plan ? `, until ${due.until}` : ""}. Paid up front, renews automatically for another ${term.months} months unless you cancel; not refunded if cancelled early.`
-                : "Monthly: pay for the rest of this month now (pro rata), then each month on the 1st. Cancel anytime; it ends at the end of the paid month."}
+                : "Cancel anytime; it ends at the end of the month you've paid for."}
             </p>
             {!reserveMode && maxSavings > 0 && (
               <button type="button" className="cx-reserve-nudge" onClick={() => setParams({ type: "reserved" }, { replace: true })}>
