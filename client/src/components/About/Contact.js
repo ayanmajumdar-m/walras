@@ -95,7 +95,7 @@ const Contact = () => (
 
         <div className="ct-support-grid">
           <div className="ct-card ct-panel">
-            <h3>Response time guarantee</h3>
+            <h3>Response time</h3>
             <ul className="ct-times">
               {RESPONSE_TIMES.map(({ priority, time, level }) => (
                 <li key={priority}>
