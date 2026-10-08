@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import SignIn from './components/AuthScreen/Login';
@@ -37,9 +38,35 @@ const HostingRoute = ({ children }) => {
   return <Navigate to="/pricing" replace />;
 };
 
+// Public pages open at the top, or at the #section a link names (footer
+// links, /pricing#domains…). Without this the router keeps the old scroll
+// position, so a footer link opened the next page already at its bottom.
+function ScrollManager() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo(0, 0);
+      return undefined;
+    }
+    // The section may render a moment after the page: try for up to 2 seconds.
+    const id = decodeURIComponent(hash.slice(1));
+    let tries = 0;
+    const timer = setInterval(() => {
+      const el = document.getElementById(id);
+      if (el || ++tries > 20) {
+        clearInterval(timer);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+    return () => clearInterval(timer);
+  }, [pathname, hash]);
+  return null;
+}
+
 function PublicLayout({ children }) {
   return (
     <>
+      <ScrollManager />
       <Navbar />
       {children}
       <Footer />
