@@ -2548,3 +2548,4 @@
 .at-notice.is-info { background: #eff6ff; color: #1d4ed8; }
 .at-notice.is-error { background: #fef2f2; color: #b91c1c; }
 @media (max-width: 600px) { .at-fields { grid-template-columns: 1fr; } }
+.wallet-sub { font-size: 0.8rem; font-weight: 500; color: #6b6b74; }

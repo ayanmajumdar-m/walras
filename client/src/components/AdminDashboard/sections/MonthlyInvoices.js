@@ -3,8 +3,8 @@ import { Download, RefreshCw, BadgeCheck, Ban, FilePlus2, ChevronDown, ChevronUp
 import { adminApi } from "../adminApi";
 
 /*
-  Billing → Invoices: monthly postpaid invoices (utils/monthlyBilling.js).
-  Issued on the 1st, pro rata per day. Unpaid: 10% late fee after 48h,
+  Billing → Invoices: prepaid invoices (utils/monthlyBilling.js): a new
+  server's (paid at purchase) and renewals issued on the 1st. Unpaid: 10% late fee after 48h,
   servers suspended after 72h, deleted after 5 days. Admins can waive the
   late fee and mark an invoice paid (money received outside Walras).
 */
@@ -90,14 +90,14 @@ const MonthlyInvoices = ({ can, openCustomer }) => {
       <div className="cx-page-head cx-page-head-row">
         <div>
           <h2>Invoices</h2>
-          <p>Monthly invoices, issued on the 1st for the month before (pro rata per day). Unpaid: 10% late fee after 48 hours, servers suspended after 72 hours, deleted after 5 days.</p>
+          <p>Prepaid: a new server's invoice (rest of the month, pro rata) is paid at purchase; renewals are issued on the 1st for the month ahead. Unpaid: 10% late fee after 48 hours, servers suspended after 72 hours, deleted after 5 days.</p>
         </div>
         <div className="cx-welcome-actions">
           <button type="button" className="cx-btn cx-btn-ghost" onClick={load}><RefreshCw size={15} /> Refresh</button>
           {manage && (
             <button type="button" className="cx-btn cx-btn-ghost" disabled={busy === "gen"}
-              onClick={() => act("gen", "/generate-monthly-invoices", "Issue last month's invoices now for accounts that don't have one yet?")}>
-              <FilePlus2 size={15} /> Issue last month's
+              onClick={() => act("gen", "/generate-monthly-invoices", "Renew now every server not yet paid for this month?")}>
+              <FilePlus2 size={15} /> Run renewals
             </button>
           )}
         </div>
@@ -133,7 +133,7 @@ const MonthlyInvoices = ({ can, openCustomer }) => {
                   return (
                     <React.Fragment key={inv.id}>
                       <tr>
-                        <td data-label="Invoice"><strong>{inv.number}</strong><small>{monthName(inv.month)} · issued {dateOnly(inv.issuedAt)}</small></td>
+                        <td data-label="Invoice"><strong>{inv.number}</strong><small>{monthName(inv.month)} · {inv.kind === "purchase" ? "new server" : "renewal"} · issued {dateOnly(inv.issuedAt)}</small></td>
                         <td data-label="Customer">
                           <button type="button" className="cx-link ap-link-btn" onClick={() => openCustomer(inv.userId)}>{inv.customer}</button>
                           <small>{inv.email}</small>

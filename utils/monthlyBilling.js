@@ -1,26 +1,29 @@
 /**
- * Postpaid monthly billing.
+ * Prepaid monthly billing for Virtual Machines.
  *
- * Services are used first and billed on the 1st of the next month (India
- * time), pro rata per day: monthly price ÷ days in the month × days the
- * service existed that month (any part of a day counts as a day). Each
- * service's billing record lives in service_usage, so a server deleted
- * mid-month is still billed for the days it ran.
+ * Buying a plan charges the rest of the current month up front, pro rata per
+ * day (India time): monthly price ÷ days in the month × days left, counting
+ * the day of purchase. It's paid from the account balance at checkout and
+ * recorded as a paid invoice. servers.paid_until is then the start of next
+ * month.
  *
- * On the 1st, the account balance pays the invoice first; the customer pays
- * the rest through CCAvenue (Billing → Invoices). Counted from when the
- * invoice was issued, while anything is still unpaid:
+ * On the 1st (00:00 IST) every server not yet paid for the new month is
+ * renewed: one invoice per account for the full month ahead. The account
+ * balance pays it first; the customer pays the rest through CCAvenue
+ * (Billing → Invoices). Counted from when the invoice was issued, while
+ * anything is still unpaid:
  *   48 hours  10% late fee added (of the invoice value; admins can waive it)
  *   72 hours  the account's servers are suspended (stopped)
  *   96 hours  warning email: services will be deleted in 24 hours
  *   5 days    the account's servers are deleted
  * Paying in full restarts the servers that suspension stopped.
  *
- * Cancelling a plan takes effect at the end of the month: the server keeps
- * running, is billed to the end of the month and is deleted on the 1st.
+ * Cancelling a plan takes effect at the end of the paid month: the server
+ * keeps running until then, isn't renewed, and is deleted on the 1st. No
+ * refunds for the unused part of a month.
  *
  * Amounts in paise, prices excluding GST. GST (services/taxServices.js) is
- * added on the invoice; the late fee is not taxed.
+ * added on every invoice; the late fee is not taxed.
  */
 const connection = require('../config/db');
 const taxService = require('../services/taxServices');
@@ -58,12 +61,6 @@ const istDate = (dayNumber) => new Date(dayNumber * DAY_MS).toISOString().slice(
 const monthLabel = (y, m) => new Date(Date.UTC(y, m, 1)).toLocaleString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const fmtIst = (date) => new Date(date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
-/** The month before the one `now` falls in (India time). */
-const previousMonth = (now = new Date()) => {
-    const { y, m } = istParts(now);
-    return m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 };
-};
-
 /** The start of next month (India time): when a cancelled plan ends. */
 const nextMonthStart = (now = new Date()) => {
     const { y, m } = istParts(now);
@@ -71,23 +68,19 @@ const nextMonthStart = (now = new Date()) => {
 };
 
 /**
- * The invoice line for one usage record in month (y, m), or null if it
- * didn't run that month. `until` caps the period (estimates to date).
+ * Pro rata line for a server from `from` to the end of that month (India
+ * time), counting the day of `from`: e.g. bought on the 5th of a 30-day
+ * month = 26 of 30 days. A full month when `from` is the 1st at 00:00.
  */
-const lineFor = (usage, y, m, until = null) => {
-    const from = new Date(Math.max(new Date(usage.started_at).getTime(), monthStart(y, m).getTime()));
-    let to = monthStart(y, m + 1).getTime();
-    if (usage.ended_at) to = Math.min(to, new Date(usage.ended_at).getTime());
-    if (until) to = Math.min(to, new Date(until).getTime());
-    if (to <= from.getTime()) return null;
+const proRata = (monthlyPaise, from) => {
+    const { y, m } = istParts(from);
     const firstDay = istDay(from);
-    const lastDay = istDay(to - 1);
+    const lastDay = istDay(monthStart(y, m + 1).getTime() - 1);
     const days = lastDay - firstDay + 1;
     const dim = daysInMonth(y, m);
-    const monthly = Number(usage.monthly_price);
+    const monthly = Number(monthlyPaise);
     return {
-        usageId: usage.id,
-        description: usage.label,
+        y, m,
         periodStart: istDate(firstDay),
         periodEnd: istDate(lastDay),
         days,
@@ -129,36 +122,16 @@ const email = async (userId, subject, lines, cta = 'View and pay your invoice') 
     }
 };
 
-// ── Usage records ────────────────────────────────────────────────────────
-
-/** A server starts being billed (called when it's created). */
-const startUsage = (server) => q(
-    `INSERT INTO service_usage (user_id, kind, ref_id, label, plan_name, monthly_price, started_at)
-     VALUES (?, 'vm', ?, ?, ?, ?, ?)`,
-    [server.userId, server.id, `Virtual Machine ${server.hostname} (${server.planName})`.slice(0, 160), server.planName,
-        Math.round(Number(server.monthlyRupees) * 100), server.startedAt || new Date()],
-);
-
-/** A server stops being billed at `at`. */
-const endUsage = (serverId, at = new Date()) => q(
-    "UPDATE service_usage SET ended_at = ? WHERE kind = 'vm' AND ref_id = ? AND ended_at IS NULL",
-    [at, serverId],
-);
-
-/** Removes a usage record for a server that was never created (failed deploy). */
-const discardUsage = (serverId) => q("DELETE FROM service_usage WHERE kind = 'vm' AND ref_id = ? AND ended_at IS NULL", [serverId]);
-
 // ── Servers: suspend, resume, delete ─────────────────────────────────────
 
 const solusClient = (server) => solusAccounts.clientForAccountId(server.solus_account_id);
 
 /**
- * Deletes a server for good: the VM on SolusVM, our record, its unit of
- * stock; billing stops at `endAt`. If SolusVM can't delete it, nothing
- * changes and the next run tries again (so we never stop billing a VM
- * that's still running).
+ * Deletes a server for good: the VM on SolusVM, our record and its unit of
+ * stock. If SolusVM can't delete it, nothing changes and the next run tries
+ * again.
  */
-const destroyServer = async (server, endAt = new Date()) => {
+const destroyServer = async (server) => {
     if (server.solus_server_id && server.solus_account_id) {
         try {
             await (await solusClient(server)).deleteServer(server.solus_server_id);
@@ -169,7 +142,6 @@ const destroyServer = async (server, endAt = new Date()) => {
             }
         }
     }
-    await endUsage(server.id, endAt);
     await q('DELETE FROM servers WHERE id = ?', [server.id]);
     if (server.solus_server_id && server.location_id && (await stock.findPlan(server.plan_name, { all: true }))) {
         await stock.release(server.plan_name, server.location_id).catch((e) => console.error('[Billing] Stock return failed:', e.message));
@@ -286,105 +258,166 @@ const applyBalance = (userId, { first = null } = {}) => withUserLock(userId, asy
     return paid;
 });
 
-// ── Generating invoices ──────────────────────────────────────────────────
+// ── Invoices ─────────────────────────────────────────────────────────────
 
-/** Lines and totals for one account in month (y, m). */
-const buildInvoice = (usages, user, y, m, until = null) => {
-    const lines = usages.map((u) => lineFor(u, y, m, until)).filter(Boolean);
-    const subtotal = lines.reduce((n, l) => n + l.amount, 0);
-    const tax = taxService.calculateTax(user || {}, subtotal);
-    return { lines, subtotal, tax };
+const mm = (y, m) => `${y}${String(m + 1).padStart(2, '0')}`;
+const billingMonthOf = (y, m) => `${y}-${String(m + 1).padStart(2, '0')}-01`;
+const serverLabel = (s) => `Virtual Machine ${s.hostname || s.name} (${s.plan_name || s.planName})`.slice(0, 255);
+
+/** An invoice number not used yet: base, or base-2, base-3… */
+const freeNumber = async (base) => {
+    const taken = new Set((await q('SELECT invoice_number FROM monthly_invoices WHERE invoice_number = ? OR invoice_number LIKE ?', [base, `${base}-%`]))
+        .map((r) => r.invoice_number));
+    if (!taken.has(base)) return base;
+    for (let n = 2; ; n += 1) if (!taken.has(`${base}-${n}`)) return `${base}-${n}`;
+};
+
+/** Inserts an invoice and its lines; returns the invoice id. */
+const insertInvoice = async ({ userId, number, kind, y, m, lines, subtotal, tax, status, now, notes }) => {
+    const dueAt = new Date(now.getTime() + PAY_WITHIN_HOURS * 3600 * 1000);
+    const paid = status === 'paid';
+    const ins = rowsOf(await q(
+        `INSERT INTO monthly_invoices (user_id, invoice_number, kind, billing_month, total_amount, subtotal, tax_amount, tax_breakdown,
+                due_date, status, amount_paid, paid_at, generated_at, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         RETURNING id`,
+        [userId, number, kind, billingMonthOf(y, m), tax.totalAmount, subtotal, tax.taxAmount, JSON.stringify(tax.taxBreakdown || []),
+            istDate(istDay(dueAt)), status, paid ? tax.totalAmount : 0, paid ? now : null, now, notes],
+    ));
+    const invoiceId = ins[0].id;
+    for (const l of lines) {
+        await q(
+            `INSERT INTO invoice_items (invoice_id, description, period_start, period_end, days, days_in_month, monthly_price, amount)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [invoiceId, l.description, l.periodStart, l.periodEnd, l.days, l.daysInMonth, l.monthlyPrice, l.amount],
+        );
+    }
+    return invoiceId;
+};
+
+/** What buying a plan now costs: the rest of this month, pro rata, plus GST. */
+const quotePurchase = (user, monthlyRupees, now = new Date()) => {
+    const line = proRata(Math.round(Number(monthlyRupees) * 100), now);
+    const tax = taxService.calculateTax(user || {}, line.amount);
+    return { ...line, subtotal: line.amount, tax, total: tax.totalAmount };
 };
 
 /**
- * Issues the invoices for month (y, m): one per account that used anything.
- * Safe to run again (one invoice per account per month). Returns the number
- * of new invoices.
+ * Takes a purchase's price from the balance, only if it covers it.
+ * Returns false (nothing taken) when it doesn't.
  */
-const generateForMonth = async (y, m, now = new Date()) => {
-    const start = monthStart(y, m);
-    const end = monthStart(y, m + 1);
-    if (now < end) throw new Error(`${monthLabel(y, m)} hasn't ended yet.`);
-    const billingMonth = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-    const usages = await q('SELECT * FROM service_usage WHERE started_at < ? AND (ended_at IS NULL OR ended_at > ?) ORDER BY started_at, id', [end, start]);
-    const invoiced = new Set((await q('SELECT user_id FROM monthly_invoices WHERE billing_month = ?', [billingMonth])).map((r) => r.user_id));
-    const byUser = new Map();
-    for (const u of usages) {
-        if (invoiced.has(u.user_id)) continue;
-        if (!byUser.has(u.user_id)) byUser.set(u.user_id, []);
-        byUser.get(u.user_id).push(u);
-    }
-    const dueAt = new Date(now.getTime() + PAY_WITHIN_HOURS * 3600 * 1000);
-    let created = 0;
+const chargeBalance = async (userId, amount) => {
+    if (amount <= 0) return true;
+    const r = await q('UPDATE wallets SET balance = balance - ? WHERE user_id = ? AND balance >= ?', [amount, userId, amount]);
+    return r.affectedRows > 0;
+};
 
-    for (const [userId, list] of byUser) {
+/** Gives back a purchase charge (the server couldn't be created). */
+const refundBalance = (userId, amount) => (amount > 0
+    ? q('UPDATE wallets SET balance = balance + ? WHERE user_id = ?', [amount, userId]) : Promise.resolve());
+
+/**
+ * Records a purchase that has been paid from the balance: a paid invoice
+ * for the pro rata period and the wallet transaction.
+ */
+const recordPurchase = async ({ userId, server, quote, now = new Date() }) => {
+    const number = await freeNumber(`WAL-${mm(quote.y, quote.m)}-${userId}-S${server.id}`);
+    const line = { ...quote, description: serverLabel(server) };
+    const invoiceId = await insertInvoice({
+        userId, number, kind: 'purchase', y: quote.y, m: quote.m, lines: [line], subtotal: quote.subtotal, tax: quote.tax,
+        status: 'paid', now, notes: `New server, ${quote.days} of ${quote.daysInMonth} days of ${monthLabel(quote.y, quote.m)}`,
+    });
+    if (quote.total > 0) {
+        await q(
+            `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, status)
+             SELECT id, 'debit', ?, ?, ?, 'completed' FROM wallets WHERE user_id = ?`,
+            [quote.total, `${serverLabel(server)}: ${quote.days} days of ${monthLabel(quote.y, quote.m)} (invoice ${number})`, `invoice_${invoiceId}`, userId],
+        );
+    }
+    return { invoiceId, number };
+};
+
+/**
+ * Renews every server not yet paid for the month `now` falls in: one
+ * invoice per account for the full month. A server is claimed (paid_until
+ * moved on) before its invoice is written, so a crash can't bill it twice.
+ * Safe to run again. Returns the number of new invoices.
+ */
+const renewMonth = async (now = new Date()) => {
+    const { y, m } = istParts(now);
+    const start = monthStart(y, m);
+    const next = monthStart(y, m + 1);
+    const due = await q(
+        `SELECT DISTINCT user_id FROM servers
+          WHERE status <> 'failed' AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)`,
+        [start, start, start],
+    );
+    let created = 0;
+    for (const { user_id: userId } of due) {
         try {
-            const [user] = await q('SELECT id, name, email, address FROM users WHERE id = ?', [userId]);
-            if (!user) continue;
-            const { lines, subtotal, tax } = buildInvoice(list, user, y, m);
-            if (subtotal <= 0) continue;
-            const number = `WAL-${y}${String(m + 1).padStart(2, '0')}-${userId}`;
-            const ins = rowsOf(await q(
-                `INSERT INTO monthly_invoices (user_id, invoice_number, billing_month, total_amount, subtotal, tax_amount, tax_breakdown,
-                        due_date, status, generated_at, notes)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
-                 ON CONFLICT (user_id, billing_month) DO NOTHING
-                 RETURNING id`,
-                [userId, number, billingMonth, tax.totalAmount, subtotal, tax.taxAmount, JSON.stringify(tax.taxBreakdown || []),
-                    istDate(istDay(dueAt)), now, `Services used in ${monthLabel(y, m)}`],
-            ));
-            if (!ins.length) continue; // already issued
-            const invoiceId = ins[0].id;
-            for (const l of lines) {
-                await q(
-                    `INSERT INTO invoice_items (invoice_id, usage_id, description, period_start, period_end, days, days_in_month, monthly_price, amount)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [invoiceId, l.usageId, l.description, l.periodStart, l.periodEnd, l.days, l.daysInMonth, l.monthlyPrice, l.amount],
-                );
-            }
+            const made = await withUserLock(userId, async () => {
+                const claimed = rowsOf(await q(
+                    `UPDATE servers SET paid_until = ?
+                      WHERE user_id = ? AND status <> 'failed' AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)
+                     RETURNING id, name, hostname, plan_name, monthly_cost`,
+                    [next, userId, start, start, start],
+                ));
+                if (!claimed.length) return null;
+                const [user] = await q('SELECT id, name, email, address FROM users WHERE id = ?', [userId]);
+                const lines = claimed.map((s) => ({ ...proRata(Math.round(Number(s.monthly_cost || 0) * 100), start), description: serverLabel(s) }));
+                const subtotal = lines.reduce((n, l) => n + l.amount, 0);
+                if (subtotal <= 0) return null;
+                const tax = taxService.calculateTax(user || {}, subtotal);
+                const number = await freeNumber(`WAL-${mm(y, m)}-${userId}`);
+                await insertInvoice({ userId, number, kind: 'renewal', y, m, lines, subtotal, tax, status: 'pending', now, notes: `Renewal for ${monthLabel(y, m)}` });
+                return { number, lines, subtotal, tax };
+            });
+            if (!made) continue;
             created += 1;
 
             const paidFromBalance = await applyBalance(userId);
-            const due = tax.totalAmount - paidFromBalance;
+            const due = made.tax.totalAmount - paidFromBalance;
+            const payBy = new Date(now.getTime() + PAY_WITHIN_HOURS * 3600 * 1000);
             await email(userId, due > 0
-                ? `Your Walras Cloud invoice for ${monthLabel(y, m)}: ${rupees(due)} due`
-                : `Your Walras Cloud invoice for ${monthLabel(y, m)} is paid`, [
-                `Your invoice ${number} for ${monthLabel(y, m)} is ${rupees(tax.totalAmount)} (${rupees(subtotal)} + ${rupees(tax.taxAmount)} GST).`,
-                ...lines.map((l) => `• ${l.description}: ${l.days} of ${l.daysInMonth} days, ${rupees(l.amount)}`),
+                ? `Your Walras Cloud renewal for ${monthLabel(y, m)}: ${rupees(due)} due`
+                : `Your Walras Cloud renewal for ${monthLabel(y, m)} is paid`, [
+                `Invoice ${made.number} renews your services for ${monthLabel(y, m)}: ${rupees(made.tax.totalAmount)} (${rupees(made.subtotal)} + ${rupees(made.tax.taxAmount)} GST).`,
+                ...made.lines.map((l) => `• ${l.description}: ${rupees(l.amount)}`),
                 ...(paidFromBalance ? [`${rupees(paidFromBalance)} was paid from your account balance.`] : []),
                 ...(due > 0 ? [
-                    `Please pay the remaining ${rupees(due)} by ${fmtIst(dueAt)} (IST).`,
+                    `Please pay the remaining ${rupees(due)} by ${fmtIst(payBy)} (IST).`,
                     `After that a ${Math.round(LATE_FEE_RATE * 100)}% late fee is added; services are suspended ${SUSPEND_AFTER_HOURS} hours after the invoice and deleted after ${DELETE_AFTER_HOURS / 24} days if it's still unpaid.`,
                 ] : []),
             ]);
         } catch (err) {
-            console.error(`[Billing] Invoice for user ${userId} (${monthLabel(y, m)}) failed:`, err.message);
+            console.error(`[Billing] Renewal for user ${userId} (${monthLabel(y, m)}) failed:`, err.message);
         }
     }
-    if (created) console.log(`[Billing] Issued ${created} invoice(s) for ${monthLabel(y, m)}`);
+    if (created) console.log(`[Billing] Issued ${created} renewal invoice(s) for ${monthLabel(y, m)}`);
     return created;
 };
 
 // ── Cancellations ────────────────────────────────────────────────────────
 
-/** Cancel a plan: the server is deleted when this month ends (India time). */
+/**
+ * Cancel a plan: the server runs to the end of the month it's paid for and
+ * is deleted then (not renewed).
+ */
 const scheduleCancel = async (server, now = new Date()) => {
-    const at = nextMonthStart(now);
+    const paidUntil = server.paid_until ? new Date(server.paid_until) : null;
+    const at = paidUntil && paidUntil > now ? paidUntil : nextMonthStart(now);
     await q('UPDATE servers SET cancel_at = ? WHERE id = ?', [at, server.id]);
     return at;
 };
 
 const undoCancel = (server) => q('UPDATE servers SET cancel_at = NULL WHERE id = ?', [server.id]);
 
-/** Deletes servers whose cancellation date has come; billing ends at that date. */
+/** Deletes servers whose cancellation date has come. */
 const processCancellations = async (now = new Date()) => {
     const due = await q('SELECT * FROM servers WHERE cancel_at IS NOT NULL AND cancel_at <= ?', [now]);
     for (const s of due) {
         try {
-            // The customer cancelled: billing ends then, even if deleting the
-            // VM has to be retried.
-            await endUsage(s.id, new Date(s.cancel_at));
-            if (await destroyServer(s, new Date(s.cancel_at))) console.log(`[Billing] Cancelled plan ended: server ${s.id} deleted`);
+            if (await destroyServer(s)) console.log(`[Billing] Cancelled plan ended: server ${s.id} deleted`);
         } catch (err) {
             console.error(`[Billing] Cancelling server ${s.id} failed:`, err.message);
         }
@@ -436,7 +469,7 @@ const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
     if (age >= DELETE_AFTER_HOURS && !cur.services_deleted_at) {
         const servers = await q('SELECT * FROM servers WHERE user_id = ?', [cur.user_id]);
         let deleted = 0;
-        for (const s of servers) if (await destroyServer(s, now)) deleted += 1;
+        for (const s of servers) if (await destroyServer(s)) deleted += 1;
         if (deleted === servers.length) await q('UPDATE monthly_invoices SET services_deleted_at = ? WHERE id = ?', [now, cur.id]);
         if (deleted) {
             await email(cur.user_id, 'Your servers have been deleted', [
@@ -451,25 +484,15 @@ let running = false;
 
 /**
  * One pass (every 15 minutes, and on the 1st at 00:00 IST): end cancelled
- * plans, issue last month's invoices if not yet issued, pay what balances
- * allow, then apply the overdue timeline.
+ * plans, renew servers not yet paid for this month, pay what balances allow,
+ * then apply the overdue timeline.
  */
 const run = async (now = new Date()) => {
     if (running) return;
     running = true;
     try {
         await processCancellations(now);
-        await q(
-            `INSERT INTO service_usage (user_id, kind, ref_id, label, plan_name, monthly_price, started_at)
-             SELECT s.user_id, 'vm', s.id, CONCAT('Virtual Machine ', COALESCE(s.hostname, s.name), ' (', s.plan_name, ')'), s.plan_name,
-                    ROUND(COALESCE(s.monthly_cost, 0) * 100), COALESCE(s.created_at, NOW())
-               FROM servers s
-              WHERE s.status <> 'failed' AND s.solus_server_id IS NOT NULL
-                AND NOT EXISTS (SELECT 1 FROM service_usage u WHERE u.kind = 'vm' AND u.ref_id = s.id)
-             RETURNING id`,
-        ).then((r) => { if (rowsOf(r).length) console.warn(`[Billing] Added ${rowsOf(r).length} missing usage record(s)`); });
-        const { y, m } = previousMonth(now);
-        await generateForMonth(y, m, now);
+        await renewMonth(now);
 
         const withBalance = await q(
             `SELECT DISTINCT i.user_id FROM monthly_invoices i JOIN wallets w ON w.user_id = i.user_id
@@ -532,14 +555,15 @@ const markPaid = (invoiceId) => q('SELECT user_id FROM monthly_invoices WHERE id
 
 // ── For the customer ─────────────────────────────────────────────────────
 
-/** This month so far, excluding GST: the "unbilled amount". */
-const estimate = async (userId, now = new Date()) => {
-    const { y, m } = istParts(now);
-    const usages = await q(
-        'SELECT * FROM service_usage WHERE user_id = ? AND started_at < ? AND (ended_at IS NULL OR ended_at > ?)',
-        [userId, now, monthStart(y, m)],
+/** What the next renewal (on the 1st) will be, excluding GST. */
+const nextRenewal = async (userId, now = new Date()) => {
+    const next = nextMonthStart(now);
+    const [r] = await q(
+        `SELECT COALESCE(SUM(ROUND(COALESCE(monthly_cost, 0) * 100)), 0) AS total FROM servers
+          WHERE user_id = ? AND status <> 'failed' AND (cancel_at IS NULL OR cancel_at > ?)`,
+        [userId, next],
     );
-    return buildInvoice(usages, null, y, m, now).subtotal;
+    return Number(r?.total || 0);
 };
 
 /** Deadlines of an invoice, for display. */
@@ -552,6 +576,7 @@ const deadlines = (inv) => {
 const publicInvoice = (inv) => ({
     id: inv.id,
     number: inv.invoice_number,
+    kind: inv.kind || 'renewal',
     month: inv.billing_month,
     issuedAt: inv.generated_at,
     subtotal: inv.subtotal === null ? null : Number(inv.subtotal) / 100,
@@ -570,10 +595,12 @@ const publicInvoice = (inv) => ({
 module.exports = {
     PAY_WITHIN_HOURS, LATE_FEE_RATE, SUSPEND_AFTER_HOURS, DELETE_AFTER_HOURS,
     // dates
-    istParts, monthStart, daysInMonth, previousMonth, nextMonthStart, lineFor,
-    // usage and servers
-    startUsage, endUsage, discardUsage, destroyServer, isSuspended, hasOverdue, resumeIfClear,
+    istParts, monthStart, daysInMonth, nextMonthStart, proRata,
+    // servers
+    destroyServer, isSuspended, hasOverdue, resumeIfClear,
+    // purchase
+    quotePurchase, chargeBalance, refundBalance, recordPurchase,
     // invoices
-    generateForMonth, applyBalance, payFromBalance, run, processCancellations, scheduleCancel, undoCancel,
-    waiveLateFee, markPaid, estimate, publicInvoice, withUserLock,
+    renewMonth, applyBalance, payFromBalance, run, processCancellations, scheduleCancel, undoCancel,
+    waiveLateFee, markPaid, nextRenewal, publicInvoice, withUserLock,
 };

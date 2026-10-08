@@ -350,9 +350,8 @@ CREATE TABLE IF NOT EXISTS wallet_auto_topup_charges (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 )`;
 
-// Postpaid monthly billing (utils/monthlyBilling.js). service_usage is the
-// billing record of each service, kept after the server itself is deleted:
-// what it was, its monthly price (paise, excluding GST) and when it ran.
+// service_usage: from the short-lived postpaid model; no longer written or
+// read (billing is prepaid, utils/monthlyBilling.js). Kept so nothing is lost.
 const createServiceUsageTable = `
 CREATE TABLE IF NOT EXISTS service_usage (
     id SERIAL PRIMARY KEY,
@@ -366,7 +365,7 @@ CREATE TABLE IF NOT EXISTS service_usage (
     ended_at TIMESTAMPTZ
 )`;
 
-// One line per service on a monthly invoice: the days it ran that month.
+// One line per service on an invoice: the days of the month it covers.
 const createInvoiceItemsTable = `
 CREATE TABLE IF NOT EXISTS invoice_items (
     id SERIAL PRIMARY KEY,
@@ -394,7 +393,11 @@ const migrateMonthlyInvoices = [
     'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ',
     'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS delete_warned_at TIMESTAMPTZ',
     'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS services_deleted_at TIMESTAMPTZ',
-    'CREATE UNIQUE INDEX IF NOT EXISTS monthly_invoices_user_month_idx ON monthly_invoices (user_id, billing_month)',
+    // Prepaid: an account can have a purchase invoice and a renewal in the
+    // same month, so the old one-invoice-per-month index goes.
+    'DROP INDEX IF EXISTS monthly_invoices_user_month_idx',
+    "ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS kind VARCHAR(10) NOT NULL DEFAULT 'renewal'",
+    'CREATE INDEX IF NOT EXISTS monthly_invoices_user_idx ON monthly_invoices (user_id, billing_month)',
 ];
 
 // Team members: people an account owner has invited (by email) and the
@@ -753,14 +756,8 @@ connection.connect((err) => {
         ['Invoice items', createInvoiceItemsTable],
         ['servers cancel_at', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS cancel_at TIMESTAMPTZ'],
         ['servers suspended_at', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ'],
-        // Servers from before postpaid billing get a usage record from when they were created.
-        ['service usage backfill', `INSERT INTO service_usage (user_id, kind, ref_id, label, plan_name, monthly_price, started_at)
-            SELECT s.user_id, 'vm', s.id, CONCAT('Virtual Machine ', COALESCE(s.hostname, s.name), ' (', s.plan_name, ')'), s.plan_name,
-                   ROUND(COALESCE(s.monthly_cost, 0) * 100), COALESCE(s.created_at, NOW())
-              FROM servers s
-             WHERE s.status <> 'failed'
-               AND NOT EXISTS (SELECT 1 FROM service_usage u WHERE u.kind = 'vm' AND u.ref_id = s.id)
-            RETURNING id`],
+        // Prepaid: the start of the first month not paid for yet (renewed on the 1st).
+        ['servers paid_until', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS paid_until TIMESTAMPTZ'],
         ['Domain transactions', createDomainTransactionsTable],
         ['Hosting accounts', createHostingAccountsTable],
         ['Hosting orders', createHostingOrdersTable],

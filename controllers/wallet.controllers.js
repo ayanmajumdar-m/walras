@@ -34,16 +34,15 @@ exports.getWallet = async (req, res) => {
     try {
         const userId = req.user.userId; // Changed from req.user.id to req.user.userId
         const wallet = await ensureWallet(userId);
-        // Postpaid (utils/monthlyBilling.js): invoices are issued on the 1st
-        // (India time) for the month before. Unbilled = this month so far,
-        // pro rata, excluding GST.
+        // Prepaid (utils/monthlyBilling.js): servers renew on the 1st (India
+        // time) for the month ahead. nextRenewal excludes GST.
         const next = monthlyBilling.istParts(monthlyBilling.nextMonthStart(new Date()));
         const nextInvoiceDate = `1st ${new Date(Date.UTC(next.y, next.m, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" })} ${next.y}`;
-        const unbilled = await monthlyBilling.estimate(userId);
+        const nextRenewal = await monthlyBilling.nextRenewal(userId);
 
         res.json({
             balance: (wallet.balance / 100).toFixed(2),
-            unbilled: (unbilled / 100).toFixed(2),
+            nextRenewal: (nextRenewal / 100).toFixed(2),
             nextInvoiceDate,
         });
     } catch (err) {

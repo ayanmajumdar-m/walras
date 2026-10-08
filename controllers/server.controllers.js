@@ -116,28 +116,43 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     const osVersion = (await client.listOsVersions()).find((o) => o.name === osName);
     if (!osVersion) throw new HttpError(400, `${osName} isn't available in ${location.name}. Choose another operating system.`);
 
-    // Postpaid (utils/monthlyBilling.js): nothing is charged now; the server is
-    // billed pro rata on the 1st. No new servers while an invoice is overdue.
+    // Prepaid (utils/monthlyBilling.js): the rest of this month, pro rata, is
+    // paid from the balance now; the 1st renews it. No new servers while an
+    // invoice is overdue.
     if (await billing.hasOverdue(userId)) {
         throw new HttpError(402, 'You have an overdue invoice. Pay it in Billing → Invoices to create new servers.', { overdue: true });
     }
     const hourly = stock.hourlyRupees(plan);
+    const [user] = await q('SELECT id, address FROM users WHERE id = ?', [userId]);
+    const now = new Date();
+    const quote = billing.quotePurchase(user, plan.monthly, now);
 
     // 1. Take a unit of stock.
     if (!(await stock.reserve(plan.name, locationId))) throw outOfStock();
 
+    // 2. Take the pro rata price from the balance, only if it covers it.
+    if (!(await billing.chargeBalance(userId, quote.total))) {
+        await stock.release(plan.name, locationId);
+        const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [userId]);
+        throw new HttpError(402, `Your account balance is too low. This server costs ₹${(quote.total / 100).toFixed(2)} now (${quote.days} days of this month, incl. GST). Add funds and try again.`, {
+            insufficient: true, required: quote.total / 100, available: Number(wallet?.balance || 0) / 100,
+        });
+    }
+
     const undo = async (serverId) => {
+        await billing.refundBalance(userId, quote.total).catch((e) => console.error('Deploy refund failed:', e.message));
         await stock.release(plan.name, locationId).catch((e) => console.error('Deploy stock return failed:', e.message));
         if (serverId) await q('DELETE FROM servers WHERE id = ?', [serverId]).catch(() => {});
     };
 
-    // 2. Our record of the server.
+    // 3. Our record of the server, paid until the end of this month.
     let serverId;
     try {
         const ins = await q(
-            `INSERT INTO servers (user_id, name, hostname, location, location_id, solus_account_id, os, plan_name, monthly_cost, hourly_cost, currency, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'deploying')`,
-            [userId, hostname, hostname, location.name, location.id, account.id, osVersion.name.slice(0, 50), plan.name, plan.monthly, hourly],
+            `INSERT INTO servers (user_id, name, hostname, location, location_id, solus_account_id, os, plan_name, monthly_cost, hourly_cost, currency, status, paid_until)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'deploying', ?)`,
+            [userId, hostname, hostname, location.name, location.id, account.id, osVersion.name.slice(0, 50), plan.name, plan.monthly, hourly,
+                billing.nextMonthStart(now)],
         );
         serverId = ins.insertId;
     } catch (err) {
@@ -145,7 +160,7 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
         throw err;
     }
 
-    // 3. The VM itself.
+    // 4. The VM itself.
     let vm;
     try {
         vm = await client.createServer({
@@ -162,11 +177,11 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
 
     await q('UPDATE servers SET solus_server_id = ?, status = ?, ip_address = ? WHERE id = ?',
         [vm.id, solusvm.walrasStatus(vm), solusvm.primaryIp(vm), serverId]);
-    // 4. Billing starts now (pro rata on next month's invoice).
-    await billing.startUsage({ id: serverId, userId, hostname, planName: plan.name, monthlyRupees: plan.monthly })
-        .catch((e) => console.error(`Billing record for server ${serverId} failed:`, e.message));
+    // 5. The paid invoice for the pro rata period.
+    await billing.recordPurchase({ userId, server: { id: serverId, hostname, plan_name: plan.name }, quote, now })
+        .catch((e) => console.error(`Purchase invoice for server ${serverId} failed:`, e.message));
 
-    res.status(201).json({ message: 'Server is being created', serverId });
+    res.status(201).json({ message: 'Server is being created', serverId, charged: quote.total / 100, days: quote.days });
 });
 
 // ── List / manage / delete ─────────────────────────────────────────────────
@@ -234,7 +249,6 @@ exports.manageServer = handle('Manage server', async (req, res) => {
 exports.deleteServer = handle('Cancel server', async (req, res) => {
     const server = await ownServer(req.user.userId, req.params.serverId);
     if (server.status === 'failed' || !server.solus_server_id) {
-        await billing.discardUsage(server.id); // never ran: nothing to bill
         await billing.destroyServer(server);
         return res.json({ message: 'Server removed' });
     }

@@ -4,7 +4,6 @@ import "./Logs.css";
 
 const Logs = () => {
   const [balance, setBalance] = useState(0);
-  const [unbilled, setUnbilled] = useState(0);
   const [nextInvoiceDate, setNextInvoiceDate] = useState("");
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,6 @@ const Logs = () => {
       const data = await res.json();
       if (res.ok) {
         setBalance(parseFloat(data.balance));
-        setUnbilled(parseFloat(data.unbilled));
         setNextInvoiceDate(data.nextInvoiceDate);
       } else {
         console.error("Wallet fetch failed:", data);
@@ -191,10 +189,10 @@ const Logs = () => {
         <div className="summary-card invoice-card">
           <div className="card-icon">📅</div>
           <div className="card-content">
-            <h3>Next Invoice</h3>
+            <h3>Next renewal</h3>
             <p className="card-value">{nextInvoiceDate || 'Not set'}</p>
             <div className="invoice-note">
-              Generated monthly
+              Renewed monthly, in advance
             </div>
           </div>
         </div>

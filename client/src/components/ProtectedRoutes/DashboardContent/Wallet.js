@@ -8,7 +8,7 @@ const Wallet = () => {
   // Admins can pause top-ups in Settings; the server refuses them too.
   const topUpsPaused = Boolean(useConsole().platform?.topUpsPaused);
   const [balance, setBalance] = useState(0);
-  const [unbilled, setUnbilled] = useState(0);
+  const [nextRenewal, setNextRenewal] = useState(0);
   const [nextInvoiceDate, setNextInvoiceDate] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("ccavenue");
@@ -98,7 +98,7 @@ const Wallet = () => {
       const data = await res.json();
       if (res.ok) {
         setBalance(parseFloat(data.balance));
-        setUnbilled(parseFloat(data.unbilled));
+        setNextRenewal(parseFloat(data.nextRenewal) || 0);
         setNextInvoiceDate(data.nextInvoiceDate);
       } else {
         console.error("Wallet fetch failed:", data);
@@ -435,11 +435,11 @@ const Wallet = () => {
           <p className="wallet-value">₹{balance.toFixed(2)}</p>
         </div>
         <div className="wallet-card">
-          <h3>Unbilled Amount</h3>
-          <p className="wallet-value">₹{unbilled.toFixed(2)}</p>
+          <h3>Next renewal</h3>
+          <p className="wallet-value">₹{nextRenewal.toFixed(2)} <small className="wallet-sub">+ GST</small></p>
         </div>
         <div className="wallet-card">
-          <h3>Next Invoice Date</h3>
+          <h3>Renews on</h3>
           <p className="wallet-value">{nextInvoiceDate}</p>
         </div>
       </div>

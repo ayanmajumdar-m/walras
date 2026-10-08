@@ -17,7 +17,7 @@ class BillingService {
             return;
         }
 
-        // Postpaid monthly billing (utils/monthlyBilling.js): invoices on the
+        // Prepaid monthly billing (utils/monthlyBilling.js): renewals on the
         // 1st at 00:00 India time, and every 15 minutes the overdue timeline
         // (late fee, suspension, deletion), balance payments and cancelled
         // plans ending. The old hourly balance deductions are gone.

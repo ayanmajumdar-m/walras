@@ -91,7 +91,7 @@ const DashboardLayout = () => {
     </div>
   ));
 
-  // Unpaid invoice banner (postpaid billing). Refreshed on each page change,
+  // Unpaid invoice banner (monthly renewals). Refreshed on each page change,
   // so it clears right after paying.
   const [billingDue, setBillingDue] = useState(null);
   useEffect(() => {

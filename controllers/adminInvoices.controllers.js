@@ -1,7 +1,8 @@
 /**
- * Admin → Billing → Invoices: monthly invoices (utils/monthlyBilling.js).
- * Admins can waive the late fee, mark an invoice paid (money received
- * outside Walras), download the PDF and issue last month's invoices now.
+ * Admin → Billing → Invoices (utils/monthlyBilling.js): purchase invoices
+ * (paid at checkout) and monthly renewals. Admins can waive the late fee,
+ * mark an invoice paid (money received outside Walras), download the PDF
+ * and run this month's renewals now.
  */
 const connection = require('../config/db');
 const billing = require('../utils/monthlyBilling');
@@ -95,11 +96,10 @@ module.exports = {
         res.json({ message: 'Invoice marked paid. Any suspended servers are being started again.' });
     }),
 
-    // POST /api/admin/generate-monthly-invoices — last month's, if not issued yet
+    // POST /api/admin/generate-monthly-invoices — renew servers not yet paid for this month
     generate: handle(async (req, res) => {
-        const { y, m } = billing.previousMonth();
-        const created = await billing.generateForMonth(y, m);
-        audit(req, 'invoice.generate', 'invoice', `${y}-${m + 1}`, { created });
-        res.json({ message: created ? `Issued ${created} invoice(s) for last month.` : "Last month's invoices were already issued." });
+        const created = await billing.renewMonth();
+        audit(req, 'invoice.generate', 'invoice', 'renewals', { created });
+        res.json({ message: created ? `Issued ${created} renewal invoice(s) for this month.` : 'Every server is already renewed for this month.' });
     }),
 };

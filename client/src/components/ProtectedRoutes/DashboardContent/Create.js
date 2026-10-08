@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock, MapPin, Eye, EyeOff, KeyRound } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
@@ -125,7 +125,7 @@ const HostingConfigurator = () => {
             <Clock size={18} aria-hidden="true" />
             <span>
               <strong>Monthly</strong>
-              <small>Billed monthly. Cancel anytime; it ends at the end of the month.</small>
+              <small>Prepaid monthly. Cancel anytime; it ends at the end of the paid month.</small>
             </span>
             <span className="cx-term-price">{formatINR(price.total, 2)}</span>
           </div>
@@ -176,6 +176,16 @@ const generatePassword = () => {
   return chars.join("");
 };
 
+// Prepaid: buying charges the rest of this month, pro rata per day, counting
+// today (India time), e.g. the 5th of a 30-day month = 26 of 30 days. The
+// server charges the same (utils/monthlyBilling.js) and adds GST.
+const proRataNow = (monthly) => {
+  const ist = new Date(Date.now() + 330 * 60 * 1000);
+  const dim = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth() + 1, 0)).getUTCDate();
+  const days = dim - ist.getUTCDate() + 1;
+  return { days, dim, amount: Math.round((monthly * 100 * days) / dim) / 100 };
+};
+
 const ComputeConfigurator = () => {
   const navigate = useNavigate();
   const { balance, refreshBalance } = useConsole();
@@ -217,6 +227,7 @@ const ComputeConfigurator = () => {
   const hasLocations = catalog?.locations.length > 0;
   const hostnameOk = HOSTNAME_RE.test(hostname.trim());
   const canDeploy = plan && inStock(plan) && osId && hostnameOk && passwordOk(password) && !deploying;
+  const due = plan ? proRataNow(plan.monthly) : { days: 0, dim: 0, amount: 0 };
 
   const pickLocation = (id) => {
     setLocationId(id);
@@ -407,16 +418,26 @@ const ComputeConfigurator = () => {
             {hasLocations && <div><dt>Location</dt><dd>{catalog.locations.find((l) => l.id === locationId)?.name || "—"}</dd></div>}
           </dl>
           <dl className="cx-summary-money">
-            <div className="cx-summary-total"><dt>Monthly</dt><dd>{plan ? formatINR(plan.monthly) : "—"}</dd></div>
+            <div><dt>Monthly</dt><dd>{plan ? formatINR(plan.monthly) : "—"}</dd></div>
+            {plan && <div className="cx-summary-total"><dt>Due now <small>({due.days} of {due.dim} days)</small></dt><dd>{formatINR(due.amount, 2)}</dd></div>}
           </dl>
-          {error && <p className="cx-alert is-error" role="alert">{error}</p>}
+          {plan && inStock(plan) && balance < due.amount && (
+            <p className="cx-alert is-info">
+              Your balance is {formatINR(balance, 2)}. <Link to="/dashboard/billing" className="cx-link">Add funds</Link> to create this server.
+            </p>
+          )}
+          {error && (
+            <p className="cx-alert is-error" role="alert">
+              {error}{/balance is too low/i.test(error) && <> <Link to="/dashboard/billing" className="cx-link">Add funds</Link></>}
+            </p>
+          )}
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={deploy} disabled={!canDeploy}>
             {deploying ? <><Loader2 size={18} className="cx-spin" /> Creating server…</>
               : !plan ? "Coming soon" : inStock(plan) ? "Deploy server" : "Out of stock"}
           </button>
           <p className="cx-summary-note">
-            Nothing to pay now. You're billed monthly, pro rata from today: the invoice comes on the 1st and your
-            account balance ({formatINR(balance, 2)}) pays it first. Prices exclude GST.
+            Paid from your account balance ({formatINR(balance, 2)}): the rest of this month now, pro rata, then the
+            full month on the 1st of each month. Prices exclude GST.
           </p>
         </div>
       </aside>

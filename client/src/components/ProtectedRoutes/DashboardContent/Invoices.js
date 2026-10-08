@@ -5,7 +5,8 @@ import { useConsole } from "../ConsoleContext";
 
 /*
   Billing → Invoices: the monthly invoices (utils/monthlyBilling.js on the
-  server). Issued on the 1st for the month before, pro rata per day. Paying
+  server): one per new server (paid at purchase, pro rata) and a renewal on
+  the 1st for the month ahead. Paying
   uses the account balance first, then CCAvenue for the rest.
 */
 
@@ -162,17 +163,17 @@ const Invoices = () => {
       )}
 
       <p className="cx-muted iv-policy">
-        Services are billed monthly, pro rata per day. Invoices are issued on the 1st for the month before and paid from your
-        account balance first. Anything left must be paid within {policy.payWithinHours} hours, or a {policy.lateFeePercent}% late
-        fee is added. Unpaid after {policy.suspendAfterHours} hours, services are suspended; after {policy.deleteAfterDays} days
-        they are deleted.
+        Plans are prepaid. A new server is paid for the rest of its first month (pro rata per day) when you create it; after
+        that, each month is invoiced on the 1st and paid from your account balance first. Anything left must be paid within
+        {policy.payWithinHours} hours, or a {policy.lateFeePercent}% late fee is added. Unpaid after {policy.suspendAfterHours} hours,
+        services are suspended; after {policy.deleteAfterDays} days they are deleted.
       </p>
 
       {invoices.length === 0 ? (
         <div className="cx-card cx-empty">
           <span className="cx-empty-icon"><FileText size={26} aria-hidden="true" /></span>
           <h4>No invoices yet</h4>
-          <p>Your first invoice is issued on the 1st of the month after you start using a service.</p>
+          <p>You get an invoice each time you create a server, and a renewal on the 1st of each month.</p>
         </div>
       ) : (
         <div className="iv-list">
@@ -184,7 +185,7 @@ const Invoices = () => {
               <div key={inv.id} className="cx-card iv-item">
                 <div className="iv-row">
                   <div className="iv-main">
-                    <strong>{monthName(inv.month)}</strong>
+                    <strong>{monthName(inv.month)}{inv.kind === "purchase" ? " · new server" : " · renewal"}</strong>
                     <small>{inv.number} · issued {dateOnly(inv.issuedAt)}</small>
                   </div>
                   <span className={`cx-status ${st.cls}`}>{inv.suspended ? "Suspended" : st.label}</span>

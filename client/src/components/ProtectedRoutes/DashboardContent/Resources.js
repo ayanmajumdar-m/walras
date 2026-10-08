@@ -134,15 +134,15 @@ const ServersTab = ({ servers, reload, notify }) => {
       reload();
     } catch (e) { notify(e.message, "error"); }
   };
-  // Cancelling takes effect at the end of the month (postpaid billing): the
-  // server keeps running until then and is billed to the month's end.
+  // Cancelling takes effect at the end of the paid month (prepaid billing):
+  // the server keeps running until then and isn't renewed.
   const cancel = async (s) => {
     const failed = s.status === "failed" || s.status === "deploying";
     const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
       .toLocaleDateString("en-IN", { day: "numeric", month: "long" });
     if (!window.confirm(failed
       ? `Remove ${s.name}?`
-      : `Cancel ${s.name}? It keeps running until ${endOfMonth} and is billed to the end of the month. Then it's deleted with all its data. You can undo this until then.`)) return;
+      : `Cancel ${s.name}? It's paid until ${endOfMonth} and keeps running until then; it won't be renewed, and is then deleted with all its data. You can undo this until then.`)) return;
     try {
       const d = await api(`/api/servers/${s.id}`, { method: "DELETE" });
       notify(d.message, "success");
