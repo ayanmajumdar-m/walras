@@ -23,7 +23,7 @@ const COMMITMENTS = [
     ref: "C-01",
     Icon: Zap,
     value: "99.9%",
-    title: "Uptime Guaranteed",
+    title: "High Uptime",
     desc: "We back our network and hardware with a 99.9% uptime SLA, so your apps stay live."
   },
   {
@@ -75,7 +75,7 @@ const SERVICES = ALL_SERVICES.filter((s) => s.title !== "Web Hosting" || WEB_HOS
    the commitments band, response and trial from support, regions and entry
    price from the pricing page. Nothing is invented for the plate. */
 const SPEC_ROWS = [
-  { k: "Uptime guarantee", v: "99.9%" },
+  { k: "Uptime", v: "99.9%" },
   { k: "Support response", v: "60 min" },
   { k: "Free trial", v: "24 hrs" },
   { k: "Regions", v: null }, // from Admin → Locations

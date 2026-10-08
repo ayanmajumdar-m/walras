@@ -5,7 +5,7 @@ import { useLocations, joinNames } from '../../data/locations';
 
 // The regions stat is filled in from Admin → Locations.
 const STATS = [
-  { value: "99.9%", label: "Uptime guarantee" },
+  { value: "99.9%", label: "Uptime" },
   { id: "regions" },
   { value: "24/7", label: "Email and ticket support" },
   { value: "₹", label: "Local pricing, billed in rupees" }
@@ -30,7 +30,7 @@ const FEATURES = [
   {
     Icon: Clock,
     title: "99.9% Uptime",
-    description: "We guarantee 99.9% uptime for your servers with redundant infrastructure."
+    description: "We target 99.9% uptime for your servers with redundant infrastructure."
   },
   {
     Icon: Wallet,

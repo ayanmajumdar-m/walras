@@ -58,7 +58,7 @@ const SECTIONS = [
 const PLATFORM_INCLUDES = [
   { Icon: Clock, text: "24/7 email and ticket support" },
   { Icon: Server, text: "User-friendly server manager" },
-  { Icon: Shield, text: "99.9% uptime guarantee" },
+  { Icon: Shield, text: "99.9% uptime" },
   { Icon: Check, text: "24-hour trial" },
   { Icon: BookOpen, text: "Documentation and video tutorials" }
 ];
