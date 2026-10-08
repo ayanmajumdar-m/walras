@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
   UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail, Tags, MapPin, Cloud,
+  Package, Wallet, Megaphone, ChevronDown,
 } from "lucide-react";
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import { adminApi, adminLogout } from "./adminApi";
@@ -34,37 +35,59 @@ import "./AdminConsole.css";
 
 const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
 
-// Sidebar, grouped like Fantom's "Vestige Root": operations, then governance.
-const GROUPS = [
+// Sidebar: top-level pages, Products (one page with tabs), and Billing /
+// Marketing as expandable sub-menus; Governance stays a group of its own.
+//   { id, label, Icon, perm }             a page
+//   { id, label, Icon, children: [...] }  a sub-menu of pages
+//   { id, label, Icon, tabs: [...] }      one page whose sections are tabs
+const NAV = [
+  { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard, perm: "view_dashboard" },
+  { id: "customers", label: "Customers", Icon: Users, perm: "view_users" },
   {
-    label: "Operations",
-    items: [
-      { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard, perm: "view_dashboard" },
-      { id: "customers", label: "Customers", Icon: Users, perm: "view_users" },
-      { id: "bulk-email", label: "Email customers", Icon: Mail, perm: "send_bulk_email" },
+    id: "products", label: "Products", Icon: Package,
+    tabs: [
+      {
+        id: "vm", label: "Virtual Machines", Icon: Layers,
+        items: [
+          { id: "servers", label: "Servers", title: "Virtual Machines", Icon: Server, perm: "view_services" },
+          { id: "vm-plans", label: "Plans", title: "VM plans", Icon: Tags, perm: "view_services" },
+          { id: "locations", label: "Locations", Icon: MapPin, perm: "view_services" },
+          { id: "compute-stock", label: "Stock", title: "VM stock", Icon: Boxes, perm: "view_services" },
+          { id: "solus-accounts", label: "SolusVM accounts", Icon: Cloud, perm: "view_services" },
+        ],
+      },
+      { id: "domain", label: "Domains", Icon: Globe, items: [{ id: "domains", label: "Domains", Icon: Globe, perm: "view_services" }] },
+      // Hidden while Web Hosting is withdrawn (data/plans.js WEB_HOSTING_ENABLED).
+      ...(WEB_HOSTING_ENABLED
+        ? [{ id: "web-hosting", label: "Web hosting", Icon: Server, items: [{ id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" }] }]
+        : []),
+    ],
+  },
+  {
+    id: "billing", label: "Billing", Icon: Wallet,
+    children: [
       { id: "orders", label: "Orders", Icon: Receipt, perm: "view_billing" },
       { id: "transactions", label: "Transactions", Icon: ArrowLeftRight, perm: "view_billing" },
       { id: "invoices", label: "Invoices", Icon: FileText, perm: "view_billing" },
       { id: "promo-codes", label: "Promo codes", Icon: Ticket, perm: ["manage_coupons", "view_billing"] },
-      // Hidden while Web Hosting is withdrawn (data/plans.js WEB_HOSTING_ENABLED).
-      ...(WEB_HOSTING_ENABLED ? [{ id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" }] : []),
-      { id: "servers", label: "Virtual Machines", Icon: Layers, perm: "view_services" },
-      { id: "vm-plans", label: "VM plans", Icon: Tags, perm: "view_services" },
-      { id: "locations", label: "Locations", Icon: MapPin, perm: "view_services" },
-      { id: "compute-stock", label: "VM stock", Icon: Boxes, perm: "view_services" },
-      { id: "solus-accounts", label: "SolusVM accounts", Icon: Cloud, perm: "view_services" },
-      { id: "domains", label: "Domains", Icon: Globe, perm: "view_services" },
     ],
   },
   {
-    label: "Governance",
-    items: [
+    id: "marketing", label: "Marketing", Icon: Megaphone,
+    children: [{ id: "bulk-email", label: "Bulk email", title: "Email customers", Icon: Mail, perm: "send_bulk_email" }],
+  },
+  {
+    id: "governance", label: "Governance", group: true,
+    children: [
       { id: "admins", label: "Administrators", Icon: UserCog, perm: "manage_admins" },
       { id: "audit", label: "Audit logs", Icon: ScrollText, perm: "view_audit_logs" },
       { id: "settings", label: "Settings", Icon: SettingsIcon, perm: "manage_settings" },
     ],
   },
 ];
+
+// Every page (leaf) under an entry, in order.
+const leaves = (e) => (e.tabs ? e.tabs.flatMap((t) => t.items) : e.children ? e.children : [e]);
 
 const ROLE_LABELS = { super_admin: "Super admin", admin: "Admin", support: "Support", finance: "Finance", readonly: "Read only" };
 
@@ -74,6 +97,7 @@ const AdminDashboard = () => {
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [expanded, setExpanded] = useState({}); // sub-menu id -> open
 
   useEffect(() => {
     adminApi("/me").then(setMe).catch((e) => setError(e.message));
@@ -87,10 +111,22 @@ const AdminDashboard = () => {
     [me]
   );
 
-  const visibleGroups = GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => can(i.perm)) })).filter((g) => g.items.length);
-  const firstSection = visibleGroups[0]?.items[0]?.id;
+  // The menu with only what this admin may open; empty entries drop out.
+  const nav = NAV.map((e) => {
+    if (e.tabs) {
+      const tabs = e.tabs.map((t) => ({ ...t, items: t.items.filter((i) => can(i.perm)) })).filter((t) => t.items.length);
+      return tabs.length ? { ...e, tabs } : null;
+    }
+    if (e.children) {
+      const children = e.children.filter((i) => can(i.perm));
+      return children.length ? { ...e, children } : null;
+    }
+    return can(e.perm) ? e : null;
+  }).filter(Boolean);
+  const pages = nav.flatMap(leaves);
+  const firstSection = pages[0]?.id;
   const requested = params.get("section");
-  const allowed = visibleGroups.flatMap((g) => g.items).some((i) => i.id === requested) || (requested === "customer" && can("view_users"));
+  const allowed = pages.some((i) => i.id === requested) || (requested === "customer" && can("view_users"));
   const section = allowed ? requested : firstSection;
   const customerId = params.get("id");
 
@@ -131,6 +167,45 @@ const AdminDashboard = () => {
   };
 
   const activeNav = section === "customer" ? "customers" : section;
+  const activeParent = nav.find((e) => (e.tabs || e.children) && leaves(e).some((i) => i.id === activeNav));
+  const page = pages.find((i) => i.id === section);
+
+  // Sub-menus: the one holding the open page starts expanded; others toggle.
+  const isOpen = (e) => expanded[e.id] ?? activeParent?.id === e.id;
+  const toggle = (e) => setExpanded((x) => ({ ...x, [e.id]: !isOpen(e) }));
+
+  const navButton = ({ id, label, Icon }, extra = "") => (
+    <button key={id} type="button" className={`cx-nav-item ap-nav-btn${extra}${activeNav === id ? " is-active" : ""}`} onClick={() => go(id)}>
+      <Icon size={18} aria-hidden="true" /><span>{label}</span>
+    </button>
+  );
+
+  // Products: tabs across the top of the page, then the open tab's sections.
+  const productTabs = () => {
+    const tab = activeParent.tabs.find((t) => t.items.some((i) => i.id === section));
+    return (
+      <div className="ap-product-tabs">
+        <div className="cx-tabs" role="tablist">
+          {activeParent.tabs.map((t) => (
+            <button key={t.id} type="button" role="tab" aria-selected={t === tab} className={`cx-tab${t === tab ? " is-active" : ""}`}
+              onClick={() => t !== tab && go(t.items[0].id)}>
+              <t.Icon size={16} aria-hidden="true" />{t.label}
+            </button>
+          ))}
+        </div>
+        {tab.items.length > 1 && (
+          <div className="ap-subtabs" role="tablist">
+            {tab.items.map((i) => (
+              <button key={i.id} type="button" role="tab" aria-selected={i.id === section} className={`ap-subtab${i.id === section ? " is-active" : ""}`}
+                onClick={() => go(i.id)}>
+                {i.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <AdminProtectedRoute>
@@ -144,17 +219,39 @@ const AdminDashboard = () => {
           <span className="cx-kicker">Admin panel</span>
 
           <nav className="cx-nav" aria-label="Admin">
-            {visibleGroups.map((g, gi) => (
-              <React.Fragment key={g.label}>
-                {gi > 0 && <span className="cx-nav-sep" aria-hidden="true" />}
-                <span className="ap-nav-label">{g.label}</span>
-                {g.items.map(({ id, label, Icon }) => (
-                  <button key={id} type="button" className={`cx-nav-item ap-nav-btn${activeNav === id ? " is-active" : ""}`} onClick={() => go(id)}>
-                    <Icon size={18} aria-hidden="true" /><span>{label}</span>
+            {nav.map((e) => {
+              if (e.group) {
+                return (
+                  <React.Fragment key={e.id}>
+                    <span className="cx-nav-sep" aria-hidden="true" />
+                    <span className="ap-nav-label">{e.label}</span>
+                    {e.children.map((i) => navButton(i))}
+                  </React.Fragment>
+                );
+              }
+              if (e.tabs) {
+                const on = activeParent?.id === e.id;
+                return (
+                  <button key={e.id} type="button" className={`cx-nav-item ap-nav-btn${on ? " is-active" : ""}`} onClick={() => !on && go(leaves(e)[0].id)}>
+                    <e.Icon size={18} aria-hidden="true" /><span>{e.label}</span>
                   </button>
-                ))}
-              </React.Fragment>
-            ))}
+                );
+              }
+              if (e.children) {
+                const open = isOpen(e);
+                return (
+                  <div key={e.id} className={`ap-nav-menu${open ? " is-open" : ""}`}>
+                    <button type="button" className={`cx-nav-item ap-nav-btn${activeParent?.id === e.id && !open ? " is-active" : ""}`}
+                      onClick={() => toggle(e)} aria-expanded={open}>
+                      <e.Icon size={18} aria-hidden="true" /><span>{e.label}</span>
+                      <ChevronDown size={16} className="ap-nav-chevron" aria-hidden="true" />
+                    </button>
+                    {open && <div className="ap-nav-sub">{e.children.map((i) => navButton(i, " ap-nav-subitem"))}</div>}
+                  </div>
+                );
+              }
+              return navButton(e);
+            })}
           </nav>
 
           <div className="cx-user">
@@ -171,7 +268,7 @@ const AdminDashboard = () => {
           <header className="cx-topbar">
             <button type="button" className="cx-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
             <h1 className="cx-topbar-title">
-              {section === "customer" ? "Customer" : visibleGroups.flatMap((g) => g.items).find((i) => i.id === section)?.label || "Admin"}
+              {section === "customer" ? "Customer" : activeParent?.tabs ? activeParent.label : page?.title || page?.label || "Admin"}
             </h1>
             <div className="cx-topbar-actions">
               {me && <NotificationsBell openCustomer={openCustomer} />}
@@ -187,6 +284,7 @@ const AdminDashboard = () => {
                 <button type="button" className="cx-icon-btn" onClick={() => setNotice(null)} aria-label="Dismiss"><X size={15} /></button>
               </div>
             )}
+            {me && activeParent?.tabs && productTabs()}
             {me ? render() : !error && <div className="cx-card cx-empty"><p>Loading…</p></div>}
           </main>
         </div>

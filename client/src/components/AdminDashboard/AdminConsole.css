@@ -21,6 +21,31 @@
 .ap-nav-btn:focus { outline: none; }
 .ap-nav-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.5); outline-offset: -2px; }
 
+/* Sub-menus (Billing, Marketing) */
+.ap-nav-menu { display: flex; flex-direction: column; gap: 2px; }
+.ap-nav-chevron { margin-left: auto; opacity: 0.6; transition: transform 0.2s ease; }
+.ap-nav-menu.is-open .ap-nav-chevron { transform: rotate(180deg); }
+.ap-nav-sub { display: flex; flex-direction: column; gap: 2px; margin-left: 20px; padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, 0.12); }
+.ap-nav-subitem { padding-top: 8px; padding-bottom: 8px; font-size: 14px; }
+.ap-nav-subitem svg { width: 16px; height: 16px; }
+
+/* Products page: product tabs, then that product's sections */
+.ap-product-tabs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+.ap-subtabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ap-subtab {
+  padding: 7px 14px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: #ffffff;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.ap-subtab:hover { color: var(--color-text); border-color: var(--color-neutral-300, #cfd6d3); }
+.ap-subtab.is-active { background: var(--color-accent-100); border-color: transparent; color: var(--color-accent-700); }
+
 .ap-role-pill { font-size: 12px; }
 .ap-page-notice { margin-bottom: 18px; }
 
