@@ -234,6 +234,7 @@ exports.manageServer = handle('Manage server', async (req, res) => {
 exports.deleteServer = handle('Cancel server', async (req, res) => {
     const server = await ownServer(req.user.userId, req.params.serverId);
     if (server.status === 'failed' || !server.solus_server_id) {
+        await billing.discardUsage(server.id); // never ran: nothing to bill
         await billing.destroyServer(server);
         return res.json({ message: 'Server removed' });
     }

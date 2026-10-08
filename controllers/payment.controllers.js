@@ -292,7 +292,8 @@ exports.handleCcavenueResponse = async (req, res) => {
                 description: `Invoice payment received (Ref: ${tracking_id || bank_ref_no || order_id})`,
                 paymentRef: tracking_id || bank_ref_no || null,
             });
-            if (result.credited) await monthlyBilling.applyBalance(result.userId);
+            const invoiceId = Number(data.merchant_param3 || String(order_id).split('_')[2]) || null;
+            if (result.credited) await monthlyBilling.applyBalance(result.userId, { first: invoiceId });
             return res.redirect(`${config.clientUrl}/dashboard/billing?tab=invoices&invoice=paid`);
         }
 
@@ -326,7 +327,16 @@ exports.handleCcavenueResponse = async (req, res) => {
  */
 exports.handleCcavenueCancel = async (req, res) => {
     const config = ccavenueService.getConfig();
-    const orderId = req.query?.order_id || req.body?.order_id || '';
+    // CCAvenue posts the cancellation like a response: encrypted in encResp,
+    // with the order number also as orderNo.
+    let orderId = req.body?.orderNo || req.query?.order_id || req.body?.order_id || '';
+    if (req.body?.encResp) {
+        try {
+            orderId = ccavenueService.parseResponse(ccavenueService.decrypt(req.body.encResp, config.workingKey)).order_id || orderId;
+        } catch (err) {
+            console.warn('[CCAvenue] Could not read the cancelled order:', err.message);
+        }
+    }
     if (orderId && orderId.startsWith('CCAW_HOST_')) {
         return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=cancelled`);
     }

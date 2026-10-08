@@ -87,7 +87,11 @@ module.exports = {
         const config = ccavenue.getConfig();
         if (!config.isConfigured) throw Object.assign(new Error('Online payment is not available right now. Please contact support.'), { status: 503 });
         const [user] = await q('SELECT name, email, phone FROM users WHERE id = ?', [userId]);
-        const [wallet] = await q('SELECT id FROM wallets WHERE user_id = ?', [userId]);
+        let [wallet] = await q('SELECT id FROM wallets WHERE user_id = ?', [userId]);
+        if (!wallet) {
+            await q('INSERT INTO wallets (user_id, balance) VALUES (?, 0)', [userId]);
+            [wallet] = await q('SELECT id FROM wallets WHERE user_id = ?', [userId]);
+        }
         const orderId = `CCAI_${Date.now()}_${inv.id}`;
         // The payment lands in the balance and is applied to the invoice at once (payment callback).
         await q(

@@ -185,7 +185,7 @@ const ServersTab = ({ servers, reload, notify }) => {
                   <button type="button" className="cx-icon-btn" onClick={() => manage(s.id, "stop")} title="Stop"><Square size={15} /></button>
                   <button type="button" className="cx-icon-btn" onClick={() => manage(s.id, "restart")} title="Restart"><RotateCcw size={15} /></button>
                 </>)}
-                {s.status === "stopped" && (
+                {s.status === "stopped" && !s.suspended_at && (
                   <button type="button" className="cx-icon-btn" onClick={() => manage(s.id, "start")} title="Start"><Play size={15} /></button>
                 )}
                 {canDelete && (s.cancel_at

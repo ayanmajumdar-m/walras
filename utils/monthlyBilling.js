@@ -266,12 +266,16 @@ const payFromBalance = async (userId, invoiceId) => {
     return rows[0] ? Number(rows[0].paid) : 0;
 };
 
-/** Uses the account balance on unpaid invoices, oldest first. Returns paise paid. */
-const applyBalance = (userId) => withUserLock(userId, async () => {
+/**
+ * Uses the account balance on unpaid invoices, oldest first (or `first`
+ * first: the invoice a customer just paid for). Returns paise paid.
+ */
+const applyBalance = (userId, { first = null } = {}) => withUserLock(userId, async () => {
     const invoices = await q(
         "SELECT id FROM monthly_invoices WHERE user_id = ? AND status <> 'paid' AND total_amount > amount_paid AND subtotal IS NOT NULL ORDER BY billing_month, id",
         [userId],
     );
+    if (first) invoices.sort((a, b) => (b.id === first) - (a.id === first));
     let paid = 0;
     for (const inv of invoices) {
         const n = await payFromBalance(userId, inv.id);
@@ -301,13 +305,15 @@ const generateForMonth = async (y, m, now = new Date()) => {
     const start = monthStart(y, m);
     const end = monthStart(y, m + 1);
     if (now < end) throw new Error(`${monthLabel(y, m)} hasn't ended yet.`);
+    const billingMonth = `${y}-${String(m + 1).padStart(2, '0')}-01`;
     const usages = await q('SELECT * FROM service_usage WHERE started_at < ? AND (ended_at IS NULL OR ended_at > ?) ORDER BY started_at, id', [end, start]);
+    const invoiced = new Set((await q('SELECT user_id FROM monthly_invoices WHERE billing_month = ?', [billingMonth])).map((r) => r.user_id));
     const byUser = new Map();
     for (const u of usages) {
+        if (invoiced.has(u.user_id)) continue;
         if (!byUser.has(u.user_id)) byUser.set(u.user_id, []);
         byUser.get(u.user_id).push(u);
     }
-    const billingMonth = `${y}-${String(m + 1).padStart(2, '0')}-01`;
     const dueAt = new Date(now.getTime() + PAY_WITHIN_HOURS * 3600 * 1000);
     let created = 0;
 
@@ -375,6 +381,9 @@ const processCancellations = async (now = new Date()) => {
     const due = await q('SELECT * FROM servers WHERE cancel_at IS NOT NULL AND cancel_at <= ?', [now]);
     for (const s of due) {
         try {
+            // The customer cancelled: billing ends then, even if deleting the
+            // VM has to be retried.
+            await endUsage(s.id, new Date(s.cancel_at));
             if (await destroyServer(s, new Date(s.cancel_at))) console.log(`[Billing] Cancelled plan ended: server ${s.id} deleted`);
         } catch (err) {
             console.error(`[Billing] Cancelling server ${s.id} failed:`, err.message);
@@ -450,6 +459,15 @@ const run = async (now = new Date()) => {
     running = true;
     try {
         await processCancellations(now);
+        await q(
+            `INSERT INTO service_usage (user_id, kind, ref_id, label, plan_name, monthly_price, started_at)
+             SELECT s.user_id, 'vm', s.id, CONCAT('Virtual Machine ', COALESCE(s.hostname, s.name), ' (', s.plan_name, ')'), s.plan_name,
+                    ROUND(COALESCE(s.monthly_cost, 0) * 100), COALESCE(s.created_at, NOW())
+               FROM servers s
+              WHERE s.status <> 'failed' AND s.solus_server_id IS NOT NULL
+                AND NOT EXISTS (SELECT 1 FROM service_usage u WHERE u.kind = 'vm' AND u.ref_id = s.id)
+             RETURNING id`,
+        ).then((r) => { if (rowsOf(r).length) console.warn(`[Billing] Added ${rowsOf(r).length} missing usage record(s)`); });
         const { y, m } = previousMonth(now);
         await generateForMonth(y, m, now);
 

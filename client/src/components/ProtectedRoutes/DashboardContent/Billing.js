@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Wallet as WalletIcon, Activity, FileText } from "lucide-react";
 import Wallet from "./Wallet";
@@ -6,10 +6,11 @@ import Logs from "./Logs";
 import Invoices from "./Invoices";
 
 /*
-  Account Balance (balance, add funds, promo codes) and Usage (billing activity) under
-  one page. The tab lives in component state, not the URL, so the
-  ?payment_status=… that payment gateways append to /dashboard/wallet is left
-  for Wallet to read.
+  Account Balance (balance, add funds, promo codes), Invoices and Usage under
+  one page. The tab is ?tab= in the URL, so links (the unpaid-invoice banner,
+  payment returns) can open a tab even while Billing is already showing.
+  Other parameters (?payment_status=… from payment gateways) are kept for
+  the tab that reads them.
 */
 const TABS = [
   { id: "wallet", label: "Account Balance", Icon: WalletIcon },
@@ -18,8 +19,9 @@ const TABS = [
 ];
 
 const Billing = ({ initialTab }) => {
-  const [params] = useSearchParams();
-  const [tab, setTab] = useState(initialTab || (TABS.some((t) => t.id === params.get("tab")) ? params.get("tab") : "wallet"));
+  const [params, setParams] = useSearchParams();
+  const tab = TABS.some((t) => t.id === params.get("tab")) ? params.get("tab") : initialTab || "wallet";
+  const setTab = (id) => setParams((p) => { const next = new URLSearchParams(p); next.set("tab", id); return next; }, { replace: true });
 
   return (
     <div className="cx-page">

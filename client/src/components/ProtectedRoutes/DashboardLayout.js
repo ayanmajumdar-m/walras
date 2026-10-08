@@ -97,7 +97,7 @@ const DashboardLayout = () => {
   useEffect(() => {
     if (!teamReady || !can("billing")) return;
     api("/api/invoices").then((d) => setBillingDue(d.summary?.due > 0 ? d.summary : null)).catch(() => {});
-  }, [location.pathname, teamReady, can]);
+  }, [location.pathname, location.search, teamReady, can]);
 
   // Close the mobile drawer whenever the page changes.
   useEffect(() => setSidebarOpen(false), [location.pathname]);
