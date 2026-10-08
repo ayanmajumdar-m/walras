@@ -141,7 +141,7 @@ const Contact = () => (
           <a href="/pricing" className="ct-btn ct-btn-primary">
             See pricing <ArrowRight aria-hidden="true" />
           </a>
-          <a href="https://help.walras.net" className="ct-btn ct-btn-ghost">
+          <a href="https://docs.walras.net" className="ct-btn ct-btn-ghost">
             <BookOpen aria-hidden="true" /> View documentation
           </a>
         </div>

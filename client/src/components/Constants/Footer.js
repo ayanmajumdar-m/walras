@@ -22,7 +22,7 @@ const Footer = () => {
               <li><Link to="/pricing#domains">Domains</Link></li>
               <li><Link to="/pricing">Pricing</Link></li>
               <li><a href='https://status.walras.net'>Status</a></li>
-              <li><a href='https://help.walras.net'>Documentation</a></li>
+              <li><a href='https://docs.walras.net'>Documentation</a></li>
             </ul>
           </div>
 
