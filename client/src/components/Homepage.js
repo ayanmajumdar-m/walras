@@ -38,7 +38,7 @@ const COMMITMENTS = [
     Icon: Gauge,
     value: "168 Hours",
     title: "Free Trial",
-    desc: "Enjoy a 24-hour free trial on our Cloud VPS, experience worry-free performance!"
+    desc: "Enjoy a 24-hour free trial on our Virtual Machines, experience worry-free performance!"
   }
 ];
 

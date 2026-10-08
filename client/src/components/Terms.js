@@ -12,7 +12,7 @@ const Terms = () => {
     {
       icon: <Server className="section-icon" />,
       title: "2. Services",
-      content: "Walras Cloud provides cloud computing services including virtual private servers (VPS), dedicated compute instances, storage, networking, control panel access, monitoring, and management tools. Services may change or evolve at our discretion. Walras Cloud does not guarantee uninterrupted service but strives for maximum uptime."
+      content: "Walras Cloud provides cloud computing services including virtual machines, dedicated compute instances, storage, networking, control panel access, monitoring, and management tools. Services may change or evolve at our discretion. Walras Cloud does not guarantee uninterrupted service but strives for maximum uptime."
     },
     {
       icon: <User className="section-icon" />,
