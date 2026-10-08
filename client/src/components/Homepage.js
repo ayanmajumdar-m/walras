@@ -31,14 +31,14 @@ const COMMITMENTS = [
     Icon: Clock,
     value: "24/7",
     title: "Fastest Resolution",
-    desc: "We're available 24/7 with a 60-Minute Response Guarantee, so you never have to worry about a thing."
+    desc: "We're available 24/7 with a 60-minute response time, so you never have to worry about a thing."
   },
   {
     ref: "C-03",
     Icon: Gauge,
     value: "168 Hours",
     title: "Free Trial",
-    desc: "Enjoy a 168 Hours free trial on our Cloud VPS, experience worry-free performance!"
+    desc: "Enjoy a 24-hour free trial on our Cloud VPS, experience worry-free performance!"
   }
 ];
 
@@ -77,9 +77,9 @@ const SERVICES = ALL_SERVICES.filter((s) => s.title !== "Web Hosting" || WEB_HOS
 const SPEC_ROWS = [
   { k: "Uptime guarantee", v: "99.9%" },
   { k: "Support response", v: "60 min" },
-  { k: "Free trial", v: "168 hrs" },
+  { k: "Free trial", v: "24 hrs" },
   { k: "Regions", v: null }, // from Admin → Locations
-  { k: "Entry plan", v: "₹900/mo" }
+  { k: "Entry plan", v: "₹350/mo" }
 ];
 
 const UPCOMING = [
