@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Wallet as WalletIcon, Activity } from "lucide-react";
+import { Wallet as WalletIcon, Activity, FileText } from "lucide-react";
 import Wallet from "./Wallet";
 import Logs from "./Logs";
+import Invoices from "./Invoices";
 
 /*
   Account Balance (balance, add funds, promo codes) and Usage (billing activity) under
@@ -12,18 +13,19 @@ import Logs from "./Logs";
 */
 const TABS = [
   { id: "wallet", label: "Account Balance", Icon: WalletIcon },
+  { id: "invoices", label: "Invoices", Icon: FileText },
   { id: "usage", label: "Usage & activity", Icon: Activity },
 ];
 
 const Billing = ({ initialTab }) => {
   const [params] = useSearchParams();
-  const [tab, setTab] = useState(initialTab || (params.get("tab") === "usage" ? "usage" : "wallet"));
+  const [tab, setTab] = useState(initialTab || (TABS.some((t) => t.id === params.get("tab")) ? params.get("tab") : "wallet"));
 
   return (
     <div className="cx-page">
       <div className="cx-page-head">
         <h2>Billing</h2>
-        <p>Your account balance, top-ups and usage.</p>
+        <p>Your account balance, monthly invoices and usage.</p>
       </div>
 
       <div className="cx-tabs" role="tablist">
@@ -35,9 +37,11 @@ const Billing = ({ initialTab }) => {
         ))}
       </div>
 
-      <div className="cx-legacy">
-        {tab === "wallet" ? <Wallet /> : <Logs />}
-      </div>
+      {tab === "invoices" ? <Invoices /> : (
+        <div className="cx-legacy">
+          {tab === "wallet" ? <Wallet /> : <Logs />}
+        </div>
+      )}
     </div>
   );
 };

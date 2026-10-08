@@ -115,13 +115,14 @@ router.get('/getAllTransactions', can('view_billing'), AdminController.getAllTra
 router.get('/getUserTransactions/:id', can('view_billing'), AdminController.getUserTransactions);
 router.get('/getBillingLogs', can('view_billing'), AdminController.getBillingLogs);
 router.get('/getUserBillingLogs/:id', can('view_billing'), AdminController.getUserBillingLogs);
-router.get('/monthly-invoices', can('view_billing'), AdminController.getAllMonthlyInvoices);
-router.get('/monthly-invoices/:userId', can('view_billing'), AdminController.getUserMonthlyInvoices);
-router.get('/monthly-invoices/:id/download', can('view_billing'), AdminController.downloadMonthlyInvoice);
-router.get('/sample-invoice', can('view_billing'), AdminController.generateSampleInvoice);
-router.put('/monthly-invoices/:id/status', can('manage_billing'), logged('invoice.status', 'invoice', byParam('id'), (req) => ({ status: req.body.status })), AdminController.updateInvoiceStatus);
-router.post('/generate-monthly-invoices', can('manage_billing'), logged('invoice.generate', 'invoice'), AdminController.generateMonthlyInvoices);
-router.post('/create-sample-invoice', can('manage_billing'), logged('invoice.create_sample', 'invoice'), AdminController.createSampleInvoice);
+// Monthly invoices (postpaid billing, utils/monthlyBilling.js)
+const Invoices = require('../controllers/adminInvoices.controllers');
+router.get('/monthly-invoices', can('view_billing'), Invoices.list);
+router.get('/monthly-invoices/:id', can('view_billing'), Invoices.get);
+router.get('/monthly-invoices/:id/download', can('view_billing'), Invoices.download);
+router.post('/monthly-invoices/:id/waive-fee', can('manage_billing'), Invoices.waiveFee);
+router.post('/monthly-invoices/:id/mark-paid', can('manage_billing'), Invoices.markPaid);
+router.post('/generate-monthly-invoices', can('manage_billing'), Invoices.generate);
 
 // ── Promo codes ────────────────────────────────────────────────────────────
 router.get('/promo-codes', can('manage_coupons', 'view_billing'), AdminController.getAllPromoCodes);

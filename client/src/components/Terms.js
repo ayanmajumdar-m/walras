@@ -39,8 +39,10 @@ KYC verification may be required to comply with Indian regulations. Users must p
     {
       icon: <CreditCard className="section-icon" />,
       title: "5. Payments & Billing",
-      content: `All fees are payable in advance as stated for your selected service plan.
-Failure to pay may result in suspension or termination of services.
+      content: `Services such as Virtual Machines are billed monthly in arrears: on the 1st of each month (India time) we issue an invoice for the previous month, charging each service pro rata for the days it existed (monthly price ÷ days in the month × days used; any part of a day counts as a day), plus applicable GST.
+Your account balance is applied to the invoice first. Any remaining amount must be paid within 48 hours of the invoice. If it is not, a late fee of 10% of the invoice value is added; services are suspended 72 hours after the invoice; and 5 days after the invoice the services and all their data are deleted permanently. The invoice remains payable after suspension or deletion.
+A cancelled plan stays active until the end of the month in which it is cancelled, is billed until then, and is deleted at the start of the next month.
+Domain registrations and other one-time purchases are payable in advance.
 Account balances can only be withdrawn to your bank if not credited via promotions or offers.
 Refunds are provided solely as described in our Refund Policy.`
     },

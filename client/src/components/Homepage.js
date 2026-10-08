@@ -63,7 +63,7 @@ const ALL_SERVICES = [
     ref: "S-03",
     Icon: Cpu,
     title: "Virtual Machine",
-    description: "General purpose virtual machines on Intel or AMD, with NVMe SSD storage, billed by the hour.",
+    description: "General purpose virtual machines on Intel or AMD, with NVMe SSD storage, billed monthly for the days you use.",
     features: ["Intel or AMD CPUs", "NVMe SSD Storage", "Instant Deployment", "99.9% Uptime"],
     action: { label: "View plans", href: "/pricing#virtual-machine" }
   }

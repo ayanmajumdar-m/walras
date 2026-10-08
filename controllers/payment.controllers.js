@@ -3,6 +3,7 @@ const ccavenueService = require('../services/ccavenueService');
 const cpanelService = require('../services/cpanelService');
 const { creditPendingTopup, failPendingTopup } = require('../utils/walletCredit');
 const autoTopup = require('../utils/autoTopup');
+const monthlyBilling = require('../utils/monthlyBilling');
 
 /**
  * Ensure user has a wallet record
@@ -280,7 +281,23 @@ exports.handleCcavenueResponse = async (req, res) => {
         }
 
         // ==========================================
-        // 💰 3. WALLET TOP-UP FLOW
+        // 🧾 3. INVOICE PAYMENT: into the balance, then straight onto the invoice
+        // ==========================================
+        if ((order_id && order_id.startsWith('CCAI_')) || data.merchant_param2 === 'invoice_payment') {
+            if (!isSuccess) {
+                await failPendingTopup(order_id, `Invoice payment failed: ${failure_message || order_status}`);
+                return res.redirect(`${config.clientUrl}/dashboard/billing?tab=invoices&invoice=failed&reason=${encodeURIComponent(failure_message || order_status || 'Payment failed')}`);
+            }
+            const result = await creditPendingTopup(order_id, {
+                description: `Invoice payment received (Ref: ${tracking_id || bank_ref_no || order_id})`,
+                paymentRef: tracking_id || bank_ref_no || null,
+            });
+            if (result.credited) await monthlyBilling.applyBalance(result.userId);
+            return res.redirect(`${config.clientUrl}/dashboard/billing?tab=invoices&invoice=paid`);
+        }
+
+        // ==========================================
+        // 💰 4. WALLET TOP-UP FLOW
         // ==========================================
         if (isSuccess) {
             // Exactly once, even if CCAvenue calls back twice for this order.
@@ -312,6 +329,9 @@ exports.handleCcavenueCancel = async (req, res) => {
     const orderId = req.query?.order_id || req.body?.order_id || '';
     if (orderId && orderId.startsWith('CCAW_HOST_')) {
         return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=cancelled`);
+    }
+    if (orderId && orderId.startsWith('CCAI_')) {
+        return res.redirect(`${config.clientUrl}/dashboard/billing?tab=invoices&invoice=cancelled`);
     }
     if (orderId && orderId.startsWith('CCAS_')) {
         // Auto top-up setup abandoned: nothing was charged or approved. (This

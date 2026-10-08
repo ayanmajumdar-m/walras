@@ -17,11 +17,12 @@ import ComputeStock from "./sections/ComputeStock";
 import VmPlans from "./sections/VmPlans";
 import Locations from "./sections/Locations";
 import SolusAccounts from "./sections/SolusAccounts";
+import MonthlyInvoices from "./sections/MonthlyInvoices";
 import { WEB_HOSTING_ENABLED } from "../../data/plans";
 import BulkEmail from "./sections/BulkEmail";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
-  DashboardSection, TransactionsSection, InvoicesSection, PromoCodesSection,
+  DashboardSection, TransactionsSection, PromoCodesSection,
   ServersSection, HostingSection, DomainsSection,
 } from "./sections/Legacy";
 // AdminDashboard.css still styles the pre-existing views (Dashboard,
@@ -149,7 +150,7 @@ const AdminDashboard = () => {
       );
       case "orders": return <Orders openCustomer={openCustomer} />;
       case "transactions": return <TransactionsSection />;
-      case "invoices": return <InvoicesSection can={can} notify={notify} />;
+      case "invoices": return <MonthlyInvoices can={can} openCustomer={openCustomer} />;
       case "promo-codes": return <PromoCodesSection notify={notify} />;
       case "hosting": return <HostingSection notify={notify} />;
       case "servers": return <ServersSection />;

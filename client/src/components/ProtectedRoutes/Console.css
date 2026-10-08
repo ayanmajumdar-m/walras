@@ -1536,3 +1536,35 @@
 
 /* Location not linked to SolusVM yet */
 .cx-choice-grid .cx-term.is-soon { cursor: not-allowed; opacity: 0.75; }
+
+/* Billing → Invoices (DashboardContent/Invoices.js) */
+.cx-due-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; text-align: left; }
+.iv-page { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+.iv-due { display: flex; gap: 10px; align-items: flex-start; justify-content: flex-start; text-align: left; }
+.iv-due svg { flex-shrink: 0; margin-top: 2px; }
+.iv-due > div { display: flex; flex-direction: column; gap: 2px; }
+.iv-policy { margin: 0; font-size: 13px; line-height: 1.55; }
+.iv-list { display: flex; flex-direction: column; gap: 10px; }
+.iv-item { padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; }
+.iv-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 16px; }
+.iv-main, .iv-amount { display: flex; flex-direction: column; gap: 2px; }
+.iv-main small, .iv-amount small { font-size: 12.5px; color: var(--text-muted); }
+.iv-amount { text-align: right; min-width: 110px; }
+.iv-actions { display: flex; align-items: center; gap: 6px; }
+.iv-step { margin: 0; font-size: 13px; color: #b45309; }
+.iv-step.is-overdue { color: #b91c1c; }
+.iv-lines { border-top: 1px solid var(--color-divider); padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.iv-lines .cx-table th, .iv-lines .cx-table td { padding-top: 8px; padding-bottom: 8px; }
+.iv-num { text-align: right; }
+.iv-totals { margin: 0 0 0 auto; min-width: 260px; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+.iv-totals div { display: flex; justify-content: space-between; gap: 20px; }
+.iv-totals dd { margin: 0; }
+.iv-totals .is-total { font-weight: 700; border-top: 1px solid var(--color-divider); padding-top: 4px; }
+.iv-lines-loading { margin: 0; font-size: 13px; }
+@media (max-width: 700px) {
+  .iv-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .iv-amount { text-align: left; }
+  .iv-actions { grid-column: 1 / -1; }
+  .iv-totals { min-width: 0; width: 100%; }
+}
+.iv-page .cx-muted, .cx-muted { color: var(--text-muted); }

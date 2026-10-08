@@ -86,6 +86,7 @@ app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
 app.use("/api/hosting", hostingRouter);
 app.use("/api/payment", paymentRouter);
+app.use("/api/invoices", require("./routes/invoices.routes"));
 
 // ✅ Step 5: Test DB connection
 connection.connect((err) => {

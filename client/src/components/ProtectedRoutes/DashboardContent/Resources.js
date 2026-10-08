@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Server, Layers, Globe, ExternalLink, KeyRound, Copy, Check, Play, Square, RotateCcw, Trash2, RefreshCw, Plus, X } from "lucide-react";
+import { Server, Layers, Globe, ExternalLink, KeyRound, Copy, Check, Play, Square, RotateCcw, Trash2, RefreshCw, Plus, X, Undo2 } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { WEB_HOSTING_ENABLED } from "../../../data/plans";
@@ -134,14 +134,29 @@ const ServersTab = ({ servers, reload, notify }) => {
       reload();
     } catch (e) { notify(e.message, "error"); }
   };
-  const remove = async (id, name) => {
-    if (!window.confirm(`Delete ${name}? This permanently destroys the server and its data.`)) return;
+  // Cancelling takes effect at the end of the month (postpaid billing): the
+  // server keeps running until then and is billed to the month's end.
+  const cancel = async (s) => {
+    const failed = s.status === "failed" || s.status === "deploying";
+    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
+      .toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+    if (!window.confirm(failed
+      ? `Remove ${s.name}?`
+      : `Cancel ${s.name}? It keeps running until ${endOfMonth} and is billed to the end of the month. Then it's deleted with all its data. You can undo this until then.`)) return;
     try {
-      await api(`/api/servers/${id}`, { method: "DELETE" });
-      notify("Server deleted", "success");
+      const d = await api(`/api/servers/${s.id}`, { method: "DELETE" });
+      notify(d.message, "success");
       reload();
     } catch (e) { notify(e.message, "error"); }
   };
+  const keep = async (s) => {
+    try {
+      const d = await api(`/api/servers/${s.id}/keep`, { method: "POST" });
+      notify(d.message, "success");
+      reload();
+    } catch (e) { notify(e.message, "error"); }
+  };
+  const until = (d) => new Date(new Date(d).getTime() - 1).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
   if (servers.length === 0) {
     return <Empty Icon={Layers} title="No virtual machines yet" text="General purpose VMs for apps and workloads, on Intel or AMD."
@@ -159,7 +174,11 @@ const ServersTab = ({ servers, reload, notify }) => {
               <td data-label="IP address"><code>{s.ip_address || "—"}</code></td>
               <td data-label="Plan">{s.plan_name}</td>
               <td data-label="Location">{s.location}</td>
-              <td data-label="Status"><span className={`cx-status is-${s.status}`}>{s.status}</span></td>
+              <td data-label="Status">
+                {s.suspended_at ? <span className="cx-status is-suspended">suspended</span> : <span className={`cx-status is-${s.status}`}>{s.status}</span>}
+                {s.cancel_at && <small className="is-warn">Cancelled: runs until {until(s.cancel_at)}</small>}
+                {s.suspended_at && <small className="is-danger"><Link to="/dashboard/billing?tab=invoices">Unpaid invoice</Link></small>}
+              </td>
               <td data-label="Cost">₹{Number(s.monthly_cost || 0).toLocaleString("en-IN")}/mo</td>
               <td className="cx-actions">
                 {s.status === "active" && (<>
@@ -169,7 +188,9 @@ const ServersTab = ({ servers, reload, notify }) => {
                 {s.status === "stopped" && (
                   <button type="button" className="cx-icon-btn" onClick={() => manage(s.id, "start")} title="Start"><Play size={15} /></button>
                 )}
-                {canDelete && <button type="button" className="cx-icon-btn is-danger" onClick={() => remove(s.id, s.name)} title="Delete"><Trash2 size={15} /></button>}
+                {canDelete && (s.cancel_at
+                  ? <button type="button" className="cx-icon-btn" onClick={() => keep(s)} title="Undo cancellation"><Undo2 size={15} /></button>
+                  : <button type="button" className="cx-icon-btn is-danger" onClick={() => cancel(s)} title="Cancel plan"><Trash2 size={15} /></button>)}
               </td>
             </tr>
           ))}

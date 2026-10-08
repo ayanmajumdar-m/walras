@@ -91,6 +91,14 @@ const DashboardLayout = () => {
     </div>
   ));
 
+  // Unpaid invoice banner (postpaid billing). Refreshed on each page change,
+  // so it clears right after paying.
+  const [billingDue, setBillingDue] = useState(null);
+  useEffect(() => {
+    if (!teamReady || !can("billing")) return;
+    api("/api/invoices").then((d) => setBillingDue(d.summary?.due > 0 ? d.summary : null)).catch(() => {});
+  }, [location.pathname, teamReady, can]);
+
   // Close the mobile drawer whenever the page changes.
   useEffect(() => setSidebarOpen(false), [location.pathname]);
 
@@ -130,6 +138,17 @@ const DashboardLayout = () => {
                   <Users size={16} aria-hidden="true" />
                   <span>You're working in <strong>{account.ownerName || account.ownerEmail}</strong>'s account.</span>
                   <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => switchAccount(null)}>Back to my account</button>
+                </div>
+              )}
+              {billingDue && !(location.pathname.startsWith("/dashboard/billing") && location.search.includes("tab=invoices")) && (
+                <div className={`cx-alert ${billingDue.overdue ? "is-error" : "is-info"} cx-due-banner`} role="status">
+                  <span>
+                    <strong>₹{billingDue.due.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} due on your invoice.</strong>{" "}
+                    {billingDue.suspended ? "Your services are suspended until it's paid."
+                      : billingDue.overdue ? "It's overdue: pay now to avoid suspension."
+                        : billingDue.oldest?.payBy ? `Pay by ${new Date(billingDue.oldest.payBy).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} to avoid a late fee.` : ""}
+                  </span>
+                  <Link to="/dashboard/billing?tab=invoices" className="cx-btn cx-btn-primary cx-btn-sm">Pay invoice</Link>
                 </div>
               )}
               {teamNotice && (

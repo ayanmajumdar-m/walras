@@ -7,7 +7,8 @@ const {
     deployServer,
     getUserServers,
     manageServer,
-    deleteServer
+    deleteServer,
+    keepServer,
 } = require("../controllers/server.controllers");
 
 // All routes require authentication
@@ -19,5 +20,6 @@ router.post("/deploy", requireSalesOpen, deployServer);
 router.get("/", getUserServers);
 router.post("/manage", manageServer);
 router.delete("/:serverId", deleteServer);
+router.post("/:serverId/keep", keepServer);
 
 module.exports = router;

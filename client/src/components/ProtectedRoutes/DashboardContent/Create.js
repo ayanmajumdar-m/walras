@@ -125,7 +125,7 @@ const HostingConfigurator = () => {
             <Clock size={18} aria-hidden="true" />
             <span>
               <strong>Monthly</strong>
-              <small>Billed every 30 days. Cancel anytime.</small>
+              <small>Billed monthly. Cancel anytime; it ends at the end of the month.</small>
             </span>
             <span className="cx-term-price">{formatINR(price.total, 2)}</span>
           </div>
@@ -415,7 +415,8 @@ const ComputeConfigurator = () => {
               : !plan ? "Coming soon" : inStock(plan) ? "Deploy server" : "Out of stock"}
           </button>
           <p className="cx-summary-note">
-            Paid from your account balance ({formatINR(balance, 2)} available) while the server runs. Prices exclude GST.
+            Nothing to pay now. You're billed monthly, pro rata from today: the invoice comes on the 1st and your
+            account balance ({formatINR(balance, 2)}) pays it first. Prices exclude GST.
           </p>
         </div>
       </aside>

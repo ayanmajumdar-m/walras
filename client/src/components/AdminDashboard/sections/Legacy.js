@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../adminApi";
 import Dashboard from "../components/Dashboard";
 import Transactions from "../components/Transactions";
-import Invoices from "../components/Invoices";
 import Servers from "../components/Servers";
 import PromoCodes from "../components/PromoCodes";
 import CreatePromoForm from "../components/CreatePromoForm";
@@ -72,24 +71,6 @@ export const TransactionsSection = () => {
     <Page title="Transactions" subtitle="Every account balance credit and debit.">
       <ErrorNote error={error} />
       <Transactions transactions={data || []} formatCurrency={formatCurrency} formatDate={formatDate} />
-    </Page>
-  );
-};
-
-export const InvoicesSection = ({ can, notify }) => {
-  const { data, error, load } = useLoad(() => adminApi(`/monthly-invoices?t=${Date.now()}`).then((d) => d.invoices || d));
-  return (
-    <Page title="Invoices" subtitle="Monthly tax invoices.">
-      <ErrorNote error={error} />
-      <Invoices
-        invoices={data || []}
-        loading={!data && !error}
-        adminInfo={{ access: can("manage_billing") ? "owner" : "billing" }}
-        token={localStorage.getItem("adminToken")}
-        setMessage={({ text, type }) => notify(text, type)}
-        fetchInvoices={load}
-        formatDate={formatDate}
-      />
     </Page>
   );
 };

@@ -10,9 +10,9 @@
 const connection = require('../config/db');
 const solusvm = require('../services/solusvm');
 const stock = require('../utils/computeStock');
-const taxService = require('../services/taxServices');
 const serverLocations = require('../utils/serverLocations');
 const solusAccounts = require('../utils/solusAccounts');
+const billing = require('../utils/monthlyBilling');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -38,13 +38,6 @@ const handle = (label, fn) => async (req, res) => {
         console.error(`${label} failed:`, err);
         res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
-};
-
-const ensureWallet = async (userId) => {
-    const [wallet] = await q('SELECT * FROM wallets WHERE user_id = ?', [userId]);
-    if (wallet) return wallet;
-    await q('INSERT INTO wallets (user_id, balance) VALUES (?, 0)', [userId]);
-    return (await q('SELECT * FROM wallets WHERE user_id = ?', [userId]))[0];
 };
 
 // RFC 1123 hostname: labels of letters, digits and hyphens (100 characters max, the column size).
@@ -123,31 +116,22 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     const osVersion = (await client.listOsVersions()).find((o) => o.name === osName);
     if (!osVersion) throw new HttpError(400, `${osName} isn't available in ${location.name}. Choose another operating system.`);
 
-    // First hour, charged now; the hourly billing job charges the rest.
+    // Postpaid (utils/monthlyBilling.js): nothing is charged now; the server is
+    // billed pro rata on the 1st. No new servers while an invoice is overdue.
+    if (await billing.hasOverdue(userId)) {
+        throw new HttpError(402, 'You have an overdue invoice. Pay it in Billing → Invoices to create new servers.', { overdue: true });
+    }
     const hourly = stock.hourlyRupees(plan);
-    const [user] = await q('SELECT id, address FROM users WHERE id = ?', [userId]);
-    const firstHour = taxService.calculateTax(user || {}, Math.round(hourly * 100)).totalAmount;
-    const wallet = await ensureWallet(userId);
 
     // 1. Take a unit of stock.
     if (!(await stock.reserve(plan.name, locationId))) throw outOfStock();
 
-    // 2. Charge the first hour, only if the balance covers it.
-    const debit = await q('UPDATE wallets SET balance = balance - ? WHERE id = ? AND balance >= ?', [firstHour, wallet.id, firstHour]);
-    if (!debit.affectedRows) {
-        await stock.release(plan.name, locationId);
-        throw new HttpError(400, 'Your account balance is too low for this server.', {
-            insufficient: true, required: firstHour / 100, available: Number(wallet.balance) / 100,
-        });
-    }
-
     const undo = async (serverId) => {
-        await q('UPDATE wallets SET balance = balance + ? WHERE id = ?', [firstHour, wallet.id]).catch((e) => console.error('Deploy refund failed:', e.message));
         await stock.release(plan.name, locationId).catch((e) => console.error('Deploy stock return failed:', e.message));
         if (serverId) await q('DELETE FROM servers WHERE id = ?', [serverId]).catch(() => {});
     };
 
-    // 3. Our record of the server.
+    // 2. Our record of the server.
     let serverId;
     try {
         const ins = await q(
@@ -161,7 +145,7 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
         throw err;
     }
 
-    // 4. The VM itself.
+    // 3. The VM itself.
     let vm;
     try {
         vm = await client.createServer({
@@ -178,17 +162,11 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
 
     await q('UPDATE servers SET solus_server_id = ?, status = ?, ip_address = ? WHERE id = ?',
         [vm.id, solusvm.walrasStatus(vm), solusvm.primaryIp(vm), serverId]);
-    await q(
-        `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, razorpay_payment_id, razorpay_order_id, status)
-         VALUES (?, 'debit', ?, ?, ?, NULL, NULL, 'completed')`,
-        [wallet.id, firstHour, `Virtual Machine first hour - ${hostname} (${plan.name})`, `server_${serverId}`],
-    ).catch((e) => console.error('Deploy transaction record failed:', e.message));
-    await q(
-        `INSERT INTO billing_logs (user_id, server_id, amount, billing_period, description) VALUES (?, ?, ?, NOW(), ?)`,
-        [userId, serverId, firstHour, `Hourly charge for ${hostname} - ${plan.name}`],
-    ).catch((e) => console.error('Deploy billing log failed:', e.message));
+    // 4. Billing starts now (pro rata on next month's invoice).
+    await billing.startUsage({ id: serverId, userId, hostname, planName: plan.name, monthlyRupees: plan.monthly })
+        .catch((e) => console.error(`Billing record for server ${serverId} failed:`, e.message));
 
-    res.status(201).json({ message: 'Server is being created', serverId, charge: firstHour / 100 });
+    res.status(201).json({ message: 'Server is being created', serverId });
 });
 
 // ── List / manage / delete ─────────────────────────────────────────────────
@@ -238,12 +216,9 @@ exports.manageServer = handle('Manage server', async (req, res) => {
     const server = await ownServer(req.user.userId, serverId);
     if (server.status === 'deploying') throw new HttpError(409, 'The server is still being created.');
 
-    if (action === 'start' && server.solus_server_id) {
-        // Billing stops servers when the balance runs out; don't restart them for free.
-        const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [req.user.userId]);
-        if (Number(wallet?.balance || 0) < Math.round(Number(server.hourly_cost) * 100)) {
-            throw new HttpError(400, 'Your account balance is too low to start this server.', { insufficient: true });
-        }
+    if (action !== 'stop' && (await billing.isSuspended(req.user.userId))) {
+        // Suspended for an unpaid invoice; paying it starts the servers again.
+        throw new HttpError(402, 'Your services are suspended for an unpaid invoice. Pay it in Billing → Invoices to start your servers.', { suspended: true });
     }
     if (server.solus_server_id) await (await solusAccounts.clientForAccountId(server.solus_account_id)).serverAction(server.solus_server_id, action);
 
@@ -252,13 +227,25 @@ exports.manageServer = handle('Manage server', async (req, res) => {
     res.json({ message: `Server ${action} requested`, status });
 });
 
-// DELETE /api/servers/:serverId — destroys the VM and returns its unit of stock.
-exports.deleteServer = handle('Delete server', async (req, res) => {
+// DELETE /api/servers/:serverId — cancels the plan at the end of the month:
+// the server keeps running until then, is billed to the month's end and is
+// deleted on the 1st (utils/monthlyBilling.js). A server that never got
+// created is removed straight away.
+exports.deleteServer = handle('Cancel server', async (req, res) => {
     const server = await ownServer(req.user.userId, req.params.serverId);
-    if (server.solus_server_id) await (await solusAccounts.clientForAccountId(server.solus_account_id)).deleteServer(server.solus_server_id);
-    await q('DELETE FROM servers WHERE id = ?', [server.id]);
-    if (server.solus_server_id && server.location_id && (await stock.findPlan(server.plan_name, { all: true }))) {
-        await stock.release(server.plan_name, server.location_id).catch((e) => console.error('Stock return failed:', e.message));
+    if (server.status === 'failed' || !server.solus_server_id) {
+        await billing.destroyServer(server);
+        return res.json({ message: 'Server removed' });
     }
-    res.json({ message: 'Server deleted' });
+    if (server.cancel_at) return res.json({ message: 'This plan is already cancelled.', cancelAt: server.cancel_at });
+    const at = await billing.scheduleCancel(server);
+    res.json({ message: 'Plan cancelled. The server keeps running until the end of the month and is then deleted.', cancelAt: at });
+});
+
+// POST /api/servers/:serverId/keep — undo a cancellation before it takes effect.
+exports.keepServer = handle('Keep server', async (req, res) => {
+    const server = await ownServer(req.user.userId, req.params.serverId);
+    if (!server.cancel_at) return res.json({ message: 'This plan is not cancelled.' });
+    await billing.undoCancel(server);
+    res.json({ message: 'Cancellation withdrawn. The server stays.' });
 });

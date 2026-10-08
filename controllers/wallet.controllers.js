@@ -1,4 +1,5 @@
 const connection = require("../config/db");
+const monthlyBilling = require("../utils/monthlyBilling");
 const {
     createOrder,
     verifyPaymentSignature,
@@ -33,21 +34,12 @@ exports.getWallet = async (req, res) => {
     try {
         const userId = req.user.userId; // Changed from req.user.id to req.user.userId
         const wallet = await ensureWallet(userId);
-        // Invoices are generated at 00:00 on the 5th for the previous month
-        // (services/billingServices.js), so from the 5th on the next one is
-        // next month's. Unbilled = usage since the start of the month that
-        // invoice will cover (still running, or the one just ended).
-        const now = new Date();
-        const next = new Date(now.getFullYear(), now.getMonth() + (now.getDate() >= 5 ? 1 : 0), 5);
-        const nextInvoiceDate = `5th ${next.toLocaleString("en-US", { month: "long" })} ${next.getFullYear()}`;
-        const unbilledFrom = new Date(next.getFullYear(), next.getMonth() - 1, 1);
-        const unbilled = await new Promise((resolve, reject) => {
-            connection.query(
-                "SELECT COALESCE(SUM(amount), 0) AS total FROM billing_logs WHERE user_id = ? AND billing_period >= ?",
-                [userId, unbilledFrom],
-                (err, rows) => (err ? reject(err) : resolve(Number(rows[0]?.total) || 0))
-            );
-        });
+        // Postpaid (utils/monthlyBilling.js): invoices are issued on the 1st
+        // (India time) for the month before. Unbilled = this month so far,
+        // pro rata, excluding GST.
+        const next = monthlyBilling.istParts(monthlyBilling.nextMonthStart(new Date()));
+        const nextInvoiceDate = `1st ${new Date(Date.UTC(next.y, next.m, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" })} ${next.y}`;
+        const unbilled = await monthlyBilling.estimate(userId);
 
         res.json({
             balance: (wallet.balance / 100).toFixed(2),

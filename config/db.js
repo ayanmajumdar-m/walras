@@ -350,6 +350,53 @@ CREATE TABLE IF NOT EXISTS wallet_auto_topup_charges (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 )`;
 
+// Postpaid monthly billing (utils/monthlyBilling.js). service_usage is the
+// billing record of each service, kept after the server itself is deleted:
+// what it was, its monthly price (paise, excluding GST) and when it ran.
+const createServiceUsageTable = `
+CREATE TABLE IF NOT EXISTS service_usage (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind VARCHAR(20) NOT NULL DEFAULT 'vm',
+    ref_id INT NOT NULL,
+    label VARCHAR(160) NOT NULL,
+    plan_name VARCHAR(100),
+    monthly_price BIGINT NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL,
+    ended_at TIMESTAMPTZ
+)`;
+
+// One line per service on a monthly invoice: the days it ran that month.
+const createInvoiceItemsTable = `
+CREATE TABLE IF NOT EXISTS invoice_items (
+    id SERIAL PRIMARY KEY,
+    invoice_id INT NOT NULL REFERENCES monthly_invoices(id) ON DELETE CASCADE,
+    usage_id INT REFERENCES service_usage(id) ON DELETE SET NULL,
+    description VARCHAR(255) NOT NULL,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    days INT NOT NULL,
+    days_in_month INT NOT NULL,
+    monthly_price BIGINT NOT NULL,
+    amount BIGINT NOT NULL
+)`;
+
+// Invoice totals: total_amount = subtotal + tax_amount + penalty_amount.
+// The *_at columns record each step of the overdue timeline once.
+const migrateMonthlyInvoices = [
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS subtotal BIGINT',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS tax_amount BIGINT NOT NULL DEFAULT 0',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS tax_breakdown TEXT',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS penalty_amount BIGINT NOT NULL DEFAULT 0',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS penalty_waived BOOLEAN NOT NULL DEFAULT FALSE',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS amount_paid BIGINT NOT NULL DEFAULT 0',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS penalty_at TIMESTAMPTZ',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS delete_warned_at TIMESTAMPTZ',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS services_deleted_at TIMESTAMPTZ',
+    'CREATE UNIQUE INDEX IF NOT EXISTS monthly_invoices_user_month_idx ON monthly_invoices (user_id, billing_month)',
+];
+
 // Team members: people an account owner has invited (by email) and the
 // access they have in the owner's account. See utils/team.js.
 const createTeamMembersTable = `
@@ -699,6 +746,21 @@ connection.connect((err) => {
         ['Promo codes', createPromoCodesTable],
         ['Promo usage', createPromoUsageTable],
         ['Monthly invoices', createMonthlyInvoicesTable],
+        ['Service usage', createServiceUsageTable],
+        ['service usage open index', 'CREATE UNIQUE INDEX IF NOT EXISTS service_usage_open_idx ON service_usage (kind, ref_id) WHERE ended_at IS NULL'],
+        ['service usage user index', 'CREATE INDEX IF NOT EXISTS service_usage_user_idx ON service_usage (user_id)'],
+        ...migrateMonthlyInvoices.map((sql, i) => [`monthly invoices migration ${i + 1}`, sql]),
+        ['Invoice items', createInvoiceItemsTable],
+        ['servers cancel_at', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS cancel_at TIMESTAMPTZ'],
+        ['servers suspended_at', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ'],
+        // Servers from before postpaid billing get a usage record from when they were created.
+        ['service usage backfill', `INSERT INTO service_usage (user_id, kind, ref_id, label, plan_name, monthly_price, started_at)
+            SELECT s.user_id, 'vm', s.id, CONCAT('Virtual Machine ', COALESCE(s.hostname, s.name), ' (', s.plan_name, ')'), s.plan_name,
+                   ROUND(COALESCE(s.monthly_cost, 0) * 100), COALESCE(s.created_at, NOW())
+              FROM servers s
+             WHERE s.status <> 'failed'
+               AND NOT EXISTS (SELECT 1 FROM service_usage u WHERE u.kind = 'vm' AND u.ref_id = s.id)
+            RETURNING id`],
         ['Domain transactions', createDomainTransactionsTable],
         ['Hosting accounts', createHostingAccountsTable],
         ['Hosting orders', createHostingOrdersTable],

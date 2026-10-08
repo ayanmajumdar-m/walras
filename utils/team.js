@@ -46,6 +46,7 @@ const ACCESS_ROUTES = [
     ['/api/wallet', 'billing'],
     ['/api/users/wallet/billing-history', 'billing'],
     ['/api/payment/ccavenue/initiate-wallet', 'billing'],
+    ['/api/invoices', 'billing'],
     ['/api/support', 'support'],
     ['/api/team/members', 'team'],
 ];
