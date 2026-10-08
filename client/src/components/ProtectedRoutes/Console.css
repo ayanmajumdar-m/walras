@@ -746,6 +746,15 @@
 .cx-term-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .cx-term strong .cx-save { display: inline-block; flex: none; vertical-align: 1px; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-100); color: var(--color-accent-700); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
 .cx-summary-save dd { color: var(--color-accent-700); font-weight: 600; }
+.cx-reserve-intro { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--color-accent-100); color: var(--color-accent-700); }
+.cx-reserve-intro svg { flex-shrink: 0; margin-top: 2px; }
+.cx-reserve-intro div { display: flex; flex-direction: column; gap: 3px; }
+.cx-reserve-intro strong { font-size: 15px; }
+.cx-reserve-intro span { font-size: 13.5px; color: var(--text-secondary); }
+.cx-reserve-nudge { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--color-accent-300, #8fd9c4); border-radius: 12px; background: #fff; font: inherit; font-size: 13.5px; text-align: left; color: var(--color-text); cursor: pointer; }
+.cx-reserve-nudge:hover { border-style: solid; background: var(--color-accent-100); }
+.cx-reserve-nudge svg { flex-shrink: 0; color: var(--color-accent-700); }
+.cx-reserve-nudge span { flex: 1; }
 
 .cx-summary { position: sticky; top: 84px; }
 

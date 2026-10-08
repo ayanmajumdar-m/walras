@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock, MapPin, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock, MapPin, Eye, EyeOff, KeyRound, BadgePercent } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
@@ -206,8 +206,12 @@ const reservationQuote = (monthly, { months, savings }) => {
   return { amount: Math.round((gross - saved) * 100) / 100, saved, until: end.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) };
 };
 
-const ComputeConfigurator = () => {
+// mode "monthly" (Virtual Machine) or "reserved" (Reserved VM): the same
+// plans, locations and stock; only the billing step differs.
+const ComputeConfigurator = ({ mode = "monthly" }) => {
   const navigate = useNavigate();
+  const [, setParams] = useSearchParams();
+  const reserveMode = mode === "reserved";
   const { balance, refreshBalance } = useConsole();
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState("");
@@ -220,7 +224,7 @@ const ComputeConfigurator = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [error, setError] = useState("");
-  const [termMonths, setTermMonths] = useState(1);
+  const [termMonths, setTermMonths] = useState(reserveMode ? 12 : 1);
 
   useEffect(() => {
     api("/api/servers/catalog")
@@ -248,7 +252,9 @@ const ComputeConfigurator = () => {
   const hasLocations = catalog?.locations.length > 0;
   const hostnameOk = HOSTNAME_RE.test(hostname.trim());
   const canDeploy = plan && inStock(plan) && osId && hostnameOk && passwordOk(password) && !deploying;
-  const terms = catalog?.terms?.length ? catalog.terms : DEFAULT_TERMS;
+  const allTerms = catalog?.terms?.length ? catalog.terms : DEFAULT_TERMS;
+  const terms = allTerms.filter((t) => (reserveMode ? t.months > 1 : t.months === 1));
+  const maxSavings = Math.max(...allTerms.map((t) => t.savings));
   const term = terms.find((t) => t.months === termMonths) || terms[0];
   const reserved = term.months > 1;
   const due = !plan ? { days: 0, dim: 0, amount: 0 }
@@ -293,6 +299,15 @@ const ComputeConfigurator = () => {
         {catalog && !anyStock && (
           <div className="cx-alert is-info">
             Virtual Machines are fully booked right now. New capacity is on its way; you can still compare plans below.
+          </div>
+        )}
+        {reserveMode && (
+          <div className="cx-reserve-intro">
+            <BadgePercent size={22} aria-hidden="true" />
+            <div>
+              <strong>Reserve a server and save up to {maxSavings}%</strong>
+              <span>Commit to a server for 3 to 36 months from today and pay up front. It renews for the same term unless you cancel.</span>
+            </div>
           </div>
         )}
 
@@ -397,7 +412,7 @@ const ComputeConfigurator = () => {
 
         {anyStock && (
           <section className="cx-card cx-step">
-            <h3><span className="cx-step-num">{hasLocations ? 3 : 2}</span> Billing</h3>
+            <h3><span className="cx-step-num">{hasLocations ? 3 : 2}</span> {reserveMode ? "Reservation term" : "Billing"}</h3>
             <div className="cx-choice-grid cx-term-grid" role="radiogroup" aria-label="Billing">
               {terms.map((t) => {
                 const q = plan ? (t.months === 1 ? proRataNow(plan.monthly) : reservationQuote(plan.monthly, t)) : null;
@@ -421,6 +436,13 @@ const ComputeConfigurator = () => {
                 ? `Reserved for ${term.months} months from today${plan ? `, until ${due.until}` : ""}. Paid up front, renews automatically for another ${term.months} months unless you cancel; not refunded if cancelled early.`
                 : "Monthly: pay for the rest of this month now (pro rata), then each month on the 1st. Cancel anytime; it ends at the end of the paid month."}
             </p>
+            {!reserveMode && maxSavings > 0 && (
+              <button type="button" className="cx-reserve-nudge" onClick={() => setParams({ type: "reserved" }, { replace: true })}>
+                <BadgePercent size={18} aria-hidden="true" />
+                <span><strong>Keeping it 6 months or more?</strong> Reserve it instead and save up to {maxSavings}%.</span>
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            )}
           </section>
         )}
 
@@ -465,7 +487,7 @@ const ComputeConfigurator = () => {
         <div className="cx-card cx-summary-card">
           <h3>Order summary</h3>
           <dl>
-            <div><dt>Product</dt><dd>Virtual Machine</dd></div>
+            <div><dt>Product</dt><dd>{reserveMode ? "Reserved VM" : "Virtual Machine"}</dd></div>
             <div><dt>Type</dt><dd>General Purpose · {CPU_TYPES.find((c) => c.id === cpu)?.label}</dd></div>
             <div><dt>Plan</dt><dd>{plan ? plan.name : "—"}</dd></div>
             {plan && <div><dt>Resources</dt><dd>{plan.vcpu} vCPU · {formatRam(plan.ram)}</dd></div>}
@@ -570,7 +592,8 @@ const Create = () => {
       </div>
 
       {type === "hosting" && <HostingConfigurator />}
-      {type === "compute" && <ComputeConfigurator />}
+      {type === "compute" && <ComputeConfigurator key="monthly" mode="monthly" />}
+      {type === "reserved" && <ComputeConfigurator key="reserved" mode="reserved" />}
       {(type === "domains" || type === "baremetal") && <ComingSoon type={type} />}
     </div>
   );
