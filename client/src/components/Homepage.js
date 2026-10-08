@@ -121,8 +121,9 @@ const Homepage = () => {
           </div>
           <h1 className="hero-title">The Straightforward Cloud</h1>
           <p className="hero-subtitle">
-            Tired of using AWS, DigitalOcean, or Akamai Cloud? Looking for a Desi alternative?
-            Switch to Walras Cloud and make the shift today!
+            Cloud infrastructure, without the complexity.
+            <br />
+            Simple, powerful, and built for everyone.
           </p>
           <div className="hero-actions">
             <a href="/login" className="btn btn-primary btn-lg blueprint">
