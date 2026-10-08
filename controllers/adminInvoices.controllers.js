@@ -67,7 +67,7 @@ module.exports = {
             invoice: withCustomer(found.inv),
             items: found.items.map((it) => ({
                 description: it.description, periodStart: it.period_start, periodEnd: it.period_end,
-                days: it.days, daysInMonth: it.days_in_month, monthlyPrice: Number(it.monthly_price) / 100, amount: Number(it.amount) / 100,
+                days: it.days, daysInMonth: it.days_in_month, months: it.months, monthlyPrice: Number(it.monthly_price) / 100, amount: Number(it.amount) / 100,
             })),
         });
     }),

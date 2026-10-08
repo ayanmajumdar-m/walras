@@ -19,9 +19,14 @@
  *   7th  the account's servers are deleted
  * Paying in full restarts the servers that suspension stopped.
  *
- * Cancelling a plan takes effect at the end of the paid month: the server
- * keeps running until then, isn't renewed, and is deleted on the 1st. No
- * refunds for the unused part of a month.
+ * Reservations (TERMS): instead of monthly, a server can be reserved for
+ * 3–36 months from the day it's bought, paid up front with savings, and
+ * renewed automatically for the same term when it ends (servers.term_months,
+ * paid_until = the end of the term). The 1st's monthly renewal skips them.
+ *
+ * Cancelling takes effect at the end of what's paid (the month, or the
+ * reservation): the server keeps running until then, isn't renewed, and is
+ * deleted. No refunds for an unused part.
  *
  * Amounts in paise, prices excluding GST. GST (services/taxServices.js) is
  * added on every invoice; the late fee is not taxed.
@@ -68,6 +73,33 @@ const fmtDay = (date) => new Date(date).toLocaleDateString('en-IN', { timeZone: 
 const nextMonthStart = (now = new Date()) => {
     const { y, m } = istParts(now);
     return monthStart(y, m + 1);
+};
+
+/**
+ * Billing terms. 1 = monthly (pro rata first month, renewed on the 1st);
+ * the rest are reservations, paid up front from the day of purchase.
+ * `savings` is the % off the monthly price for the whole term.
+ */
+const TERMS = [
+    { months: 1, savings: 0 },
+    { months: 3, savings: 0 },
+    { months: 6, savings: 5 },
+    { months: 12, savings: 10 },
+    { months: 24, savings: 15 },
+    { months: 36, savings: 25 },
+];
+const termFor = (months) => TERMS.find((t) => t.months === Number(months)) || null;
+
+/** Midnight (India time) starting the day `date` falls on. */
+const dayStartOf = (date) => new Date(istDay(date) * DAY_MS - IST_MS);
+
+/**
+ * The same day n months later (India time), at midnight; the 31st becomes the
+ * last day of a shorter month. 5 Nov + 12 = 5 Nov next year.
+ */
+const addMonths = (date, n) => {
+    const { y, m, d } = istParts(date);
+    return new Date(Date.UTC(y, m + n, Math.min(d, daysInMonth(y, m + n))) - IST_MS);
 };
 
 /**
@@ -289,19 +321,52 @@ const insertInvoice = async ({ userId, number, kind, y, m, lines, subtotal, tax,
     const invoiceId = ins[0].id;
     for (const l of lines) {
         await q(
-            `INSERT INTO invoice_items (invoice_id, description, period_start, period_end, days, days_in_month, monthly_price, amount)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [invoiceId, l.description, l.periodStart, l.periodEnd, l.days, l.daysInMonth, l.monthlyPrice, l.amount],
+            `INSERT INTO invoice_items (invoice_id, description, period_start, period_end, days, days_in_month, months, monthly_price, amount)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [invoiceId, l.description, l.periodStart, l.periodEnd, l.days, l.daysInMonth, l.months || null, l.monthlyPrice, l.amount],
         );
     }
     return invoiceId;
 };
 
-/** What buying a plan now costs: the rest of this month, pro rata, plus GST. */
-const quotePurchase = (user, monthlyRupees, now = new Date()) => {
-    const line = proRata(Math.round(Number(monthlyRupees) * 100), now);
-    const tax = taxService.calculateTax(user || {}, line.amount);
-    return { ...line, subtotal: line.amount, tax, total: tax.totalAmount };
+/**
+ * Lines for a reservation of `term` from `from` (midnight India time): the
+ * full price for the term, then the savings as a negative line.
+ */
+const reservationLines = (monthlyPaise, term, from) => {
+    const to = addMonths(from, term.months);
+    const days = Math.round((to.getTime() - from.getTime()) / DAY_MS);
+    const gross = Number(monthlyPaise) * term.months;
+    const savings = Math.round((gross * term.savings) / 100);
+    const period = { periodStart: istDate(istDay(from)), periodEnd: istDate(istDay(to.getTime() - 1)) };
+    const lines = [{ ...period, suffix: ` · ${term.months}-month reservation`, days, daysInMonth: days, months: term.months, monthlyPrice: Number(monthlyPaise), amount: gross }];
+    if (savings) lines.push({ ...period, description: `Reservation savings (${term.savings}%)`, days: 0, daysInMonth: 0, months: null, monthlyPrice: 0, amount: -savings });
+    return { lines, to, subtotal: gross - savings, savings };
+};
+
+/**
+ * What buying a plan now costs, plus GST. Monthly (term 1): the rest of this
+ * month, pro rata; paid until the 1st. A reservation: the whole term from
+ * today, less its savings; paid until the same day `months` later.
+ */
+const quotePurchase = (user, monthlyRupees, now = new Date(), months = 1) => {
+    const monthly = Math.round(Number(monthlyRupees) * 100);
+    const term = termFor(months) || TERMS[0];
+    const { y, m } = istParts(now);
+    if (term.months === 1) {
+        const line = proRata(monthly, now);
+        const tax = taxService.calculateTax(user || {}, line.amount);
+        return {
+            ...line, term, lines: [{ ...line, suffix: '', months: null }], subtotal: line.amount, savings: 0, tax, total: tax.totalAmount,
+            paidUntil: nextMonthStart(now), notes: `New server, ${line.days} of ${line.daysInMonth} days of ${monthLabel(y, m)}`,
+        };
+    }
+    const r = reservationLines(monthly, term, dayStartOf(now));
+    const tax = taxService.calculateTax(user || {}, r.subtotal);
+    return {
+        y, m, term, lines: r.lines, subtotal: r.subtotal, savings: r.savings, tax, total: tax.totalAmount, paidUntil: r.to,
+        notes: `New server, ${term.months}-month reservation until ${istDate(istDay(r.to.getTime() - 1))}`,
+    };
 };
 
 /**
@@ -324,16 +389,16 @@ const refundBalance = (userId, amount) => (amount > 0
  */
 const recordPurchase = async ({ userId, server, quote, now = new Date() }) => {
     const number = await freeNumber(`WAL-${mm(quote.y, quote.m)}-${userId}-S${server.id}`);
-    const line = { ...quote, description: serverLabel(server) };
+    const lines = quote.lines.map((l) => ({ ...l, description: l.description || `${serverLabel(server)}${l.suffix || ''}` }));
     const invoiceId = await insertInvoice({
-        userId, number, kind: 'purchase', y: quote.y, m: quote.m, lines: [line], subtotal: quote.subtotal, tax: quote.tax,
-        status: 'paid', now, notes: `New server, ${quote.days} of ${quote.daysInMonth} days of ${monthLabel(quote.y, quote.m)}`,
+        userId, number, kind: 'purchase', y: quote.y, m: quote.m, lines, subtotal: quote.subtotal, tax: quote.tax,
+        status: 'paid', now, notes: quote.notes,
     });
     if (quote.total > 0) {
         await q(
             `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, status)
              SELECT id, 'debit', ?, ?, ?, 'completed' FROM wallets WHERE user_id = ?`,
-            [quote.total, `${serverLabel(server)}: ${quote.days} days of ${monthLabel(quote.y, quote.m)} (invoice ${number})`, `invoice_${invoiceId}`, userId],
+            [quote.total, `${serverLabel(server)}: ${quote.notes.replace(/^New server, /, '')} (invoice ${number})`, `invoice_${invoiceId}`, userId],
         );
     }
     return { invoiceId, number };
@@ -351,7 +416,7 @@ const renewMonth = async (now = new Date()) => {
     const next = monthStart(y, m + 1);
     const due = await q(
         `SELECT DISTINCT user_id FROM servers
-          WHERE status <> 'failed' AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)`,
+          WHERE status <> 'failed' AND COALESCE(term_months, 1) = 1 AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)`,
         [start, start, start],
     );
     let created = 0;
@@ -360,7 +425,7 @@ const renewMonth = async (now = new Date()) => {
             const made = await withUserLock(userId, async () => {
                 const claimed = rowsOf(await q(
                     `UPDATE servers SET paid_until = ?
-                      WHERE user_id = ? AND status <> 'failed' AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)
+                      WHERE user_id = ? AND status <> 'failed' AND COALESCE(term_months, 1) = 1 AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)
                      RETURNING id, name, hostname, plan_name, monthly_cost`,
                     [next, userId, start, start, start],
                 ));
@@ -396,6 +461,59 @@ const renewMonth = async (now = new Date()) => {
         }
     }
     if (created) console.log(`[Billing] Issued ${created} renewal invoice(s) for ${monthLabel(y, m)}`);
+    return created;
+};
+
+/**
+ * Renews reservations whose term has ended: the same term again, from the
+ * end of the last one, at the same savings. One invoice per server. The
+ * server is claimed (paid_until moved on) first, so it can't be billed twice.
+ */
+const renewReservations = async (now = new Date()) => {
+    const due = await q(
+        `SELECT * FROM servers
+          WHERE COALESCE(term_months, 1) > 1 AND status <> 'failed' AND paid_until IS NOT NULL AND paid_until <= ?
+            AND (cancel_at IS NULL OR cancel_at > paid_until)`,
+        [now],
+    );
+    let created = 0;
+    for (const s of due) {
+        try {
+            const made = await withUserLock(s.user_id, async () => {
+                const term = termFor(s.term_months) || { months: Number(s.term_months), savings: 0 };
+                const from = new Date(s.paid_until);
+                const r = reservationLines(Math.round(Number(s.monthly_cost || 0) * 100), term, from);
+                const claimed = rowsOf(await q('UPDATE servers SET paid_until = ? WHERE id = ? AND paid_until = ? RETURNING id', [r.to, s.id, from]));
+                if (!claimed.length || r.subtotal <= 0) return null;
+                const [user] = await q('SELECT id, name, email, address FROM users WHERE id = ?', [s.user_id]);
+                const tax = taxService.calculateTax(user || {}, r.subtotal);
+                const { y, m } = istParts(from);
+                const number = await freeNumber(`WAL-${mm(y, m)}-${s.user_id}-R${s.id}`);
+                const lines = r.lines.map((l) => ({ ...l, description: l.description || `${serverLabel(s)}${l.suffix}` }));
+                await insertInvoice({
+                    userId: s.user_id, number, kind: 'renewal', y, m, lines, subtotal: r.subtotal, tax, status: 'pending', now,
+                    notes: `Reservation renewal: ${term.months} months until ${istDate(istDay(r.to.getTime() - 1))}`,
+                });
+                return { number, term, tax, to: r.to, label: serverLabel(s) };
+            });
+            if (!made) continue;
+            created += 1;
+            const paidFromBalance = await applyBalance(s.user_id);
+            const due2 = made.tax.totalAmount - paidFromBalance;
+            const { suspendAt, deleteAt } = deadlines({ generated_at: now });
+            await email(s.user_id, due2 > 0 ? `Your reservation renewed: ${rupees(due2)} due` : 'Your reservation renewed', [
+                `${made.label} has been reserved for another ${made.term.months} months, until ${fmtDay(new Date(made.to.getTime() - 1))} (invoice ${made.number}, ${rupees(made.tax.totalAmount)}).`,
+                ...(paidFromBalance ? [`${rupees(paidFromBalance)} was paid from your account balance.`] : []),
+                ...(due2 > 0 ? [
+                    `Please pay the remaining ${rupees(due2)} today.`,
+                    `If it's still unpaid on ${fmtDay(suspendAt)}, a ${Math.round(LATE_FEE_RATE * 100)}% late fee is added on the unpaid amount and your services are suspended; on ${fmtDay(deleteAt)} they are deleted.`,
+                ] : []),
+            ]);
+        } catch (err) {
+            console.error(`[Billing] Reservation renewal for server ${s.id} failed:`, err.message);
+        }
+    }
+    if (created) console.log(`[Billing] Renewed ${created} reservation(s)`);
     return created;
 };
 
@@ -492,6 +610,7 @@ const run = async (now = new Date()) => {
     try {
         await processCancellations(now);
         await renewMonth(now);
+        await renewReservations(now);
 
         const withBalance = await q(
             `SELECT DISTINCT i.user_id FROM monthly_invoices i JOIN wallets w ON w.user_id = i.user_id
@@ -559,7 +678,7 @@ const nextRenewal = async (userId, now = new Date()) => {
     const next = nextMonthStart(now);
     const [r] = await q(
         `SELECT COALESCE(SUM(ROUND(COALESCE(monthly_cost, 0) * 100)), 0) AS total FROM servers
-          WHERE user_id = ? AND status <> 'failed' AND (cancel_at IS NULL OR cancel_at > ?)`,
+          WHERE user_id = ? AND status <> 'failed' AND COALESCE(term_months, 1) = 1 AND (cancel_at IS NULL OR cancel_at > ?)`,
         [userId, next],
     );
     return Number(r?.total || 0);
@@ -595,12 +714,12 @@ const publicInvoice = (inv) => ({
 module.exports = {
     LATE_FEE_RATE, SUSPEND_DAY, DELETE_DAY, deadlines,
     // dates
-    istParts, monthStart, daysInMonth, nextMonthStart, proRata,
+    istParts, monthStart, daysInMonth, nextMonthStart, proRata, addMonths, TERMS, termFor,
     // servers
     destroyServer, isSuspended, hasOverdue, resumeIfClear,
     // purchase
     quotePurchase, chargeBalance, refundBalance, recordPurchase,
     // invoices
-    renewMonth, applyBalance, payFromBalance, run, processCancellations, scheduleCancel, undoCancel,
+    renewMonth, renewReservations, applyBalance, payFromBalance, run, processCancellations, scheduleCancel, undoCancel,
     waiveLateFee, markPaid, nextRenewal, publicInvoice, withUserLock,
 };

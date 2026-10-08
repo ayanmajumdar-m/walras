@@ -138,11 +138,13 @@ const ServersTab = ({ servers, reload, notify }) => {
   // the server keeps running until then and isn't renewed.
   const cancel = async (s) => {
     const failed = s.status === "failed" || s.status === "deploying";
-    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
-      .toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+    // Paid until: the end of the month, or of the reservation.
+    const paidThrough = s.paid_until
+      ? new Date(new Date(s.paid_until).getTime() - 1).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+      : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toLocaleDateString("en-IN", { day: "numeric", month: "long" });
     if (!window.confirm(failed
       ? `Remove ${s.name}?`
-      : `Cancel ${s.name}? It's paid until ${endOfMonth} and keeps running until then; it won't be renewed, and is then deleted with all its data. You can undo this until then.`)) return;
+      : `Cancel ${s.name}? It's paid until ${paidThrough} and keeps running until then; it won't be renewed, and is then deleted with all its data.${Number(s.term_months) > 1 ? " The rest of the reservation isn't refunded." : ""} You can undo this until then.`)) return;
     try {
       const d = await api(`/api/servers/${s.id}`, { method: "DELETE" });
       notify(d.message, "success");
@@ -177,6 +179,7 @@ const ServersTab = ({ servers, reload, notify }) => {
               <td data-label="Status">
                 {s.suspended_at ? <span className="cx-status is-suspended">suspended</span> : <span className={`cx-status is-${s.status}`}>{s.status}</span>}
                 {s.cancel_at && <small className="is-warn">Cancelled: runs until {until(s.cancel_at)}</small>}
+                {!s.cancel_at && Number(s.term_months) > 1 && s.paid_until && <small>Reserved {s.term_months} months · until {new Date(new Date(s.paid_until).getTime() - 1).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}, renews</small>}
                 {s.suspended_at && <small className="is-danger"><Link to="/dashboard/billing?tab=invoices">Unpaid invoice</Link></small>}
               </td>
               <td data-label="Cost">₹{Number(s.monthly_cost || 0).toLocaleString("en-IN")}/mo</td>

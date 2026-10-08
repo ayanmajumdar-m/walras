@@ -80,7 +80,7 @@ exports.getCatalog = handle('Compute catalogue', async (req, res) => {
         hourly: stock.hourlyRupees(p),
         locations: Object.keys(availability[p.name] || {}).map(Number),
     }));
-    res.json({ enabled: plans.some((p) => p.locations.length > 0), plans, locations, os: os.map((name) => ({ id: name, name })) });
+    res.json({ enabled: plans.some((p) => p.locations.length > 0), plans, locations, os: os.map((name) => ({ id: name, name })), terms: billing.TERMS });
 });
 
 // ── Deploy ─────────────────────────────────────────────────────────────────
@@ -125,7 +125,9 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     const hourly = stock.hourlyRupees(plan);
     const [user] = await q('SELECT id, address FROM users WHERE id = ?', [userId]);
     const now = new Date();
-    const quote = billing.quotePurchase(user, plan.monthly, now);
+    const term = billing.termFor(req.body.term ?? 1);
+    if (!term) throw new HttpError(400, 'Choose a billing term.');
+    const quote = billing.quotePurchase(user, plan.monthly, now, term.months);
 
     // 1. Take a unit of stock.
     if (!(await stock.reserve(plan.name, locationId))) throw outOfStock();
@@ -134,7 +136,7 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     if (!(await billing.chargeBalance(userId, quote.total))) {
         await stock.release(plan.name, locationId);
         const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [userId]);
-        throw new HttpError(402, `Your account balance is too low. This server costs ₹${(quote.total / 100).toFixed(2)} now (${quote.days} days of this month, incl. GST). Add funds and try again.`, {
+        throw new HttpError(402, `Your account balance is too low. This server costs ₹${(quote.total / 100).toFixed(2)} now (${term.months === 1 ? `${quote.days} days of this month` : `${term.months}-month reservation`}, incl. GST). Add funds and try again.`, {
             insufficient: true, required: quote.total / 100, available: Number(wallet?.balance || 0) / 100,
         });
     }
@@ -149,10 +151,10 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     let serverId;
     try {
         const ins = await q(
-            `INSERT INTO servers (user_id, name, hostname, location, location_id, solus_account_id, os, plan_name, monthly_cost, hourly_cost, currency, status, paid_until)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'deploying', ?)`,
+            `INSERT INTO servers (user_id, name, hostname, location, location_id, solus_account_id, os, plan_name, monthly_cost, hourly_cost, currency, status, paid_until, term_months)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'deploying', ?, ?)`,
             [userId, hostname, hostname, location.name, location.id, account.id, osVersion.name.slice(0, 50), plan.name, plan.monthly, hourly,
-                billing.nextMonthStart(now)],
+                quote.paidUntil, term.months],
         );
         serverId = ins.insertId;
     } catch (err) {
@@ -181,7 +183,7 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
     await billing.recordPurchase({ userId, server: { id: serverId, hostname, plan_name: plan.name }, quote, now })
         .catch((e) => console.error(`Purchase invoice for server ${serverId} failed:`, e.message));
 
-    res.status(201).json({ message: 'Server is being created', serverId, charged: quote.total / 100, days: quote.days });
+    res.status(201).json({ message: 'Server is being created', serverId, charged: quote.total / 100, term: term.months });
 });
 
 // ── List / manage / delete ─────────────────────────────────────────────────

@@ -72,11 +72,13 @@ const sendInvoicePdf = async (res, { inv, items }) => {
     for (const it of rows) {
         if (y > 690) { doc.addPage(); y = 60; head(); }
         doc.fontSize(9);
-        const period = it.period_start ? `${dayShort(it.period_start)} – ${dayShort(it.period_end)}` : '';
+        const period = it.period_start && Number(it.amount) >= 0
+            ? (it.months ? `${day(it.period_start)} – ${day(it.period_end)}` : `${dayShort(it.period_start)} – ${dayShort(it.period_end)}`) : '';
         const h = Math.max(doc.heightOfString(it.description, { width: 205 }), period ? doc.heightOfString(period, { width: 115 }) : 0, 12);
         doc.text(it.description, 58, y, { width: 205 });
         if (period) doc.text(period, 270, y, { width: 115 });
-        if (it.days) doc.text(`${it.days}/${it.days_in_month}`, 390, y);
+        if (it.months) doc.text(`${it.months} mo`, 390, y);
+        else if (it.days) doc.text(`${it.days}/${it.days_in_month}`, 390, y);
         doc.text(money(it.amount), 440, y, { width: 102, align: 'right' });
         y += h + 8;
     }

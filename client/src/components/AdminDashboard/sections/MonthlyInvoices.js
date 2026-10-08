@@ -36,7 +36,9 @@ const Lines = ({ id }) => {
       {data.items.map((it, i) => (
         <li key={i}>
           <span>{it.description}</span>
-          <span className="ap-muted">{dateOnly(it.periodStart)} – {dateOnly(it.periodEnd)} · {it.days}/{it.daysInMonth} days of {inr(it.monthlyPrice)}</span>
+          <span className="ap-muted">{it.amount < 0 ? "" : it.months
+            ? `${dateOnly(it.periodStart)} ${new Date(it.periodStart).getFullYear()} – ${dateOnly(it.periodEnd)} ${new Date(it.periodEnd).getFullYear()} · ${it.months} months of ${inr(it.monthlyPrice)}`
+            : `${dateOnly(it.periodStart)} – ${dateOnly(it.periodEnd)} · ${it.days}/${it.daysInMonth} days of ${inr(it.monthlyPrice)}`}</span>
           <strong>{inr(it.amount)}</strong>
         </li>
       ))}

@@ -758,6 +758,9 @@ connection.connect((err) => {
         ['servers suspended_at', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ'],
         // Prepaid: the start of the first month not paid for yet (renewed on the 1st).
         ['servers paid_until', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS paid_until TIMESTAMPTZ'],
+        // Reservations: 1 = monthly; 3–36 = reserved for that many months (paid up front).
+        ['servers term_months', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS term_months INT NOT NULL DEFAULT 1'],
+        ['invoice items months', 'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS months INT'],
         ['Domain transactions', createDomainTransactionsTable],
         ['Hosting accounts', createHostingAccountsTable],
         ['Hosting orders', createHostingOrdersTable],

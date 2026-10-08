@@ -186,6 +186,26 @@ const proRataNow = (monthly) => {
   return { days, dim, amount: Math.round((monthly * 100 * days) / dim) / 100 };
 };
 
+// Billing terms (also sent by /api/servers/catalog): 1 = monthly; the rest
+// reserve the server from today for that many months, paid up front.
+const DEFAULT_TERMS = [
+  { months: 1, savings: 0 }, { months: 3, savings: 0 }, { months: 6, savings: 5 },
+  { months: 12, savings: 10 }, { months: 24, savings: 15 }, { months: 36, savings: 25 },
+];
+const termLabel = (m) => (m === 1 ? "Monthly" : `${m} months`);
+
+/** A reservation from today: total before GST, its savings, and the last reserved day. */
+const reservationQuote = (monthly, { months, savings }) => {
+  const gross = monthly * months;
+  const saved = Math.round(gross * savings) / 100;
+  const ist = new Date(Date.now() + 330 * 60 * 1000);
+  const y = ist.getUTCFullYear();
+  const m = ist.getUTCMonth() + months;
+  const dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  const end = new Date(Date.UTC(y, m, Math.min(ist.getUTCDate(), dim)) - 24 * 3600 * 1000);
+  return { amount: Math.round((gross - saved) * 100) / 100, saved, until: end.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) };
+};
+
 const ComputeConfigurator = () => {
   const navigate = useNavigate();
   const { balance, refreshBalance } = useConsole();
@@ -200,6 +220,7 @@ const ComputeConfigurator = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [error, setError] = useState("");
+  const [termMonths, setTermMonths] = useState(1);
 
   useEffect(() => {
     api("/api/servers/catalog")
@@ -227,7 +248,11 @@ const ComputeConfigurator = () => {
   const hasLocations = catalog?.locations.length > 0;
   const hostnameOk = HOSTNAME_RE.test(hostname.trim());
   const canDeploy = plan && inStock(plan) && osId && hostnameOk && passwordOk(password) && !deploying;
-  const due = plan ? proRataNow(plan.monthly) : { days: 0, dim: 0, amount: 0 };
+  const terms = catalog?.terms?.length ? catalog.terms : DEFAULT_TERMS;
+  const term = terms.find((t) => t.months === termMonths) || terms[0];
+  const reserved = term.months > 1;
+  const due = !plan ? { days: 0, dim: 0, amount: 0 }
+    : reserved ? reservationQuote(plan.monthly, term) : proRataNow(plan.monthly);
 
   const pickLocation = (id) => {
     setLocationId(id);
@@ -251,7 +276,7 @@ const ComputeConfigurator = () => {
     try {
       await api("/api/servers/deploy", {
         method: "POST",
-        body: { plan: plan.name, location: locationId, os: Number(osId), hostname: hostname.trim().toLowerCase(), password },
+        body: { plan: plan.name, location: locationId, os: Number(osId), hostname: hostname.trim().toLowerCase(), password, term: term.months },
       });
       refreshBalance();
       navigate("/dashboard/resources?tab=servers&created=1");
@@ -372,7 +397,36 @@ const ComputeConfigurator = () => {
 
         {anyStock && (
           <section className="cx-card cx-step">
-            <h3><span className="cx-step-num">{hasLocations ? 3 : 2}</span> Operating system and access</h3>
+            <h3><span className="cx-step-num">{hasLocations ? 3 : 2}</span> Billing</h3>
+            <div className="cx-choice-grid cx-term-grid" role="radiogroup" aria-label="Billing">
+              {terms.map((t) => {
+                const q = plan ? (t.months === 1 ? proRataNow(plan.monthly) : reservationQuote(plan.monthly, t)) : null;
+                const on = t.months === term.months;
+                return (
+                  <label key={t.months} className={`cx-term${on ? " is-selected" : ""}`}>
+                    <input type="radio" name="compute-term" className="cx-visually-hidden" checked={on} onChange={() => setTermMonths(t.months)} />
+                    <span>
+                      <strong>{termLabel(t.months)}{t.savings > 0 && <span className="cx-save">Save {t.savings}%*</span>}</strong>
+                      <small>
+                        {t.months === 1 ? "Pay the rest of this month now, then monthly on the 1st"
+                          : q ? `${formatINR(q.amount, 2)} up front · ${formatINR(q.amount / t.months, 2)}/mo` : "Reserved, paid up front"}
+                      </small>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="cx-step-help">
+              {reserved
+                ? `Reserved for ${term.months} months from today${plan ? `, until ${due.until}` : ""}. Paid up front, renews automatically for another ${term.months} months unless you cancel; not refunded if cancelled early.`
+                : "Monthly: pay for the rest of this month now (pro rata), then each month on the 1st. Cancel anytime; it ends at the end of the paid month."}
+            </p>
+          </section>
+        )}
+
+        {anyStock && (
+          <section className="cx-card cx-step">
+            <h3><span className="cx-step-num">{hasLocations ? 4 : 3}</span> Operating system and access</h3>
             <div className="cx-form-grid">
               <label className="cx-field">
                 <span>Operating system</span>
@@ -419,7 +473,14 @@ const ComputeConfigurator = () => {
           </dl>
           <dl className="cx-summary-money">
             <div><dt>Monthly</dt><dd>{plan ? formatINR(plan.monthly) : "—"}</dd></div>
-            {plan && <div className="cx-summary-total"><dt>Due now <small>({due.days} of {due.dim} days)</small></dt><dd>{formatINR(due.amount, 2)}</dd></div>}
+            <div><dt>Billing</dt><dd>{reserved ? `${term.months}-month reservation` : "Monthly"}</dd></div>
+            {plan && reserved && due.saved > 0 && <div className="cx-summary-save"><dt>Savings*</dt><dd>−{formatINR(due.saved, 2)}</dd></div>}
+            {plan && (
+              <div className="cx-summary-total">
+                <dt>Due now <small>{reserved ? `(until ${due.until})` : `(${due.days} of ${due.dim} days)`}</small></dt>
+                <dd>{formatINR(due.amount, 2)}</dd>
+              </div>
+            )}
           </dl>
           {plan && inStock(plan) && balance < due.amount && (
             <p className="cx-alert is-info">
@@ -436,8 +497,9 @@ const ComputeConfigurator = () => {
               : !plan ? "Coming soon" : inStock(plan) ? "Deploy server" : "Out of stock"}
           </button>
           <p className="cx-summary-note">
-            Paid from your account balance ({formatINR(balance, 2)}): the rest of this month now, pro rata, then the
-            full month on the 1st of each month. Prices exclude GST.
+            {reserved
+              ? <>Paid from your account balance ({formatINR(balance, 2)}) for the whole reservation now. Prices exclude GST.<br />*Savings compared with paying monthly for the same period.</>
+              : <>Paid from your account balance ({formatINR(balance, 2)}): the rest of this month now, pro rata, then the full month on the 1st of each month. Prices exclude GST.</>}
           </p>
         </div>
       </aside>

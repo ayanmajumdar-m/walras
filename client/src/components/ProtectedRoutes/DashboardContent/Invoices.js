@@ -15,6 +15,7 @@ const day = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", mon
 // The day before an instant at midnight: "pay by 1 Dec" for a 2 Dec 00:00 deadline.
 const dayBefore = (d) => day(new Date(new Date(d).getTime() - 1));
 const dateOnly = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+const dateYear = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 const monthName = (d) => new Date(d).toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
 
 const STATUS = {
@@ -70,13 +71,13 @@ const Lines = ({ id }) => {
   return (
     <div className="iv-lines">
       <table className="cx-table">
-        <thead><tr><th>Service</th><th>Period</th><th>Days</th><th className="iv-num">Amount</th></tr></thead>
+        <thead><tr><th>Service</th><th>Period</th><th>Term</th><th className="iv-num">Amount</th></tr></thead>
         <tbody>
           {data.items.map((it, i) => (
             <tr key={i}>
-              <td data-label="Service">{it.description}<small>{inr(it.monthlyPrice)}/month</small></td>
-              <td data-label="Period">{dateOnly(it.periodStart)} – {dateOnly(it.periodEnd)}</td>
-              <td data-label="Days">{it.days} of {it.daysInMonth}</td>
+              <td data-label="Service">{it.description}{it.amount >= 0 && <small>{inr(it.monthlyPrice)}/month</small>}</td>
+              <td data-label="Period">{it.amount < 0 ? "" : it.months ? `${dateYear(it.periodStart)} – ${dateYear(it.periodEnd)}` : `${dateOnly(it.periodStart)} – ${dateOnly(it.periodEnd)}`}</td>
+              <td data-label="Term">{it.amount < 0 ? "" : it.months ? `${it.months} months` : `${it.days} of ${it.daysInMonth} days`}</td>
               <td data-label="Amount" className="iv-num">{inr(it.amount)}</td>
             </tr>
           ))}

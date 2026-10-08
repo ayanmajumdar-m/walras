@@ -742,6 +742,10 @@
 .cx-term span { display: flex; flex-direction: column; flex: 1; }
 .cx-term small { font-size: 13px; color: var(--text-secondary); }
 .cx-term-price { font-weight: 700; font-size: 16px; }
+/* Billing terms on the order form */
+.cx-term-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.cx-term strong .cx-save { display: inline-block; flex: none; vertical-align: 1px; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-100); color: var(--color-accent-700); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.cx-summary-save dd { color: var(--color-accent-700); font-weight: 600; }
 
 .cx-summary { position: sticky; top: 84px; }
 

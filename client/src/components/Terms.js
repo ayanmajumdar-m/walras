@@ -41,7 +41,8 @@ KYC verification may be required to comply with Indian regulations. Users must p
       title: "5. Payments & Billing",
       content: `Services such as Virtual Machines are prepaid monthly. When you buy a plan, the rest of the current month is charged from your account balance at once, pro rata per day (monthly price ÷ days in the month × days remaining, counting the day of purchase), plus applicable GST. On the 1st of each month (India time) we issue an invoice for that month in advance.
 Your account balance is applied to the invoice first. Any remaining amount is due on the day the invoice is issued. If any amount is still unpaid on the 3rd of the month, a late fee of 10% of the unpaid amount is added and services are suspended; if it is still unpaid on the 7th, the services and all their data are deleted permanently. The invoice remains payable after suspension or deletion.
-A cancelled plan stays active until the end of the month it is paid for, is not renewed, and is deleted at the start of the next month. Amounts already paid for a month are not refunded.
+You can instead reserve a server for 3, 6, 12, 24 or 36 months from the day of purchase, paid in full up front at a discount shown at checkout (savings are compared with paying monthly for the same period). A reservation renews automatically for the same term and discount when it ends, unless cancelled before then.
+A cancelled plan stays active until the end of the period it is paid for (the month, or the reservation), is not renewed, and is then deleted. Amounts already paid are not refunded, including the unused part of a reservation.
 Domain registrations and other one-time purchases are payable in advance.
 Account balances can only be withdrawn to your bank if not credited via promotions or offers.
 Refunds are provided solely as described in our Refund Policy.`
