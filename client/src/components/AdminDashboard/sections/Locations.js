@@ -10,7 +10,15 @@ import { adminApi } from "../adminApi";
   order form.
 */
 
-const EMPTY = { name: "", country: "", note: "", sortOrder: "", active: true };
+const EMPTY = { name: "", country: "", note: "", flagUrl: "", sortOrder: "", active: true };
+
+// A flag image from its link; nothing if there's no link or it doesn't load.
+const Flag = ({ url, size = "sm" }) => {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [url]);
+  if (!url || broken) return null;
+  return <img src={url} alt="" className={`ap-flag is-${size}`} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />;
+};
 
 const Modal = ({ title, onClose, children }) => (
   <div className="cx-modal-scrim" onClick={onClose}>
@@ -42,7 +50,7 @@ const LocationForm = ({ initial, editing, onSaved, onClose }) => {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const body = { name: f.name, country: f.country, note: f.note, active: f.active, ...(f.sortOrder !== "" ? { sortOrder: f.sortOrder } : {}) };
+    const body = { name: f.name, country: f.country, note: f.note, flagUrl: f.flagUrl.trim(), active: f.active, ...(f.sortOrder !== "" ? { sortOrder: f.sortOrder } : {}) };
     try {
       const d = editing
         ? await adminApi(`/locations/${initial.id}`, { method: "PUT", body })
@@ -75,6 +83,12 @@ const LocationForm = ({ initial, editing, onSaved, onClose }) => {
           <Field label="Country"><input value={f.country} onChange={set("country")} maxLength={60} required placeholder="United States" /></Field>
           <Field label="Description" hint="Shown on the About page." wide>
             <input value={f.note} onChange={set("note")} maxLength={160} placeholder="Our region for customers across the Americas." />
+          </Field>
+          <Field label="Flag image link" hint="Optional. A link to the flag image (PNG or SVG), shown on top of the location for customers." wide>
+            <span className="ap-flag-field">
+              <input type="url" value={f.flagUrl} onChange={set("flagUrl")} maxLength={500} placeholder="https://flagcdn.com/w80/in.png" />
+              {f.flagUrl.trim() && <Flag url={f.flagUrl.trim()} size="md" />}
+            </span>
           </Field>
           <Field label="Order" hint="Lower shows first."><input type="number" step="1" value={f.sortOrder} onChange={set("sortOrder")} /></Field>
         </div>
@@ -150,7 +164,10 @@ const Locations = ({ can }) => {
                 const activeServers = l.servedBy.filter((a) => a.status === "active");
                 return (
                   <tr key={l.id} className={l.active ? "" : "is-hidden-plan"}>
-                    <td data-label="Location"><strong>{l.name}</strong><small>{l.country}{l.note ? ` · ${l.note}` : ""}</small></td>
+                    <td data-label="Location">
+                      <span className="ap-loc-name"><Flag url={l.flagUrl} /><strong>{l.name}</strong></span>
+                      <small>{l.country}{l.note ? ` · ${l.note}` : ""}</small>
+                    </td>
                     <td data-label="Served by">
                       {l.servedBy.length
                         ? l.servedBy.map((a) => `${a.name}${a.status === "paused" ? " (paused)" : ""}`).join(", ")
@@ -182,7 +199,7 @@ const Locations = ({ can }) => {
       {editing && (
         <LocationForm
           editing={editing !== "new"}
-          initial={editing === "new" ? EMPTY : { ...editing, sortOrder: editing.sortOrder }}
+          initial={editing === "new" ? EMPTY : { ...editing, flagUrl: editing.flagUrl || "", sortOrder: editing.sortOrder }}
           onSaved={done}
           onClose={() => setEditing(null)}
         />

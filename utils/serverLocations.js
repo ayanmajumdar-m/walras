@@ -2,7 +2,8 @@
  * Server locations, managed in Admin → Locations (table server_locations).
  *
  * Each location has a customer-facing name and country, a short note (shown
- * on the About page), whether it's shown at all (active) and its order. Its
+ * on the About page), an optional flag image link (flagUrl, shown with the
+ * location), whether it's shown at all (active) and its order. Its
  * id is what stock (compute_stock.location_id) and servers
  * (servers.location_id) use. SolusVM accounts say which locations they serve
  * (Admin → SolusVM accounts); an active location no account serves is listed
@@ -19,6 +20,7 @@ const toLocation = (r) => ({
     name: r.name,
     country: r.country,
     note: r.note || '',
+    flagUrl: r.flag_url || '',
     active: Boolean(r.active),
     sortOrder: Number(r.sort_order),
 });

@@ -513,6 +513,14 @@
 .ap-plan-spacer { flex: 1; }
 @media (max-width: 600px) { .ap-plan-grid { grid-template-columns: 1fr; } }
 
+/* Location flags (Admin → Locations) */
+.ap-flag { display: inline-block; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.ap-flag.is-sm { width: 22px; height: 15px; }
+.ap-flag.is-md { width: 36px; height: 24px; flex-shrink: 0; }
+.ap-flag-field { display: flex; align-items: center; gap: 10px; }
+.ap-flag-field input { flex: 1; min-width: 0; }
+.ap-loc-name { display: inline-flex; align-items: center; gap: 8px; }
+
 /* Locations form: full-width description */
 .ap-plan-grid .ap-wide { grid-column: 1 / -1; }
 

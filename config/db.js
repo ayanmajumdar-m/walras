@@ -729,6 +729,8 @@ connection.connect((err) => {
         ['VM plans seed', seedVmPlans],
         ['Server locations', createServerLocationsTable],
         ['Server locations seed', seedServerLocations],
+        // A flag image shown with the location (Admin → Locations).
+        ['server locations flag', "ALTER TABLE server_locations ADD COLUMN IF NOT EXISTS flag_url VARCHAR(500) NOT NULL DEFAULT ''"],
         ['SolusVM accounts', createSolusAccountsTable],
         ['SolusVM account locations', createSolusAccountLocationsTable],
         ['SolusVM account plans', createSolusAccountPlansTable],

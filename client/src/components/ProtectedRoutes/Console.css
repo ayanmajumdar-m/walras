@@ -746,6 +746,8 @@
 .cx-term-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .cx-term strong .cx-save { display: inline-block; flex: none; vertical-align: 1px; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-100); color: var(--color-accent-700); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
 .cx-summary-save dd { color: var(--color-accent-700); font-weight: 600; }
+/* Location flag on top of the city (order form) */
+.cx-term .cx-flag { width: 30px; height: 20px; margin-bottom: 6px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); }
 .cx-reserve-intro { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--color-accent-100); color: var(--color-accent-700); }
 .cx-reserve-intro svg { flex-shrink: 0; margin-top: 2px; }
 .cx-reserve-intro div { display: flex; flex-direction: column; gap: 3px; }

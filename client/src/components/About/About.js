@@ -125,9 +125,11 @@ const About = () => {
         </div>
 
         <div className="ab-region-grid">
-          {locations.map(({ name: city, country, note }) => (
+          {locations.map(({ name: city, country, note, flagUrl }) => (
             <div className="ab-card ab-region" key={city}>
-              <span className="ab-icon"><MapPin aria-hidden="true" /></span>
+              {flagUrl
+                ? <img src={flagUrl} alt="" className="ab-flag" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                : <span className="ab-icon"><MapPin aria-hidden="true" /></span>}
               <div>
                 <h3>{city}<span>{country}</span></h3>
                 <p>{note}</p>

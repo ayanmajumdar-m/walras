@@ -46,6 +46,14 @@ const readLocation = (body, { partial = false } = {}) => {
     if (!partial || given('name')) out.name = text(body.name, 'City', { max: 60 });
     if (!partial || given('country')) out.country = text(body.country, 'Country', { max: 60 });
     if (!partial || given('note')) out.note = text(body.note, 'Description', { max: 160, required: false });
+    if (!partial || given('flagUrl')) {
+        out.flagUrl = text(body.flagUrl, 'Flag image link', { max: 500, required: false });
+        if (out.flagUrl) {
+            let url;
+            try { url = new URL(out.flagUrl); } catch { url = null; }
+            if (!url || !/^https?:$/.test(url.protocol)) throw new HttpError(400, 'Flag image link must be a full https:// address.');
+        }
+    }
     if (given('active')) out.active = Boolean(body.active);
     if (given('sortOrder') && body.sortOrder !== '') {
         const n = Number(body.sortOrder);
@@ -55,7 +63,7 @@ const readLocation = (body, { partial = false } = {}) => {
     return out;
 };
 
-const COLUMNS = { name: 'name', country: 'country', note: 'note', active: 'active', sortOrder: 'sort_order' };
+const COLUMNS = { name: 'name', country: 'country', note: 'note', flagUrl: 'flag_url', active: 'active', sortOrder: 'sort_order' };
 
 const serversAt = async (locationId) => {
     const [{ n }] = await q('SELECT COUNT(*) AS n FROM servers WHERE location_id = ?', [locationId]);
@@ -65,7 +73,7 @@ const serversAt = async (locationId) => {
 const LocationsController = {
     // GET /api/locations — public
     publicList: handle(async (req, res) => {
-        res.json({ locations: (await locations.getLocations()).map(({ name, country, note }) => ({ name, country, note })) });
+        res.json({ locations: (await locations.getLocations()).map(({ name, country, note, flagUrl }) => ({ name, country, note, flagUrl })) });
     }),
 
     // GET /api/admin/locations — every location, its server count and the accounts serving it
@@ -89,8 +97,8 @@ const LocationsController = {
     create: handle(async (req, res) => {
         const l = readLocation(req.body);
         const ins = await q(
-            'INSERT INTO server_locations (name, country, note, active, sort_order) VALUES (?, ?, ?, ?, ?)',
-            [l.name, l.country, l.note, l.active ?? true, l.sortOrder ?? 0],
+            'INSERT INTO server_locations (name, country, note, flag_url, active, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+            [l.name, l.country, l.note, l.flagUrl || '', l.active ?? true, l.sortOrder ?? 0],
         );
         locations.forgetLocations();
         audit(req, 'locations.create', 'location', ins.insertId, l);

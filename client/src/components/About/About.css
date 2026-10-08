@@ -383,6 +383,8 @@
 }
 
 .ab-icon svg { width: 22px; height: 22px; }
+/* Location flag (Admin → Locations), in place of the pin */
+.ab-flag { flex-shrink: 0; width: 46px; height: 32px; margin-top: 4px; object-fit: cover; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); }
 
 .ab-feature-grid {
   display: grid;

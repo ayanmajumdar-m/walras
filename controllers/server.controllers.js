@@ -74,7 +74,7 @@ exports.getCatalog = handle('Compute catalogue', async (req, res) => {
     for (const a of await solusAccounts.listAccounts()) {
         if (a.status === 'active') Object.keys(a.locations).forEach((id) => served.add(Number(id)));
     }
-    const locations = places.map((l) => ({ id: l.id, name: l.name, country: l.country, comingSoon: !served.has(l.id) }));
+    const locations = places.map((l) => ({ id: l.id, name: l.name, country: l.country, flagUrl: l.flagUrl, comingSoon: !served.has(l.id) }));
     const plans = active.map(({ id, active: _a, sortOrder: _s, ...p }) => ({
         ...p,
         hourly: stock.hourlyRupees(p),

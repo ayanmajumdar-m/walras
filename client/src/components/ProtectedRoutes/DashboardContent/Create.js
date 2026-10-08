@@ -323,10 +323,11 @@ const ComputeConfigurator = ({ mode = "monthly" }) => {
                 return (
                   <label key={l.id} className={`cx-term${selected ? " is-selected" : ""}${hasStock ? "" : " is-muted"}${soon ? " is-soon" : ""}`}>
                     <input type="radio" name="compute-location" className="cx-visually-hidden" checked={selected} disabled={soon} onChange={() => pickLocation(l.id)} />
-                    <MapPin size={18} aria-hidden="true" />
+                    {!l.flagUrl && <MapPin size={18} aria-hidden="true" />}
                     <span>
+                      {l.flagUrl && <img src={l.flagUrl} alt="" className="cx-flag" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
                       <strong>{l.name}</strong>
-                      <small>{soon ? "Coming soon" : hasStock ? "Available" : "Out of stock"}</small>
+                      <small>{l.country ? `${l.country} · ` : ""}{soon ? "Coming soon" : hasStock ? "Available" : "Out of stock"}</small>
                     </span>
                   </label>
                 );
