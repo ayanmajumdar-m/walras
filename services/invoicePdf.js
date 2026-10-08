@@ -17,6 +17,17 @@ const day = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', mon
 const dayShort = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
 const month = (d) => new Date(d).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
+/** What the invoice covers: the dates of its lines, or the billing month for a full month. */
+const periodOf = (inv, items) => {
+    const lines = items.filter((it) => it.period_start && Number(it.amount) >= 0);
+    if (!lines.length) return month(inv.billing_month);
+    const start = lines.map((it) => new Date(it.period_start)).sort((a, b) => a - b)[0];
+    const end = lines.map((it) => new Date(it.period_end)).sort((a, b) => b - a)[0];
+    const sameMonth = start.getUTCDate() === 1 && end.getUTCMonth() === start.getUTCMonth() && end.getUTCFullYear() === start.getUTCFullYear()
+        && new Date(end.getTime() + 86400000).getUTCDate() === 1;
+    return sameMonth ? month(start) : `${day(start)} – ${day(end)}`;
+};
+
 /** Loads an invoice (optionally only the given user's) with its lines; null if not found. */
 const loadInvoice = async (invoiceId, userId = null) => {
     const [inv] = await q(
@@ -45,7 +56,7 @@ const sendInvoicePdf = async (res, { inv, items }) => {
     doc.fontSize(10).fillColor('#000000');
     doc.text(`Invoice number: ${inv.invoice_number}`, 50, top)
         .text(`Invoice date: ${day(inv.generated_at)}`, 50, top + 15)
-        .text(`Billing period: ${month(inv.billing_month)}`, 50, top + 30);
+        .text(`Billing period: ${periodOf(inv, items)}`, 50, top + 30);
     doc.text(company.legalName, 330, top, { width: 220 })
         .text(`GSTIN: ${company.gstin}`, 330, doc.y + 2, { width: 220 })
         .text(company.email, 330, doc.y + 2, { width: 220 })
@@ -62,7 +73,7 @@ const sendInvoicePdf = async (res, { inv, items }) => {
     let y = doc.y + 25;
     const head = () => {
         doc.fillColor('#0b2622').rect(50, y, 500, 22).fill().fillColor('#ffffff').fontSize(9)
-            .text('Service', 58, y + 7).text('Period', 270, y + 7).text('Days', 390, y + 7)
+            .text('Service', 58, y + 7).text('Period', 270, y + 7).text('Term', 390, y + 7)
             .text('Amount (INR)', 440, y + 7, { width: 102, align: 'right' });
         y += 28;
         doc.fillColor('#1d1f20');
@@ -110,8 +121,12 @@ const sendInvoicePdf = async (res, { inv, items }) => {
         doc.text(`Bank: ${company.bankName} · Account: ${company.accountNumber} · IFSC: ${company.ifsc}`, 50, y);
         y = doc.y + 6;
     }
-    doc.text('Pro rata: each service is billed for the days it existed in the month (monthly price ÷ days in month × days used).', 50, y, { width: 500 })
-        .text(`Questions? ${company.email}. This is a computer-generated invoice.`, 50, doc.y + 6, { width: 500 });
+    // Only explain pro rata when a line is for part of a month.
+    if (items.some((it) => !it.months && it.days && Number(it.days) < Number(it.days_in_month))) {
+        doc.text('Pro rata: billed for the days of the month the service is paid for (monthly price ÷ days in month × days).', 50, y, { width: 500 });
+        y = doc.y + 6;
+    }
+    doc.text(`Questions? ${company.email}. This is a computer-generated invoice.`, 50, y, { width: 500 });
     doc.end();
 };
 
