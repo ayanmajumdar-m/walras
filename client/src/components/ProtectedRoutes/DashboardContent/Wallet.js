@@ -11,7 +11,6 @@ const Wallet = () => {
   const [nextRenewal, setNextRenewal] = useState(0);
   const [nextInvoiceDate, setNextInvoiceDate] = useState("");
   const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("ccavenue");
   const [loading, setLoading] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [userData, setUserData] = useState(null);
@@ -108,22 +107,6 @@ const Wallet = () => {
     }
   };
 
-  // ✅ Convert INR to USD for PayPal
-  const convertINRtoUSD = async (inrAmount) => {
-    try {
-      // You can use a currency conversion API or fixed rate
-      // For now, using a fixed rate - replace with actual API call
-      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/INR`);
-      const data = await response.json();
-      const rate = data.rates.USD;
-      return (inrAmount * rate).toFixed(2);
-    } catch (error) {
-      console.error("Error converting currency:", error);
-      // Fallback rate
-      return (inrAmount * 0.012).toFixed(2);
-    }
-  };
-
   // ✅ CCAvenue payment handler
   const handleCcavenuePayment = async (amt) => {
     try {
@@ -169,160 +152,6 @@ const Wallet = () => {
     }
   };
 
-  // ✅ Razorpay payment handler
-  const handleRazorpayPayment = async (amt) => {
-    try {
-      // Step 1: Create order
-      const res = await fetch(`${API_URL}/api/wallet/create-order`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders(),
-        },
-        body: JSON.stringify({ amount: amt }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.orderId) {
-        alert(data.error || "Failed to create Razorpay order");
-        setLoading(false);
-        return;
-      }
-
-      // Step 2: Open Razorpay checkout
-      const options = {
-        key: data.key,
-        amount: data.amount,
-        currency: data.currency,
-        name: "Walras Cloud Account Balance",
-        description: "Add funds to account balance",
-        order_id: data.orderId,
-        handler: async (response) => {
-          // Step 3: Verify payment
-          const verifyRes = await fetch(`${API_URL}/api/wallet/verify`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...authHeaders(),
-            },
-            body: JSON.stringify({
-              ...response,
-              amount: amt,
-            }),
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyRes.ok) {
-            alert("✅ Payment successful! Account balance credited ₹" + verifyData.amount);
-            fetchWallet();
-            setAmount("");
-            // If user had entered BLACKFRIDAY promo and topped up ₹5000 or more, apply promo now
-            if (promoCode.trim().toUpperCase() === 'BLACKFRIDAY' && parseFloat(amt) >= 5000) {
-              // apply promo after top-up
-              applyPromoAfterTopup('BLACKFRIDAY');
-            }
-          } else {
-            alert("❌ Verification failed: " + verifyData.error);
-          }
-        },
-        prefill: {
-          name: userData?.name || "Customer",
-          email: userData?.email || "",
-          contact: userData?.phone || "",
-        },
-        theme: { color: "#111" },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to start Razorpay payment");
-      throw err;
-    }
-  };
-
-  // ✅ PayPal payment handler
-  const handlePayPalPayment = async (amt) => {
-    try {
-      // Convert INR to USD
-      const usdAmount = await convertINRtoUSD(amt);
-      
-      // Create PayPal order
-      const res = await fetch(`${API_URL}/api/wallet/create-paypal-order`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders(),
-        },
-        body: JSON.stringify({ 
-          amount: usdAmount,
-          currency: "USD"
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.orderID) {
-        alert(data.error || "Failed to create PayPal order");
-        setLoading(false);
-        return;
-      }
-
-      // Open PayPal checkout
-      const paypal = window.paypal;
-      if (!paypal) {
-        alert("PayPal SDK not loaded");
-        return;
-      }
-
-      paypal.Buttons({
-        createOrder: function(data, actions) {
-          return data.orderID;
-        },
-        onApprove: async function(data, actions) {
-          try {
-            const verifyRes = await fetch(`${API_URL}/api/wallet/verify-paypal`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...authHeaders(),
-              },
-              body: JSON.stringify({
-                orderID: data.orderID,
-                amount: amt, // Original INR amount for wallet credit
-                usdAmount: usdAmount
-              }),
-            });
-            
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok) {
-              alert(`✅ Payment successful! Account balance credited ₹${amt}`);
-              fetchWallet();
-              setAmount("");
-              // If user had entered BLACKFRIDAY promo and topped up ₹5000 or more, apply promo now
-              if (promoCode.trim().toUpperCase() === 'BLACKFRIDAY' && parseFloat(amt) >= 5000) {
-                applyPromoAfterTopup('BLACKFRIDAY');
-              }
-            } else {
-              alert("❌ Payment verification failed: " + verifyData.error);
-            }
-          } catch (error) {
-            console.error("PayPal verification error:", error);
-            alert("Payment verification failed");
-          }
-        },
-        onError: function(err) {
-          console.error("PayPal error:", err);
-          alert("PayPal payment failed");
-        }
-      }).render('#paypal-button-container');
-
-    } catch (err) {
-      console.error(err);
-      alert("Failed to start PayPal payment");
-      throw err;
-    }
-  };
-
   // ✅ Main payment handler
   const handleAddFunds = async () => {
     const amt = parseFloat(amount);
@@ -332,13 +161,7 @@ const Wallet = () => {
     try {
       setLoading(true);
 
-      if (paymentMethod === "ccavenue") {
-        await handleCcavenuePayment(amt);
-      } else if (paymentMethod === "razorpay") {
-        await handleRazorpayPayment(amt);
-      } else if (paymentMethod === "paypal") {
-        await handlePayPalPayment(amt);
-      }
+      await handleCcavenuePayment(amt);
 
       setLoading(false);
     } catch (err) {
@@ -350,18 +173,6 @@ const Wallet = () => {
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
       alert("Please enter a promo code");
-      return;
-    }
-
-    // Special frontend-only rule: BLACKFRIDAY must be applied only when user is adding ₹5000
-    if (promoCode.trim().toUpperCase() === 'BLACKFRIDAY') {
-      const amt = parseFloat(amount);
-      if (isNaN(amt) || amt < 5000) {
-        alert("The BLACKFRIDAY promo requires you to add ₹5000 in the Add Funds section. Enter ₹5000 and complete the payment — the promo will be applied automatically after a successful top-up.");
-        return;
-      }
-      // If amount is >= 5000, do not apply promo immediately here; it will be applied after successful payment.
-      alert("You have a BLACKFRIDAY promo and are adding ₹" + amt + ". The promo will be applied automatically after successful payment.");
       return;
     }
 
@@ -390,31 +201,6 @@ const Wallet = () => {
       alert("Failed to apply promo code");
     } finally {
       setPromoLoading(false);
-    }
-  };
-
-  // Helper: apply promo after successful top-up (frontend-triggered)
-  const applyPromoAfterTopup = async (appliedPromoCode) => {
-    if (!appliedPromoCode) return;
-    try {
-      const response = await fetch(`${API_URL}/api/wallet/apply-promo`, {
-        method: "POST",
-        headers: {
-          ...authHeaders(),
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ promoCode: appliedPromoCode.trim().toUpperCase() })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        alert(`✅ Promo applied: ${data.message}\nCredit: ₹${data.creditAmount}`);
-        setPromoCode("");
-        fetchWallet();
-      } else {
-        console.warn('Promo apply failed after topup:', data);
-      }
-    } catch (err) {
-      console.error('Error applying promo after topup:', err);
     }
   };
 
@@ -476,17 +262,9 @@ const Wallet = () => {
       ) : (
       <div className="wallet-add-section">
         <h2>Add Funds</h2>
-        <p>Select a payment method and enter the amount to add to your wallet.</p>
+        <p>Enter the amount to add to your account balance.</p>
 
-        <div className="wallet-payment-method">
-          <label>Payment Method:</label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-          >
-            <option style={{color: 'black'}} value="ccavenue">CCAvenue (UPI, Cards, Net Banking)</option>
-          </select>
-        </div>
+        <p className="wallet-pay-with">Paid securely through CCAvenue: UPI, cards and net banking.</p>
 
         <div className="wallet-input-row">
           <input
@@ -505,15 +283,6 @@ const Wallet = () => {
           </button>
         </div>
 
-        {/* PayPal Button Container */}
-        {paymentMethod === "paypal" && (
-          <div className="paypal-container">
-            <p className="currency-note">
-              💡 Amount will be converted to USD during payment
-            </p>
-            <div id="paypal-button-container"></div>
-          </div>
-        )}
       </div>
       )}
 

@@ -20,7 +20,7 @@ const Transactions = ({ transactions, formatCurrency, formatDate }) => {
               <th className="col-type">Type</th>
               <th className="col-amount">Amount</th>
               <th className="col-description">Description</th>
-              <th className="col-payment">Payment ID</th>
+              <th className="col-payment">Payment ref</th>
               <th className="col-date">Date</th>
               <th className="col-status">Status</th>
             </tr>

@@ -152,8 +152,8 @@ const createWalletTransactionTable = `
   description VARCHAR(255),
   status VARCHAR(19) CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')) DEFAULT 'completed',
   reference_id VARCHAR(255), -- server deployment id or other reference
-  razorpay_payment_id VARCHAR(255) NULL, -- Razorpay payment ID for wallet top-ups
-  razorpay_order_id VARCHAR(255) NULL, -- Razorpay order ID
+  razorpay_payment_id VARCHAR(255) NULL, -- payment gateway reference (CCAvenue tracking id); name kept from an earlier gateway
+  razorpay_order_id VARCHAR(255) NULL, -- unused (earlier gateway)
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (wallet_id) REFERENCES wallets(id) ON DELETE CASCADE
 )
@@ -552,7 +552,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     type VARCHAR(16) CHECK (type IN ('credit', 'debit')) NOT NULL,
     amount BIGINT NOT NULL, -- in paise
     description TEXT,
-    reference_id VARCHAR(255), -- razorpay payment_id, wallet_transaction_id, etc.
+    reference_id VARCHAR(255), -- payment or wallet transaction reference
     reference_type VARCHAR(17) CHECK (reference_type IN ('payment', 'wallet', 'billing', 'refund')) DEFAULT 'payment',
     status VARCHAR(19) CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')) DEFAULT 'completed',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,

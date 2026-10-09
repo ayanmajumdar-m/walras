@@ -23,7 +23,6 @@ userRouter.get('/openprovider/auth-token', authenticateToken, UserController.get
 userRouter.get('/openprovider/domains', authenticateToken, UserController.getOpenProviderDomains);
 userRouter.post('/openprovider/search-domain', authenticateToken, UserController.searchDomain);
 userRouter.post('/openprovider/purchase-domain', authenticateToken, requireSalesOpen, UserController.purchaseDomain);
-userRouter.post('/openprovider/verify-domain-payment', authenticateToken, UserController.verifyDomainPayment);
 userRouter.get('/openprovider/domain-transactions', authenticateToken, UserController.getDomainTransactions);
 // Update nameservers for a purchased domain
 userRouter.post('/openprovider/update-nameservers', authenticateToken, UserController.updateNameservers);

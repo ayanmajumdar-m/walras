@@ -67,46 +67,6 @@ const Cart = () => {
         alert(`Domain ${item.domain} purchased successfully via Account Balance!`);
       }
 
-      // === RAZORPAY PAYMENT FLOW ===
-      else if (paymentMethod === 'razorpay') {
-        // Step 1: Create Razorpay order via backend (same endpoint)
-        const res = await fetch(`${API_URL}/api/users/openprovider/purchase-domain`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(body)
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Razorpay order failed');
-
-        // Step 2: Launch Razorpay Checkout
-        const options = {
-          key: process.env.REACT_APP_RAZORPAY_KEY_ID, // 🔑 from your Razorpay Dashboard
-          amount: data.amount, // amount in paise
-          currency: 'INR',
-          name: 'Glid Domains',
-          description: `Purchase domain ${item.domain}`,
-          order_id: data.orderId, // returned by backend
-          handler: function (response) {
-            alert(`Payment successful for ${item.domain}!`);
-            const remaining = cart.filter(c => c.domain !== item.domain);
-            setCart(remaining);
-            localStorage.setItem('cart', JSON.stringify(remaining));
-          },
-          prefill: {
-            name: `${contactInfo.firstName} ${contactInfo.lastName}`,
-            email: contactInfo.email,
-            contact: contactInfo.phone
-          },
-          theme: { color: '#3bddb4' }
-        };
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      }
-
     } catch (err) {
       console.error('Checkout error', err);
       setError(err.message || 'Checkout failed');
@@ -156,14 +116,6 @@ const Cart = () => {
             checked={paymentMethod === 'wallet'}
             onChange={e => setPaymentMethod(e.target.value)}
           /> Account Balance
-        </label>
-        <label>
-          <input
-            type="radio"
-            value="razorpay"
-            checked={paymentMethod === 'razorpay'}
-            onChange={e => setPaymentMethod(e.target.value)}
-          /> CCAvenue
         </label>
       </div>
 

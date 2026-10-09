@@ -148,16 +148,11 @@ function Domain() {
         throw new Error(data.error || 'Purchase failed')
       }
 
-      if (paymentMethod === 'wallet') {
-        // Wallet payment - domain should be registered immediately
-        alert(`Domain ${selectedDomain.domain} purchased successfully!`)
+      // Paid from the account balance: the domain is registered straight away
+      alert(`Domain ${selectedDomain.domain} purchased successfully!`)
         setShowPurchaseModal(false)
         setSelectedDomain(null)
         fetchWalletBalance() // Refresh wallet balance
-      } else {
-        // Razorpay payment - show payment form
-        handleRazorpayPayment(data)
-      }
 
     } catch (error) {
       console.error('Purchase error:', error)
@@ -168,62 +163,6 @@ function Domain() {
   }
 
   const API_URL = ``
-  const handleRazorpayPayment = async (orderData) => {
-    const options = {
-      key: orderData.key,
-      amount: orderData.amount,
-      currency: orderData.currency,
-      name: 'Domain Purchase',
-      description: `Domain: ${selectedDomain.domain}`,
-      order_id: orderData.orderId,
-      handler: async function (response) {
-        try {
-          const token = localStorage.getItem('token')
-          const verifyResponse = await fetch(`${API_URL}/api/users/openprovider/verify-domain-payment`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              domainTransactionId: orderData.domainTransactionId
-            })
-          })
-
-          const verifyData = await verifyResponse.json()
-
-          if (verifyResponse.ok) {
-            alert(`Domain ${selectedDomain.domain} purchased successfully!`)
-            setShowPurchaseModal(false)
-            setSelectedDomain(null)
-          } else {
-            throw new Error(verifyData.error || 'Payment verification failed')
-          }
-        } catch (error) {
-          console.error('Payment verification error:', error)
-          setError(error.message || 'Payment verification failed')
-        }
-      },
-      prefill: {
-        name: contactInfo.firstName + ' ' + contactInfo.lastName,
-        email: contactInfo.email,
-        contact: contactInfo.phone
-      },
-      theme: {
-        color: '#3bddb4'
-      }
-    }
-
-    const rzp = new window.Razorpay(options)
-    rzp.on('payment.failed', function (response) {
-      setError('Payment failed. Please try again.')
-    })
-    rzp.open()
-  }
-
   return (
     <div className="domain-container">
       <div className="domain-header">
@@ -348,17 +287,7 @@ function Domain() {
                 <div className="payment-method">
                   <label>Payment Method:</label>
                   <div className="payment-options">
-                    <label className="payment-option">
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        value="razorpay" 
-                        checked={paymentMethod === 'razorpay'}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      />
-                      <span>Credit/Debit Card (CCAvenue)</span>
-                    </label>
-                    <label className="payment-option">
+<label className="payment-option">
                       <input 
                         type="radio" 
                         name="payment" 

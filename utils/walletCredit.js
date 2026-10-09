@@ -17,6 +17,8 @@ const q = (sql, params = []) => new Promise((resolve, reject) => {
  * Resolves { credited: true, amount, walletId, userId, balance } or
  * { credited: false } when it was already completed, failed or unknown.
  */
+// paymentRef goes in razorpay_payment_id: the gateway reference column (CCAvenue's
+// tracking id; the name is left from an earlier gateway).
 const creditPendingTopup = async (orderId, { description, paymentRef } = {}) => {
     const rows = await q(
         `WITH tx AS (

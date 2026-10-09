@@ -71,84 +71,6 @@ async function handleWalletPayment(userId, amountPaise, domainTransactionId, dom
     }
 }
 
-// Helper function to handle Razorpay payment for domain purchase
-async function handleRazorpayPayment(userId, amountPaise, domainTransactionId, domainName,
-    registrationPeriod, contactInfo, res, connection) {
-    try {
-        const { createOrder } = require('../services/razorpayServices');
-        const receipt = `domain_${domainTransactionId}_${Date.now()}`;
-
-        // Store contact information first for Razorpay payments
-        const contactQuery = `
-            INSERT INTO domain_contacts 
-            (user_id, contact_type, first_name, last_name, company, email, phone, 
-             address_line1, address_line2, city, state, country, postal_code, gender)
-            VALUES (?, 'owner', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        connection.query(contactQuery, [
-            contactInfo.userId,
-            contactInfo.firstName,
-            contactInfo.lastName,
-            contactInfo.company || '',
-            contactInfo.email,
-            contactInfo.phone,
-            contactInfo.address1,
-            contactInfo.address2 || '',
-            contactInfo.city,
-            contactInfo.state,
-            contactInfo.country,
-            contactInfo.postalCode,
-            contactInfo.gender || 'm'
-        ], (contactErr) => {
-            if (contactErr) {
-                console.error('Error storing contact info for Razorpay payment:', contactErr);
-                return connection.rollback(() => {
-                    res.status(500).json({ error: 'Failed to store contact information' });
-                });
-            }
-
-            // Create Razorpay order
-            createOrder({
-                amount: amountPaise,
-                currency: "INR",
-                receipt
-            }).then(order => {
-                // Update domain transaction with Razorpay order ID
-                connection.query(
-                    "UPDATE domain_transactions SET payment_reference = ? WHERE id = ?",
-                    [order.id, domainTransactionId],
-                    (err) => {
-                        if (err) {
-                            return connection.rollback(() => {
-                                res.status(500).json({ error: 'Failed to update domain transaction' });
-                            });
-                        }
-
-                        res.json({
-                            success: true,
-                            message: 'Razorpay order created. Complete payment to proceed with domain registration.',
-                            orderId: order.id,
-                            amount: order.amount,
-                            currency: order.currency,
-                            key: require('../utils/integrations').get('RAZORPAY_KEY_ID'),
-                            domainTransactionId
-                        });
-                    }
-                );
-            }).catch(error => {
-                connection.rollback(() => {
-                    res.status(500).json({ error: 'Razorpay order creation failed' });
-                });
-            });
-        });
-    } catch (error) {
-        connection.rollback(() => {
-            res.status(500).json({ error: 'Razorpay order creation failed' });
-        });
-    }
-}
-
 // Helper function to proceed with domain registration after payment
 // Helper function to proceed with domain registration after payment
 async function proceedWithDomainRegistration(domainTransactionId, domainName,
@@ -486,9 +408,10 @@ const UserController = {
             });
         }
 
-        if (!['wallet', 'razorpay'].includes(paymentMethod)) {
+        // Domains are paid from the account balance (topped up through CCAvenue).
+        if (paymentMethod !== 'wallet') {
             return res.status(400).json({
-                error: 'Invalid payment method. Must be "wallet" or "razorpay"'
+                error: 'Domains are paid from your account balance. Add funds in Billing first.'
             });
         }
 
@@ -541,18 +464,11 @@ const UserController = {
 
                     // ✅ REMOVED EMAIL SENDING FROM HERE - Will be sent after successful registration
 
-                    // Proceed with payment method handling
-                    if (paymentMethod === 'wallet') {
-                        return handleWalletPayment(
-                            userId, amountPaise, domainTransactionId, domainName,
-                            registrationPeriod, contactInfo, res, connection,
-                        );
-                    } else {
-                        return handleRazorpayPayment(
-                            userId, amountPaise, domainTransactionId, domainName,
-                            registrationPeriod, contactInfo, res, connection
-                        );
-                    }
+                    // Paid from the account balance
+                    return handleWalletPayment(
+                        userId, amountPaise, domainTransactionId, domainName,
+                        registrationPeriod, contactInfo, res, connection,
+                    );
                 });
 
             } catch (error) {
@@ -607,111 +523,6 @@ const UserController = {
         }
     },
 
-    verifyDomainPayment: async (req, res) => {
-        try {
-            const userId = req.user.userId;
-            const { razorpay_order_id, razorpay_payment_id, razorpay_signature, domainTransactionId } = req.body;
-
-            if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !domainTransactionId) {
-                return res.status(400).json({ error: 'Missing payment verification details' });
-            }
-
-            const { verifyPaymentSignature } = require('../services/razorpayServices');
-            const connection = require('../config/db');
-
-            // Verify payment signature
-            const isValid = verifyPaymentSignature({
-                order_id: razorpay_order_id,
-                payment_id: razorpay_payment_id,
-                signature: razorpay_signature
-            });
-
-            if (!isValid) {
-                return res.status(400).json({ error: 'Invalid payment signature' });
-            }
-
-            // Get domain transaction details
-            connection.query(
-                "SELECT * FROM domain_transactions WHERE id = ? AND user_id = ? AND status = 'pending'",
-                [domainTransactionId, userId],
-                (err, results) => {
-                    if (err) {
-                        console.error('Error fetching domain transaction:', err);
-                        return res.status(500).json({ error: 'Database error' });
-                    }
-
-                    if (results.length === 0) {
-                        return res.status(404).json({ error: 'Domain transaction not found or already processed' });
-                    }
-
-                    const domainTransaction = results[0];
-
-                    // Update domain transaction with payment details
-                    connection.query(
-                        `UPDATE domain_transactions 
-                         SET status = 'processing', payment_reference = ?
-                         WHERE id = ?`,
-                        [razorpay_payment_id, domainTransactionId],
-                        (updateErr) => {
-                            if (updateErr) {
-                                console.error('Error updating domain transaction:', updateErr);
-                                return res.status(500).json({ error: 'Failed to update domain transaction' });
-                            }
-
-                            // Get contact information from domain_contacts table
-                            connection.query(
-                                "SELECT * FROM domain_contacts WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
-                                [userId],
-                                (contactErr, contactRows) => {
-                                    if (contactErr) {
-                                        console.error('Error fetching contact info:', contactErr);
-                                        return connection.rollback(() => {
-                                            res.status(500).json({ error: 'Failed to fetch contact information' });
-                                        });
-                                    }
-
-                                    if (contactRows.length === 0) {
-                                        return connection.rollback(() => {
-                                            res.status(400).json({ error: 'Contact information not found' });
-                                        });
-                                    }
-
-                                    const contactInfo = {
-                                        userId: userId,
-                                        firstName: contactRows[0].first_name,
-                                        lastName: contactRows[0].last_name,
-                                        company: contactRows[0].company,
-                                        email: contactRows[0].email,
-                                        phone: contactRows[0].phone,
-                                        address1: contactRows[0].address_line1,
-                                        address2: contactRows[0].address_line2,
-                                        city: contactRows[0].city,
-                                        state: contactRows[0].state,
-                                        country: contactRows[0].country,
-                                        postalCode: contactRows[0].postal_code
-                                    };
-
-                                    // Proceed with domain registration
-                                    proceedWithDomainRegistration(
-                                        domainTransactionId,
-                                        domainTransaction.full_domain,
-                                        domainTransaction.registration_period,
-                                        contactInfo,
-                                        res,
-                                        connection
-                                    );
-                                }
-                            );
-                        }
-                    );
-                }
-            );
-
-        } catch (error) {
-            console.error('Error verifying domain payment:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
     getPurchasedDomains: async (req, res) => {
         try {
             const userId = req.user.userId;

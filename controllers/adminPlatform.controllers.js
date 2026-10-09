@@ -345,7 +345,7 @@ const PlatformController = {
                                NULL AS failure_message, wt.created_at
                         FROM wallet_transactions wt
                         JOIN wallets w ON w.id = wt.wallet_id LEFT JOIN users u ON u.id = w.user_id
-                        WHERE wt.type = 'credit' AND (wt.reference_id LIKE 'CCAW%' OR wt.razorpay_order_id IS NOT NULL)
+                        WHERE wt.type = 'credit' AND wt.reference_id LIKE 'CCA%'
                         ${status ? 'AND wt.status = ?' : ''}`);
             if (status) params.push(status);
         }

@@ -10,7 +10,7 @@
  *
  * Reads are synchronous (get('SMTP_HOST')) from an in-memory copy loaded at
  * boot, refreshed every minute and right after an admin saves. Services that
- * build a client once (mail, Razorpay) subscribe with onChange to rebuild it.
+ * build a client once (mail) subscribe with onChange to rebuild it.
  *
  * Server settings that must exist before the database can even be reached
  * (DATABASE_URL, JWT_SECRET, PORT, NODE_ENV) stay environment-only.
@@ -50,13 +50,6 @@ const GROUPS = [
             { name: 'CCAVENUE_ACCESS_CODE', label: 'Access code', secret: true },
             { name: 'CCAVENUE_WORKING_KEY', label: 'Working key', secret: true },
             { name: 'CCAVENUE_ENVIRONMENT', label: 'Environment', options: ['production', 'test'] },
-        ],
-    },
-    {
-        id: 'razorpay', label: 'Razorpay (payments)',
-        fields: [
-            { name: 'RAZORPAY_KEY_ID', label: 'Key ID' },
-            { name: 'RAZORPAY_KEY_SECRET', label: 'Key secret', secret: true },
         ],
     },
     {
