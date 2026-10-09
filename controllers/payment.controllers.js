@@ -307,6 +307,9 @@ exports.handleCcavenueResponse = async (req, res) => {
                 paymentRef: tracking_id || bank_ref_no || null,
             });
             if (!result.credited) console.warn("[CCAvenue] Transaction not in pending state or not found:", order_id);
+            // Pay any unpaid invoice now (restarts suspended servers) rather than on
+            // the next run; in the background, so the customer isn't kept waiting.
+            else monthlyBilling.applyBalance(result.userId).catch((e) => console.error("[CCAvenue] Paying invoices from top-up failed:", e.message));
             return res.redirect(
                 `${config.clientUrl}/dashboard/wallet?payment_status=success&order_id=${encodeURIComponent(order_id)}&amount=${encodeURIComponent(amount)}&tracking_id=${encodeURIComponent(tracking_id || '')}`
             );

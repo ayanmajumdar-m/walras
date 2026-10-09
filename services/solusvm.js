@@ -112,8 +112,10 @@ const clientFor = (account) => {
             }
         },
 
-        serverAction: (id, action) =>
-            solus(`/servers/${id}/${action}`, { method: 'POST', json: action === 'start' ? undefined : { force: false } }),
+        // stop/restart are graceful (ACPI) unless force: a forced stop powers the
+        // VM off even if its operating system ignores the shutdown request.
+        serverAction: (id, action, { force = false } = {}) =>
+            solus(`/servers/${id}/${action}`, { method: 'POST', json: action === 'start' ? undefined : { force } }),
 
         deleteServer: async (id) => {
             try {

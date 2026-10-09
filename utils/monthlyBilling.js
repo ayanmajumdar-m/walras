@@ -160,6 +160,21 @@ const email = async (userId, subject, lines, cta = 'View and pay your invoice') 
 // ── Servers: suspend, resume, delete ─────────────────────────────────────
 
 const solusClient = (server) => solusAccounts.clientForAccountId(server.solus_account_id);
+const solusvm = require('../services/solusvm');
+
+/** The VM's state on SolusVM ('active', 'stopped', 'deploying', 'failed' = gone), or null if it can't be read. */
+const vmState = async (server) => {
+    try {
+        return solusvm.walrasStatus(await (await solusClient(server)).getServer(server.solus_server_id));
+    } catch (err) {
+        console.error(`[Billing] Reading server ${server.id} on SolusVM failed:`, err.message);
+        return null;
+    }
+};
+
+// A suspended VM that is still running this long after the graceful stop is
+// powered off by force (its OS ignored the shutdown request).
+const FORCE_STOP_AFTER_MS = 10 * 60 * 1000;
 
 /**
  * Deletes a server for good: the VM on SolusVM, our record and its unit of
@@ -184,17 +199,52 @@ const destroyServer = async (server) => {
     return true;
 };
 
-/** Stops the account's running servers; they're marked so paying restarts them. */
+/**
+ * Stops the account's running servers; they're marked so paying restarts
+ * them. A server is only marked once SolusVM accepted the stop (or says it's
+ * already off); otherwise it's tried again on the next run.
+ */
 const suspendServers = async (userId) => {
     const servers = await q("SELECT * FROM servers WHERE user_id = ? AND status IN ('active', 'deploying') AND suspended_at IS NULL", [userId]);
+    let stopped = 0;
     for (const s of servers) {
         if (s.solus_server_id && s.solus_account_id) {
-            await solusClient(s).then((c) => c.serverAction(s.solus_server_id, 'stop'))
-                .catch((err) => console.error(`[Billing] Stopping server ${s.id} failed:`, err.message));
+            try {
+                await (await solusClient(s)).serverAction(s.solus_server_id, 'stop');
+            } catch (err) {
+                const state = await vmState(s);
+                if (state !== 'stopped' && state !== 'failed') {
+                    console.error(`[Billing] Stopping server ${s.id} failed (will retry):`, err.message);
+                    continue;
+                }
+            }
         }
         await q("UPDATE servers SET status = 'stopped', suspended_at = NOW() WHERE id = ?", [s.id]);
+        stopped += 1;
     }
-    return servers.length;
+    return stopped;
+};
+
+/**
+ * For a suspended account: stop anything not stopped yet, and power off by
+ * force any suspended VM that's still running some minutes after its
+ * graceful stop.
+ */
+const enforceSuspension = async (userId, now = new Date()) => {
+    await suspendServers(userId);
+    const marked = await q(
+        'SELECT * FROM servers WHERE user_id = ? AND suspended_at IS NOT NULL AND suspended_at <= ? AND solus_server_id IS NOT NULL',
+        [userId, new Date(now.getTime() - FORCE_STOP_AFTER_MS)],
+    );
+    for (const s of marked) {
+        if ((await vmState(s)) !== 'active') continue;
+        try {
+            await (await solusClient(s)).serverAction(s.solus_server_id, 'stop', { force: true });
+            console.warn(`[Billing] Server ${s.id} ignored the shutdown; powered off by force.`);
+        } catch (err) {
+            console.error(`[Billing] Force-stopping server ${s.id} failed (will retry):`, err.message);
+        }
+    }
 };
 
 /** Is the account suspended (an unpaid invoice past the suspension point)? */
@@ -215,23 +265,35 @@ const hasOverdue = async (userId) => {
     return rows.length > 0;
 };
 
-/** Once nothing suspends the account any more, restart what suspension stopped. */
+/**
+ * Once nothing suspends the account any more, restart what suspension
+ * stopped. A server whose start fails stays marked and is tried again on
+ * the next run.
+ */
 const resumeIfClear = async (userId) => {
     if (await isSuspended(userId)) return 0;
     const servers = await q('SELECT * FROM servers WHERE user_id = ? AND suspended_at IS NOT NULL', [userId]);
+    let started = 0;
     for (const s of servers) {
         if (s.solus_server_id && s.solus_account_id) {
-            await solusClient(s).then((c) => c.serverAction(s.solus_server_id, 'start'))
-                .catch((err) => console.error(`[Billing] Restarting server ${s.id} failed:`, err.message));
+            try {
+                await (await solusClient(s)).serverAction(s.solus_server_id, 'start');
+            } catch (err) {
+                if ((await vmState(s)) !== 'active') {
+                    console.error(`[Billing] Restarting server ${s.id} failed (will retry):`, err.message);
+                    continue;
+                }
+            }
         }
         await q("UPDATE servers SET status = 'active', suspended_at = NULL WHERE id = ?", [s.id]);
+        started += 1;
     }
-    if (servers.length) {
+    if (started) {
         await email(userId, 'Your servers are running again', [
-            `Thanks for your payment. The ${servers.length === 1 ? 'server' : `${servers.length} servers`} we suspended ${servers.length === 1 ? 'has' : 'have'} been started again.`,
+            `Thanks for your payment. The ${started === 1 ? 'server' : `${started} servers`} we suspended ${started === 1 ? 'has' : 'have'} been started again.`,
         ], 'View your invoices');
     }
-    return servers.length;
+    return started;
 };
 
 // ── Paying from the account balance ──────────────────────────────────────
@@ -623,6 +685,20 @@ const run = async (now = new Date()) => {
             [new Date(now.getTime() - SUSPEND_DAY * DAY_MS + DAY_MS)], // issued at least a day ago; enforceInvoice checks the exact dates
         );
         for (const inv of unpaid) await enforceInvoice(inv, now).catch((e) => console.error(`[Billing] Overdue step for invoice ${inv.id} failed:`, e.message));
+
+        // Suspended accounts: retry stops that failed, force off VMs that ignored the shutdown.
+        const suspended = await q(
+            `SELECT DISTINCT user_id FROM monthly_invoices
+              WHERE status <> 'paid' AND total_amount > amount_paid AND suspended_at IS NOT NULL AND services_deleted_at IS NULL`,
+        );
+        for (const { user_id: userId } of suspended) {
+            await withUserLock(userId, () => enforceSuspension(userId, now)).catch((e) => console.error(`[Billing] Suspension check for user ${userId} failed:`, e.message));
+        }
+        // Paid up since: restart anything still stopped (a start that failed before).
+        const toResume = await q('SELECT DISTINCT user_id FROM servers WHERE suspended_at IS NOT NULL');
+        for (const { user_id: userId } of toResume) {
+            await withUserLock(userId, () => resumeIfClear(userId)).catch((e) => console.error(`[Billing] Restart for user ${userId} failed:`, e.message));
+        }
     } catch (err) {
         console.error('[Billing] Run failed:', err.message);
     } finally {
@@ -716,7 +792,7 @@ module.exports = {
     // dates
     istParts, monthStart, daysInMonth, nextMonthStart, proRata, addMonths, TERMS, termFor,
     // servers
-    destroyServer, isSuspended, hasOverdue, resumeIfClear,
+    destroyServer, isSuspended, hasOverdue, resumeIfClear, suspendServers, enforceSuspension,
     // purchase
     quotePurchase, chargeBalance, refundBalance, recordPurchase,
     // invoices

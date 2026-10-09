@@ -244,19 +244,21 @@ exports.manageServer = handle('Manage server', async (req, res) => {
     res.json({ message: `Server ${action} requested`, status });
 });
 
-// DELETE /api/servers/:serverId — cancels the plan at the end of the month:
-// the server keeps running until then, is billed to the month's end and is
-// deleted on the 1st (utils/monthlyBilling.js). A server that never got
-// created is removed straight away.
+// DELETE /api/servers/:serverId — cancels the plan at the end of what's paid
+// (the month, or the reservation): the server keeps running until then, isn't
+// renewed and is then deleted (utils/monthlyBilling.js). A server that never
+// got created is removed straight away.
 exports.deleteServer = handle('Cancel server', async (req, res) => {
     const server = await ownServer(req.user.userId, req.params.serverId);
     if (server.status === 'failed' || !server.solus_server_id) {
-        await billing.destroyServer(server);
+        if (!(await billing.destroyServer(server))) throw new HttpError(502, "We couldn't remove this server right now. Please try again shortly.");
         return res.json({ message: 'Server removed' });
     }
     if (server.cancel_at) return res.json({ message: 'This plan is already cancelled.', cancelAt: server.cancel_at });
     const at = await billing.scheduleCancel(server);
-    res.json({ message: 'Plan cancelled. The server keeps running until the end of the month and is then deleted.', cancelAt: at });
+    // The last paid day (the month, or the reservation), in India time.
+    const lastDay = new Date(at.getTime() - 1).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' });
+    res.json({ message: `Plan cancelled. The server keeps running until ${lastDay} and is then deleted.`, cancelAt: at });
 });
 
 // POST /api/servers/:serverId/keep — undo a cancellation before it takes effect.

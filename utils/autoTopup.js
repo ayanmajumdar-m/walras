@@ -351,6 +351,8 @@ const settle = async (charge, result, amount = Number(charge.amount)) => {
     if (result.status === 'success') {
         const ref = result.trackingId || charge.order_id;
         await creditPendingTopup(charge.order_id, { description: `Auto top-up (Ref: ${ref})`, paymentRef: ref });
+        // Pay any unpaid invoice with it now (required here: monthlyBilling doesn't load this module).
+        await require('./monthlyBilling').applyBalance(charge.user_id).catch((e) => console.error('[AutoTopup] Paying invoices failed:', e.message));
         await q("UPDATE wallet_auto_topup_charges SET status = 'success', tracking_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [result.trackingId, charge.id]);
         await q('UPDATE wallet_auto_topup SET failures = 0, last_error = NULL WHERE user_id = ?', [charge.user_id]);
         console.log(`[AutoTopup] Charged ${rupees(amount)} for user ${charge.user_id} (${charge.order_id})`);
