@@ -1,5 +1,7 @@
 # Wallet Currency Conversion Fix
 
+> **Historical note (October 2026):** Razorpay, PayPal and Cashfree have been removed. Walras Cloud takes payments through **CCAvenue only** (account balance top-ups and invoice payments). This document describes earlier work and is kept for reference; see CODEBASE_OVERVIEW.md for how payments work now.
+
 ## Problem
 
 When a user entered $10 USD to add to wallet:

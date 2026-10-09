@@ -55,11 +55,11 @@ This is a **full-stack cloud hosting and domain management platform** built with
 See **BUTTR_ID_INTEGRATION.md** for the flow, configuration and migration notes.
 
 ### 2. **Wallet & Payment System**
-- Wallet balance management
-- Razorpay integration for payments
-- Promo code system with usage tracking
-- Transaction history and billing logs
-- Multi-currency wallet support (INR/USD)
+- Account balance (wallet), topped up through **CCAvenue** (UPI, cards, net banking), the only payment gateway
+- Credits are applied exactly once per order (`utils/walletCredit.js`), however many times CCAvenue calls back
+- Promo codes: one use per customer, usage limits enforced in the database
+- Wallet transactions, monthly invoices (PDF) and an invoice payment flow
+- Auto top-up via CCAvenue Standing Instructions (built, switched off until CCAvenue's SI details are confirmed)
 
 ### 3. **Server/Cloud Deployment**
 - VPS deployment plans (WSC-4GB, SFC-8GB, SFC-16GB, SFC-32GB)
@@ -108,7 +108,7 @@ See **BUTTR_ID_INTEGRATION.md** for the flow, configuration and migration notes.
 - **JWT** (jsonwebtoken v9.0.2) - Session tokens
 - **BUTTR ID** - OpenID Connect identity provider (user authentication)
 - **bcrypt** (v6.0.0) - Admin password hashing
-- **Razorpay** (v2.9.6) - Payment gateway
+- **CCAvenue** - Payment gateway (AES-128 encrypted form post and callbacks; no SDK)
 - **node-cron** (v4.2.1) - Scheduled tasks
 - **PDFKit** (v0.17.2) - Invoice generation
 - **Axios** - HTTP client
@@ -176,23 +176,22 @@ See **BUTTR_ID_INTEGRATION.md** for the flow, configuration and migration notes.
 - **Multi-currency support**: Separate tables for USD and INR billing logs
 - **Conversion rate**: 1 USD = 83 INR (configurable)
 
-### Billing Flow
-1. **Hourly Billing** (cron job every hour)
-   - Processes active servers
-   - Deducts from wallet
-   - Creates billing log entries
-   - Updates billing summary
-
-2. **Monthly Invoicing** (cron job on 5th of each month)
-   - Generates PDF invoices
-   - Includes GST calculation
-   - Server breakdown per invoice
-   - Stores invoice metadata
+### Billing Flow (prepaid, `utils/monthlyBilling.js`)
+1. **Purchase**: a Virtual Machine is paid from the account balance at checkout:
+   - Monthly: the rest of the current month, pro rata per day (India time, purchase day included), plus GST.
+   - Reserved (3–36 months): the whole term up front with its savings, from the purchase day.
+   Each purchase is recorded as a paid invoice.
+2. **Renewal** (cron on the 1st at 00:00 IST, plus a run every 15 minutes):
+   - Monthly servers are invoiced for the month ahead; reservations renew for the same term when it ends.
+   - The account balance pays first; the rest is paid through CCAvenue (Billing → Invoices).
+3. **Unpaid invoices**: due the day they're issued; on the 3rd a 10% late fee on the unpaid amount
+   (admins can waive it) and the account's servers are suspended (stopped on SolusVM, force-stopped if
+   they ignore the shutdown); final notice on the 6th; servers deleted on the 7th. Paying restarts them.
+4. **Cancelling** takes effect at the end of what's paid (month or reservation); no refunds.
 
 ### Payment Methods
-- **Razorpay** - For INR payments
-- **Wallet** - Internal wallet system
-- **Webhook support** - For payment verification
+- **CCAvenue** - The only gateway: account balance top-ups and invoice payments
+- **Account balance** - Pays purchases, renewals and domains
 
 ---
 
@@ -211,12 +210,20 @@ See **BUTTR_ID_INTEGRATION.md** for the flow, configuration and migration notes.
 - `GET /domains/purchased` - Get purchased domains
 
 ### Wallet Routes (`/api/wallet`)
-- `GET /` - Get wallet balance
-- `POST /create-order` - Create Razorpay order
-- `POST /verify` - Verify payment
+- `GET /` - Balance, next renewal amount and date
+- `GET /transactions` - Wallet transactions
 - `POST /apply-promo` - Apply promo code
-- `GET /transactions` - Get transactions
-- `POST /webhooks/razorpay` - Payment webhook
+- `GET|PUT|DELETE /auto-topup`, `POST /auto-topup/setup` - Auto top-up
+
+### Payment Routes (`/api/payment`)
+- `POST /ccavenue/initiate-wallet` - Start a CCAvenue top-up
+- `POST /ccavenue/response` - CCAvenue callback (top-ups, invoice payments, auto top-up setup)
+- `POST /ccavenue/cancel` - CCAvenue cancel callback
+
+### Invoice Routes (`/api/invoices`)
+- `GET /` - Invoices and amount due
+- `GET /:id`, `GET /:id/pdf` - Invoice lines and PDF
+- `POST /:id/pay` - Pay from the balance, the rest through CCAvenue
 
 ### Admin Routes (`/api/admin`)
 - `POST /login` - Admin login
@@ -266,9 +273,9 @@ The codebase includes migration scripts for:
 ### Environment Variables Required
 
 **Backend:**
-- `MYSQL_DB_HOST`, `MYSQL_DB_USER`, `MYSQL_DB_PASSWORD`, `MYSQL_DB_NAME`, `MYSQL_DB_PORT`
-- `JWT_SECRET`, `JWT_EXPIRES_IN`
-- `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
+- `DATABASE_URL` (PostgreSQL)
+- `JWT_SECRET`, `JWT_EXPIRES_IN`, `SETTINGS_ENCRYPTION_KEY`
+- `CCAVENUE_MERCHANT_ID`, `CCAVENUE_ACCESS_CODE`, `CCAVENUE_WORKING_KEY`, `CCAVENUE_ENVIRONMENT`
 - `OPENPROVIDER_API`, `OPENPROVIDER_USERNAME`, `OPENPROVIDER_PASSWORD`
 - `WHOIS_API_KEY`
 - `FAST2SMS_API_KEY`
