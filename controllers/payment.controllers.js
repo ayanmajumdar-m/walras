@@ -3,30 +3,7 @@ const ccavenueService = require('../services/ccavenueService');
 const { creditPendingTopup, failPendingTopup } = require('../utils/walletCredit');
 const autoTopup = require('../utils/autoTopup');
 const monthlyBilling = require('../utils/monthlyBilling');
-
-/**
- * Ensure user has a wallet record
- */
-async function ensureWallet(userId) {
-    return new Promise((resolve, reject) => {
-        connection.query("SELECT * FROM wallets WHERE user_id = ?", [userId], (err, rows) => {
-            if (err) return reject(err);
-            if (rows && rows.length) return resolve(rows[0]);
-
-            connection.query(
-                "INSERT INTO wallets (user_id, balance) VALUES (?, 0)",
-                [userId],
-                (err2, res) => {
-                    if (err2) return reject(err2);
-                    connection.query("SELECT * FROM wallets WHERE id = ?", [res.insertId], (err3, newRows) => {
-                        if (err3) return reject(err3);
-                        resolve(newRows[0]);
-                    });
-                }
-            );
-        });
-    });
-}
+const { ensureWallet } = require('../utils/wallets');
 
 /**
  * 🟢 POST /api/payment/ccavenue/initiate-wallet
@@ -195,7 +172,8 @@ exports.handleCcavenueResponse = async (req, res) => {
         );
     } catch (error) {
         console.error("[CCAvenue] Response callback error:", error);
-        return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=failed&reason=${encodeURIComponent(error.message)}`);
+        // The details are in the log; the customer gets a plain message, not a decryption error.
+        return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=failed&reason=${encodeURIComponent("We couldn't read the payment response. If money was taken, contact support@walras.net.")}`);
     }
 };
 
@@ -207,8 +185,9 @@ exports.handleCcavenueCancel = async (req, res) => {
     const config = ccavenueService.getConfig();
     // CCAvenue posts the cancellation like a response: encrypted in encResp,
     // with the order number also as orderNo.
-    let orderId = req.body?.orderNo || req.query?.order_id || req.body?.order_id || '';
-    if (req.body?.encResp) {
+    // This endpoint is public: anything can be posted here, so read only strings.
+    let orderId = [req.body?.orderNo, req.query?.order_id, req.body?.order_id].find((v) => typeof v === 'string') || '';
+    if (typeof req.body?.encResp === 'string') {
         try {
             orderId = ccavenueService.parseResponse(ccavenueService.decrypt(req.body.encResp, config.workingKey)).order_id || orderId;
         } catch (err) {

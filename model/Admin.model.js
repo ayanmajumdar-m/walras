@@ -61,14 +61,13 @@ const Admin = {
             u.isPhoneVerified AS "isPhoneVerified",
             u.lastLoginAt AS "lastLoginAt",
             u.createdAt AS "createdAt",
-            w.balance,
+            (SELECT w.balance FROM wallets w WHERE w.user_id = u.id ORDER BY w.id LIMIT 1) AS balance,
             (SELECT COUNT(*) FROM servers WHERE user_id = u.id) as server_count,
             (SELECT COUNT(*) FROM user_sessions WHERE user_id = u.id) as total_logins,
             (SELECT COUNT(DISTINCT ip_address) FROM user_sessions WHERE user_id = u.id) as unique_ips,
             (SELECT COALESCE(SUM(amount), 0) FROM billing_logs WHERE user_id = u.id) as total_spent,
             (SELECT COUNT(*) FROM billing_logs WHERE user_id = u.id) as transaction_count
-            FROM users u 
-            LEFT JOIN wallets w ON u.id = w.user_id 
+            FROM users u
             ORDER BY u.createdAt DESC`;
         connection.query(query, (err, results) => {
             if (err) {
@@ -79,14 +78,13 @@ const Admin = {
                     u.isPhoneVerified AS "isPhoneVerified",
                     u.lastLoginAt AS "lastLoginAt",
                     u.createdAt AS "createdAt",
-                    w.balance,
+                    (SELECT w.balance FROM wallets w WHERE w.user_id = u.id ORDER BY w.id LIMIT 1) AS balance,
                     (SELECT COUNT(*) FROM servers WHERE user_id = u.id) as server_count,
                     0 as total_logins,
                     0 as unique_ips,
                     (SELECT COALESCE(SUM(amount), 0) FROM billing_logs WHERE user_id = u.id) as total_spent,
                     (SELECT COUNT(*) FROM billing_logs WHERE user_id = u.id) as transaction_count
-                    FROM users u 
-                    LEFT JOIN wallets w ON u.id = w.user_id 
+                    FROM users u
                     ORDER BY u.createdAt DESC`;
                 connection.query(fallbackQuery, callback);
             } else {
@@ -190,9 +188,9 @@ const Admin = {
             (SELECT COUNT(*) FROM users) as total_users,
             (SELECT COUNT(*) FROM servers WHERE status = 'active') as active_servers,
             (SELECT COUNT(*) FROM servers) as total_servers,
-            (SELECT COUNT(*) FROM billing_logs) as total_transactions,
-            (SELECT COALESCE(SUM(amount), 0) FROM billing_logs) as total_revenue,
-            (SELECT COUNT(*) FROM invoices) as total_invoices,
+            (SELECT COUNT(*) FROM wallet_transactions WHERE status = 'completed') as total_transactions,
+            (SELECT COALESCE(SUM(amount_paid), 0) FROM monthly_invoices) as total_revenue,
+            (SELECT COUNT(*) FROM monthly_invoices) as total_invoices,
             (SELECT COUNT(*) FROM user_sessions WHERE is_active = true) as active_sessions,
             (SELECT COUNT(DISTINCT ip_address) FROM user_sessions) as unique_ips`;
         connection.query(query, (err, results) => {
@@ -202,9 +200,9 @@ const Admin = {
                     (SELECT COUNT(*) FROM users) as total_users,
                     (SELECT COUNT(*) FROM servers WHERE status = 'active') as active_servers,
                     (SELECT COUNT(*) FROM servers) as total_servers,
-                    (SELECT COUNT(*) FROM billing_logs) as total_transactions,
-                    (SELECT COALESCE(SUM(amount), 0) FROM billing_logs) as total_revenue,
-                    (SELECT COUNT(*) FROM invoices) as total_invoices,
+                    (SELECT COUNT(*) FROM wallet_transactions WHERE status = 'completed') as total_transactions,
+                    (SELECT COALESCE(SUM(amount_paid), 0) FROM monthly_invoices) as total_revenue,
+                    (SELECT COUNT(*) FROM monthly_invoices) as total_invoices,
                     0 as active_sessions,
                     0 as unique_ips`;
                 connection.query(fallbackQuery, callback);

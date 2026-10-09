@@ -308,7 +308,8 @@ const UserController = {
                 if (err) return res.status(500).json({ error: 'Database error' });
                 if (!results || results.length === 0) return res.status(404).json({ error: 'User not found' });
 
-                User.updateData(userId, { name, phone, company, gstin: gstin || null, role, address }, (updateErr) => {
+                // A cleared phone is NULL, not '': phone is UNIQUE, so a second '' would clash.
+                User.updateData(userId, { name, phone: phone || null, company, gstin: gstin || null, role, address }, (updateErr) => {
                     if (updateErr && updateErr.code === 'ER_DUP_ENTRY') {
                         return res.status(409).json({ error: 'This phone number is already linked to another account' });
                     }
@@ -323,26 +324,6 @@ const UserController = {
         }
     },
 
-    getOpenProviderAuthToken: async (req, res) => {
-        try {
-            const { getAuthToken } = require('../services/openProviderServices');
-            const authToken = await getAuthToken();
-            res.status(200).json({ authToken });
-        } catch (error) {
-            console.error('Error fetching OpenProvider auth token:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    getOpenProviderDomains: async (req, res) => {
-        try {
-            const { getDomains } = require('../services/openProviderServices');
-            const domains = await getDomains();
-            res.status(200).json({ domains });
-        } catch (error) {
-            console.error('Error fetching OpenProvider domains:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
     searchDomain: async (req, res) => {
         try {
             const { domainName } = req.body;
@@ -367,10 +348,7 @@ const UserController = {
 
             console.log('Formatted results:', formattedResults);
 
-            res.status(200).json({
-                searchResults: formattedResults,
-                originalResponse: searchResults
-            });
+            res.status(200).json({ searchResults: formattedResults });
         } catch (error) {
             console.error('Error searching domain:', error);
 

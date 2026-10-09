@@ -67,7 +67,7 @@ const Wallet = () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/user/profile/${userId}`, {
+      const res = await fetch(`${API_URL}/api/users/profile/${userId}`, {
         headers: {
           "Content-Type": "application/json",
           ...authHeaders(),

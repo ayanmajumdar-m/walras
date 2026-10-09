@@ -56,6 +56,8 @@ const migrateLegacyUsers = [
     'ALTER TABLE users ADD COLUMN IF NOT EXISTS gstin VARCHAR(15)',
     // The customer's Zendesk end-user (support tickets), linked on first use.
     'ALTER TABLE users ADD COLUMN IF NOT EXISTS zendesk_user_id BIGINT',
+    // A cleared phone used to be saved as '', which UNIQUE allows only once.
+    "UPDATE users SET phone = NULL WHERE phone = ''",
 ];
 
 // Small key/value store for settings admins can change without a redeploy
@@ -673,6 +675,9 @@ connection.connect((err) => {
         ['Role permissions', createRolePermissionsTable],
         ['Audit logs', createAuditLogsTable],
         ['Wallet', createWalletTable],
+        // One wallet per customer (utils/wallets.js relies on it). Fails, and says
+        // so here, if an account already has two: merge those first.
+        ['wallets one per user', 'CREATE UNIQUE INDEX IF NOT EXISTS wallets_user_id_key ON wallets (user_id)'],
         ['Wallet transaction', createWalletTransactionTable],
         ['Billing logs', createBillingLogsTable],
         ['Invoices', createInvoicesTable],
@@ -689,8 +694,6 @@ connection.connect((err) => {
         ['SolusVM account locations', createSolusAccountLocationsTable],
         ['SolusVM account plans', createSolusAccountPlansTable],
         ['servers account', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS solus_account_id INT'],
-        // One use of a promo code per customer (also stops double-click redemptions).
-        ['promo usage unique', 'CREATE UNIQUE INDEX IF NOT EXISTS promo_code_usage_once_idx ON promo_code_usage (promo_code_id, user_id)'],
         ['Auto top-up', createAutoTopupTable],
         ['Auto top-up charges', createAutoTopupChargesTable],
         // At most one open (scheduled/pending) charge per account.
@@ -706,6 +709,9 @@ connection.connect((err) => {
         ['Transactions', createTransactionsTable],
         ['Promo codes', createPromoCodesTable],
         ['Promo usage', createPromoUsageTable],
+        // One use of a promo code per customer (also stops double-click redemptions).
+        // After the table: on a new database it used to run first and never exist.
+        ['promo usage unique', 'CREATE UNIQUE INDEX IF NOT EXISTS promo_code_usage_once_idx ON promo_code_usage (promo_code_id, user_id)'],
         ['Monthly invoices', createMonthlyInvoicesTable],
         ['Service usage', createServiceUsageTable],
         ['service usage open index', 'CREATE UNIQUE INDEX IF NOT EXISTS service_usage_open_idx ON service_usage (kind, ref_id) WHERE ended_at IS NULL'],

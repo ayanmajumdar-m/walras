@@ -6,7 +6,7 @@ const whoisKey = () => integrations.get('WHOIS_API_KEY'); // Admin → Integrati
 const UserController = require('../controllers/user.controllers');
 const WalletController = require('../controllers/wallet.controllers')
 const authenticateToken = require('../utils/auth.middleware');
-const { requireSalesOpen } = require('../utils/platformSettings');
+const rateLimit = require('../utils/rateLimit');
 
 // Public routes
 //
@@ -19,17 +19,22 @@ userRouter.put('/profile/:id', authenticateToken, UserController.updateProfile);
 
 userRouter.get('/wallet/billing-history', authenticateToken, WalletController.getBillingHistory );
 
-userRouter.get('/openprovider/auth-token', authenticateToken, UserController.getOpenProviderAuthToken);
-userRouter.get('/openprovider/domains', authenticateToken, UserController.getOpenProviderDomains);
+// Domains are "coming soon" on the site. Buying and transferring stay closed
+// until the flow is finished: it registered the domain with OpenProvider and
+// then failed (no domain_contacts table, a status the table doesn't allow),
+// refunding the customer, and its prices read EUR as rupees. The reseller's
+// own token and full domain list are never exposed to customers.
+const domainsComingSoon = (req, res) =>
+    res.status(503).json({ error: 'Domain registration is coming soon. Contact support@walras.net if you need a domain now.', comingSoon: true });
 userRouter.post('/openprovider/search-domain', authenticateToken, UserController.searchDomain);
-userRouter.post('/openprovider/purchase-domain', authenticateToken, requireSalesOpen, UserController.purchaseDomain);
+userRouter.post('/openprovider/purchase-domain', authenticateToken, domainsComingSoon);
 userRouter.get('/openprovider/domain-transactions', authenticateToken, UserController.getDomainTransactions);
-// Update nameservers for a purchased domain
-userRouter.post('/openprovider/update-nameservers', authenticateToken, UserController.updateNameservers);
-// Transfer a domain (requires auth code)
-userRouter.post('/openprovider/transfer-domain', authenticateToken, UserController.transferDomain);
+userRouter.post('/openprovider/update-nameservers', authenticateToken, domainsComingSoon);
+userRouter.post('/openprovider/transfer-domain', authenticateToken, domainsComingSoon);
 
-userRouter.get("/domain-check", async (req, res) => {
+// Public, and every lookup costs WHOIS API quota.
+const domainCheckLimit = rateLimit({ windowMs: 60 * 1000, max: 20, message: 'Too many domain lookups. Please wait a minute.' });
+userRouter.get("/domain-check", domainCheckLimit, async (req, res) => {
   const { domain } = req.query;
   
   console.log("Domain check request for:", domain);

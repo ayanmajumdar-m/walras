@@ -15,6 +15,7 @@ const supportDepartments = require('../utils/supportDepartments');
 const solusAccounts = require('../utils/solusAccounts');
 const computeStock = require('../utils/computeStock');
 const serverLocations = require('../utils/serverLocations');
+const { ensureWallet } = require('../utils/wallets');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -291,11 +292,7 @@ const PlatformController = {
         const [user] = await q('SELECT id FROM users WHERE id = ?', [id]);
         if (!user) throw new HttpError(404, 'Customer not found');
 
-        let [wallet] = await q('SELECT id FROM wallets WHERE user_id = ?', [id]);
-        if (!wallet) {
-            const created = await q('INSERT INTO wallets (user_id, balance) VALUES (?, 0)', [id]);
-            wallet = { id: created.insertId };
-        }
+        const wallet = await ensureWallet(id);
 
         const updated = type === 'credit'
             ? await q('UPDATE wallets SET balance = balance + ? WHERE id = ? RETURNING balance', [paise, wallet.id])

@@ -57,15 +57,24 @@ const AdminController = {
         });
     },
     deleteUser: (req, res) => {
-        const userId = req.params.id; // Use body instead of params
-        Admin.deleteUserById(userId, (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error' });
+        const userId = req.params.id;
+        // Deleting the user cascades to their server rows but not to the VMs on
+        // SolusVM, which would keep running, unbilled and untracked.
+        connection.query('SELECT COUNT(*) AS n FROM servers WHERE user_id = ?', [userId], (countErr, rows) => {
+            if (countErr) return res.status(500).json({ error: 'Database error' });
+            const n = Number(rows[0].n);
+            if (n > 0) {
+                return res.status(409).json({ error: `This customer has ${n} server${n === 1 ? '' : 's'}, so they can't be deleted yet. Suspend the account instead, or delete it once their servers have been cancelled and removed.` });
             }
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-            res.json({ message: 'User deleted successfully' });
+            Admin.deleteUserById(userId, (err, result) => {
+                if (err) {
+                    return res.status(500).json({ error: 'Database error' });
+                }
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+                res.json({ message: 'User deleted successfully' });
+            });
         });
     },
     getUser: (req, res) => {
@@ -137,7 +146,8 @@ const AdminController = {
             if (err) {
                 return res.status(500).json({ error: 'Database error' });
             }
-            res.json(results);
+            // users.* carries the password hash; it never leaves the server.
+            res.json(results.map(({ password_hash, ...user }) => user));
         });
     },
 
@@ -361,10 +371,14 @@ const AdminController = {
     createPromoCode: async (req, res) => {
         try {
             const { code, description, creditAmount, usageLimit, expiresAt } = req.body;
-            const adminId = req.params.id;
+            const adminId = req.admin.adminId;
 
             if (!code || !creditAmount) {
                 return res.status(400).json({ error: 'Code and credit amount are required' });
+            }
+            // A negative "credit" would take money from whoever redeems it.
+            if (!Number.isFinite(Number(creditAmount)) || Number(creditAmount) <= 0) {
+                return res.status(400).json({ error: 'Credit amount must be more than ₹0' });
             }
 
             const creditAmountPaise = Math.round(creditAmount * 100);
@@ -531,7 +545,7 @@ const AdminController = {
                     pc.is_active,
                     pc.expires_at,
                     COUNT(pcu.id) as actual_usage,
-                    SUM(pc.credit_amount) as total_credits_given
+                    pc.credit_amount * COUNT(pcu.id) as total_credits_given
                 FROM promo_codes pc
                 LEFT JOIN promo_code_usage pcu ON pc.id = pcu.promo_code_id
                 GROUP BY pc.id

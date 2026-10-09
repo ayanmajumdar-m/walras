@@ -25,6 +25,7 @@ const connection = require('../config/db');
 const ccavenue = require('../services/ccavenueService');
 const si = require('../services/ccavenueSI');
 const { creditPendingTopup, failPendingTopup } = require('./walletCredit');
+const { ensureWallet } = require('./wallets');
 const { sendRawEmail, escapeHtml } = require('./sendEmail');
 const integrations = require('./integrations');
 const { getPlatform } = require('./platformSettings');
@@ -58,12 +59,8 @@ const platformOpen = async () => {
 const getRow = async (userId) => (await q('SELECT * FROM wallet_auto_topup WHERE user_id = ?', [userId]))[0] || null;
 
 const walletOf = async (userId) => {
-    let rows = await q('SELECT id, balance FROM wallets WHERE user_id = ?', [userId]);
-    if (!rows.length) {
-        await q('INSERT INTO wallets (user_id, balance) VALUES (?, 0)', [userId]);
-        rows = await q('SELECT id, balance FROM wallets WHERE user_id = ?', [userId]);
-    }
-    return { id: rows[0].id, balance: Number(rows[0].balance) };
+    const wallet = await ensureWallet(userId);
+    return { id: wallet.id, balance: Number(wallet.balance) };
 };
 
 /** What the customer sees on the Billing page. */

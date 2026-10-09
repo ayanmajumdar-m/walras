@@ -134,7 +134,8 @@ const ComputeConfigurator = ({ mode = "monthly" }) => {
     try {
       await api("/api/servers/deploy", {
         method: "POST",
-        body: { plan: plan.name, location: locationId, os: Number(osId), hostname: hostname.trim().toLowerCase(), password, term: term.months },
+        // OS choices are identified by name ("Ubuntu 22.04"): each SolusVM panel numbers its images differently.
+        body: { plan: plan.name, location: locationId, os: osId, hostname: hostname.trim().toLowerCase(), password, term: term.months },
       });
       refreshBalance();
       navigate("/dashboard/resources?tab=servers&created=1");

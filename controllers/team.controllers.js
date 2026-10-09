@@ -42,6 +42,15 @@ const idParam = (raw) => {
     return Number(raw);
 };
 
+// A team Admin working in the owner's account (req.user.actorId set) can only
+// hand out areas they have themselves; the owner can give any.
+const checkGrant = (req, access) => {
+    if (!req.user.actorId) return;
+    if (access.areas.some((a) => !(req.user.teamAreas || []).includes(a))) {
+        throw new HttpError(403, 'You can only give access to areas you have yourself.');
+    }
+};
+
 const findUser = async (userId) => {
     const [u] = await q('SELECT id, name, email, isemailverified FROM users WHERE id = ?', [userId]);
     if (!u) throw new HttpError(404, 'Account not found.');
@@ -111,6 +120,7 @@ const TeamController = {
         if (!EMAIL.test(email) || email.length > 255) throw new HttpError(400, 'Enter a valid email address.');
         if (email === normEmail(owner.email)) throw new HttpError(400, "That's the account owner's own email address.");
         if (!access) throw new HttpError(400, 'Choose a role and at least one area: Servers, Billing or Support.');
+        checkGrant(req, access);
 
         const [{ n }] = await q('SELECT COUNT(*) AS n FROM team_members WHERE owner_id = ?', [owner.id]);
         if (Number(n) >= team.TEAM_LIMIT) {
@@ -141,6 +151,13 @@ const TeamController = {
         const id = idParam(req.params.id);
         const access = team.cleanAccess(req.body.role, req.body.areas);
         if (!access) throw new HttpError(400, 'Choose a role and at least one area, or remove the person instead.');
+        checkGrant(req, access);
+        if (req.user.actorId) {
+            const [row] = await q('SELECT member_user_id FROM team_members WHERE id = ? AND owner_id = ?', [id, req.user.userId]);
+            if (row && Number(row.member_user_id) === Number(req.user.actorId)) {
+                throw new HttpError(403, "You can't change your own access. Ask the account owner.");
+            }
+        }
         const r = await q('UPDATE team_members SET permissions = ? WHERE id = ? AND owner_id = ?', [team.formatAccess(access), id, req.user.userId]);
         if (!r.affectedRows) throw new HttpError(404, 'Not found.');
         res.json({ message: 'Access updated.' });

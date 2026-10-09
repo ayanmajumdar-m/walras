@@ -11,12 +11,23 @@ require("./services/billingServices");
 const { verifyEmailTransport } = require("./utils/sendEmail");
 if (process.env.DISABLE_BILLING !== "true") console.log("💰 Billing service initialized");
 
+// Basic hardening: no framework banner, no framing by other sites (clickjacking
+// on the console and admin panel), no MIME sniffing.
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
 // ✅ Step 1: Proper CORS setup (for frontend on localhost:3000)
 app.use(
   cors({
     origin: ["http://localhost:3000", "https://walras.net", "https://www.walras.net"],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    // PATCH: Admin → Administrators edits an admin with it.
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
       "Authorization",
@@ -85,6 +96,8 @@ app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/invoices", require("./routes/invoices.routes"));
+// An API path nothing handles is a 404 in JSON, not the React app's HTML.
+app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));
 
 // ✅ Step 5: Test DB connection
 connection.connect((err) => {

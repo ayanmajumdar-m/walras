@@ -1,28 +1,6 @@
 const connection = require("../config/db");
 const monthlyBilling = require("../utils/monthlyBilling");
-
-// Helper: ensure wallet exists for a user
-async function ensureWallet(userId) {
-    return new Promise((resolve, reject) => {
-        connection.query("SELECT * FROM wallets WHERE user_id = ?", [userId], (err, rows) => {
-            if (err) return reject(err);
-            if (rows.length) return resolve(rows[0]);
-
-            // create new wallet
-            connection.query(
-                "INSERT INTO wallets (user_id, balance) VALUES (?, 0)",
-                [userId],
-                (err2, res) => {
-                    if (err2) return reject(err2);
-                    connection.query("SELECT * FROM wallets WHERE id = ?", [res.insertId], (err3, newRows) => {
-                        if (err3) return reject(err3);
-                        resolve(newRows[0]);
-                    });
-                }
-            );
-        });
-    });
-}
+const { ensureWallet } = require("../utils/wallets");
 
 // 🟢 GET wallet
 exports.getWallet = async (req, res) => {
@@ -264,7 +242,8 @@ exports.applyPromoCode = async (req, res) => {
                                                                             res.json({
                                                                                 message: "Promo code applied successfully!",
                                                                                 creditAmount: (promo.credit_amount / 100).toFixed(2),
-                                                                                newBalance: ((wallet.balance + promo.credit_amount) / 100).toFixed(2)
+                                                                                // BIGINT columns arrive as strings: add them as numbers.
+                                                                                newBalance: ((Number(wallet.balance) + Number(promo.credit_amount)) / 100).toFixed(2)
                                                                             });
                                                                         });
                                                                     }
