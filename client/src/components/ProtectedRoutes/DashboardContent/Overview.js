@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Layers, Server, Globe, Cpu, ArrowRight, Wallet, Plus, Boxes } from "lucide-react";
+import { Layers, Globe, Cpu, ArrowRight, Wallet, Plus, Boxes } from "lucide-react";
 import { api } from "../consoleApi";
-import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
 
@@ -13,7 +12,6 @@ const Overview = () => {
   const { profile, balance, platform, account, can } = useConsole();
   const hasServers = can("servers");
   const [servers, setServers] = useState([]);
-  const [hosting, setHosting] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,21 +19,16 @@ const Overview = () => {
     if (!hasServers) { setLoading(false); return; }
     Promise.allSettled([
       api("/api/servers").then((d) => setServers(d.servers || [])),
-      api("/api/hosting").then((d) => setHosting(d.hostingAccounts || [])),
       api("/api/users/domains/purchased").then((d) => setDomains(d.domains || [])),
     ]).finally(() => setLoading(false));
   }, [hasServers]);
 
   const firstName = (profile?.name || "").split(" ")[0];
   const activeServers = servers.filter((s) => s.status === "active").length;
-  const activeHosting = hosting.filter((h) => h.status === "active").length;
 
   const STATS = [
     ...(hasServers ? [
     { label: "Virtual Machines", value: servers.length, note: `${activeServers} running`, Icon: Layers, to: "/dashboard/resources?tab=servers" },
-    ...(WEB_HOSTING_ENABLED || hosting.length > 0
-      ? [{ label: "Web hosting", value: hosting.length, note: `${activeHosting} active`, Icon: Server, to: "/dashboard/resources?tab=hosting" }]
-      : []),
     { label: "Domains", value: domains.length, note: "registered", Icon: Globe, to: "/dashboard/resources?tab=domains" },
     ] : []),
     ...(can("billing") ? [{ label: "Account balance", value: `₹${balance.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`, note: platform?.topUpsPaused ? "View billing" : "Add funds", Icon: Wallet, to: "/dashboard/billing" }] : []),
@@ -43,7 +36,6 @@ const Overview = () => {
 
   // Newest first, across every kind of resource.
   const recent = [
-    ...hosting.map((h) => ({ key: `h${h.id}`, Icon: Server, name: h.domain, kind: `Web Hosting · ${h.plan_name}`, status: h.status, date: h.created_at, tab: "hosting" })),
     ...servers.map((s) => ({ key: `s${s.id}`, Icon: Cpu, name: s.name, kind: `Virtual Machine · ${s.plan_name}`, status: s.status, date: s.created_at, tab: "servers" })),
     ...domains.map((d) => ({ key: `d${d.id}`, Icon: Globe, name: d.full_domain || d.domain_name, kind: "Domain", status: d.status, date: d.created_at || d.registration_date, tab: "domains" })),
   ]
@@ -112,7 +104,7 @@ const Overview = () => {
           <div className="cx-card cx-empty">
             <span className="cx-empty-icon"><Boxes size={26} aria-hidden="true" /></span>
             <h4>Nothing here yet</h4>
-            <p>Your servers, hosting accounts and domains will show up here once you create them.</p>
+            <p>Your servers and domains will show up here once you create them.</p>
             <Link to="/dashboard/create" className="cx-btn cx-btn-primary"><Plus size={16} /> Create your first resource</Link>
           </div>
         ) : (

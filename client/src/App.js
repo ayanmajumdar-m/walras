@@ -26,17 +26,6 @@ import Refund from './components/Refund';
 import Terms from './components/Terms';
 import './components/BareMetal.css';
 import FlareMail from './components/FlareMail';
-import WebHosting from './components/WebHosting/WebHosting';
-import HostingPurchase from './components/WebHosting/HostingPurchase';
-import { WEB_HOSTING_ENABLED } from './data/plans';
-
-// While Web Hosting is withdrawn its pages go to Pricing, except the purchase
-// page when CCAvenue returns a customer there with a payment result.
-const HostingRoute = ({ children }) => {
-  const { search } = useLocation();
-  if (WEB_HOSTING_ENABLED || new URLSearchParams(search).has('payment_status')) return children;
-  return <Navigate to="/pricing" replace />;
-};
 
 // Public pages open at the top, or at the #section a link names (footer
 // links, /pricing#domains…). Without this the router keeps the old scroll
@@ -86,11 +75,6 @@ function App() {
         <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
         <Route path="/domains" element={<Navigate to={{ pathname: "/pricing", hash: "#domains" }} replace />} />
         <Route path="/domains/buy" element={<PublicLayout><Domain /></PublicLayout>} />
-        <Route path="/web-hosting" element={<HostingRoute><PublicLayout><WebHosting /></PublicLayout></HostingRoute>} />
-        <Route path="/web-hosting/purchase" element={<HostingRoute><PublicLayout><HostingPurchase /></PublicLayout></HostingRoute>} />
-        <Route path="/web-hosting/buy" element={<Navigate to="/web-hosting/purchase" replace />} />
-        <Route path="/hosting/purchase" element={<Navigate to="/web-hosting/purchase" replace />} />
-        <Route path="/purchase/hosting" element={<Navigate to="/web-hosting/purchase" replace />} />
         <Route path='/privacy' element={<PublicLayout><Privacy /></PublicLayout>} />
         <Route path='/refund' element={<PublicLayout><Refund /></PublicLayout>} />
         <Route path='/terms' element={<PublicLayout><Terms /></PublicLayout>} />

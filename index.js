@@ -42,7 +42,6 @@ const adminRouter = require("./routes/admin.routes");
 const walletRouter = require("./routes/wallet.routes");
 const serverRouter = require("./routes/server.routes");
 const authRouter = require("./routes/auth.routes");
-const hostingRouter = require("./routes/hosting.routes");
 const paymentRouter = require("./routes/payment.routes");
 
 // ✅ Step 4: Use routes
@@ -84,7 +83,6 @@ app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
-app.use("/api/hosting", hostingRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/invoices", require("./routes/invoices.routes"));
 

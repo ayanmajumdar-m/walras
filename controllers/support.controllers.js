@@ -82,7 +82,6 @@ const ownTicket = async (userId, id) => {
 /** Account summary for the agent, added to each new ticket as an internal note. */
 const accountNote = async (userId) => {
     const [u] = await q('SELECT id, waladmin_id, name, email, phone, account_type, company, gstin, createdat FROM users WHERE id = ?', [userId]);
-    const hosting = await q('SELECT domain, plan_name, status, expires_at FROM hosting_accounts WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [userId]).catch(() => []);
     const servers = await q('SELECT name, plan_name, status FROM servers WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [userId]).catch(() => []);
     const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [userId]).catch(() => []);
     const date = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '-');
@@ -94,9 +93,6 @@ const accountNote = async (userId) => {
         `Type: ${u?.account_type || 'personal'}${u?.company ? ` · ${u.company}` : ''}${u?.gstin ? ` · GSTIN ${u.gstin}` : ''}`,
         `Joined ${date(u?.createdat)} · Account balance ₹${(Number(wallet?.balance || 0) / 100).toFixed(2)}`,
         `Admin: ${base}/vadmin-1997/dashboard?section=customer&id=${userId}`,
-        '',
-        'Web hosting:',
-        ...(hosting.length ? hosting.map((h) => `- ${h.domain} (${h.plan_name}): ${h.status}, expires ${date(h.expires_at)}`) : ['- none']),
         '',
         'Virtual Machines:',
         ...(servers.length ? servers.map((s) => `- ${s.name} (${s.plan_name}): ${s.status}`) : ['- none']),

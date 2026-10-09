@@ -1,14 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Server, Layers, Globe, ExternalLink, KeyRound, Copy, Check, Play, Square, RotateCcw, Trash2, RefreshCw, Plus, X, Undo2 } from "lucide-react";
+import { Layers, Globe, Play, Square, RotateCcw, Trash2, RefreshCw, X, Undo2 } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
-import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 import EditNSModal from "./EditNSModal";
 import TransferDomainModal from "./TransferDomainModal";
 
 const TABS = [
-  { id: "hosting", label: "Web Hosting", Icon: Server },
   { id: "servers", label: "Virtual Machines", Icon: Layers },
   { id: "domains", label: "Domains", Icon: Globe },
 ];
@@ -27,103 +25,7 @@ const Empty = ({ Icon, title, text, cta }) => (
   </div>
 );
 
-// ── Credentials modal ─────────────────────────────────────────────────────
-const CopyField = ({ label, value, mono }) => {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-  return (
-    <div className="cx-copy">
-      <span className="cx-copy-label">{label}</span>
-      <span className="cx-copy-row">
-        {mono ? <code>{value}</code> : <span>{value}</span>}
-        <button type="button" onClick={copy} aria-label={`Copy ${label}`}>{copied ? <Check size={15} /> : <Copy size={15} />}</button>
-      </span>
-    </div>
-  );
-};
-
-const CredentialsModal = ({ data, onClose }) => (
-  <div className="cx-modal-scrim" onClick={onClose}>
-    <div className="cx-modal" role="dialog" aria-modal="true" aria-label="Hosting details" onClick={(e) => e.stopPropagation()}>
-      <div className="cx-modal-head">
-        <h3>{data.domain}</h3>
-        <button type="button" className="cx-icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
-      </div>
-      <CopyField label="cPanel username" value={data.username} mono />
-      <CopyField label="cPanel password" value={data.password} mono />
-      <div className="cx-copy">
-        <span className="cx-copy-label">cPanel URL</span>
-        <a href={data.cpanel_url} target="_blank" rel="noreferrer" className="cx-link">{data.cpanel_url}</a>
-      </div>
-      <div className="cx-copy">
-        <span className="cx-copy-label">Point your domain to these nameservers</span>
-        {(data.nameservers || []).map((ns) => <CopyField key={ns} label="" value={ns} mono />)}
-      </div>
-    </div>
-  </div>
-);
-
 // ── Tabs ──────────────────────────────────────────────────────────────────
-const HostingTab = ({ accounts, notify }) => {
-  const [creds, setCreds] = useState(null);
-
-  const login = async (id) => {
-    try {
-      const d = await api(`/api/hosting/${id}/login`);
-      if (d.url) window.open(d.url, "_blank", "noopener");
-    } catch (e) { notify(e.message, "error"); }
-  };
-  const details = async (id) => {
-    try { setCreds(await api(`/api/hosting/${id}/credentials`)); } catch (e) { notify(e.message, "error"); }
-  };
-
-  if (accounts.length === 0) {
-    return <Empty Icon={Server} title="No web hosting yet" text="Get cPanel hosting with free SSL and email, ready in minutes."
-      cta={<Link to="/dashboard/create?type=hosting" className="cx-btn cx-btn-primary"><Plus size={16} /> Buy web hosting</Link>} />;
-  }
-
-  return (
-    <>
-      <div className="cx-card cx-table-wrap">
-        <table className="cx-table">
-          <thead><tr><th>Domain</th><th>Plan</th><th>cPanel user</th><th>Status</th><th>Expires</th><th /></tr></thead>
-          <tbody>
-            {accounts.map((a) => {
-              const suspended = a.status === "suspended";
-              return (
-                <tr key={a.id}>
-                  <td data-label="Domain"><strong>{a.domain}</strong><small>{a.billing_cycle}</small></td>
-                  <td data-label="Plan">{a.plan_name}</td>
-                  <td data-label="cPanel user"><code>{a.cpanel_username}</code></td>
-                  <td data-label="Status">
-                    <span className={`cx-status is-${a.status}`}>{a.status}</span>
-                    {a.suspension_reason && <small>{a.suspension_reason}</small>}
-                  </td>
-                  <td data-label="Expires">{formatDate(a.expires_at)}</td>
-                  <td className="cx-actions">
-                    <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" onClick={() => login(a.id)} disabled={suspended}
-                      title={suspended ? "Suspended accounts can't sign in to cPanel" : "Open cPanel"}>
-                      <ExternalLink size={14} /> cPanel
-                    </button>
-                    <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => details(a.id)}>
-                      <KeyRound size={14} /> Details
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      {creds && <CredentialsModal data={creds} onClose={() => setCreds(null)} />}
-    </>
-  );
-};
-
 const ServersTab = ({ servers, reload, notify }) => {
   // Team members with Write access can't delete.
   const canDelete = useConsole().can("delete");
@@ -283,10 +185,7 @@ const DomainsTab = ({ domains, reload, notify }) => {
 // ── Page ──────────────────────────────────────────────────────────────────
 const Resources = () => {
   const [params, setParams] = useSearchParams();
-  const [hosting, setHosting] = useState([]);
-  // Web Hosting's tab only shows while it's sold, or for customers who have it.
-  const tabs = TABS.filter((t) => t.id !== "hosting" || WEB_HOSTING_ENABLED || hosting.length > 0);
-  const tab = tabs.some((t) => t.id === params.get("tab")) ? params.get("tab") : tabs[0].id;
+  const tab = TABS.some((t) => t.id === params.get("tab")) ? params.get("tab") : TABS[0].id;
   const [servers, setServers] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -300,7 +199,6 @@ const Resources = () => {
   const load = useCallback(() => {
     setLoading(true);
     Promise.allSettled([
-      api("/api/hosting").then((d) => setHosting(d.hostingAccounts || [])),
       api("/api/servers").then((d) => setServers(d.servers || [])),
       api("/api/users/domains/purchased").then((d) => setDomains(d.domains || [])),
     ]).finally(() => setLoading(false));
@@ -318,7 +216,7 @@ const Resources = () => {
     return () => clearInterval(timer);
   }, [building]);
 
-  const counts = { hosting: hosting.length, servers: servers.length, domains: domains.length };
+  const counts = { servers: servers.length, domains: domains.length };
 
   return (
     <div className="cx-page">
@@ -333,7 +231,7 @@ const Resources = () => {
       </div>
 
       <div className="cx-tabs" role="tablist">
-        {tabs.map(({ id, label, Icon }) => (
+        {TABS.map(({ id, label, Icon }) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id}
             className={`cx-tab${tab === id ? " is-active" : ""}`} onClick={() => setParams({ tab: id }, { replace: true })}>
             <Icon size={16} aria-hidden="true" /> {label} <span className="cx-count">{counts[id]}</span>
@@ -352,7 +250,6 @@ const Resources = () => {
         <div className="cx-card cx-empty"><p>Loading…</p></div>
       ) : (
         <>
-          {tab === "hosting" && <HostingTab accounts={hosting} notify={notify} />}
           {tab === "servers" && <ServersTab servers={servers} reload={load} notify={notify} />}
           {tab === "domains" && <DomainsTab domains={domains} reload={load} notify={notify} />}
         </>

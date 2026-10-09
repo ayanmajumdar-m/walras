@@ -1,8 +1,7 @@
 import React from "react";
 import "./Homepage.css";
 import { useLocations } from "../data/locations";
-import { WEB_HOSTING_ENABLED } from "../data/plans";
-import { Zap, Clock, Gauge, Globe, Server, Cpu, Check, BadgePercent } from "lucide-react";
+import { Zap, Clock, Gauge, Globe, Cpu, Check, BadgePercent } from "lucide-react";
 
 /*
   The homepage as a specification sheet.
@@ -42,7 +41,7 @@ const COMMITMENTS = [
   }
 ];
 
-const ALL_SERVICES = [
+const SERVICES = [
   {
     ref: "S-01",
     Icon: Globe,
@@ -53,14 +52,6 @@ const ALL_SERVICES = [
   },
   {
     ref: "S-02",
-    Icon: Server,
-    title: "Web Hosting",
-    description: "High-speed SSD hosting with cPanel, automated SSL, and 24/7 expert support.",
-    features: ["SSD Storage", "Free SSL Certificate", "cPanel Control Panel", "Automated Backups"],
-    action: { label: "Explore Hosting", href: "/web-hosting" }
-  },
-  {
-    ref: "S-03",
     Icon: Cpu,
     title: "Virtual Machine",
     description: "General purpose virtual machines on Intel or AMD, with NVMe SSD storage, prepaid monthly with the first month pro rata.",
@@ -68,7 +59,7 @@ const ALL_SERVICES = [
     action: { label: "View plans", href: "/pricing#virtual-machine" }
   },
   {
-    ref: "S-04",
+    ref: "S-03",
     Icon: BadgePercent,
     title: "Reserved VMs",
     description: "The same virtual machines, reserved for 3 to 36 months and paid up front, for up to 25% less than monthly.",
@@ -76,11 +67,6 @@ const ALL_SERVICES = [
     action: { label: "See savings", href: "/pricing#virtual-machine" }
   }
 ];
-
-// Numbered in the order shown, so hiding one (Web Hosting) leaves no gap.
-const SERVICES = ALL_SERVICES
-  .filter((s) => s.title !== "Web Hosting" || WEB_HOSTING_ENABLED)
-  .map((s, i) => ({ ...s, ref: `S-${String(i + 1).padStart(2, "0")}` }));
 
 /* Every figure here is a commitment made elsewhere on the site — uptime from
    the commitments band, response and trial from support, regions and entry

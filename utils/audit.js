@@ -33,7 +33,7 @@ module.exports = audit;
  * Route-level audit for existing handlers: records the action once the
  * response has gone out, and only if it succeeded.
  *
- *   router.delete('/hosting/:id', auditRoute('hosting.delete', 'hosting', (req) => req.params.id), handler)
+ *   router.delete('/servers/:id', auditRoute('server.delete', 'server', (req) => req.params.id), handler)
  */
 audit.route = (action, targetType, getTargetId = () => null, getMeta = () => ({})) => (req, res, next) => {
     res.on('finish', () => {

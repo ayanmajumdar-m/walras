@@ -212,13 +212,6 @@ const PlatformController = {
         res.json({ message: 'Platform settings saved', ...(await platform.getPlatform()) });
     }),
 
-    updatePlanAvailability: handle(async (req, res) => {
-        await platform.setPlanAvailability(req.body.planAvailability);
-        const after = await platform.getPlatform();
-        audit(req, 'settings.plans', 'settings', 'plans', { planAvailability: after.planAvailability });
-        res.json({ message: 'Plan availability saved', ...after });
-    }),
-
     updateInvoiceDetails: handle(async (req, res) => {
         const gstin = String(req.body.invoice?.gstin || '').trim().toUpperCase();
         if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) {
@@ -242,12 +235,10 @@ const PlatformController = {
         if (!user) throw new HttpError(404, 'Customer not found');
 
         const settle = (p) => p.catch((e) => { console.error('User overview part failed:', e.message); return []; });
-        const [wallet, hosting, servers, domains, orders, transactions, invoices, sessions] = await Promise.all([
+        const [wallet, servers, domains, transactions, invoices, sessions] = await Promise.all([
             settle(q('SELECT id, balance, currency, updated_at FROM wallets WHERE user_id = ?', [id])),
-            settle(q('SELECT id, domain, plan_name, billing_cycle, cpanel_username, status, expires_at, suspension_reason, created_at FROM hosting_accounts WHERE user_id = ? ORDER BY created_at DESC', [id])),
             settle(q('SELECT id, name, ip_address, plan_name, location, status, hourly_cost, created_at FROM servers WHERE user_id = ? ORDER BY created_at DESC', [id])),
             settle(q('SELECT id, full_domain, status, amount, currency, registration_date, expiration_date, created_at FROM domain_transactions WHERE user_id = ? ORDER BY created_at DESC', [id])),
-            settle(q('SELECT id, order_id, plan_name, domain, billing_cycle, total_amount, status, failure_message, created_at FROM hosting_orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 50', [id])),
             settle(q(`SELECT wt.id, wt.type, wt.amount, wt.description, wt.status, wt.reference_id, wt.created_at
                       FROM wallet_transactions wt JOIN wallets w ON wt.wallet_id = w.id
                       WHERE w.user_id = ? ORDER BY wt.created_at DESC LIMIT 50`, [id])),
@@ -258,7 +249,7 @@ const PlatformController = {
         res.json({
             user,
             wallet: wallet[0] || null,
-            hosting, servers, domains, orders, transactions, invoices, sessions,
+            servers, domains, transactions, invoices, sessions,
         });
     }),
 
@@ -326,48 +317,33 @@ const PlatformController = {
     // ── Orders ───────────────────────────────────────────────────────────
     listOrders: handle(async (req, res) => {
         const status = ['pending', 'completed', 'failed', 'cancelled'].includes(req.query.status) ? req.query.status : null;
-        const type = ['hosting', 'wallet'].includes(req.query.type) ? req.query.type : null;
         const limit = Math.min(500, Math.max(10, Number.parseInt(req.query.limit, 10) || 200));
-
-        const parts = [];
-        const params = [];
-        if (type !== 'wallet') {
-            parts.push(`SELECT 'hosting' AS type, ho.order_id, ho.user_id, u.name AS user_name, u.email,
-                               CONCAT(ho.plan_name, ' · ', ho.domain) AS item, ho.total_amount AS amount,
-                               ho.status, ho.tracking_id, ho.failure_message, ho.created_at
-                        FROM hosting_orders ho LEFT JOIN users u ON u.id = ho.user_id
-                        ${status ? 'WHERE ho.status = ?' : ''}`);
-            if (status) params.push(status);
-        }
-        if (type !== 'hosting') {
-            parts.push(`SELECT 'wallet' AS type, wt.reference_id AS order_id, w.user_id, u.name AS user_name, u.email,
-                               'Account balance top-up' AS item, wt.amount, wt.status, wt.razorpay_payment_id AS tracking_id,
-                               NULL AS failure_message, wt.created_at
-                        FROM wallet_transactions wt
-                        JOIN wallets w ON w.id = wt.wallet_id LEFT JOIN users u ON u.id = w.user_id
-                        WHERE wt.type = 'credit' AND wt.reference_id LIKE 'CCA%'
-                        ${status ? 'AND wt.status = ?' : ''}`);
-            if (status) params.push(status);
-        }
-        const orders = await q(`${parts.join(' UNION ALL ')} ORDER BY created_at DESC LIMIT ?`, [...params, limit]);
+        // CCAvenue payments: account balance top-ups and invoice payments.
+        const orders = await q(
+            `SELECT wt.reference_id AS order_id, w.user_id, u.name AS user_name, u.email,
+                    CASE WHEN wt.reference_id LIKE 'CCAI%' THEN 'Invoice payment' ELSE 'Account balance top-up' END AS item,
+                    wt.amount, wt.status, wt.razorpay_payment_id AS tracking_id, wt.created_at
+               FROM wallet_transactions wt
+               JOIN wallets w ON w.id = wt.wallet_id LEFT JOIN users u ON u.id = w.user_id
+              WHERE wt.type = 'credit' AND wt.reference_id LIKE 'CCA%'
+              ${status ? 'AND wt.status = ?' : ''}
+              ORDER BY wt.created_at DESC LIMIT ?`,
+            status ? [status, limit] : [limit],
+        );
         res.json({ orders });
     }),
 
     // ── Notifications ────────────────────────────────────────────────────
     /**
      * Derived from the data itself rather than a separate event table: recent
-     * sign-ups, hosting orders and failed payments. "Unread" is anything newer
+     * sign-ups and failed payments. "Unread" is anything newer
      * than when this admin last opened the bell.
      */
     listNotifications: handle(async (req, res) => {
         const settle = (p) => p.catch(() => []);
-        const [signups, orders, failedTopups, [me]] = await Promise.all([
+        const [signups, failedTopups, [me]] = await Promise.all([
             settle(q(`SELECT id, name, email, account_type, createdat AS at FROM users
                       WHERE createdat > NOW() - INTERVAL '14 days' ORDER BY createdat DESC LIMIT 20`)),
-            settle(q(`SELECT ho.order_id, ho.status, ho.total_amount, ho.domain, ho.plan_name, ho.user_id, u.name, ho.created_at AS at
-                      FROM hosting_orders ho LEFT JOIN users u ON u.id = ho.user_id
-                      WHERE ho.created_at > NOW() - INTERVAL '14 days' AND ho.status IN ('completed', 'failed')
-                      ORDER BY ho.created_at DESC LIMIT 20`)),
             settle(q(`SELECT wt.reference_id, wt.amount, w.user_id, u.name, wt.created_at AS at
                       FROM wallet_transactions wt JOIN wallets w ON w.id = wt.wallet_id LEFT JOIN users u ON u.id = w.user_id
                       WHERE wt.status = 'failed' AND wt.created_at > NOW() - INTERVAL '14 days'
@@ -377,13 +353,6 @@ const PlatformController = {
 
         const items = [
             ...signups.map((u) => ({ kind: 'signup', title: `New ${u.account_type || 'personal'} sign-up`, body: `${u.name} · ${u.email}`, userId: u.id, at: u.at })),
-            ...orders.map((o) => ({
-                kind: o.status === 'completed' ? 'order' : 'payment_failed',
-                title: o.status === 'completed' ? 'Hosting order paid' : 'Hosting payment failed',
-                body: `${o.name || 'Customer'} · ${o.plan_name} · ${o.domain} · ₹${(Number(o.total_amount) / 100).toFixed(2)}`,
-                userId: o.user_id,
-                at: o.at,
-            })),
             ...failedTopups.map((t) => ({ kind: 'payment_failed', title: 'Account balance top-up failed', body: `${t.name || 'Customer'} · ₹${(Number(t.amount) / 100).toFixed(2)}`, userId: t.user_id, at: t.at })),
         ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 30);
 

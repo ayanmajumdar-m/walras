@@ -8,27 +8,13 @@ const taxService = require('../services/taxServices');
  * Defaults reproduce how the platform behaved before these switches existed.
  */
 
-// A family listed here can't be sold. Virtual Machines are not listed: they are on
-// sale wherever its stock allows (utils/computeStock.js).
-// Web Hosting is withdrawn for now: no new hosting can be bought. Existing
-// hosting accounts keep running and stay manageable. Delete the entry to
-// sell it again (the per-plan switches in Settings then apply).
-const LOCKED_FAMILIES = {
-    hosting: 'Web Hosting is withdrawn for now, so no new hosting can be bought. Existing hosting accounts keep running.',
-};
-
-const PLAN_DEFAULTS = {
-    hosting: { Seed: true, Tree: true },
-    compute: {}, // from stock, see utils/computeStock.js
-};
-
 // What invoices showed when these details were hard-coded.
 const INVOICE_DEFAULTS = {
     legalName: 'IOOGN TECHNOLOGIES (OPC) PRIVATE LIMITED',
     registeredAddress: 'IOOGNS HQ, Khudiram Sarani, Duttapukur, North 24 Parganas - 743248, Barasat - I, West Bengal, India',
     gstAddress: '1, IOOGN HQ, Duttapukur Station Road, Aurobindapally, Nebadhai Duttapukur, North 24 Parganas - 743248, West Bengal',
     gstin: '19AAHCI9209H1Z9',
-    sac: '998315', // hosting and IT infrastructure provisioning services
+    sac: '998315', // SAC: hosting and IT infrastructure provisioning services (cloud servers)
     email: 'support@walras.net',
     phone: '+91 94296 94951',
     bankName: '',
@@ -57,7 +43,6 @@ const getInvoiceDetails = async () => invoiceDetailsFrom(await appSettings.getAl
 
 const getPlatform = async () => {
     const s = await appSettings.getAll();
-    const plans = parseJson(s['plans.availability'], {});
     return {
         maintenanceMode: s['platform.maintenance_mode'] === 'true',
         paymentsPaused: s['platform.payments_paused'] === 'true',
@@ -69,14 +54,10 @@ const getPlatform = async () => {
         autoTopupEnabled: s['platform.auto_topup'] === 'true',
         autoTopupReady: ccavenueSI.SPEC_CONFIRMED,
         planAvailability: {
-            hosting: LOCKED_FAMILIES.hosting
-                ? Object.fromEntries(Object.keys(PLAN_DEFAULTS.hosting).map((name) => [name, false]))
-                : { ...PLAN_DEFAULTS.hosting, ...(plans.hosting || {}) },
             // In stock in at least one location (stock and SolusVM in Admin → Virtual Machine stock).
             compute: Object.fromEntries(Object.entries(await computeStock.getAvailability())
                 .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
         },
-        lockedFamilies: LOCKED_FAMILIES,
         invoice: invoiceDetailsFrom(s),
     };
 };
@@ -89,16 +70,6 @@ const setPlatform = ({ maintenanceMode, paymentsPaused, topUpsPaused, autoTopupE
         'platform.auto_topup': String(Boolean(autoTopupEnabled)),
     });
 
-const setPlanAvailability = (availability) => {
-    const clean = { hosting: {} };
-    for (const family of ['hosting'].filter((f) => !LOCKED_FAMILIES[f])) {
-        for (const plan of Object.keys(PLAN_DEFAULTS[family])) {
-            if (availability?.[family] && plan in availability[family]) clean[family][plan] = Boolean(availability[family][plan]);
-        }
-    }
-    return appSettings.setMany({ 'plans.availability': JSON.stringify(clean) });
-};
-
 const setInvoiceDetails = async (details) => {
     const clean = {};
     for (const key of Object.keys(INVOICE_DEFAULTS)) {
@@ -109,7 +80,7 @@ const setInvoiceDetails = async (details) => {
 };
 
 /**
- * Express guard for buying a plan (hosting, servers, domains). Refused during
+ * Express guard for buying a plan (servers, domains). Refused during
  * maintenance or while "All plans out of stock" is on. Account balance
  * top-ups use requireTopUpsOpen instead: they aren't a plan.
  */
@@ -169,13 +140,10 @@ const requireTopUpsOpen = async (req, res, next) => {
 module.exports = {
     requireNotMaintenance,
     requireTopUpsOpen,
-    LOCKED_FAMILIES,
-    PLAN_DEFAULTS,
     INVOICE_DEFAULTS,
     getPlatform,
     getInvoiceDetails,
     setPlatform,
-    setPlanAvailability,
     setInvoiceDetails,
     requireSalesOpen,
 };

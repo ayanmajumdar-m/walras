@@ -9,7 +9,7 @@ const Privacy = () => {
       title: "Information We Collect",
       content: `Personal details such as name, email, phone number, and billing information
 Technical information including IP address, device and browser type, and access times
-Hosting usage data such as resource consumption, storage usage, and server activity
+Service usage data such as resource consumption, storage usage, and server activity
 Cookies and similar tracking technologies to enhance your experience
 KYC information, if required for legal compliance or identity verification`
     },
@@ -21,7 +21,7 @@ KYC information, if required for legal compliance or identity verification`
     {
       icon: <Eye className="section-icon" />,
       title: "How We Use Your Information",
-      content: `To provide, manage, and improve our hosting services
+      content: `To provide, manage, and improve our cloud services
 To communicate with you regarding support, billing, or updates
 To ensure the security of our platform and prevent fraud or abuse
 To comply with legal requirements and enforce our terms of service`

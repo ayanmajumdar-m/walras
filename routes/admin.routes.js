@@ -34,7 +34,6 @@ router.get('/audit-logs', can('view_audit_logs'), Platform.listAuditLogs);
 // ── Settings ───────────────────────────────────────────────────────────────
 router.get('/settings/platform', can('manage_settings'), Platform.getPlatformSettings);
 router.put('/settings/platform', can('manage_settings'), Platform.updatePlatformSettings);
-router.put('/settings/plans', can('manage_settings'), Platform.updatePlanAvailability);
 router.put('/settings/invoice', can('manage_settings'), Platform.updateInvoiceDetails);
 router.get('/settings/mail', can('manage_settings'), SettingsController.getMail);
 router.put('/settings/mail', can('manage_settings'), logged('settings.mail', 'settings', () => 'mail', (req) => ({ fromAddress: req.body.fromAddress, fromName: req.body.fromName })), SettingsController.updateMail);
@@ -134,12 +133,6 @@ router.delete('/promo-codes/:id', can('manage_coupons'), logged('promo.delete', 
 // ── Services ───────────────────────────────────────────────────────────────
 router.get('/getAllServers', can('view_services'), AdminController.getAllServers);
 router.get('/getUserServers/:id', can('view_services'), AdminController.getUserServers);
-router.get('/getAllHosting', can('view_services'), AdminController.getAllHosting);
-router.get('/hostingPackages', can('view_services'), AdminController.getWhmPackages);
 router.get('/getAllDomains', can('view_services'), AdminController.getAllDomains);
-router.post('/hosting/:id/suspend', can('manage_services'), logged('hosting.suspend', 'hosting', byParam('id')), AdminController.suspendHosting);
-router.post('/hosting/:id/unsuspend', can('manage_services'), logged('hosting.unsuspend', 'hosting', byParam('id')), AdminController.unsuspendHosting);
-router.delete('/hosting/:id', can('manage_services'), logged('hosting.delete', 'hosting', byParam('id')), AdminController.deleteHosting);
-router.get('/hosting/:id/login', can('manage_services'), logged('hosting.cpanel_login', 'hosting', byParam('id')), AdminController.getHostingLogin);
 
 module.exports = router;

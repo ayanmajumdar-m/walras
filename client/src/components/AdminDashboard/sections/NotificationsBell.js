@@ -6,7 +6,7 @@ const ICONS = { signup: UserPlus, order: Receipt, payment_failed: AlertTriangle 
 const POLL_MS = 60 * 1000;
 
 /**
- * Header bell: recent sign-ups, paid hosting orders and failed payments.
+ * Header bell: recent sign-ups and failed payments.
  * Polls every minute; opening it marks everything as seen for this admin.
  */
 const NotificationsBell = ({ openCustomer }) => {

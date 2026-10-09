@@ -18,12 +18,11 @@ import VmPlans from "./sections/VmPlans";
 import Locations from "./sections/Locations";
 import SolusAccounts from "./sections/SolusAccounts";
 import MonthlyInvoices from "./sections/MonthlyInvoices";
-import { WEB_HOSTING_ENABLED } from "../../data/plans";
 import BulkEmail from "./sections/BulkEmail";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
   DashboardSection, TransactionsSection, PromoCodesSection,
-  ServersSection, HostingSection, DomainsSection,
+  ServersSection, DomainsSection,
 } from "./sections/Legacy";
 // AdminDashboard.css still styles the pre-existing views (Dashboard,
 // Transactions, Invoices, …); the console + admin sheets come after it.
@@ -58,10 +57,6 @@ const NAV = [
         ],
       },
       { id: "domain", label: "Domains", Icon: Globe, items: [{ id: "domains", label: "Domains", Icon: Globe, perm: "view_services" }] },
-      // Hidden while Web Hosting is withdrawn (data/plans.js WEB_HOSTING_ENABLED).
-      ...(WEB_HOSTING_ENABLED
-        ? [{ id: "web-hosting", label: "Web hosting", Icon: Server, items: [{ id: "hosting", label: "Web hosting", Icon: Server, perm: "view_services" }] }]
-        : []),
     ],
   },
   {
@@ -152,7 +147,6 @@ const AdminDashboard = () => {
       case "transactions": return <TransactionsSection />;
       case "invoices": return <MonthlyInvoices can={can} openCustomer={openCustomer} />;
       case "promo-codes": return <PromoCodesSection notify={notify} />;
-      case "hosting": return <HostingSection notify={notify} />;
       case "servers": return <ServersSection />;
       case "vm-plans": return <VmPlans can={can} />;
       case "locations": return <Locations can={can} />;

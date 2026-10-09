@@ -1,6 +1,6 @@
 import React from "react";
 import "./WalrasGuarantee.css";
-import { Globe, Clock, RefreshCw, Sparkles, CheckCircle2 } from "lucide-react";
+import { Clock, RefreshCw, Sparkles, CheckCircle2 } from "lucide-react";
 
 // Official AWS Logo SVG
 const AwsLogo = () => (
@@ -33,13 +33,6 @@ const AwsLogo = () => (
 );
 
 const DEFAULT_GUARANTEES = [
-  {
-    id: "domain",
-    icon: <Globe size={26} className="guarantee-icon" />,
-    badge: "INCLUDED",
-    title: "Lifetime Free Domain",
-    desc: "Your primary domain remains 100% free for as long as your hosting plan stays active. No renewal fees for your domain."
-  },
   {
     id: "resolution",
     icon: <Clock size={26} className="guarantee-icon" />,

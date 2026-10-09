@@ -32,8 +32,7 @@ const AUDIENCES = {
     all: { label: 'All customers', where: 'TRUE' },
     active: {
         label: 'Customers with active services',
-        where: `(EXISTS (SELECT 1 FROM servers s WHERE s.user_id = u.id AND s.status IN ('active', 'stopped', 'deploying'))
-                 OR EXISTS (SELECT 1 FROM hosting_accounts h WHERE h.user_id = u.id AND h.status = 'active'))`,
+        where: `EXISTS (SELECT 1 FROM servers s WHERE s.user_id = u.id AND s.status IN ('active', 'stopped', 'deploying'))`,
     },
     business: { label: 'Business accounts', where: "u.account_type = 'business'" },
     personal: { label: 'Personal accounts', where: "u.account_type = 'personal'" },

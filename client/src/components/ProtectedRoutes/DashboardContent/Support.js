@@ -124,7 +124,7 @@ const NewTicket = ({ onCancel, onCreated, notify }) => {
       )}
       <label className="cx-field">
         <span>Subject</span>
-        <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={160} placeholder="e.g. Can't reach cPanel for example.com" autoFocus />
+        <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={160} placeholder="e.g. Can't reach my server web1" autoFocus />
       </label>
       <label className="cx-field">
         <span>How can we help?</span>

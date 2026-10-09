@@ -1,163 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Lock, Loader2, ShieldCheck, ArrowRight, Clock, MapPin, Eye, EyeOff, KeyRound, BadgePercent } from "lucide-react";
+import { Loader2, ShieldCheck, ArrowRight, MapPin, Eye, EyeOff, KeyRound, BadgePercent } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
-import { CPU_TYPES, HOSTING_PLANS, HOSTING_PRICES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
+import { CPU_TYPES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
 
 /*
   One page to create anything, CloudPe style: pick the product at the top,
   configure it in the middle, review and pay in the summary on the right.
 */
-
-const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*\.[a-z]{2,}$/;
-
-const cleanDomain = (value) =>
-  value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
-
-// ── Web Hosting ────────────────────────────────────────────────────────────
-const HostingConfigurator = () => {
-  const { platform } = useConsole();
-  const onSale = (name) => platform?.planAvailability?.hosting?.[name] !== false;
-  const [planName, setPlanName] = useState("Tree");
-  const [domain, setDomain] = useState("");
-  const [paying, setPaying] = useState(false);
-  const [error, setError] = useState("");
-
-  // If the chosen plan has been taken off sale, fall back to one that's on sale.
-  const effectivePlan = onSale(planName) ? planName : HOSTING_PLANS.find((p) => onSale(p.name))?.name || planName;
-  const price = HOSTING_PRICES[effectivePlan];
-  const nothingOnSale = !HOSTING_PLANS.some((p) => onSale(p.name));
-  const domainValue = cleanDomain(domain);
-  const domainValid = DOMAIN_RE.test(domainValue);
-
-  const pay = async () => {
-    if (!domainValid) {
-      setError("Enter the domain this hosting is for, e.g. mybusiness.com");
-      return;
-    }
-    setError("");
-    setPaying(true);
-    try {
-      const data = await api("/api/hosting/initiate-payment", {
-        method: "POST",
-        body: { planName: effectivePlan, domain: domainValue, billingCycle: "1 Month" },
-      });
-      if (!data.encRequest) throw new Error("Could not start the payment. Please try again.");
-
-      // Hand over to CCAvenue with a self-submitting form.
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = data.actionUrl;
-      [["encRequest", data.encRequest], ["access_code", data.accessCode]].forEach(([name, value]) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-      });
-      document.body.appendChild(form);
-      form.submit();
-    } catch (err) {
-      if (err.message !== "Session expired") setError(err.message);
-      setPaying(false);
-    }
-  };
-
-  return (
-    <div className="cx-create-body">
-      <div className="cx-config">
-        {nothingOnSale && (
-          <div className="cx-alert is-info">Web Hosting is out of stock right now. New capacity is on its way; please check back soon.</div>
-        )}
-        <section className="cx-card cx-step">
-          <h3><span className="cx-step-num">1</span> Choose a plan</h3>
-          <div className="cx-plan-grid">
-            {HOSTING_PLANS.map((plan) => {
-              const p = HOSTING_PRICES[plan.name];
-              const available = onSale(plan.name);
-              const selected = plan.name === effectivePlan && available;
-              return (
-                <label key={plan.name} className={`cx-plan${selected ? " is-selected" : ""}${available ? "" : " is-disabled"}`}>
-                  <input type="radio" name="hosting-plan" checked={selected} disabled={!available} onChange={() => setPlanName(plan.name)} />
-                  <span className="cx-plan-top">
-                    <span className="cx-plan-name">{plan.name}</span>
-                    {plan.popular && available && <span className="cx-tag">Popular</span>}
-                    {!available && <span className="cx-pill cx-plan-off">Out of stock</span>}
-                  </span>
-                  <span className="cx-plan-tagline">{plan.tagline}</span>
-                  <span className="cx-plan-price">
-                    <strong>{formatINR(p.monthly)}</strong>
-                    <small>/mo + GST</small>
-                  </span>
-                  <ul>
-                    {plan.features.map((f) => (
-                      <li key={f}><Check size={14} aria-hidden="true" />{f}</li>
-                    ))}
-                  </ul>
-                </label>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="cx-card cx-step">
-          <h3><span className="cx-step-num">2</span> Your domain</h3>
-          <p className="cx-step-help">The website this hosting account is for. You can point the domain at us after setup.</p>
-          <label className="cx-field">
-            <span>Primary domain</span>
-            <input
-              type="text"
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              placeholder="mybusiness.com"
-              autoComplete="off"
-              spellCheck="false"
-            />
-          </label>
-          {domain && !domainValid && <p className="cx-field-error">That doesn't look like a domain yet, e.g. mybusiness.com</p>}
-        </section>
-
-        <section className="cx-card cx-step">
-          <h3><span className="cx-step-num">3</span> Billing</h3>
-          <div className="cx-term is-selected">
-            <Clock size={18} aria-hidden="true" />
-            <span>
-              <strong>Monthly</strong>
-              <small>Prepaid monthly. Cancel anytime; it ends at the end of the paid month.</small>
-            </span>
-            <span className="cx-term-price">{formatINR(price.total, 2)}</span>
-          </div>
-        </section>
-      </div>
-
-      <aside className="cx-summary">
-        <div className="cx-card cx-summary-card">
-          <h3>Order summary</h3>
-          <dl>
-            <div><dt>Product</dt><dd>Web Hosting</dd></div>
-            <div><dt>Plan</dt><dd>{effectivePlan}</dd></div>
-            <div><dt>Domain</dt><dd className="cx-ellipsis">{domainValid ? domainValue : "—"}</dd></div>
-            <div><dt>Billing</dt><dd>Monthly</dd></div>
-          </dl>
-          <dl className="cx-summary-money">
-            <div><dt>Subtotal</dt><dd>{formatINR(price.monthly, 2)}</dd></div>
-            <div><dt>GST (18%)</dt><dd>{formatINR(price.gst, 2)}</dd></div>
-            <div className="cx-summary-total"><dt>Total due today</dt><dd>{formatINR(price.total, 2)}</dd></div>
-          </dl>
-          {error && <p className="cx-alert is-error" role="alert">{error}</p>}
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={pay} disabled={paying || nothingOnSale}>
-            {paying ? <><Loader2 size={18} className="cx-spin" /> Connecting to payment…</>
-              : nothingOnSale ? "Out of stock"
-              : <>Pay {formatINR(price.total, 2)} &amp; activate</>}
-          </button>
-          <p className="cx-summary-note"><Lock size={13} aria-hidden="true" /> Secure payment via CCAvenue. Your cPanel account is created as soon as payment succeeds.</p>
-        </div>
-      </aside>
-    </div>
-  );
-};
 
 // ── Virtual Machine ────────────────────────────────────────────────────────
 const HOSTNAME_RE = /^(?=.{1,100}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
@@ -593,7 +445,6 @@ const Create = () => {
         })}
       </div>
 
-      {type === "hosting" && <HostingConfigurator />}
       {type === "compute" && <ComputeConfigurator key="monthly" mode="monthly" />}
       {type === "reserved" && <ComputeConfigurator key="reserved" mode="reserved" />}
       {(type === "domains" || type === "baremetal") && <ComingSoon type={type} />}

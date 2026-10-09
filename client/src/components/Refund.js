@@ -7,12 +7,12 @@ const Refund = () => {
     {
       icon: <Clock className="section-icon" />,
       title: "24-Hour Trial",
-      content: "All new users can start a 24-hour trial by paying INR 100. This amount is credited to your Walras Cloud account balance and can be used for any future purchases. During the trial period, you can evaluate our hosting services risk-free."
+      content: "All new users can start a 24-hour trial by paying INR 100. This amount is credited to your Walras Cloud account balance and can be used for any future purchases. During the trial period, you can evaluate our cloud services risk-free."
     },
     {
       icon: <CreditCard className="section-icon" />,
       title: "No Refunds After Purchase",
-      content: "Once the trial period ends or any service is purchased, Walras Cloud does not provide refunds for hosting services, add-ons, or domain registrations."
+      content: "Once the trial period ends or any service is purchased, Walras Cloud does not provide refunds for cloud services, add-ons, or domain registrations."
     },
     {
       icon: <Wallet className="section-icon" />,

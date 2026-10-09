@@ -11,11 +11,10 @@ import Profile from "./DashboardContent/Profile";
 import Support from "./DashboardContent/Support";
 import { api, rupees, actingAccount, switchAccount, ACCOUNT_KEY } from "./consoleApi";
 import { ConsoleContext } from "./ConsoleContext";
-// The retired Home and HostingConsole pages' stylesheets carry generic global
-// classes (.message, .primary, .featured, …) that other pages still lean on,
-// so they stay loaded here, ahead of the console's own styles.
+// The retired Home page's stylesheet carries generic global classes
+// (.message, .primary, .featured, …) that other pages still lean on, so it
+// stays loaded here, ahead of the console's own styles.
 import "./DashboardContent/Home.css";
-import "./DashboardContent/HostingConsole.css";
 import "./Console.css";
 
 const TITLES = {
@@ -178,7 +177,6 @@ const DashboardLayout = () => {
 
                 {/* Old per-service pages fold into Create / Resources / Billing. */}
                 <Route path="/deploy" element={<Navigate to="/dashboard/create?type=compute" replace />} />
-                <Route path="/hosting" element={<Navigate to="/dashboard/resources?tab=hosting" replace />} />
                 <Route path="/domains" element={<Navigate to="/dashboard/resources?tab=domains" replace />} />
                 <Route path="/submitTicket" element={<Navigate to="/dashboard/support" replace />} />
                 <Route path="/notifications" element={<Navigate to="/dashboard/home" replace />} />

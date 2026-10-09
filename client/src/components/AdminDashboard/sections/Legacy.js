@@ -6,7 +6,6 @@ import Servers from "../components/Servers";
 import PromoCodes from "../components/PromoCodes";
 import CreatePromoForm from "../components/CreatePromoForm";
 import Domain from "../components/Domain";
-import Hosting from "../components/Hosting";
 
 /*
   The pre-existing admin views, each wrapped with its own data loading so
@@ -122,25 +121,6 @@ export const ServersSection = () => {
     <Page title="Virtual Machines" subtitle="Every customer virtual machine.">
       <ErrorNote error={error} />
       <Servers servers={data || []} formatCurrency={formatCurrency} formatDate={formatDate} />
-    </Page>
-  );
-};
-
-export const HostingSection = ({ notify }) => {
-  const { data, error, load } = useLoad(() => adminApi("/getAllHosting").then((d) => d.hostingAccounts || []));
-  const call = (fn, ok) => fn().then(() => { notify(ok, "success"); load(); }).catch((e) => notify(e.message, "error"));
-  return (
-    <Page title="Web hosting" subtitle="Every cPanel account.">
-      <ErrorNote error={error} />
-      <Hosting
-        hostingAccounts={data || []}
-        onSuspend={(id, reason) => call(() => adminApi(`/hosting/${id}/suspend`, { method: "POST", body: { reason } }), "Hosting account suspended")}
-        onUnsuspend={(id) => call(() => adminApi(`/hosting/${id}/unsuspend`, { method: "POST" }), "Hosting account reinstated")}
-        onDelete={(id) => call(() => adminApi(`/hosting/${id}`, { method: "DELETE" }), "Hosting account deleted")}
-        onLogin={(id) => adminApi(`/hosting/${id}/login`).then((d) => d.url && window.open(d.url, "_blank", "noopener")).catch((e) => notify(e.message, "error"))}
-        onRefresh={load}
-        formatDate={formatDate}
-      />
     </Page>
   );
 };

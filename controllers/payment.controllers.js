@@ -1,6 +1,5 @@
 const connection = require('../config/db');
 const ccavenueService = require('../services/ccavenueService');
-const cpanelService = require('../services/cpanelService');
 const { creditPendingTopup, failPendingTopup } = require('../utils/walletCredit');
 const autoTopup = require('../utils/autoTopup');
 const monthlyBilling = require('../utils/monthlyBilling');
@@ -128,7 +127,7 @@ exports.handleCcavenueResponse = async (req, res) => {
         const { encResp } = req.body;
         if (!encResp) {
             console.error("[CCAvenue] Missing encResp in callback payload");
-            return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=failed&reason=Missing+response`);
+            return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=failed&reason=Missing+response`);
         }
 
         const decryptedText = ccavenueService.decrypt(encResp, config.workingKey);
@@ -145,133 +144,9 @@ exports.handleCcavenueResponse = async (req, res) => {
 
         const { order_id, tracking_id, bank_ref_no, order_status, failure_message, amount } = data;
         const isSuccess = (order_status || '').toLowerCase() === 'success';
-        const isHostingOrder = (order_id && order_id.startsWith('CCAW_HOST_')) || data.merchant_param2 === 'hosting_purchase';
 
         // ==========================================
-        // 🚀 1. WEB HOSTING DIRECT PURCHASE FLOW
-        // ==========================================
-        if (isHostingOrder) {
-            if (isSuccess) {
-                connection.query(
-                    "SELECT * FROM hosting_orders WHERE order_id = ?",
-                    [order_id],
-                    async (err, orderRows) => {
-                        if (err || !orderRows || !orderRows.length) {
-                            console.warn("[CCAvenue] Hosting order record not found for:", order_id);
-                            return res.redirect(
-                                `${config.clientUrl}/web-hosting/purchase?payment_status=success&order_id=${encodeURIComponent(order_id)}&amount=${encodeURIComponent(amount)}&tracking_id=${encodeURIComponent(tracking_id || '')}`
-                            );
-                        }
-
-                        const order = orderRows[0];
-
-                        // Idempotency: if already completed, simply redirect
-                        if (order.status === 'completed') {
-                            return res.redirect(
-                                `${config.clientUrl}/web-hosting/purchase?payment_status=success&order_id=${encodeURIComponent(order_id)}&domain=${encodeURIComponent(order.domain)}&plan=${encodeURIComponent(order.plan_name)}&tracking_id=${encodeURIComponent(order.tracking_id || '')}`
-                            );
-                        }
-
-                        const userId = order.user_id;
-                        const cleanDomain = order.domain;
-                        const normalizedPlan = order.plan_name;
-                        const totalPaise = order.total_amount;
-                        const formattedCycle = order.billing_cycle || '1 Month';
-
-                        // Fetch user for cPanel contact email
-                        connection.query("SELECT * FROM users WHERE id = ?", [userId], async (uErr, uRows) => {
-                            const user = uRows?.[0];
-                            const contactEmail = user?.email || `user_${userId}@walras.net`;
-
-                            // Generate cPanel credentials
-                            const cpanelUsername = cpanelService.generateCpanelUsername(cleanDomain);
-                            const cpanelPassword = cpanelService.generateSecurePassword();
-                            const cpanelPackage = cpanelService.getPackageForPlan(normalizedPlan);
-
-                            // Provision cPanel account via WHM API
-                            console.log(`[Hosting] Provisioning cPanel for user ${userId}, domain ${cleanDomain}, package ${cpanelPackage}...`);
-                            const cpanelResult = await cpanelService.createAccount({
-                                username: cpanelUsername,
-                                domain: cleanDomain,
-                                plan: normalizedPlan,
-                                password: cpanelPassword,
-                                email: contactEmail
-                            });
-
-                            if (!cpanelResult.success) {
-                                console.error("[Hosting] Provisioning failed:", cpanelResult.reason);
-                            }
-
-                            // 1. Insert into hosting_accounts
-                            connection.query(
-                                `INSERT INTO hosting_accounts 
-                                 (user_id, plan_name, cpanel_package, domain, cpanel_username, cpanel_password, 
-                                  status, billing_cycle, amount, currency, expires_at) 
-                                 VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, 'INR', NOW() + INTERVAL '30 days')`,
-                                [
-                                    userId,
-                                    normalizedPlan,
-                                    cpanelPackage,
-                                    cleanDomain,
-                                    cpanelUsername,
-                                    cpanelPassword,
-                                    formattedCycle,
-                                    totalPaise
-                                ],
-                                (hErr, hRes) => {
-                                    if (hErr) {
-                                        console.error("[Hosting] Failed to save hosting account:", hErr);
-                                    }
-
-                                    // 2. Insert transaction record for reporting & invoicing
-                                    connection.query(
-                                        `INSERT INTO transactions 
-                                         (user_id, type, amount, description, reference_id, reference_type, status) 
-                                         VALUES (?, 'debit', ?, ?, ?, 'payment', 'completed')`,
-                                        [
-                                            userId,
-                                            totalPaise,
-                                            `Web Hosting (${normalizedPlan}) Direct Purchase for ${cleanDomain} (Plan + 18% GST)`,
-                                            tracking_id || bank_ref_no || order_id
-                                        ],
-                                        () => {}
-                                    );
-
-                                    // 3. Mark hosting order as completed
-                                    connection.query(
-                                        `UPDATE hosting_orders 
-                                         SET status = 'completed', tracking_id = ?, bank_ref_no = ? 
-                                         WHERE id = ?`,
-                                        [tracking_id || '', bank_ref_no || '', order.id],
-                                        () => {
-                                            console.log(`✅ [Hosting] Web Hosting activated via direct payment for ${cleanDomain} (${order_id})`);
-                                            return res.redirect(
-                                                `${config.clientUrl}/web-hosting/purchase?payment_status=success&order_id=${encodeURIComponent(order_id)}&domain=${encodeURIComponent(cleanDomain)}&plan=${encodeURIComponent(normalizedPlan)}&tracking_id=${encodeURIComponent(tracking_id || bank_ref_no || '')}`
-                                            );
-                                        }
-                                    );
-                                }
-                            );
-                        });
-                    }
-                );
-            } else {
-                // Payment failed for hosting purchase
-                connection.query(
-                    "UPDATE hosting_orders SET status = 'failed', failure_message = ? WHERE order_id = ?",
-                    [failure_message || order_status || 'Payment failed', order_id],
-                    () => {
-                        return res.redirect(
-                            `${config.clientUrl}/web-hosting/purchase?payment_status=failed&order_id=${encodeURIComponent(order_id)}&reason=${encodeURIComponent(failure_message || order_status || 'Payment failed')}`
-                        );
-                    }
-                );
-            }
-            return;
-        }
-
-        // ==========================================
-        // 🔁 2. AUTO TOP-UP SETUP (first payment + standing instruction)
+        // 🔁 1. AUTO TOP-UP SETUP (first payment + standing instruction)
         // ==========================================
         if ((order_id && order_id.startsWith('CCAS_')) || data.merchant_param2 === 'autotopup_setup') {
             const result = await autoTopup.completeSetup(data);
@@ -281,7 +156,7 @@ exports.handleCcavenueResponse = async (req, res) => {
         }
 
         // ==========================================
-        // 🧾 3. INVOICE PAYMENT: into the balance, then straight onto the invoice
+        // 🧾 2. INVOICE PAYMENT: into the balance, then straight onto the invoice
         // ==========================================
         if ((order_id && order_id.startsWith('CCAI_')) || data.merchant_param2 === 'invoice_payment') {
             if (!isSuccess) {
@@ -298,7 +173,7 @@ exports.handleCcavenueResponse = async (req, res) => {
         }
 
         // ==========================================
-        // 💰 4. WALLET TOP-UP FLOW
+        // 💰 3. WALLET TOP-UP FLOW
         // ==========================================
         if (isSuccess) {
             // Exactly once, even if CCAvenue calls back twice for this order.
@@ -320,7 +195,7 @@ exports.handleCcavenueResponse = async (req, res) => {
         );
     } catch (error) {
         console.error("[CCAvenue] Response callback error:", error);
-        return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=error&reason=${encodeURIComponent(error.message)}`);
+        return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=failed&reason=${encodeURIComponent(error.message)}`);
     }
 };
 
@@ -340,9 +215,6 @@ exports.handleCcavenueCancel = async (req, res) => {
             console.warn('[CCAvenue] Could not read the cancelled order:', err.message);
         }
     }
-    if (orderId && orderId.startsWith('CCAW_HOST_')) {
-        return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=cancelled`);
-    }
     if (orderId && orderId.startsWith('CCAI_')) {
         return res.redirect(`${config.clientUrl}/dashboard/billing?tab=invoices&invoice=cancelled`);
     }
@@ -352,8 +224,5 @@ exports.handleCcavenueCancel = async (req, res) => {
         // replaces the unfinished one.)
         return res.redirect(`${config.clientUrl}/dashboard/billing?autotopup=cancelled`);
     }
-    if (orderId && orderId.startsWith('CCAW_')) {
-        return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=cancelled`);
-    }
-    return res.redirect(`${config.clientUrl}/web-hosting/purchase?payment_status=cancelled`);
+    return res.redirect(`${config.clientUrl}/dashboard/wallet?payment_status=cancelled`);
 };

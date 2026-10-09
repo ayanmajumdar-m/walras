@@ -2,7 +2,7 @@
 
 ## 🏗️ Architecture Overview
 
-This is a **full-stack cloud hosting and domain management platform** built with:
+This is a **full-stack cloud (Virtual Machines) and domain management platform** built with:
 - **Backend**: Node.js/Express with PostgreSQL database
 - **Frontend**: React.js with React Router
 - **Deployment**: Docker containerization with multi-stage build

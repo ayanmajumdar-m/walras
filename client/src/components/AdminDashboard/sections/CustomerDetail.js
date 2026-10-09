@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Wallet, ShieldOff, ShieldCheck, Trash2, BadgeCheck, X, Mail, Phone, Building2, MapPin, Copy, Check } from "lucide-react";
 import { adminApi, inr, fmtDate } from "../adminApi";
-import { WEB_HOSTING_ENABLED } from "../../../data/plans";
 
 const TABS = [
   { id: "services", label: "Services" },
@@ -89,7 +88,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
   if (error) return <div className="cx-page"><button type="button" className="cx-btn cx-btn-ghost ap-back" onClick={onBack}><ArrowLeft size={16} /> Customers</button><div className="cx-alert is-error">{error}</div></div>;
   if (!data) return <div className="cx-page"><div className="cx-card cx-empty"><p>Loading customer…</p></div></div>;
 
-  const { user, wallet, hosting, servers, domains, orders, transactions, invoices, sessions } = data;
+  const { user, wallet, servers, domains, transactions, invoices, sessions } = data;
   const suspended = Boolean(user.suspended_at);
   const verified = user.isemailverified;
   const address = (user.address || "").split("\n").filter(Boolean).join(", ");
@@ -168,13 +167,6 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {tab === "services" && (
         <div className="ap-stack">
-          {/* Web Hosting is withdrawn: only shown for customers who still have it. */}
-          {(WEB_HOSTING_ENABLED || hosting.length > 0) && (
-          <div className="cx-card"><h3 className="ap-card-title">Web hosting ({hosting.length})</h3>
-            <Table head={["Domain", "Plan", "cPanel user", "Status", "Expires"]} empty="No hosting accounts."
-              rows={hosting.map((h) => <tr key={h.id}><td><strong>{h.domain}</strong></td><td>{h.plan_name}</td><td><code>{h.cpanel_username}</code></td><td><span className={`cx-status is-${h.status}`}>{h.status}</span></td><td>{fmtDate(h.expires_at)}</td></tr>)} />
-          </div>
-          )}
           <div className="cx-card"><h3 className="ap-card-title">Virtual Machines ({servers.length})</h3>
             <Table head={["Name", "IP", "Plan", "Location", "Status"]} empty="No servers."
               rows={servers.map((s) => <tr key={s.id}><td><strong>{s.name}</strong></td><td><code>{s.ip_address || "—"}</code></td><td>{s.plan_name}</td><td>{s.location}</td><td><span className={`cx-status is-${s.status}`}>{s.status}</span></td></tr>)} />
@@ -188,10 +180,6 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {tab === "billing" && (
         <div className="ap-stack">
-          <div className="cx-card"><h3 className="ap-card-title">Orders</h3>
-            <Table head={["Order", "Item", "Amount", "Status", "Date"]} empty="No orders."
-              rows={orders.map((o) => <tr key={o.id}><td><code>{o.order_id}</code></td><td>{o.plan_name} · {o.domain}</td><td>{inr(o.total_amount)}</td><td><span className={`cx-status is-${o.status}`}>{o.status}</span>{o.failure_message && <small>{o.failure_message}</small>}</td><td>{fmtDate(o.created_at, true)}</td></tr>)} />
-          </div>
           <div className="cx-card"><h3 className="ap-card-title">Account balance transactions</h3>
             <Table head={["Description", "Type", "Amount", "Status", "Date"]} empty="No transactions."
               rows={transactions.map((t) => <tr key={t.id}><td>{t.description}</td><td>{t.type}</td><td className={t.type === "credit" ? "ap-pos" : "ap-neg"}>{t.type === "credit" ? "+" : "−"}{inr(t.amount)}</td><td><span className={`cx-status is-${t.status === "completed" ? "active" : t.status}`}>{t.status}</span></td><td>{fmtDate(t.created_at, true)}</td></tr>)} />
@@ -254,7 +242,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {modal === "delete" && (
         <Modal title="Delete customer permanently?" onClose={() => setModal(null)}>
-          <p className="ap-muted">This deletes {user.email} and everything attached: account balance, servers, hosting records, domains, orders and invoices. It can't be undone.</p>
+          <p className="ap-muted">This deletes {user.email} and everything attached: account balance, servers, domains, transactions and invoices. It can't be undone.</p>
           <label className="cx-field"><span>Type the customer's email to confirm</span>
             <input value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder={user.email} />
           </label>

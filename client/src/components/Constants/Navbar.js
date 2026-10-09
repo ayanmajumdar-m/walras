@@ -12,8 +12,6 @@ const Logo = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png"
 
 // Domains, Virtual Machines and Bare Metal all live on the one Pricing page.
 const SECTIONS = [
-  // Hidden from the navbar for now; the /web-hosting page still exists.
-  // { name: "Web Hosting", href: "/web-hosting" },
   { name: "Pricing", href: "/pricing" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" }
