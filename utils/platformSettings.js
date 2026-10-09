@@ -10,10 +10,10 @@ const taxService = require('../services/taxServices');
 
 // What invoices showed when these details were hard-coded.
 const INVOICE_DEFAULTS = {
-    legalName: 'IOOGN TECHNOLOGIES (OPC) PRIVATE LIMITED',
-    registeredAddress: 'IOOGNS HQ, Khudiram Sarani, Duttapukur, North 24 Parganas - 743248, Barasat - I, West Bengal, India',
-    gstAddress: '1, IOOGN HQ, Duttapukur Station Road, Aurobindapally, Nebadhai Duttapukur, North 24 Parganas - 743248, West Bengal',
-    gstin: '19AAHCI9209H1Z9',
+    legalName: 'Noutikal Technologies',
+    registeredAddress: 'Kashimpur Shibalaya Road, Digha Sarada Pally, Nebadhai Duttapukur, North Twenty Four Parganas - 743248, West Bengal, India',
+    gstAddress: 'Kashimpur Shibalaya Road, Digha Sarada Pally, Nebadhai Duttapukur, North Twenty Four Parganas - 743248, West Bengal',
+    gstin: '19GDSPM2994C1ZV',
     sac: '998315', // SAC: hosting and IT infrastructure provisioning services (cloud servers)
     email: 'support@walras.net',
     phone: '+91 94296 94951',

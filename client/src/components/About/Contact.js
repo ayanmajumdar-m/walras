@@ -2,7 +2,7 @@ import React from 'react';
 import './Contact.css';
 import { Mail, Phone, MapPin, Clock, Shield, Zap, Check, ArrowRight, BookOpen } from 'lucide-react';
 
-const ADDRESS = "IOOGNS HQ, Khudiram Sarani, Duttapukur, North 24 Parganas, Barasat I, West Bengal, India, 743248";
+const ADDRESS = "Noutikal Technologies, Kashimpur Shibalaya Road, Digha Sarada Pally, Nebadhai Duttapukur, North Twenty Four Parganas, West Bengal, India, 743248";
 
 const CONTACT_METHODS = [
   {

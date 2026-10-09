@@ -145,7 +145,7 @@ const About = () => {
       <div className="ab-wrap ab-cta-inner">
         <div>
           <h2>Ready to build on Walras Cloud?</h2>
-          <p>Walras Cloud is operated by IOOGN TECHNOLOGIES (OPC) PVT LTD, from India for India and the world.</p>
+          <p>Walras Cloud is operated by Noutikal Technologies, from India for India and the world.</p>
         </div>
         <div className="ab-cta-actions">
           <a href="/pricing" className="ab-btn ab-btn-primary">

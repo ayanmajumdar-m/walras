@@ -98,7 +98,7 @@ const Footer = () => (
       </div>
 
       <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} IOOGN TECHNOLOGIES OPC PVT LTD. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Noutikal Technologies. All rights reserved.</span>
         <span className="footer-made">Made in India</span>
       </div>
     </div>
