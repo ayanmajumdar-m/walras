@@ -1,4 +1,8 @@
 const connection = require("../config/db");
+const { creditPendingTopup } = require("../utils/walletCredit");
+const qp = (sql, params = []) => new Promise((resolve, reject) => {
+    connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+});
 const monthlyBilling = require("../utils/monthlyBilling");
 const {
     createOrder,
@@ -63,6 +67,7 @@ exports.createOrderController = async (req, res) => {
 
         const amountPaise = Math.round(amount * 100);
         const receipt = `wallet_${userId}_${Date.now()}`;
+        await ensureWallet(userId); // the pending row below needs the wallet's id
 
         const order = await createOrder({
             amount: amountPaise,
@@ -96,208 +101,68 @@ exports.createOrderController = async (req, res) => {
     }
 };
 
-// 🟢 POST verify payment
+// 🟢 POST verify payment (Razorpay checkout handler)
+// Credits the pending top-up exactly once (utils/walletCredit.js): the
+// webhook below may report the same payment, and only one of them credits.
 exports.verifyPayment = async (req, res) => {
     try {
-        const userId = req.user.userId; // Changed from req.user.id to req.user.userId
+        const userId = req.user.userId;
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             return res.status(400).json({ error: "Missing payment details" });
         }
-
-        const valid = verifyPaymentSignature({
-            order_id: razorpay_order_id,
-            payment_id: razorpay_payment_id,
-            signature: razorpay_signature,
-        });
-
-        if (!valid) {
+        if (!verifyPaymentSignature({ order_id: razorpay_order_id, payment_id: razorpay_payment_id, signature: razorpay_signature })) {
             return res.status(400).json({ error: "Invalid signature" });
         }
 
-        // Start transaction
-        connection.beginTransaction(async (txErr) => {
-            if (txErr) {
-                console.error("Transaction error:", txErr);
-                return res.status(500).json({ error: "Transaction error" });
-            }
+        // The order must be this account's own pending top-up.
+        const [tx] = await qp(
+            `SELECT wt.amount, wt.status FROM wallet_transactions wt JOIN wallets w ON w.id = wt.wallet_id
+              WHERE wt.reference_id = ? AND w.user_id = ?`,
+            [razorpay_order_id, userId],
+        );
+        if (!tx) return res.status(404).json({ error: "Transaction not found" });
 
-            try {
-                // Get wallet with lock
-                connection.query("SELECT * FROM wallets WHERE user_id = ? FOR UPDATE", [userId], (wErr, wRows) => {
-                    if (wErr) {
-                        return connection.rollback(() => {
-                            res.status(500).json({ error: "Database error" });
-                        });
-                    }
-
-                    const proceedCredit = (walletId) => {
-                        // Get order amount from pending transaction
-                        connection.query(
-                            "SELECT amount FROM wallet_transactions WHERE reference_id = ? AND status = 'pending'",
-                            [razorpay_order_id],
-                            (txErr, txRows) => {
-                                if (txErr || txRows.length === 0) {
-                                    return connection.rollback(() => {
-                                        res.status(400).json({ error: "Transaction not found" });
-                                    });
-                                }
-
-                                const amountPaise = txRows[0].amount;
-
-                                // Update wallet balance
-                                connection.query(
-                                    "UPDATE wallets SET balance = balance + ? WHERE id = ?",
-                                    [amountPaise, walletId],
-                                    (uErr) => {
-                                        if (uErr) {
-                                            return connection.rollback(() => {
-                                                res.status(500).json({ error: "Failed to update wallet" });
-                                            });
-                                        }
-
-                                        // Update transaction status and add payment reference
-                                        connection.query(
-                                            `UPDATE wallet_transactions 
-                       SET status = 'completed', razorpay_payment_id = ?, razorpay_order_id = ?
-                       WHERE reference_id = ? AND status = 'pending'`,
-                                            [razorpay_payment_id, razorpay_order_id, razorpay_order_id],
-                                            (tErr) => {
-                                                if (tErr) {
-                                                    return connection.rollback(() => {
-                                                        res.status(500).json({ error: "Failed to update transaction" });
-                                                    });
-                                                }
-
-                                                connection.commit((cErr) => {
-                                                    if (cErr) {
-                                                        return connection.rollback(() => {
-                                                            res.status(500).json({ error: "Commit failed" });
-                                                        });
-                                                    }
-                                                    res.json({
-                                                        message: "Account balance credited successfully",
-                                                        amount: (amountPaise / 100).toFixed(2)
-                                                    });
-                                                });
-                                            }
-                                        );
-                                    }
-                                );
-                            }
-                        );
-                    };
-
-                    if (wRows.length === 0) {
-                        // Create wallet if doesn't exist
-                        connection.query(
-                            "INSERT INTO wallets (user_id, balance) VALUES (?, 0)",
-                            [userId],
-                            (insErr, insRes) => {
-                                if (insErr) {
-                                    return connection.rollback(() => {
-                                        res.status(500).json({ error: "Failed to create wallet" });
-                                    });
-                                }
-                                proceedCredit(insRes.insertId);
-                            }
-                        );
-                    } else {
-                        proceedCredit(wRows[0].id);
-                    }
-                });
-            } catch (error) {
-                connection.rollback(() => {
-                    res.status(500).json({ error: "Verification failed" });
-                });
-            }
+        const result = await creditPendingTopup(razorpay_order_id, {
+            description: `Razorpay top-up (Ref: ${razorpay_payment_id})`,
+            paymentRef: razorpay_payment_id,
         });
+        if (result.credited) {
+            monthlyBilling.applyBalance(userId).catch((e) => console.error("[Razorpay] Paying invoices from top-up failed:", e.message));
+        }
+        // Already credited (e.g. by the webhook) is still a success for the customer.
+        if (!result.credited && tx.status !== 'pending' && tx.status !== 'completed') {
+            return res.status(409).json({ error: "This payment can't be credited. Please contact support." });
+        }
+        res.json({ message: "Account balance credited successfully", amount: (Number(tx.amount) / 100).toFixed(2) });
     } catch (err) {
         console.error("verify error", err);
         res.status(500).json({ error: "Verification failed" });
     }
 };
 
-// 🟢 POST webhook
-exports.handleWebhook = (req, res) => {
+// 🟢 POST webhook (Razorpay payment.captured): the same exactly-once credit.
+exports.handleWebhook = async (req, res) => {
     try {
         const signature = req.headers["x-razorpay-signature"];
-        const body = JSON.stringify(req.body);
-
+        const body = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body);
         if (!verifyWebhookSignature(body, signature)) {
             return res.status(400).send("Invalid signature");
         }
+        const payload = Buffer.isBuffer(req.body) ? JSON.parse(body) : req.body;
+        if (payload.event !== "payment.captured") return res.status(200).send("OK - Event ignored");
 
-        const payload = req.body;
-
-        if (payload.event === "payment.captured") {
-            const payment = payload.payload.payment.entity;
-            const orderId = payment.order_id;
-            const paymentId = payment.id;
-            const amount = payment.amount;
-
-            connection.query(
-                `SELECT wt.*, w.user_id FROM wallet_transactions wt 
-         JOIN wallets w ON wt.wallet_id = w.id 
-         WHERE wt.reference_id = ? AND wt.status = 'pending' LIMIT 1`,
-                [orderId],
-                (err, rows) => {
-                    if (err) {
-                        console.error("Webhook DB error:", err);
-                        return res.status(500).send("Database error");
-                    }
-                    if (rows.length === 0) return res.status(200).send("OK - No pending transaction");
-
-                    const tx = rows[0];
-                    const walletId = tx.wallet_id;
-
-                    connection.beginTransaction((tErr) => {
-                        if (tErr) return res.status(500).send("Transaction error");
-
-                        // Update wallet balance
-                        connection.query(
-                            "UPDATE wallets SET balance = balance + ? WHERE id = ?",
-                            [amount, walletId],
-                            (uErr) => {
-                                if (uErr) {
-                                    return connection.rollback(() => {
-                                        res.status(500).send("Update error");
-                                    });
-                                }
-
-                                // Update transaction
-                                connection.query(
-                                    `UPDATE wallet_transactions 
-                   SET status = 'completed', razorpay_payment_id = ?, razorpay_order_id = ?
-                   WHERE reference_id = ? AND status = 'pending'`,
-                                    [paymentId, orderId, orderId],
-                                    (updErr) => {
-                                        if (updErr) {
-                                            return connection.rollback(() => {
-                                                res.status(500).send("Transaction update error");
-                                            });
-                                        }
-
-                                        connection.commit((cErr) => {
-                                            if (cErr) {
-                                                return connection.rollback(() => {
-                                                    res.status(500).send("Commit error");
-                                                });
-                                            }
-                                            console.log(`Webhook: Wallet ${walletId} credited with ${amount} paise`);
-                                            return res.status(200).send("Credited");
-                                        });
-                                    }
-                                );
-                            }
-                        );
-                    });
-                }
-            );
-        } else {
-            return res.status(200).send("OK - Event ignored");
+        const payment = payload.payload.payment.entity;
+        const result = await creditPendingTopup(payment.order_id, {
+            description: `Razorpay top-up (Ref: ${payment.id})`,
+            paymentRef: payment.id,
+        });
+        if (result.credited) {
+            console.log(`Webhook: wallet ${result.walletId} credited with ${result.amount} paise`);
+            monthlyBilling.applyBalance(result.userId).catch((e) => console.error("[Razorpay] Paying invoices from top-up failed:", e.message));
         }
+        return res.status(200).send(result.credited ? "Credited" : "OK - Nothing pending");
     } catch (err) {
         console.error("Webhook error:", err);
         res.status(500).send("Server error");
@@ -493,18 +358,21 @@ exports.applyPromoCode = async (req, res) => {
                                                             (usageErr) => {
                                                                 if (usageErr) {
                                                                     return connection.rollback(() => {
+                                                                        // promo_code_usage is unique per customer: a double click lands here
+                                                                        if (usageErr.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: "You have already used this promo code" });
                                                                         res.status(500).json({ error: "Failed to record promo usage" });
                                                                     });
                                                                 }
 
                                                                 // Update promo code usage count
                                                                 connection.query(
-                                                                    `UPDATE promo_codes SET used_count = used_count + 1 
-                                                                     WHERE id = ?`,
+                                                                    `UPDATE promo_codes SET used_count = used_count + 1
+                                                                     WHERE id = ? AND (usage_limit IS NULL OR used_count < usage_limit)`,
                                                                     [promo.id],
-                                                                    (countErr) => {
-                                                                        if (countErr) {
+                                                                    (countErr, countRes) => {
+                                                                        if (countErr || !countRes.affectedRows) {
                                                                             return connection.rollback(() => {
+                                                                                if (!countErr) return res.status(400).json({ error: "This promo code has reached its usage limit" });
                                                                                 res.status(500).json({ error: "Failed to update usage count" });
                                                                             });
                                                                         }

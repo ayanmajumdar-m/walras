@@ -20,6 +20,11 @@
  */
 
 const { Pool } = require('pg');
+const { AsyncLocalStorage } = require('async_hooks');
+
+// A transaction left open this long is rolled back and its client released,
+// so a code path that forgets commit/rollback can't hold a connection forever.
+const TX_TIMEOUT_MS = 2 * 60 * 1000;
 
 /**
  * Rewrites MySQL's `?` placeholders as PostgreSQL's `$n`.
@@ -128,12 +133,17 @@ const createConnection = (config) => {
         console.error('PostgreSQL pool error:', err.code || err.message);
     });
 
-    // While a transaction is open every query must run on its client, or the
-    // statements land outside the transaction. The old single mysql2
-    // connection serialised everything for the same reason; this keeps that
-    // behaviour without letting one transaction capture another's work.
-    let txClient = null;
-    let txChain = Promise.resolve();
+    // A transaction belongs to the request that opened it. beginTransaction
+    // runs its callback inside an AsyncLocalStorage context holding the
+    // transaction's client; queries issued from that callback chain (the
+    // callbacks and promises it creates) run on that client, while queries
+    // from any other request keep using the pool. So two requests can each
+    // have a transaction open, and one rolling back never undoes another's
+    // writes (the old single shared client did both).
+    // So issue a transaction's queries from inside the beginTransaction
+    // callback (callback style, as every caller does): code after an `await`
+    // on a promise-wrapped beginTransaction runs outside it.
+    const txStore = new AsyncLocalStorage();
 
     const run = (sql, params, cb) => {
         if (typeof params === 'function') {
@@ -143,7 +153,8 @@ const createConnection = (config) => {
         cb = typeof cb === 'function' ? cb : () => {};
 
         const text = withReturningId(toPositional(sql));
-        const runner = txClient || pool;
+        const tx = txStore.getStore();
+        const runner = (tx && tx.client) || pool;
 
         runner
             .query(text, params || [])
@@ -167,22 +178,34 @@ const createConnection = (config) => {
         },
 
         beginTransaction(cb) {
-            txChain = txChain.then(async () => {
-                try {
-                    const client = await pool.connect();
-                    await client.query('BEGIN');
-                    txClient = client;
-                    cb(null);
-                } catch (err) {
-                    cb(translateError(err));
-                }
-            });
+            pool.connect()
+                .then(async (client) => {
+                    try {
+                        await client.query('BEGIN');
+                    } catch (err) {
+                        client.release(err);
+                        return cb(translateError(err));
+                    }
+                    const tx = { client };
+                    tx.timer = setTimeout(() => {
+                        if (!tx.client) return;
+                        console.error('PostgreSQL transaction left open for 2 minutes; rolling it back.');
+                        const c = tx.client;
+                        tx.client = null;
+                        c.query('ROLLBACK').then(() => c.release()).catch(() => c.release(true));
+                    }, TX_TIMEOUT_MS);
+                    tx.timer.unref?.();
+                    txStore.run(tx, () => cb(null));
+                })
+                .catch((err) => cb(translateError(err)));
         },
 
         commit(cb) {
-            const client = txClient;
-            txClient = null;
+            const tx = txStore.getStore();
+            const client = tx && tx.client;
             if (!client) return cb && cb(null);
+            tx.client = null;
+            clearTimeout(tx.timer);
             client
                 .query('COMMIT')
                 .then(() => { client.release(); cb && cb(null); })
@@ -190,9 +213,11 @@ const createConnection = (config) => {
         },
 
         rollback(cb) {
-            const client = txClient;
-            txClient = null;
+            const tx = txStore.getStore();
+            const client = tx && tx.client;
             if (!client) return cb && cb();
+            tx.client = null;
+            clearTimeout(tx.timer);
             client
                 .query('ROLLBACK')
                 .then(() => { client.release(); cb && cb(); })

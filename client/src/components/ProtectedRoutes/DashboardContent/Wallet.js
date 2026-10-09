@@ -485,7 +485,6 @@ const Wallet = () => {
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
             <option style={{color: 'black'}} value="ccavenue">CCAvenue (UPI, Cards, Net Banking)</option>
-            <option style={{color: 'black'}} value="paypal">PayPal (International)</option>
           </select>
         </div>
 

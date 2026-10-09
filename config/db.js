@@ -735,6 +735,8 @@ connection.connect((err) => {
         ['SolusVM account locations', createSolusAccountLocationsTable],
         ['SolusVM account plans', createSolusAccountPlansTable],
         ['servers account', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS solus_account_id INT'],
+        // One use of a promo code per customer (also stops double-click redemptions).
+        ['promo usage unique', 'CREATE UNIQUE INDEX IF NOT EXISTS promo_code_usage_once_idx ON promo_code_usage (promo_code_id, user_id)'],
         ['Auto top-up', createAutoTopupTable],
         ['Auto top-up charges', createAutoTopupChargesTable],
         // At most one open (scheduled/pending) charge per account.

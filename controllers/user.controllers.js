@@ -30,12 +30,15 @@ async function handleWalletPayment(userId, amountPaise, domainTransactionId, dom
             }
 
             // Deduct from wallet
+            // Only if the balance still covers it: two purchases at once can't
+            // both pass the check above and take the balance negative.
             connection.query(
-                "UPDATE wallets SET balance = balance - ? WHERE user_id = ?",
-                [amountPaise, userId],
-                (updateErr) => {
-                    if (updateErr) {
+                "UPDATE wallets SET balance = balance - ? WHERE user_id = ? AND balance >= ?",
+                [amountPaise, userId, amountPaise],
+                (updateErr, updateRes) => {
+                    if (updateErr || !updateRes.affectedRows) {
                         return connection.rollback(() => {
+                            if (!updateErr) return res.status(400).json({ error: 'Insufficient wallet balance' });
                             res.status(500).json({ error: 'Failed to deduct from account balance' });
                         });
                     }
