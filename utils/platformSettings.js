@@ -1,6 +1,7 @@
 const appSettings = require('./appSettings');
 const computeStock = require('./computeStock');
 const ccavenueSI = require('../services/ccavenueSI');
+const taxService = require('../services/taxServices');
 
 /**
  * Platform switches admins control from Settings, stored in app_settings.
@@ -27,6 +28,7 @@ const INVOICE_DEFAULTS = {
     registeredAddress: 'IOOGNS HQ, Khudiram Sarani, Duttapukur, North 24 Parganas - 743248, Barasat - I, West Bengal, India',
     gstAddress: '1, IOOGN HQ, Duttapukur Station Road, Aurobindapally, Nebadhai Duttapukur, North 24 Parganas - 743248, West Bengal',
     gstin: '19AAHCI9209H1Z9',
+    sac: '998315', // hosting and IT infrastructure provisioning services
     email: 'support@walras.net',
     phone: '+91 94296 94951',
     bankName: '',
@@ -41,6 +43,17 @@ const parseJson = (raw, fallback) => {
         return fallback;
     }
 };
+
+/**
+ * The seller details invoices show (Admin → Settings → Invoice details).
+ * GST follows the GSTIN here: its state decides CGST + SGST or IGST.
+ */
+const invoiceDetailsFrom = (s) => {
+    const invoice = { ...INVOICE_DEFAULTS, ...parseJson(s['invoice.details'], {}) };
+    taxService.setSellerGstin(invoice.gstin);
+    return invoice;
+};
+const getInvoiceDetails = async () => invoiceDetailsFrom(await appSettings.getAll());
 
 const getPlatform = async () => {
     const s = await appSettings.getAll();
@@ -64,7 +77,7 @@ const getPlatform = async () => {
                 .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
         },
         lockedFamilies: LOCKED_FAMILIES,
-        invoice: { ...INVOICE_DEFAULTS, ...parseJson(s['invoice.details'], {}) },
+        invoice: invoiceDetailsFrom(s),
     };
 };
 
@@ -86,12 +99,13 @@ const setPlanAvailability = (availability) => {
     return appSettings.setMany({ 'plans.availability': JSON.stringify(clean) });
 };
 
-const setInvoiceDetails = (details) => {
+const setInvoiceDetails = async (details) => {
     const clean = {};
     for (const key of Object.keys(INVOICE_DEFAULTS)) {
         if (typeof details?.[key] === 'string') clean[key] = details[key].trim().slice(0, 300);
     }
-    return appSettings.setMany({ 'invoice.details': JSON.stringify(clean) });
+    await appSettings.setMany({ 'invoice.details': JSON.stringify(clean) });
+    return getInvoiceDetails();
 };
 
 /**
@@ -159,6 +173,7 @@ module.exports = {
     PLAN_DEFAULTS,
     INVOICE_DEFAULTS,
     getPlatform,
+    getInvoiceDetails,
     setPlatform,
     setPlanAvailability,
     setInvoiceDetails,

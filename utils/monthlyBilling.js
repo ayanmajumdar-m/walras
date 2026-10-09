@@ -37,6 +37,7 @@ const solusAccounts = require('./solusAccounts');
 const stock = require('./computeStock');
 const { sendRawEmail, escapeHtml } = require('./sendEmail');
 const integrations = require('./integrations');
+const platformSettings = require('./platformSettings');
 
 // The overdue timeline, in days after the day an invoice is issued (India
 // time): issued on the 1st → due that day, late fee + suspension on the
@@ -374,11 +375,11 @@ const insertInvoice = async ({ userId, number, kind, y, m, lines, subtotal, tax,
     const paid = status === 'paid';
     const ins = rowsOf(await q(
         `INSERT INTO monthly_invoices (user_id, invoice_number, kind, billing_month, total_amount, subtotal, tax_amount, tax_breakdown,
-                due_date, status, amount_paid, paid_at, generated_at, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                place_of_supply, customer_gstin, due_date, status, amount_paid, paid_at, generated_at, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING id`,
         [userId, number, kind, billingMonthOf(y, m), tax.totalAmount, subtotal, tax.taxAmount, JSON.stringify(tax.taxBreakdown || []),
-            istDate(istDay(now)), status, paid ? tax.totalAmount : 0, paid ? now : null, now, notes],
+            tax.placeOfSupply || null, tax.customerGstin || null, istDate(istDay(now)), status, paid ? tax.totalAmount : 0, paid ? now : null, now, notes],
     ));
     const invoiceId = ins[0].id;
     for (const l of lines) {
@@ -492,7 +493,7 @@ const renewMonth = async (now = new Date()) => {
                     [next, userId, start, start, start],
                 ));
                 if (!claimed.length) return null;
-                const [user] = await q('SELECT id, name, email, address FROM users WHERE id = ?', [userId]);
+                const [user] = await q('SELECT id, name, email, address, gstin FROM users WHERE id = ?', [userId]);
                 const lines = claimed.map((s) => ({ ...proRata(Math.round(Number(s.monthly_cost || 0) * 100), start), description: serverLabel(s) }));
                 const subtotal = lines.reduce((n, l) => n + l.amount, 0);
                 if (subtotal <= 0) return null;
@@ -547,7 +548,7 @@ const renewReservations = async (now = new Date()) => {
                 const r = reservationLines(Math.round(Number(s.monthly_cost || 0) * 100), term, from);
                 const claimed = rowsOf(await q('UPDATE servers SET paid_until = ? WHERE id = ? AND paid_until = ? RETURNING id', [r.to, s.id, from]));
                 if (!claimed.length || r.subtotal <= 0) return null;
-                const [user] = await q('SELECT id, name, email, address FROM users WHERE id = ?', [s.user_id]);
+                const [user] = await q('SELECT id, name, email, address, gstin FROM users WHERE id = ?', [s.user_id]);
                 const tax = taxService.calculateTax(user || {}, r.subtotal);
                 const { y, m } = istParts(from);
                 const number = await freeNumber(`WAL-${mm(y, m)}-${s.user_id}-R${s.id}`);
@@ -670,6 +671,8 @@ const run = async (now = new Date()) => {
     if (running) return;
     running = true;
     try {
+        // GST follows the seller GSTIN in Settings; on a read failure the last one known is used.
+        await platformSettings.getInvoiceDetails().catch((e) => console.error('[Billing] Invoice details read failed:', e.message));
         await processCancellations(now);
         await renewMonth(now);
         await renewReservations(now);

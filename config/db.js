@@ -393,6 +393,9 @@ const migrateMonthlyInvoices = [
     'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ',
     'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS delete_warned_at TIMESTAMPTZ',
     'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS services_deleted_at TIMESTAMPTZ',
+    // GST details as they were when the invoice was issued.
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS place_of_supply VARCHAR(120)',
+    'ALTER TABLE monthly_invoices ADD COLUMN IF NOT EXISTS customer_gstin VARCHAR(15)',
     // Prepaid: an account can have a purchase invoice and a renewal in the
     // same month, so the old one-invoice-per-month index goes.
     'DROP INDEX IF EXISTS monthly_invoices_user_month_idx',

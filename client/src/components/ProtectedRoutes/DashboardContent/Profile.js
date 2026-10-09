@@ -43,27 +43,30 @@ const ProfileDetails = () => {
     fetchProfile();
   }, [userId, token]);
 
-  // Function to parse the address string into individual fields
+  // The address is saved as six lines: line 1, line 2, city, state, country,
+  // PIN, blank ones kept so each field stays in its place (GST reads the
+  // state and country from it, services/taxServices.js). Addresses saved
+  // before that dropped blank lines; those are read from the end.
   const parseAddress = (addressString) => {
     if (!addressString) return {};
-    
-    const lines = addressString.split('\n');
-    return {
-      addressLine1: lines[0] || '',
-      addressLine2: lines[1] || '',
-      city: lines[2] || '',
-      state: lines[3] || '',
-      country: lines[4] || '',
-      zipCode: lines[5] || ''
-    };
+    const lines = addressString.split('\n').map((l) => l.trim());
+    if (lines.length === 6) {
+      const [addressLine1, addressLine2, city, state, country, zipCode] = lines;
+      return { addressLine1, addressLine2, city, state, country, zipCode };
+    }
+    const rest = lines.filter(Boolean);
+    const last = rest[rest.length - 1] || '';
+    const zipCode = rest.length > 1 && /\d/.test(last) && /^[a-z0-9 -]{3,10}$/i.test(last) ? rest.pop() : '';
+    const country = rest.length > 1 ? rest.pop() : '';
+    const state = rest.length > 1 ? rest.pop() : '';
+    const city = rest.length > 1 ? rest.pop() : '';
+    return { addressLine1: rest[0] || '', addressLine2: rest.slice(1).join(', '), city, state, country, zipCode };
   };
 
-  // Function to format address for submission
   const formatAddress = (addressData) => {
     const { addressLine1, addressLine2, city, state, country, zipCode } = addressData;
-    return [addressLine1, addressLine2, city, state, country, zipCode]
-      .filter(line => line && line.trim() !== '')
-      .join('\n');
+    const lines = [addressLine1, addressLine2, city, state, country, zipCode].map((l) => String(l || '').replace(/\s+/g, ' ').trim());
+    return lines.some(Boolean) ? lines.join('\n') : '';
   };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -295,7 +298,7 @@ const ProfileDetails = () => {
                     id="country"
                     type="text"
                     name="country"
-                    placeholder="Enter your country"
+                    placeholder="India"
                     value={form.country || ""}
                     onChange={handleChange}
                   />

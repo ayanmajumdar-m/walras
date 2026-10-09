@@ -13,6 +13,7 @@ const stock = require('../utils/computeStock');
 const serverLocations = require('../utils/serverLocations');
 const solusAccounts = require('../utils/solusAccounts');
 const billing = require('../utils/monthlyBilling');
+const platformSettings = require('../utils/platformSettings');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -123,7 +124,8 @@ exports.deployServer = handle('Deploy server', async (req, res) => {
         throw new HttpError(402, 'You have an overdue invoice. Pay it in Billing → Invoices to create new servers.', { overdue: true });
     }
     const hourly = stock.hourlyRupees(plan);
-    const [user] = await q('SELECT id, address FROM users WHERE id = ?', [userId]);
+    const [user] = await q('SELECT id, address, gstin FROM users WHERE id = ?', [userId]);
+    await platformSettings.getInvoiceDetails(); // GST follows the seller GSTIN in Settings
     const now = new Date();
     const term = billing.termFor(req.body.term ?? 1);
     if (!term) throw new HttpError(400, 'Choose a billing term.');

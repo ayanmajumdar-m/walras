@@ -7,6 +7,7 @@ const PDFDocument = require('pdfkit');
 const connection = require('../config/db');
 const { drawBrandHeader } = require('../utils/invoiceBrand');
 const { getPlatform } = require('../utils/platformSettings');
+const taxService = require('./taxServices');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -31,7 +32,7 @@ const periodOf = (inv, items) => {
 /** Loads an invoice (optionally only the given user's) with its lines; null if not found. */
 const loadInvoice = async (invoiceId, userId = null) => {
     const [inv] = await q(
-        `SELECT mi.*, u.name AS user_name, u.email AS user_email, u.company, u.address
+        `SELECT mi.*, u.name AS user_name, u.email AS user_email, u.company, u.address, u.gstin AS user_gstin
            FROM monthly_invoices mi LEFT JOIN users u ON u.id = mi.user_id
           WHERE mi.id = ? ${userId ? 'AND mi.user_id = ?' : ''}`,
         userId ? [invoiceId, userId] : [invoiceId],
@@ -57,23 +58,29 @@ const sendInvoicePdf = async (res, { inv, items }) => {
     doc.text(`Invoice number: ${inv.invoice_number}`, 50, top)
         .text(`Invoice date: ${day(inv.generated_at)}`, 50, top + 15)
         .text(`Billing period: ${periodOf(inv, items)}`, 50, top + 30);
-    doc.text(company.legalName, 330, top, { width: 220 })
-        .text(`GSTIN: ${company.gstin}`, 330, doc.y + 2, { width: 220 })
+    if (inv.place_of_supply) doc.text(`Place of supply: ${taxService.withStateCode(inv.place_of_supply)}`, 50, top + 45, { width: 260 });
+    doc.text(company.legalName, 330, top, { width: 220 });
+    if (company.gstAddress) doc.fontSize(8.5).text(company.gstAddress, 330, doc.y + 2, { width: 220 }).fontSize(10);
+    doc.text(`GSTIN: ${company.gstin}`, 330, doc.y + 2, { width: 220 })
         .text(company.email, 330, doc.y + 2, { width: 220 })
         .text(company.phone, 330, doc.y + 2, { width: 220 });
+    const sellerEnd = doc.y;
 
-    const billTo = Math.max(doc.y, top + 50) + 20;
+    // The customer's GSTIN as it was when the invoice was issued.
+    const customerGstin = inv.place_of_supply ? inv.customer_gstin : inv.user_gstin;
+    const billTo = Math.max(sellerEnd, top + 62) + 20;
     doc.font('Helvetica-Bold').text('Bill to', 50, billTo).font('Helvetica')
         .text(inv.user_name || '', 50, billTo + 15)
         .text(inv.company || '', 50, doc.y)
         .text(inv.user_email || '', 50, doc.y)
-        .text(inv.address || '', 50, doc.y, { width: 250 });
+        .text(String(inv.address || '').split('\n').map((l) => l.trim()).filter(Boolean).join('\n'), 50, doc.y, { width: 250 });
+    if (customerGstin) doc.text(`GSTIN: ${customerGstin}`, 50, doc.y);
 
     // Lines
     let y = doc.y + 25;
     const head = () => {
         doc.fillColor('#0b2622').rect(50, y, 500, 22).fill().fillColor('#ffffff').fontSize(9)
-            .text('Service', 58, y + 7).text('Period', 270, y + 7).text('Term', 390, y + 7)
+            .text(company.sac ? `Service (SAC ${company.sac})` : 'Service', 58, y + 7).text('Period', 270, y + 7).text('Term', 390, y + 7)
             .text('Amount (INR)', 440, y + 7, { width: 102, align: 'right' });
         y += 28;
         doc.fillColor('#1d1f20');

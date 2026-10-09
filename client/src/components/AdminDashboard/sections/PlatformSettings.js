@@ -10,6 +10,7 @@ const INVOICE_FIELDS = [
   { key: "registeredAddress", label: "Registered address", wide: true },
   { key: "gstAddress", label: "GST registered address", wide: true },
   { key: "gstin", label: "GSTIN" },
+  { key: "sac", label: "SAC code" },
   { key: "email", label: "Billing email" },
   { key: "phone", label: "Billing phone" },
   { key: "bankName", label: "Bank name" },
@@ -132,7 +133,7 @@ const PlatformSettings = () => {
 
       <section className="cx-card ap-card">
         <h3><FileText size={18} /> Invoice details</h3>
-        <p className="ap-muted">Printed on every tax invoice. Bank details are only shown once both bank name and account number are filled in.</p>
+        <p className="ap-muted">Printed on every tax invoice. The GSTIN's state decides GST: customers in the same state pay CGST + SGST, other states IGST. Bank details are only shown once both bank name and account number are filled in.</p>
         <div className="ap-form-grid">
           {INVOICE_FIELDS.map(({ key, label, wide }) => (
             <label key={key} className={`cx-field${wide ? " ap-wide" : ""}`}>
