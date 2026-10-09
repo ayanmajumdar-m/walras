@@ -832,3 +832,8 @@
   .ct-title { font-size: 30px; }
   .ct-cta h2 { font-size: 28px; }
 }
+
+/* Several phone numbers in one card, each tap-to-call */
+.ct-phones { display: flex; flex-direction: column; gap: 4px; }
+.ct-phones a { color: inherit; text-decoration: none; }
+.ct-phones a:hover { text-decoration: underline; }

@@ -18,6 +18,11 @@ const CONTACT_METHODS = [
     title: "Contact Sales",
     meta: "Monday to Saturday, 10 AM to 6 PM",
     detail: "+91 94296 94951",
+    // Each number is its own tap-to-call link.
+    phones: [
+      { label: "+91 94296 94951", tel: "+919429694951" },
+      { label: "+91 744 992 4142", tel: "+917449924142" },
+    ],
     href: "tel:+919429694951",
     action: "Call now"
   },
@@ -67,12 +72,18 @@ const Contact = () => (
 
     {/* Contact methods */}
     <section className="ct-wrap ct-methods" aria-label="Ways to reach us">
-      {CONTACT_METHODS.map(({ Icon, title, meta, detail, href, action, external }) => (
+      {CONTACT_METHODS.map(({ Icon, title, meta, detail, phones, href, action, external }) => (
         <div className="ct-card ct-method" key={title}>
           <span className="ct-icon"><Icon aria-hidden="true" /></span>
           <h2>{title}</h2>
           <p className="ct-meta">{meta}</p>
-          <p className="ct-detail">{detail}</p>
+          {phones ? (
+            <p className="ct-detail ct-phones">
+              {phones.map((p) => <a key={p.tel} href={`tel:${p.tel}`}>{p.label}</a>)}
+            </p>
+          ) : (
+            <p className="ct-detail">{detail}</p>
+          )}
           <a
             href={href}
             className="ct-link"
