@@ -62,8 +62,8 @@ const sendInvoicePdf = async (res, { inv, items }) => {
     doc.text(company.legalName, 330, top, { width: 220 });
     if (company.gstAddress) doc.fontSize(8.5).text(company.gstAddress, 330, doc.y + 2, { width: 220 }).fontSize(10);
     doc.text(`GSTIN: ${company.gstin}`, 330, doc.y + 2, { width: 220 })
-        .text(company.email, 330, doc.y + 2, { width: 220 })
-        .text(company.phone, 330, doc.y + 2, { width: 220 });
+        .text(company.email, 330, doc.y + 2, { width: 220 });
+    if (company.phone) doc.text(company.phone, 330, doc.y + 2, { width: 220 });
     const sellerEnd = doc.y;
 
     // The customer's GSTIN as it was when the invoice was issued.

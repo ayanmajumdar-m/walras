@@ -16,7 +16,7 @@ const INVOICE_DEFAULTS = {
     gstin: '19GDSPM2994C1ZV',
     sac: '998315', // SAC: hosting and IT infrastructure provisioning services (cloud servers)
     email: 'support@walras.net',
-    phone: '+91 94296 94951',
+    phone: '',
     bankName: '',
     accountNumber: '',
     ifsc: '',

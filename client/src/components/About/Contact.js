@@ -1,6 +1,6 @@
 import React from 'react';
 import './Contact.css';
-import { Mail, Phone, MapPin, Clock, Shield, Zap, Check, ArrowRight, BookOpen } from 'lucide-react';
+import { Mail, MapPin, Clock, Shield, Zap, Check, ArrowRight, BookOpen } from 'lucide-react';
 
 const ADDRESS = "Noutikal Technologies, Kashimpur Shibalaya Road, Digha Sarada Pally, Nebadhai Duttapukur, North Twenty Four Parganas, West Bengal, India, 743248";
 
@@ -12,19 +12,6 @@ const CONTACT_METHODS = [
     detail: "support@walras.net",
     href: "mailto:support@walras.net",
     action: "Get support"
-  },
-  {
-    Icon: Phone,
-    title: "Contact Sales",
-    meta: "Monday to Saturday, 10 AM to 6 PM",
-    detail: "+91 94296 94951",
-    // Each number is its own tap-to-call link.
-    phones: [
-      { label: "+91 94296 94951", tel: "+919429694951" },
-      { label: "+91 744 992 4142", tel: "+917449924142" },
-    ],
-    href: "tel:+919429694951",
-    action: "Call now"
   },
   {
     Icon: MapPin,
