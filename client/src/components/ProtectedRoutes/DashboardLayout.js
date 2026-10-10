@@ -147,7 +147,7 @@ const DashboardLayout = () => {
                     <strong>₹{billingDue.due.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} due on your invoice.</strong>{" "}
                     {billingDue.suspended ? "Your services are suspended until it's paid."
                       : billingDue.overdue ? "It's overdue: pay now to avoid suspension."
-                        : billingDue.oldest?.suspendAt ? `Pay before ${new Date(billingDue.oldest.suspendAt).toLocaleDateString("en-IN", { day: "numeric", month: "long" })} to avoid a late fee and suspension.` : ""}
+                        : billingDue.oldest?.payBy ? `Pay by ${new Date(billingDue.oldest.payBy).toLocaleString("en-IN", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })} to avoid a late fee.` : ""}
                   </span>
                   <Link to="/dashboard/billing?tab=invoices" className="cx-btn cx-btn-primary cx-btn-sm">Pay invoice</Link>
                 </div>

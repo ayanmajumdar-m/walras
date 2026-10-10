@@ -10,13 +10,16 @@
  * On the 1st (00:00 IST) every server not yet paid for the new month is
  * renewed: one invoice per account for the full month ahead. The account
  * balance pays it first; the customer pays the rest through Razorpay
- * (Billing → Invoices). In calendar days (India time) from the day the
- * invoice is issued (the 1st for renewals), while anything is still unpaid:
- *   1st  issued, due the same day
- *   3rd  10% late fee on the amount still unpaid (admins can waive it), and
- *        the account's servers are suspended (stopped)
- *   6th  final notice: services will be deleted tomorrow
- *   7th  the account's servers are deleted
+ * (Billing → Invoices). The overdue timeline follows the Terms of Service
+ * (§5) and the Refund and Billing Policy (§3), in hours from the moment the
+ * invoice is issued, while anything is still unpaid:
+ *   48 h  due. After that it is overdue and a one-time late fee of 10% of the
+ *         original invoice value is added (admins can waive it)
+ *   72 h  the account's servers are suspended (stopped)
+ *   7 days after it became overdue (48 h + 7 days): the servers are deleted;
+ *         a final notice goes out the day before
+ * For a renewal issued on the 1st at 00:00 IST: late fee on the 3rd, suspension
+ * on the 4th, final notice on the 9th, deletion on the 10th (00:00 IST).
  * Paying in full restarts the servers that suspension stopped.
  *
  * Reservations (TERMS): instead of monthly, a server can be reserved for
@@ -39,13 +42,13 @@ const { sendRawEmail, escapeHtml } = require('./sendEmail');
 const integrations = require('./integrations');
 const platformSettings = require('./platformSettings');
 
-// The overdue timeline, in days after the day an invoice is issued (India
-// time): issued on the 1st → due that day, late fee + suspension on the
-// 3rd, final notice on the 6th, deletion on the 7th.
-const LATE_FEE_RATE = 0.10;
-const SUSPEND_DAY = 2;       // 1st + 2 = the 3rd (00:00 IST)
-const DELETE_WARNING_DAY = 5; // the 6th
-const DELETE_DAY = 6;        // the 7th
+// The overdue timeline (Terms of Service §5, Refund and Billing Policy §3),
+// measured from the moment an invoice is issued. See deadlines().
+const LATE_FEE_RATE = 0.10;          // one-time, on the original invoice value
+const DUE_HOURS = 48;                // pay within 48 hours; overdue after that
+const SUSPEND_HOURS = 72;            // suspended after 72 hours
+const DELETE_DAYS_AFTER_OVERDUE = 7; // deleted 7 days after it became overdue
+const HOUR_MS = 3600 * 1000;
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -69,6 +72,8 @@ const istDay = (date) => Math.floor((new Date(date).getTime() + IST_MS) / DAY_MS
 const istDate = (dayNumber) => new Date(dayNumber * DAY_MS).toISOString().slice(0, 10); // YYYY-MM-DD
 const monthLabel = (y, m) => new Date(Date.UTC(y, m, 1)).toLocaleString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const fmtDay = (date) => new Date(date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long' });
+// "3 October, 12:00 am IST": deadlines are exact times, not whole days.
+const fmtWhen = (date) => `${new Date(date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })} IST`;
 
 /** The start of next month (India time): when a cancelled plan ends. */
 const nextMonthStart = (now = new Date()) => {
@@ -507,7 +512,7 @@ const renewMonth = async (now = new Date()) => {
 
             const paidFromBalance = await applyBalance(userId);
             const due = made.tax.totalAmount - paidFromBalance;
-            const { suspendAt, deleteAt } = deadlines({ generated_at: now });
+            const { payBy, suspendAt, deleteAt } = deadlines({ generated_at: now });
             await email(userId, due > 0
                 ? `Your Walras Cloud renewal for ${monthLabel(y, m)}: ${rupees(due)} due`
                 : `Your Walras Cloud renewal for ${monthLabel(y, m)} is paid`, [
@@ -515,8 +520,8 @@ const renewMonth = async (now = new Date()) => {
                 ...made.lines.map((l) => `• ${l.description}: ${rupees(l.amount)}`),
                 ...(paidFromBalance ? [`${rupees(paidFromBalance)} was paid from your account balance.`] : []),
                 ...(due > 0 ? [
-                    `Please pay the remaining ${rupees(due)} today.`,
-                    `If it's still unpaid on ${fmtDay(suspendAt)}, a ${Math.round(LATE_FEE_RATE * 100)}% late fee is added on the unpaid amount and your services are suspended; on ${fmtDay(deleteAt)} they are deleted.`,
+                    `Please pay the remaining ${rupees(due)} within ${DUE_HOURS} hours, by ${fmtWhen(payBy)}.`,
+                    `If it's still unpaid then, a one-time ${Math.round(LATE_FEE_RATE * 100)}% late fee on the invoice value is added; on ${fmtWhen(suspendAt)} your services are suspended, and on ${fmtWhen(deleteAt)} they are deleted.`,
                 ] : []),
             ]);
         } catch (err) {
@@ -563,13 +568,13 @@ const renewReservations = async (now = new Date()) => {
             created += 1;
             const paidFromBalance = await applyBalance(s.user_id);
             const due2 = made.tax.totalAmount - paidFromBalance;
-            const { suspendAt, deleteAt } = deadlines({ generated_at: now });
+            const { payBy, suspendAt, deleteAt } = deadlines({ generated_at: now });
             await email(s.user_id, due2 > 0 ? `Your reservation renewed: ${rupees(due2)} due` : 'Your reservation renewed', [
                 `${made.label} has been reserved for another ${made.term.months} months, until ${fmtDay(new Date(made.to.getTime() - 1))} (invoice ${made.number}, ${rupees(made.tax.totalAmount)}).`,
                 ...(paidFromBalance ? [`${rupees(paidFromBalance)} was paid from your account balance.`] : []),
                 ...(due2 > 0 ? [
-                    `Please pay the remaining ${rupees(due2)} today.`,
-                    `If it's still unpaid on ${fmtDay(suspendAt)}, a ${Math.round(LATE_FEE_RATE * 100)}% late fee is added on the unpaid amount and your services are suspended; on ${fmtDay(deleteAt)} they are deleted.`,
+                    `Please pay the remaining ${rupees(due2)} within ${DUE_HOURS} hours, by ${fmtWhen(payBy)}.`,
+                    `If it's still unpaid then, a one-time ${Math.round(LATE_FEE_RATE * 100)}% late fee on the invoice value is added; on ${fmtWhen(suspendAt)} your services are suspended, and on ${fmtWhen(deleteAt)} they are deleted.`,
                 ] : []),
             ]);
         } catch (err) {
@@ -609,43 +614,59 @@ const processCancellations = async (now = new Date()) => {
 
 // ── The overdue timeline ─────────────────────────────────────────────────
 
-/** 10% of what's still unpaid when the fee is added. */
-const lateFeeFor = (inv) => Math.round(Math.max(0, Number(inv.total_amount) - Number(inv.amount_paid)) * LATE_FEE_RATE);
+/** One-time late fee: 10% of the original invoice value (subtotal + GST), whatever has been paid. */
+const lateFeeFor = (inv) => Math.round((Number(inv.subtotal) + Number(inv.tax_amount)) * LATE_FEE_RATE);
 
 const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
-    const [cur] = await q('SELECT * FROM monthly_invoices WHERE id = ?', [inv.id]);
+    let [cur] = await q('SELECT * FROM monthly_invoices WHERE id = ?', [inv.id]);
     if (!cur || cur.status === 'paid' || Number(cur.total_amount) <= Number(cur.amount_paid)) return;
-    const { suspendAt, warnAt, deleteAt } = deadlines(cur);
+    const { payBy, suspendAt, warnAt, deleteAt } = deadlines(cur);
     const label = cur.invoice_number;
+    const pct = Math.round(LATE_FEE_RATE * 100);
 
-    // The 3rd: late fee on what's unpaid, and suspension, together.
-    if (now >= suspendAt && !cur.penalty_at) {
+    // After 48 hours: overdue, with the one-time late fee.
+    if (now >= payBy && !cur.penalty_at) {
         const fee = cur.penalty_waived ? 0 : lateFeeFor(cur);
         await q(
             `UPDATE monthly_invoices SET penalty_amount = ?, total_amount = subtotal + tax_amount + ?, penalty_at = ?, status = 'overdue'
               WHERE id = ? AND penalty_at IS NULL`,
             [fee, fee, now, cur.id],
         );
-        const due = Number(cur.total_amount) + fee - Number(cur.amount_paid);
+        [cur] = await q('SELECT * FROM monthly_invoices WHERE id = ?', [cur.id]);
+        // Suspension and this step together only if a run was missed; then the suspension email says it all.
+        if (now < suspendAt) {
+            await email(cur.user_id, `Invoice ${label} is overdue: late fee added`, [
+                fee ? `Invoice ${label} wasn't paid within ${DUE_HOURS} hours, so a one-time ${pct}% late fee of ${rupees(fee)} has been added.`
+                    : `Invoice ${label} wasn't paid within ${DUE_HOURS} hours.`,
+                `${rupees(Number(cur.total_amount) - Number(cur.amount_paid))} is now due. If it's still unpaid on ${fmtWhen(suspendAt)}, your services are suspended; on ${fmtWhen(deleteAt)} they and their data are deleted.`,
+            ], 'Pay your invoice');
+        }
+    }
+
+    // After 72 hours: suspended.
+    if (now >= suspendAt && !cur.suspended_at) {
         await q('UPDATE monthly_invoices SET suspended_at = ? WHERE id = ? AND suspended_at IS NULL', [now, cur.id]);
         const n = await suspendServers(cur.user_id);
-        await email(cur.user_id, `Invoice ${label} is overdue: services suspended`, [
-            fee ? `Invoice ${label} wasn't paid on time, so a ${Math.round(LATE_FEE_RATE * 100)}% late fee of ${rupees(fee)} has been added on the unpaid amount.`
-                : `Invoice ${label} wasn't paid on time.`,
-            `${n ? `Your ${n === 1 ? 'server has' : `${n} servers have`} been suspended (stopped). ` : ''}${rupees(due)} is now due; paying it starts them again.`,
-            `If it's still unpaid on ${fmtDay(deleteAt)}, your servers and their data will be deleted permanently.`,
-        ], 'Pay your invoice');
-    } else if (now >= suspendAt && !cur.suspended_at) {
-        await q('UPDATE monthly_invoices SET suspended_at = ? WHERE id = ?', [now, cur.id]);
-        await suspendServers(cur.user_id);
+        if (n) {
+            const fee = Number(cur.penalty_amount);
+            await email(cur.user_id, `Invoice ${label} is overdue: services suspended`, [
+                `Invoice ${label} is still unpaid${fee ? `, including a ${pct}% late fee of ${rupees(fee)}` : ''}.`,
+                `Your ${n === 1 ? 'server has' : `${n} servers have`} been suspended (stopped). ${rupees(Number(cur.total_amount) - Number(cur.amount_paid))} is now due; paying it starts them again.`,
+                `If it's still unpaid on ${fmtWhen(deleteAt)}, your servers and their data will be deleted permanently.`,
+            ], 'Pay your invoice');
+        }
     }
+
+    // The day before deletion: final notice.
     if (now >= warnAt && now < deleteAt && !cur.delete_warned_at) {
         await q('UPDATE monthly_invoices SET delete_warned_at = ? WHERE id = ?', [now, cur.id]);
         await email(cur.user_id, 'Final notice: your servers will be deleted tomorrow', [
-            `Invoice ${label} is still unpaid. Your servers and all their data will be deleted permanently on ${fmtDay(deleteAt)}.`,
+            `Invoice ${label} is still unpaid. Your servers and all their data will be deleted permanently on ${fmtWhen(deleteAt)}.`,
             'Pay the invoice before then to keep them; they start again as soon as it is paid.',
         ], 'Pay your invoice');
     }
+
+    // 7 days after it became overdue: deleted.
     if (now >= deleteAt && !cur.services_deleted_at) {
         const servers = await q('SELECT * FROM servers WHERE user_id = ?', [cur.user_id]);
         let deleted = 0;
@@ -685,7 +706,7 @@ const run = async (now = new Date()) => {
 
         const unpaid = await q(
             "SELECT id, user_id FROM monthly_invoices WHERE status <> 'paid' AND total_amount > amount_paid AND subtotal IS NOT NULL AND generated_at <= ?",
-            [new Date(now.getTime() - SUSPEND_DAY * DAY_MS + DAY_MS)], // issued at least a day ago; enforceInvoice checks the exact dates
+            [new Date(now.getTime() - DUE_HOURS * HOUR_MS)], // past due; enforceInvoice checks each step's time
         );
         for (const inv of unpaid) await enforceInvoice(inv, now).catch((e) => console.error(`[Billing] Overdue step for invoice ${inv.id} failed:`, e.message));
 
@@ -763,12 +784,17 @@ const nextRenewal = async (userId, now = new Date()) => {
     return Number(r?.total || 0);
 };
 
-/** Deadlines of an invoice, for display. */
+/**
+ * An invoice's deadlines, from the moment it was issued (Terms §5): due
+ * within 48 hours (payBy; the late fee is added then), suspension at 72
+ * hours, deletion 7 days after it became overdue, final notice a day before.
+ */
 const deadlines = (inv) => {
-    // Midnight (India time) starting the day the invoice was issued.
-    const dayStart = istDay(inv.generated_at) * DAY_MS - IST_MS;
-    const day = (n) => new Date(dayStart + n * DAY_MS);
-    return { payBy: day(1), suspendAt: day(SUSPEND_DAY), warnAt: day(DELETE_WARNING_DAY), deleteAt: day(DELETE_DAY) };
+    const issued = new Date(inv.generated_at).getTime();
+    const payBy = new Date(issued + DUE_HOURS * HOUR_MS);
+    const suspendAt = new Date(issued + SUSPEND_HOURS * HOUR_MS);
+    const deleteAt = new Date(payBy.getTime() + DELETE_DAYS_AFTER_OVERDUE * DAY_MS);
+    return { payBy, suspendAt, warnAt: new Date(deleteAt.getTime() - DAY_MS), deleteAt };
 };
 
 const publicInvoice = (inv) => ({
@@ -791,7 +817,7 @@ const publicInvoice = (inv) => ({
 });
 
 module.exports = {
-    LATE_FEE_RATE, SUSPEND_DAY, DELETE_DAY, deadlines,
+    LATE_FEE_RATE, DUE_HOURS, SUSPEND_HOURS, DELETE_DAYS_AFTER_OVERDUE, deadlines,
     // dates
     istParts, monthStart, daysInMonth, nextMonthStart, proRata, addMonths, TERMS, termFor,
     // servers

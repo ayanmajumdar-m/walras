@@ -44,9 +44,11 @@ module.exports = {
                 oldest,
             },
             policy: {
+                // Terms §5: due in 48 h, late fee then, suspension at 72 h, deletion 7 days after overdue.
                 lateFeePercent: Math.round(billing.LATE_FEE_RATE * 100),
-                suspendDay: billing.SUSPEND_DAY + 1, // the 3rd
-                deleteDay: billing.DELETE_DAY + 1,   // the 7th
+                dueHours: billing.DUE_HOURS,
+                suspendHours: billing.SUSPEND_HOURS,
+                deleteDaysAfterOverdue: billing.DELETE_DAYS_AFTER_OVERDUE,
             },
         });
     }),
