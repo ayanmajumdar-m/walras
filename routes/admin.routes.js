@@ -123,6 +123,12 @@ router.post('/monthly-invoices/:id/waive-fee', can('manage_billing'), Invoices.w
 router.post('/monthly-invoices/:id/mark-paid', can('manage_billing'), Invoices.markPaid);
 router.post('/generate-monthly-invoices', can('manage_billing'), Invoices.generate);
 
+// ── Support + (priority phone support) ─────────────────────────────────────
+const SupportPlus = require('../controllers/adminSupportPlus.controllers');
+router.get('/support-plus/callbacks', can('manage_callbacks'), SupportPlus.list);
+router.put('/support-plus/callbacks/:id', can('manage_callbacks'), SupportPlus.setStatus);
+router.get('/support-plus/subscribers', can('manage_callbacks'), SupportPlus.subscribers);
+
 // ── Promo codes ────────────────────────────────────────────────────────────
 router.get('/promo-codes', can('manage_coupons', 'view_billing'), AdminController.getAllPromoCodes);
 router.get('/promo-codes/stats', can('manage_coupons', 'view_billing'), AdminController.getPromoCodeStats);

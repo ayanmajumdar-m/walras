@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
   UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail, Tags, MapPin, Cloud,
-  Package, Wallet, Megaphone, ChevronDown,
+  Package, Wallet, Megaphone, ChevronDown, LifeBuoy, PhoneCall,
 } from "lucide-react";
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import { adminApi, adminLogout } from "./adminApi";
@@ -19,6 +19,7 @@ import Locations from "./sections/Locations";
 import SolusAccounts from "./sections/SolusAccounts";
 import MonthlyInvoices from "./sections/MonthlyInvoices";
 import BulkEmail from "./sections/BulkEmail";
+import SupportPlus from "./sections/SupportPlus";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
   DashboardSection, TransactionsSection, PromoCodesSection,
@@ -67,6 +68,10 @@ const NAV = [
       { id: "invoices", label: "Invoices", Icon: FileText, perm: "view_billing" },
       { id: "promo-codes", label: "Promo codes", Icon: Ticket, perm: ["manage_coupons", "view_billing"] },
     ],
+  },
+  {
+    id: "support", label: "Support", Icon: LifeBuoy,
+    children: [{ id: "support-plus", label: "Support +", title: "Support + call-backs", Icon: PhoneCall, perm: "manage_callbacks" }],
   },
   {
     id: "marketing", label: "Marketing", Icon: Megaphone,
@@ -152,6 +157,7 @@ const AdminDashboard = () => {
       case "locations": return <Locations can={can} />;
       case "compute-stock": return <ComputeStock can={can} />;
       case "solus-accounts": return <SolusAccounts can={can} />;
+      case "support-plus": return <SupportPlus openCustomer={openCustomer} />;
       case "bulk-email": return <BulkEmail />;
       case "domains": return <DomainsSection />;
       case "admins": return <Administrators me={me} />;
@@ -266,7 +272,7 @@ const AdminDashboard = () => {
               {section === "customer" ? "Customer" : activeParent?.tabs ? activeParent.label : page?.title || page?.label || "Admin"}
             </h1>
             <div className="cx-topbar-actions">
-              {me && <NotificationsBell openCustomer={openCustomer} />}
+              {me && <NotificationsBell openCustomer={openCustomer} openSection={go} />}
               {me && <span className="cx-pill is-brand ap-role-pill">{ROLE_LABELS[me.role]}</span>}
             </div>
           </header>

@@ -1603,3 +1603,111 @@
 @media (max-width: 900px) { .lg-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .lg-stats { grid-template-columns: 1fr; } .lg-num { text-align: left; } }
 .lg-num.is-void { color: var(--text-muted); text-decoration: line-through; font-weight: 500; }
+
+/* ── Support + (DashboardContent/SupportPlus.js) ── */
+.cx-splus-loading { display: flex; align-items: center; gap: 10px; padding: 18px 20px; color: var(--text-muted); font-size: 14px; }
+
+.cx-splus-offer {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  gap: 28px;
+  padding: 28px 30px;
+  border-radius: 16px;
+  color: #ffffff;
+  background:
+    radial-gradient(520px 260px at 100% 0%, rgba(31, 196, 162, 0.3), transparent 65%),
+    linear-gradient(135deg, #061916 0%, #0b2622 100%);
+  overflow: hidden;
+}
+.cx-splus-offer h3 { margin: 0 0 8px; font-family: var(--font-heading); font-size: 26px; line-height: 1.2; color: #ffffff; }
+.cx-splus-offer p { margin: 0; color: rgba(255, 255, 255, 0.75); line-height: 1.55; }
+.cx-splus-points { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cx-splus-points li { display: flex; align-items: center; gap: 9px; font-size: 14.5px; color: rgba(255, 255, 255, 0.88); }
+.cx-splus-points svg { flex-shrink: 0; color: #5eebc2; }
+.cx-splus-offer-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.cx-splus-offer-side > small { font-size: 13px; color: rgba(255, 255, 255, 0.65); }
+.cx-splus-price { display: flex; align-items: baseline; gap: 6px; }
+.cx-splus-price strong { font-family: var(--font-heading); font-size: 34px; line-height: 1; color: #ffffff; }
+.cx-splus-price span { font-size: 14px; color: rgba(255, 255, 255, 0.7); }
+.cx-splus-offer .cx-btn-ghost-light { background: transparent; }
+.cx-splus-confirm { display: flex; flex-direction: column; gap: 12px; }
+.cx-splus-confirm p { font-size: 14px; }
+.cx-splus-confirm strong { color: #ffffff; }
+.cx-splus-confirm-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cx-splus-error { width: 100%; box-sizing: border-box; flex-wrap: wrap; }
+
+.cx-splus { display: flex; flex-direction: column; gap: 18px; padding: 22px; }
+.cx-splus-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cx-splus-icon {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 42px; height: 42px; border-radius: 12px;
+  background: var(--color-accent-100); color: var(--color-accent-700);
+}
+.cx-splus-title { flex: 1; min-width: 200px; }
+.cx-splus-title h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 2px; font-family: var(--font-heading); font-size: 19px; }
+.cx-splus-title small { font-size: 13.5px; color: var(--text-muted); }
+
+.cx-splus-form { display: flex; flex-direction: column; gap: 14px; padding-top: 18px; border-top: 1px solid var(--color-divider); }
+.cx-splus-form h4, .cx-splus-recent h4 { margin: 0; font-family: var(--font-heading); font-size: 16px; }
+.cx-splus-hint { margin: -6px 0 0; font-size: 13.5px; color: var(--text-muted); }
+.cx-splus-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.cx-splus-form .cx-field small { font-weight: 400; color: var(--text-muted); }
+
+.cx-splus-tracker {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 18px; border: 1px solid #fde68a; border-radius: 12px; background: #fffbeb;
+}
+.cx-splus-tracker.is-accepted { border-color: var(--color-accent-200); background: var(--color-accent-100); }
+.cx-splus-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.cx-splus-steps li {
+  position: relative; flex: 1; display: flex; align-items: center; gap: 8px;
+  font-size: 13.5px; font-weight: 600; color: var(--text-muted);
+}
+.cx-splus-steps li:not(:last-child)::after {
+  content: ; flex: 1; height: 2px; min-width: 12px; border-radius: 2px; background: color-mix(in srgb, #1d1f20 12%, transparent);
+}
+.cx-splus-steps li.is-done:not(:last-child)::after { background: var(--color-accent); }
+.cx-splus-steps li > span:last-child { display: flex; flex-direction: column; white-space: nowrap; }
+.cx-splus-steps small { font-size: 11.5px; font-weight: 500; color: var(--text-muted); }
+.cx-splus-steps li.is-done, .cx-splus-steps li.is-current { color: var(--color-text); }
+.cx-splus-dot {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 50%;
+  font-size: 12px; background: #ffffff; border: 2px solid color-mix(in srgb, #1d1f20 15%, transparent);
+}
+.cx-splus-steps li.is-done .cx-splus-dot { background: var(--color-accent); border-color: var(--color-accent); color: #ffffff; }
+.cx-splus-steps li.is-current .cx-splus-dot { border-color: #f59e0b; color: #b45309; }
+.cx-splus-callnote { display: flex; align-items: flex-start; gap: 12px; color: var(--color-accent-800); }
+.cx-splus-callnote.is-waiting { color: #92400e; }
+.cx-splus-callnote svg { flex-shrink: 0; margin-top: 2px; }
+.cx-splus-callnote strong { display: block; font-family: var(--font-heading); font-size: 20px; line-height: 1.25; }
+.cx-splus-callnote p { margin: 4px 0 0; font-size: 14px; color: var(--color-text); }
+.cx-splus-reply { margin: 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.cx-splus-tracker-actions { display: flex; justify-content: flex-end; }
+
+.cx-splus-recent { display: flex; flex-direction: column; gap: 10px; }
+.cx-splus-recent ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cx-splus-recent li {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px;
+  padding: 10px 0; border-top: 1px solid var(--color-divider); font-size: 13.5px;
+}
+.cx-splus-recent li small { flex-basis: 100%; color: var(--text-muted); overflow-wrap: anywhere; }
+
+@media (max-width: 760px) {
+  .cx-splus-offer { grid-template-columns: 1fr; padding: 22px 18px; gap: 18px; }
+  .cx-splus-offer h3 { font-size: 22px; }
+  .cx-splus-fields { grid-template-columns: 1fr; }
+  .cx-splus { padding: 18px 16px; }
+  .cx-splus-steps li > span:last-child { white-space: normal; }
+}

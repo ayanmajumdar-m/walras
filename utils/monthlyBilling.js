@@ -31,6 +31,10 @@
  * reservation): the server keeps running until then, isn't renewed, and is
  * deleted. No refunds for an unused part.
  *
+ * Support + (utils/supportPlus.js, table support_plus) is billed the same way
+ * as a monthly server: pro rata when it's enabled, then a line on the 1st's
+ * renewal invoice. It ends with the servers if that invoice goes unpaid.
+ *
  * Amounts in paise, prices excluding GST. GST (services/taxServices.js) is
  * added on every invoice; the late fee is not taxed.
  */
@@ -54,6 +58,9 @@ const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
 });
 const rowsOf = (r) => (Array.isArray(r) ? r : r?.rows || []);
+
+// Support +'s line on invoices.
+const SUPPORT_PLUS_LABEL = 'Support + (priority phone support)';
 
 const rupees = (paise) => `₹${(Number(paise) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -262,6 +269,9 @@ const isSuspended = async (userId) => {
     return rows.length > 0;
 };
 
+/** Is Support + on for the account (including one cancelled but not ended yet)? */
+const hasSupportPlus = async (userId) => (await q("SELECT 1 FROM support_plus WHERE user_id = ? AND status = 'active'", [userId])).length > 0;
+
 /** Has the account an unpaid invoice past its due time (late fee stage)? */
 const hasOverdue = async (userId) => {
     const rows = await q(
@@ -453,11 +463,13 @@ const refundBalance = (userId, amount) => (amount > 0
 
 /**
  * Records a purchase that has been paid from the balance: a paid invoice
- * for the pro rata period and the wallet transaction.
+ * for the pro rata period and the wallet transaction. A server, or another
+ * service given by `label` and `ref` (the invoice number's suffix).
  */
-const recordPurchase = async ({ userId, server, quote, now = new Date() }) => {
-    const number = await freeNumber(`WAL-${mm(quote.y, quote.m)}-${userId}-S${server.id}`);
-    const lines = quote.lines.map((l) => ({ ...l, description: l.description || `${serverLabel(server)}${l.suffix || ''}` }));
+const recordPurchase = async ({ userId, server, label, ref, quote, now = new Date() }) => {
+    const name = label || serverLabel(server);
+    const number = await freeNumber(`WAL-${mm(quote.y, quote.m)}-${userId}-${ref || `S${server.id}`}`);
+    const lines = quote.lines.map((l) => ({ ...l, description: l.description || `${name}${l.suffix || ''}` }));
     const invoiceId = await insertInvoice({
         userId, number, kind: 'purchase', y: quote.y, m: quote.m, lines, subtotal: quote.subtotal, tax: quote.tax,
         status: 'paid', now, notes: quote.notes,
@@ -466,26 +478,28 @@ const recordPurchase = async ({ userId, server, quote, now = new Date() }) => {
         await q(
             `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, status)
              SELECT id, 'debit', ?, ?, ?, 'completed' FROM wallets WHERE user_id = ?`,
-            [quote.total, `${serverLabel(server)}: ${quote.notes.replace(/^New server, /, '')} (invoice ${number})`, `invoice_${invoiceId}`, userId],
+            [quote.total, `${name}: ${quote.notes.replace(/^(New server|Support \+), /, '')} (invoice ${number})`, `invoice_${invoiceId}`, userId],
         );
     }
     return { invoiceId, number };
 };
 
 /**
- * Renews every server not yet paid for the month `now` falls in: one
- * invoice per account for the full month. A server is claimed (paid_until
- * moved on) before its invoice is written, so a crash can't bill it twice.
- * Safe to run again. Returns the number of new invoices.
+ * Renews every server, and Support +, not yet paid for the month `now` falls
+ * in: one invoice per account for the full month. Each is claimed
+ * (paid_until moved on) before the invoice is written, so a crash can't bill
+ * it twice. Safe to run again. Returns the number of new invoices.
  */
 const renewMonth = async (now = new Date()) => {
     const { y, m } = istParts(now);
     const start = monthStart(y, m);
     const next = monthStart(y, m + 1);
     const due = await q(
-        `SELECT DISTINCT user_id FROM servers
-          WHERE status <> 'failed' AND COALESCE(term_months, 1) = 1 AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)`,
-        [start, start, start],
+        `SELECT user_id FROM servers
+          WHERE status <> 'failed' AND COALESCE(term_months, 1) = 1 AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)
+         UNION
+         SELECT user_id FROM support_plus WHERE status = 'active' AND paid_until <= ? AND (cancel_at IS NULL OR cancel_at > ?)`,
+        [start, start, start, start, start],
     );
     let created = 0;
     for (const { user_id: userId } of due) {
@@ -497,9 +511,18 @@ const renewMonth = async (now = new Date()) => {
                      RETURNING id, name, hostname, plan_name, monthly_cost`,
                     [next, userId, start, start, start],
                 ));
-                if (!claimed.length) return null;
+                const plus = rowsOf(await q(
+                    `UPDATE support_plus SET paid_until = ?
+                      WHERE user_id = ? AND status = 'active' AND paid_until <= ? AND (cancel_at IS NULL OR cancel_at > ?)
+                     RETURNING monthly_price`,
+                    [next, userId, start, start],
+                ));
+                if (!claimed.length && !plus.length) return null;
                 const [user] = await q('SELECT id, name, email, address, gstin FROM users WHERE id = ?', [userId]);
-                const lines = claimed.map((s) => ({ ...proRata(Math.round(Number(s.monthly_cost || 0) * 100), start), description: serverLabel(s) }));
+                const lines = [
+                    ...claimed.map((s) => ({ ...proRata(Math.round(Number(s.monthly_cost || 0) * 100), start), description: serverLabel(s) })),
+                    ...plus.map((p) => ({ ...proRata(Number(p.monthly_price), start), description: SUPPORT_PLUS_LABEL })),
+                ];
                 const subtotal = lines.reduce((n, l) => n + l.amount, 0);
                 if (subtotal <= 0) return null;
                 const tax = taxService.calculateTax(user || {}, subtotal);
@@ -600,8 +623,13 @@ const scheduleCancel = async (server, now = new Date()) => {
 
 const undoCancel = (server) => q('UPDATE servers SET cancel_at = NULL WHERE id = ?', [server.id]);
 
-/** Deletes servers whose cancellation date has come. */
+/** Deletes servers whose cancellation date has come, and ends cancelled Support +. */
 const processCancellations = async (now = new Date()) => {
+    const ended = rowsOf(await q(
+        "UPDATE support_plus SET status = 'ended', ended_at = cancel_at WHERE status = 'active' AND cancel_at IS NOT NULL AND cancel_at <= ? RETURNING user_id",
+        [now],
+    ));
+    if (ended.length) console.log(`[Billing] Cancelled Support + ended for ${ended.length} account(s)`);
     const due = await q('SELECT * FROM servers WHERE cancel_at IS NOT NULL AND cancel_at <= ?', [now]);
     for (const s of due) {
         try {
@@ -643,16 +671,22 @@ const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
         }
     }
 
-    // After 72 hours: suspended.
+    // After 72 hours: suspended (servers stopped; Support + call-backs paused, see isSuspended).
     if (now >= suspendAt && !cur.suspended_at) {
         await q('UPDATE monthly_invoices SET suspended_at = ? WHERE id = ? AND suspended_at IS NULL', [now, cur.id]);
         const n = await suspendServers(cur.user_id);
-        if (n) {
+        const plus = await hasSupportPlus(cur.user_id);
+        if (n || plus) {
             const fee = Number(cur.penalty_amount);
+            const what = [
+                n ? `your ${n === 1 ? 'server has' : `${n} servers have`} been stopped` : null,
+                plus ? 'Support + call-backs are paused' : null,
+            ].filter(Boolean).join(', and ');
             await email(cur.user_id, `Invoice ${label} is overdue: services suspended`, [
                 `Invoice ${label} is still unpaid${fee ? `, including a ${pct}% late fee of ${rupees(fee)}` : ''}.`,
-                `Your ${n === 1 ? 'server has' : `${n} servers have`} been suspended (stopped). ${rupees(Number(cur.total_amount) - Number(cur.amount_paid))} is now due; paying it starts them again.`,
-                `If it's still unpaid on ${fmtWhen(deleteAt)}, your servers and their data will be deleted permanently.`,
+                `Your services have been suspended: ${what}. ${rupees(Number(cur.total_amount) - Number(cur.amount_paid))} is now due; paying it restores them.`,
+                n ? `If it's still unpaid on ${fmtWhen(deleteAt)}, your servers and their data will be deleted permanently.`
+                    : `If it's still unpaid on ${fmtWhen(deleteAt)}, Support + is cancelled.`,
             ], 'Pay your invoice');
         }
     }
@@ -660,10 +694,18 @@ const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
     // The day before deletion: final notice.
     if (now >= warnAt && now < deleteAt && !cur.delete_warned_at) {
         await q('UPDATE monthly_invoices SET delete_warned_at = ? WHERE id = ?', [now, cur.id]);
-        await email(cur.user_id, 'Final notice: your servers will be deleted tomorrow', [
-            `Invoice ${label} is still unpaid. Your servers and all their data will be deleted permanently on ${fmtWhen(deleteAt)}.`,
-            'Pay the invoice before then to keep them; they start again as soon as it is paid.',
-        ], 'Pay your invoice');
+        const [{ n }] = await q('SELECT COUNT(*)::int AS n FROM servers WHERE user_id = ?', [cur.user_id]);
+        if (n) {
+            await email(cur.user_id, 'Final notice: your servers will be deleted tomorrow', [
+                `Invoice ${label} is still unpaid. Your servers and all their data will be deleted permanently on ${fmtWhen(deleteAt)}.`,
+                'Pay the invoice before then to keep them; they start again as soon as it is paid.',
+            ], 'Pay your invoice');
+        } else if (await hasSupportPlus(cur.user_id)) {
+            await email(cur.user_id, 'Final notice: Support + will be cancelled tomorrow', [
+                `Invoice ${label} is still unpaid. Support + will be cancelled on ${fmtWhen(deleteAt)}.`,
+                'Pay the invoice before then to keep it.',
+            ], 'Pay your invoice');
+        }
     }
 
     // 7 days after it became overdue: deleted.
@@ -671,7 +713,17 @@ const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
         const servers = await q('SELECT * FROM servers WHERE user_id = ?', [cur.user_id]);
         let deleted = 0;
         for (const s of servers) if (await destroyServer(s)) deleted += 1;
+        const plusEnded = rowsOf(await q(
+            "UPDATE support_plus SET status = 'ended', ended_at = ? WHERE user_id = ? AND status = 'active' RETURNING user_id",
+            [now, cur.user_id],
+        )).length > 0;
         if (deleted === servers.length) await q('UPDATE monthly_invoices SET services_deleted_at = ? WHERE id = ?', [now, cur.id]);
+        if (plusEnded) {
+            await email(cur.user_id, 'Support + has been cancelled', [
+                `Invoice ${label} was still unpaid, so your Support + subscription has been cancelled.`,
+                'The invoice is still due. Please pay it; you can enable Support + again from Support in the console.',
+            ], 'Pay your invoice');
+        }
         if (deleted) {
             await email(cur.user_id, 'Your servers have been deleted', [
                 `Invoice ${label} was still unpaid, so your ${deleted === 1 ? 'server and its data have' : `${deleted} servers and their data have`} been deleted.`,
@@ -773,13 +825,15 @@ const markPaid = (invoiceId) => q('SELECT user_id FROM monthly_invoices WHERE id
 
 // ── For the customer ─────────────────────────────────────────────────────
 
-/** What the next renewal (on the 1st) will be, excluding GST. */
+/** What the next renewal (on the 1st) will be, excluding GST: monthly servers and Support +. */
 const nextRenewal = async (userId, now = new Date()) => {
     const next = nextMonthStart(now);
     const [r] = await q(
-        `SELECT COALESCE(SUM(ROUND(COALESCE(monthly_cost, 0) * 100)), 0) AS total FROM servers
-          WHERE user_id = ? AND status <> 'failed' AND COALESCE(term_months, 1) = 1 AND (cancel_at IS NULL OR cancel_at > ?)`,
-        [userId, next],
+        `SELECT (SELECT COALESCE(SUM(ROUND(COALESCE(monthly_cost, 0) * 100)), 0) FROM servers
+                  WHERE user_id = ? AND status <> 'failed' AND COALESCE(term_months, 1) = 1 AND (cancel_at IS NULL OR cancel_at > ?))
+               + (SELECT COALESCE(SUM(monthly_price), 0) FROM support_plus
+                  WHERE user_id = ? AND status = 'active' AND (cancel_at IS NULL OR cancel_at > ?)) AS total`,
+        [userId, next, userId, next],
     );
     return Number(r?.total || 0);
 };
@@ -819,9 +873,9 @@ const publicInvoice = (inv) => ({
 module.exports = {
     LATE_FEE_RATE, DUE_HOURS, SUSPEND_HOURS, DELETE_DAYS_AFTER_OVERDUE, deadlines,
     // dates
-    istParts, monthStart, daysInMonth, nextMonthStart, proRata, addMonths, TERMS, termFor,
+    istParts, monthStart, monthLabel, daysInMonth, nextMonthStart, proRata, addMonths, TERMS, termFor,
     // servers
-    destroyServer, isSuspended, hasOverdue, resumeIfClear, suspendServers, enforceSuspension,
+    destroyServer, isSuspended, hasOverdue, hasSupportPlus, SUPPORT_PLUS_LABEL, resumeIfClear, suspendServers, enforceSuspension,
     // purchase
     quotePurchase, chargeBalance, refundBalance, recordPurchase,
     // invoices

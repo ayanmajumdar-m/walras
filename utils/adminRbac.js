@@ -29,6 +29,7 @@ const PERMISSIONS = [
     { id: 'manage_services', label: 'Suspend, delete and log in to services', group: 'Services' },
     { id: 'manage_plans', label: 'Change plans, prices and locations', group: 'Services' },
     { id: 'send_bulk_email', label: 'Email all customers', group: 'Customers' },
+    { id: 'manage_callbacks', label: 'Handle Support + call-back requests', group: 'Support' },
     { id: 'view_audit_logs', label: 'View audit logs', group: 'Governance' },
     { id: 'manage_settings', label: 'Change platform settings', group: 'Governance' },
     { id: 'manage_integrations', label: 'Manage SolusVM accounts', group: 'Governance' },
@@ -39,7 +40,7 @@ const ALL = PERMISSIONS.map((p) => p.id);
 
 const DEFAULTS = {
     admin: ALL.filter((p) => !['manage_admins', 'manage_settings', 'send_bulk_email', 'manage_plans', 'manage_integrations'].includes(p)),
-    support: ['view_dashboard', 'view_users', 'view_billing', 'view_services'],
+    support: ['view_dashboard', 'view_users', 'view_billing', 'view_services', 'manage_callbacks'],
     finance: ['view_dashboard', 'view_users', 'manage_wallets', 'view_billing', 'manage_billing', 'manage_coupons'],
     readonly: ['view_dashboard', 'view_users', 'view_billing', 'view_services', 'view_audit_logs'],
 };
@@ -51,6 +52,29 @@ const query = (sql, params = []) => new Promise((resolve, reject) => {
 let cache = null;
 let cachedAt = 0;
 const CACHE_MS = 30 * 1000;
+
+// Permissions added after a database's defaults were written: granted once
+// (marked in app_settings) to the roles that have them by default. An admin
+// who removes one later keeps it removed.
+const ADDED = ['manage_callbacks'];
+let addedChecked = false;
+const grantAdded = async () => {
+    for (const permission of ADDED) {
+        const first = await query(
+            "INSERT INTO app_settings (key, value) VALUES (?, '1') ON CONFLICT (key) DO NOTHING RETURNING key",
+            [`rbac.granted.${permission}`]
+        );
+        if (!(first.rows || first).length) continue;
+        for (const [role, perms] of Object.entries(DEFAULTS)) {
+            if (!perms.includes(permission)) continue;
+            await query(
+                'INSERT INTO admin_role_permissions (role, permission) VALUES (?, ?) ON CONFLICT (role, permission) DO NOTHING',
+                [role, permission]
+            );
+        }
+    }
+    addedChecked = true;
+};
 
 const loadMatrix = async () => {
     if (cache && Date.now() - cachedAt < CACHE_MS) return cache;
@@ -66,6 +90,10 @@ const loadMatrix = async () => {
                 );
             }
         }
+        rows = await query('SELECT role, permission FROM admin_role_permissions');
+    }
+    if (!addedChecked) {
+        await grantAdded();
         rows = await query('SELECT role, permission FROM admin_role_permissions');
     }
     const matrix = {};

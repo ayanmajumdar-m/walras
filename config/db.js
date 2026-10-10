@@ -422,6 +422,43 @@ const migrateMonthlyInvoices = [
     'CREATE INDEX IF NOT EXISTS monthly_invoices_user_idx ON monthly_invoices (user_id, billing_month)',
 ];
 
+// Support + (utils/supportPlus.js): priority phone support, a monthly service
+// billed like a server — pro rata when enabled, then on the 1st with the
+// account's other services. paid_until = the start of the first month not
+// paid for; cancel_at = when a cancelled subscription ends. Prices in paise.
+const createSupportPlusTable = `
+CREATE TABLE IF NOT EXISTS support_plus (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(10) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'ended')),
+    monthly_price BIGINT NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    paid_until TIMESTAMPTZ NOT NULL,
+    cancel_at TIMESTAMPTZ,
+    ended_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// Support + call-back requests: pending → accepted (we call within 60
+// minutes) → completed, or declined / cancelled by the customer. name and
+// phone are who to call, as entered with the request.
+const createSupportCallbacksTable = `
+CREATE TABLE IF NOT EXISTS support_callbacks (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    requested_by INT REFERENCES users(id) ON DELETE SET NULL,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    note VARCHAR(500),
+    status VARCHAR(10) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'completed', 'declined', 'cancelled')),
+    admin_note VARCHAR(500),
+    handled_by INT,
+    handled_by_name VARCHAR(100),
+    accepted_at TIMESTAMPTZ,
+    closed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
 // Team members: people an account owner has invited (by email) and the
 // access they have in the owner's account. See utils/team.js.
 const createTeamMembersTable = `
@@ -622,7 +659,7 @@ END;
 $$ LANGUAGE plpgsql
 `;
 
-const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions'].map(
+const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'support_plus', 'support_callbacks'].map(
     (table) => `
 CREATE OR REPLACE TRIGGER ${table}_touch_updated_at
 BEFORE UPDATE ON ${table}
@@ -745,6 +782,11 @@ connection.connect((err) => {
         // Reservations: 1 = monthly; 3–36 = reserved for that many months (paid up front).
         ['servers term_months', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS term_months INT NOT NULL DEFAULT 1'],
         ['invoice items months', 'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS months INT'],
+        ['Support +', createSupportPlusTable],
+        ['Support + call-backs', createSupportCallbacksTable],
+        // One open (pending or accepted) call-back per account at a time.
+        ['support call-backs open', "CREATE UNIQUE INDEX IF NOT EXISTS support_callbacks_open_idx ON support_callbacks (user_id) WHERE status IN ('pending', 'accepted')"],
+        ['support call-backs list', 'CREATE INDEX IF NOT EXISTS support_callbacks_created_idx ON support_callbacks (created_at DESC)'],
         ['Domain transactions', createDomainTransactionsTable],
         ['updated_at function', createTouchFunction],
         ...touchTriggers.map((sql, i) => [`updated_at trigger ${i + 1}`, sql]),

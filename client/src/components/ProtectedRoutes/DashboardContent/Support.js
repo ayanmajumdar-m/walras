@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { LifeBuoy, Plus, RefreshCw, ArrowLeft, Paperclip, Send, X, Download, Mail } from "lucide-react";
 import { api, authHeaders } from "../consoleApi";
+import SupportPlus from "./SupportPlus";
 
 /*
-  Support tickets, backed by Zendesk through /api/support (like Fantom).
+  Support tickets, backed by Zendesk through /api/support (like Fantom), and
+  Support + (priority phone call-backs, SupportPlus.js) above the list.
   The list, a new-ticket form and a ticket's conversation are one page; the
   open ticket lives in ?ticket=<id> so it can be linked and survives reloads.
 */
@@ -287,7 +289,7 @@ const Support = () => {
       <div className="cx-page-head cx-page-head-row">
         <div>
           <h2>Support</h2>
-          <p>Open a ticket and our team will reply here and by email.</p>
+          <p>Talk to us on the phone with Support +, or open a ticket and our team will reply here and by email.</p>
         </div>
         {configured && !openId && !composing && (
           <div className="cx-welcome-actions">
@@ -307,6 +309,9 @@ const Support = () => {
           <button type="button" className="cx-icon-btn" onClick={() => setMessage(null)} aria-label="Dismiss"><X size={15} /></button>
         </div>
       )}
+
+      {!openId && !composing && <SupportPlus notify={notify} />}
+      {configured && !openId && !composing && <div className="cx-section-head"><h3>Tickets</h3></div>}
 
       {!configured ? (
         <div className="cx-card cx-empty">

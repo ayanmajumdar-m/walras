@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Bell, UserPlus, Receipt, AlertTriangle } from "lucide-react";
+import { Bell, UserPlus, Receipt, AlertTriangle, PhoneCall } from "lucide-react";
 import { adminApi, fmtDate } from "../adminApi";
 
-const ICONS = { signup: UserPlus, order: Receipt, payment_failed: AlertTriangle };
+const ICONS = { signup: UserPlus, order: Receipt, payment_failed: AlertTriangle, callback: PhoneCall };
 const POLL_MS = 60 * 1000;
 
 /**
- * Header bell: recent sign-ups and failed payments.
+ * Header bell: recent sign-ups, failed payments and waiting Support +
+ * call-back requests.
  * Polls every minute; opening it marks everything as seen for this admin.
  */
-const NotificationsBell = ({ openCustomer }) => {
+const NotificationsBell = ({ openCustomer, openSection }) => {
   const [data, setData] = useState({ items: [], unread: 0 });
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -54,7 +55,7 @@ const NotificationsBell = ({ openCustomer }) => {
                 const Icon = ICONS[n.kind] || Bell;
                 return (
                   <li key={i}>
-                    <button type="button" onClick={() => { setOpen(false); if (n.userId) openCustomer(n.userId); }}>
+                    <button type="button" onClick={() => { setOpen(false); if (n.section) openSection(n.section); else if (n.userId) openCustomer(n.userId); }}>
                       <span className={`ap-bell-icon is-${n.kind}`}><Icon size={15} /></span>
                       <span className="ap-bell-text">
                         <strong>{n.title}</strong>

@@ -23,4 +23,16 @@ supportRouter.get('/tickets/:id', readLimit, SupportController.get);
 supportRouter.post('/tickets/:id/reply', replyLimit, SupportController.reply);
 supportRouter.get('/tickets/:id/attachments/:attachmentId', readLimit, SupportController.attachment);
 
+// Support + (priority phone support) and its call-back requests.
+const SupportPlus = require('../controllers/supportPlus.controllers');
+const planLimit = rateLimit({ windowMs: 15 * MINUTE, max: 10, keyFn: userKey('support-plus') });
+const callbackLimit = rateLimit({ windowMs: 60 * MINUTE, max: 10, keyFn: userKey('support-callback'), message: 'Too many call-back requests. Please wait a while.' });
+supportRouter.get('/plus', readLimit, SupportPlus.overview);
+supportRouter.post('/plus', planLimit, SupportPlus.enable);
+supportRouter.delete('/plus', planLimit, SupportPlus.cancel);
+supportRouter.post('/plus/keep', planLimit, SupportPlus.keep);
+supportRouter.get('/callbacks', readLimit, SupportPlus.callbacks);
+supportRouter.post('/callbacks', callbackLimit, SupportPlus.requestCallback);
+supportRouter.post('/callbacks/:id/cancel', planLimit, SupportPlus.cancelCallback);
+
 module.exports = supportRouter;

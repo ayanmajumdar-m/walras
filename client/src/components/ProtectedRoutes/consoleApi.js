@@ -72,7 +72,7 @@ export const api = async (path, { method = "GET", body } = {}) => {
     accessRevoked(data.error);
     throw new Error("Session expired");
   }
-  if (!res.ok) throw new Error(data.error || data.message || "Request failed");
+  if (!res.ok) throw Object.assign(new Error(data.error || data.message || "Request failed"), { status: res.status, data });
   return data;
 };
 

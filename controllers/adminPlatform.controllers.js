@@ -16,6 +16,7 @@ const solusAccounts = require('../utils/solusAccounts');
 const computeStock = require('../utils/computeStock');
 const serverLocations = require('../utils/serverLocations');
 const { ensureWallet } = require('../utils/wallets');
+const supportPlus = require('../utils/supportPlus');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -342,7 +343,7 @@ const PlatformController = {
      */
     listNotifications: handle(async (req, res) => {
         const settle = (p) => p.catch(() => []);
-        const [signups, failedTopups, [me]] = await Promise.all([
+        const [signups, failedTopups, [me], callbacks] = await Promise.all([
             settle(q(`SELECT id, name, email, account_type, createdat AS at FROM users
                       WHERE createdat > NOW() - INTERVAL '14 days' ORDER BY createdat DESC LIMIT 20`)),
             settle(q(`SELECT wt.reference_id, wt.amount, w.user_id, u.name, wt.created_at AS at
@@ -350,10 +351,13 @@ const PlatformController = {
                       WHERE wt.status = 'failed' AND wt.created_at > NOW() - INTERVAL '14 days'
                       ORDER BY wt.created_at DESC LIMIT 20`)),
             q('SELECT notifications_seen_at FROM admins WHERE id = ?', [req.admin.adminId]),
+            // Support + call-backs waiting for someone to pick them up.
+            req.admin.permissions.includes('manage_callbacks') ? settle(supportPlus.pendingForBell()) : [],
         ]);
 
         const items = [
             ...signups.map((u) => ({ kind: 'signup', title: `New ${u.account_type || 'personal'} sign-up`, body: `${u.name} · ${u.email}`, userId: u.id, at: u.at })),
+            ...callbacks.map((c) => ({ kind: 'callback', title: 'Support + call-back requested', body: `${c.account_name || 'Customer'} · ${c.phone}`, section: 'support-plus', at: c.at })),
             ...failedTopups.map((t) => ({ kind: 'payment_failed', title: 'Account balance top-up failed', body: `${t.name || 'Customer'} · ₹${(Number(t.amount) / 100).toFixed(2)}`, userId: t.user_id, at: t.at })),
         ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 30);
 
