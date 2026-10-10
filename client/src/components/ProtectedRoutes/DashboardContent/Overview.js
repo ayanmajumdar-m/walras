@@ -75,7 +75,8 @@ const Overview = () => {
           <h3>Create a new resource</h3>
         </div>
         <div className="cx-product-grid">
-          {PRODUCTS.map((product) => {
+          {/* Reserved VM has its own sidebar entry (Reserve & Save), so it isn't a card here. */}
+          {PRODUCTS.filter((p) => p.id !== "reserved").map((product) => {
             const { id, Icon, title, desc, to } = product;
             const { label, available } = productStatus(product, platform);
             return (
