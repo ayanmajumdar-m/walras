@@ -2,9 +2,9 @@
  * Completes a pending account balance top-up: marks its wallet_transactions
  * row completed and adds the amount to the wallet, in one statement.
  *
- * Gateways can call back twice for the same order (a retry, a double
- * submit). Only the call that flips the row from 'pending' gets a row back,
- * so the balance is credited exactly once.
+ * Razorpay can report the same payment more than once (Checkout's verify
+ * call, the webhook, the reconcile job). Only the call that flips the row to
+ * 'completed' gets a row back, so the balance is credited exactly once.
  */
 const connection = require('../config/db');
 
@@ -16,9 +16,10 @@ const q = (sql, params = []) => new Promise((resolve, reject) => {
  * Credits the pending top-up with reference_id = orderId.
  * Resolves { credited: true, amount, walletId, userId, balance } or
  * { credited: false } when it was already completed, failed or unknown.
+ * 'cancelled' is an abandoned checkout we expired (utils/payments.js): a
+ * payment Razorpay captures for it after all is still credited.
  */
-// paymentRef goes in razorpay_payment_id: the gateway reference column (CCAvenue's
-// tracking id; the name is left from an earlier gateway).
+// paymentRef goes in razorpay_payment_id: the Razorpay payment id.
 const creditPendingTopup = async (orderId, { description, paymentRef } = {}) => {
     const rows = await q(
         `WITH tx AS (
@@ -26,7 +27,7 @@ const creditPendingTopup = async (orderId, { description, paymentRef } = {}) => 
                SET status = 'completed',
                    description = COALESCE(?, description),
                    razorpay_payment_id = COALESCE(?, razorpay_payment_id)
-             WHERE reference_id = ? AND status = 'pending' AND type = 'credit'
+             WHERE reference_id = ? AND status IN ('pending', 'cancelled') AND type = 'credit'
          RETURNING wallet_id, amount
         )
         UPDATE wallets w SET balance = w.balance + tx.amount

@@ -42,6 +42,9 @@ app.use(
 // Support tickets carry attachments, so they get their own larger body limit;
 // mounted before the global parser (100kb) so that one never sees them.
 app.use("/api/support", require("./routes/support.routes"));
+// Payments: the Razorpay webhook needs the raw body to check its signature,
+// so this router parses its own bodies too.
+app.use("/api/payment", require("./routes/payment.routes"));
 
 // ✅ Step 2: Body parser
 app.use(bodyParser.json());
@@ -53,7 +56,6 @@ const adminRouter = require("./routes/admin.routes");
 const walletRouter = require("./routes/wallet.routes");
 const serverRouter = require("./routes/server.routes");
 const authRouter = require("./routes/auth.routes");
-const paymentRouter = require("./routes/payment.routes");
 
 // ✅ Step 4: Use routes
 // What the website and console need to know about the platform's state:
@@ -94,7 +96,6 @@ app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
-app.use("/api/payment", paymentRouter);
 app.use("/api/invoices", require("./routes/invoices.routes"));
 // An API path nothing handles is a 404 in JSON, not the React app's HTML.
 app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));

@@ -82,14 +82,14 @@ const PlatformSettings = () => {
             checked={s.topUpsPaused} onChange={(v) => setS({ ...s, topUpsPaused: v })} />
           {s.autoTopupReady ? (
             <Switch Icon={RefreshCw} label="Auto top-up"
-              hint="Customers can save a card or UPI with CCAvenue (Standing Instructions) and have their balance topped up automatically. Paused while top-ups are paused."
+              hint="Customers can save a card with Razorpay and have their balance topped up automatically. Paused while top-ups are paused."
               checked={s.autoTopupEnabled} onChange={(v) => setS({ ...s, autoTopupEnabled: v })} />
           ) : (
             <div className="ap-setting is-disabled">
               <span className="ap-setting-icon"><RefreshCw size={18} /></span>
               <span className="ap-setting-text">
                 <strong>Auto top-up</strong>
-                <small>Waiting for CCAvenue Standing Instructions to be enabled and the integration finished. It can be switched on here after that.</small>
+                <small>Waiting for Razorpay to enable recurring payments on the account. Then set RAZORPAY_RECURRING=enabled (with the Razorpay keys and webhook secret) on the server, and it can be switched on here.</small>
               </span>
             </div>
           )}

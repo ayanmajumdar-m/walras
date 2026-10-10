@@ -44,12 +44,12 @@ const GROUPS = [
         ],
     },
     {
-        id: 'ccavenue', label: 'CCAvenue (payments)',
+        id: 'razorpay', label: 'Razorpay (payments)',
         fields: [
-            { name: 'CCAVENUE_MERCHANT_ID', label: 'Merchant ID' },
-            { name: 'CCAVENUE_ACCESS_CODE', label: 'Access code', secret: true },
-            { name: 'CCAVENUE_WORKING_KEY', label: 'Working key', secret: true },
-            { name: 'CCAVENUE_ENVIRONMENT', label: 'Environment', options: ['production', 'test'] },
+            { name: 'RAZORPAY_KEY_ID', label: 'Key ID' },
+            { name: 'RAZORPAY_KEY_SECRET', label: 'Key secret', secret: true },
+            { name: 'RAZORPAY_WEBHOOK_SECRET', label: 'Webhook secret', secret: true },
+            { name: 'RAZORPAY_RECURRING', label: 'Recurring payments', options: ['disabled', 'enabled'], hint: 'Set to enabled once Razorpay has activated recurring payments on the account (auto top-up).' },
         ],
     },
     {

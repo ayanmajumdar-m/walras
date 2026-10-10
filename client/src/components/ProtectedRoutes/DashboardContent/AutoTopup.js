@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Clock, AlertTriangle } from "lucide-react";
 import { authHeaders } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
+import { payWithRazorpay } from "../razorpayCheckout";
 
 /*
   Auto top-up (utils/autoTopup.js on the server): when the balance falls to
   "When balance reaches", the saved payment method is charged to bring it
-  back to "Top up to". Setting it up is one normal CCAvenue payment that also
-  approves automatic payments with the bank.
+  back to "Top up to". Setting it up is one Razorpay payment that also saves
+  the card for automatic payments (approved with the bank's OTP).
 */
 
 const api = async (method, body) => {
@@ -24,22 +25,6 @@ const api = async (method, body) => {
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 const when = (d) => new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
-// Posts the CCAvenue form, like Add Funds does.
-const goToCheckout = ({ actionUrl, encRequest, accessCode }) => {
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = actionUrl;
-  for (const [name, value] of [["encRequest", encRequest], ["access_code", accessCode]]) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-  }
-  document.body.appendChild(form);
-  form.submit();
-};
-
 const AutoTopup = ({ balance, onChange }) => {
   const { platform, can } = useConsole();
   const [s, setS] = useState(null);
@@ -52,23 +37,7 @@ const AutoTopup = ({ balance, onChange }) => {
       .catch((e) => setNotice({ type: "error", text: e.message }));
   }, []);
 
-  useEffect(() => {
-    load();
-    // Back from the setup checkout.
-    const params = new URLSearchParams(window.location.search);
-    const result = params.get("autotopup");
-    if (result) {
-      const message = params.get("message");
-      setNotice(result === "on"
-        ? { type: "success", text: "Auto top-up is on. Your payment was added to your balance." }
-        : result === "cancelled"
-          ? { type: "info", text: "Auto top-up setup was cancelled. Nothing was charged." }
-          : { type: "error", text: message || "Auto top-up couldn't be set up." });
-      params.delete("autotopup");
-      params.delete("message");
-      window.history.replaceState({}, document.title, `${window.location.pathname}${params.toString() ? `?${params}` : ""}`);
-    }
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   if (!platform?.autoTopup && !s?.enabled) return null;
   if (!s) return null;
@@ -94,7 +63,23 @@ const AutoTopup = ({ balance, onChange }) => {
     }
   };
 
-  const setup = () => run(async () => { goToCheckout(await api("POST", { threshold, target })); return null; });
+  // Pay through Razorpay with the card saved for recurring charges. Auto top-up
+  // switches on once Razorpay confirms the saved card (usually within minutes).
+  const setup = async () => {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const { checkout } = await api("POST", { threshold, target });
+      const result = await payWithRazorpay(checkout);
+      setNotice({ type: "success", text: `${result.message} Auto top-up switches on as soon as your bank confirms the card.` });
+      onChange?.();
+      load();
+    } catch (e) {
+      if (e.message !== "Session expired") setNotice({ type: e.cancelled ? "info" : "error", text: e.message });
+    } finally {
+      setBusy(false);
+    }
+  };
   const toggle = (enabled) => run(() => api("PUT", { enabled }), enabled ? "Auto top-up is on." : "Auto top-up is off. Your saved payment method is kept.");
   const save = () => run(() => api("PUT", { threshold, target }), "Auto top-up amounts saved.");
   const remove = () => {
@@ -137,12 +122,12 @@ const AutoTopup = ({ balance, onChange }) => {
       {active ? (<>
         <p className="at-note">
           Walras Cloud will charge {s.paymentMethod || "your saved payment method"} the amount needed to bring your balance back
-          to {inr(s.target)} whenever it falls to {inr(s.threshold)}. You'll get an email about each charge {s.limits.noticeHours} hours before it's made,
-          and there are at most {s.limits.maxPerDay} automatic charges a day.
+          to {inr(s.target)} whenever it falls to {inr(s.threshold)}. Your bank notifies you before each charge, which is made about {s.limits.noticeHours} hours
+          later, and there are at most {s.limits.maxPerDay} automatic charges a day.
         </p>
         {s.upcoming && (
           <p className="at-meta"><Clock size={15} aria-hidden="true" />
-            {s.upcoming.status === "scheduled" ? `${inr(s.upcoming.amount)} will be charged on ${when(s.upcoming.dueAt)}` : `${inr(s.upcoming.amount)} charge in progress`}
+            {`${inr(s.upcoming.amount)} will be charged around ${when(s.upcoming.dueAt)}`}
           </p>
         )}
         {s.lastError && <p className="at-meta is-error"><AlertTriangle size={15} aria-hidden="true" /> Last attempt failed: {s.lastError}</p>}
@@ -152,10 +137,13 @@ const AutoTopup = ({ balance, onChange }) => {
         </div>
       </>) : (<>
         <p className="at-note">
-          To set it up you'll pay {inr(setupAmount)} now, added to your balance, through CCAvenue, and approve automatic payments with your
-          bank (OTP). After that, whenever your balance falls to the first amount we'll charge your card or UPI the amount needed to reach the
-          second, with an email {s.limits.noticeHours} hours before each charge. Top up to can be at most {inr(s.limits.maxTarget)}.
+          To set it up you'll pay {inr(setupAmount)} now, added to your balance, through Razorpay, and save your card for automatic payments
+          (approved with your bank's OTP). After that, whenever your balance falls to the first amount we'll charge your card the amount needed
+          to reach the second; your bank notifies you before each charge. Top up to can be at most {inr(s.limits.maxTarget)}.
         </p>
+        {s.mandate === "pending" && !s.lastError && (
+          <p className="at-meta"><Clock size={15} aria-hidden="true" /> Your saved card is being confirmed with your bank. Auto top-up switches on automatically once it is.</p>
+        )}
         {s.lastError && <p className="at-meta is-error"><AlertTriangle size={15} aria-hidden="true" /> {s.lastError}</p>}
         <div className="at-actions">
           <button type="button" className="wallet-add-btn" onClick={setup} disabled={busy || !platform?.autoTopup}>

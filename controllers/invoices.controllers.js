@@ -4,9 +4,9 @@
  */
 const connection = require('../config/db');
 const billing = require('../utils/monthlyBilling');
-const ccavenue = require('../services/ccavenueService');
+const payments = require('../utils/payments');
+const { RazorpayError } = require('../services/razorpay');
 const { loadInvoice, sendInvoicePdf } = require('../services/invoicePdf');
-const { ensureWallet } = require('../utils/wallets');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -17,7 +17,11 @@ const handle = (fn) => async (req, res) => {
         if (req.params.id !== undefined && !/^\d{1,10}$/.test(req.params.id)) throw notFound();
         await fn(req, res);
     } catch (err) {
-        if (err.status) return res.status(err.status).json({ error: err.message });
+        if (err.status && !(err instanceof RazorpayError)) return res.status(err.status).json({ error: err.message });
+        if (err instanceof RazorpayError) {
+            console.error(`Invoices ${req.method} ${req.path} (Razorpay) failed:`, err.message);
+            return res.status(502).json({ error: "We couldn't reach the payment gateway. Please try again in a moment." });
+        }
         console.error(`Invoices ${req.method} ${req.path} failed:`, err.message);
         res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
@@ -69,7 +73,8 @@ module.exports = {
 
     /**
      * POST /api/invoices/:id/pay — the account balance first; whatever is
-     * left goes through CCAvenue (the browser posts the returned form).
+     * left is paid through Razorpay Checkout (the browser opens it with the
+     * returned options and finishes at /api/payment/razorpay/verify).
      */
     pay: handle(async (req, res) => {
         const userId = req.user.userId;
@@ -84,39 +89,10 @@ module.exports = {
             return res.json({ paid: true, message: fromBalance ? 'Paid from your account balance.' : 'This invoice is paid.' });
         }
 
-        const config = ccavenue.getConfig();
-        if (!config.isConfigured) throw Object.assign(new Error('Online payment is not available right now. Please contact support.'), { status: 503 });
-        const [user] = await q('SELECT name, email, phone FROM users WHERE id = ?', [userId]);
-        const wallet = await ensureWallet(userId);
-        const orderId = `CCAI_${Date.now()}_${inv.id}`;
-        // The payment lands in the balance and is applied to the invoice at once (payment callback).
-        await q(
-            `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, status)
-             VALUES (?, 'credit', ?, ?, ?, 'pending')`,
-            [wallet.id, due, `Payment for invoice ${cur.invoice_number} (Order ${orderId})`, orderId],
-        );
-        const params = {
-            merchant_id: config.merchantId,
-            order_id: orderId,
-            currency: 'INR',
-            amount: (due / 100).toFixed(2),
-            redirect_url: `${config.clientUrl}/api/payment/ccavenue/response`,
-            cancel_url: `${config.clientUrl}/api/payment/ccavenue/cancel`,
-            language: 'EN',
-            billing_name: user?.name || 'Customer',
-            billing_email: user?.email || '',
-            billing_tel: user?.phone || '',
-            merchant_param1: String(userId),
-            merchant_param2: 'invoice_payment',
-            merchant_param3: String(inv.id),
-        };
-        res.json({
-            paid: false,
-            fromBalance: fromBalance / 100,
-            amount: (due / 100).toFixed(2),
-            actionUrl: config.actionUrl,
-            encRequest: ccavenue.encrypt(ccavenue.stringifyParams(params), config.workingKey),
-            accessCode: config.accessCode,
+        // The payment lands in the balance and is applied to this invoice first (utils/payments.js).
+        const checkout = await payments.startCheckout({
+            userId, purpose: 'invoice', amount: due, invoiceId: inv.id, description: `Payment for invoice ${cur.invoice_number}`,
         });
+        res.json({ paid: false, fromBalance: fromBalance / 100, amount: (due / 100).toFixed(2), checkout });
     }),
 };

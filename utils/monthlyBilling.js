@@ -9,7 +9,7 @@
  *
  * On the 1st (00:00 IST) every server not yet paid for the new month is
  * renewed: one invoice per account for the full month ahead. The account
- * balance pays it first; the customer pays the rest through CCAvenue
+ * balance pays it first; the customer pays the rest through Razorpay
  * (Billing → Invoices). In calendar days (India time) from the day the
  * invoice is issued (the 1st for renewals), while anything is still unpaid:
  *   1st  issued, due the same day

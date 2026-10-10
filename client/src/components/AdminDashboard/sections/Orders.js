@@ -31,7 +31,7 @@ const Orders = ({ openCustomer }) => {
       <div className="cx-page-head cx-page-head-row">
         <div>
           <h2>Orders</h2>
-          <p>CCAvenue payments: account balance top-ups and invoice payments. {orders.length} shown · {inr(paid)} paid</p>
+          <p>Razorpay payments: account balance top-ups, invoice payments and auto top-up. {orders.length} shown · {inr(paid)} paid</p>
         </div>
         <button type="button" className="cx-btn cx-btn-ghost" onClick={load} disabled={loading}><RefreshCw size={15} className={loading ? "cx-spin" : ""} /> Refresh</button>
       </div>

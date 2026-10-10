@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Download, ChevronDown, ChevronUp, FileText, AlertTriangle } from "lucide-react";
 import { api, authHeaders } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
+import { payWithRazorpay } from "../razorpayCheckout";
 
 /*
   Billing → Invoices: the monthly invoices (utils/monthlyBilling.js on the
   server): one per new server (paid at purchase, pro rata) and a renewal on
   the 1st for the month ahead. Paying
-  uses the account balance first, then CCAvenue for the rest.
+  uses the account balance first, then Razorpay for the rest.
 */
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -22,21 +23,6 @@ const STATUS = {
   paid: { label: "Paid", cls: "is-active" },
   pending: { label: "Due", cls: "is-pending" },
   overdue: { label: "Overdue", cls: "is-failed" },
-};
-
-const goToCheckout = ({ actionUrl, encRequest, accessCode }) => {
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = actionUrl;
-  for (const [name, value] of [["encRequest", encRequest], ["access_code", accessCode]]) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-  }
-  document.body.appendChild(form);
-  form.submit();
 };
 
 const downloadPdf = async (inv) => {
@@ -109,19 +95,7 @@ const Invoices = () => {
     api("/api/invoices").then(setData).catch((e) => setNotice({ type: "error", text: e.message }));
   }, []);
 
-  useEffect(() => {
-    load();
-    // Back from paying an invoice through CCAvenue.
-    const params = new URLSearchParams(window.location.search);
-    const result = params.get("invoice");
-    if (result) {
-      setNotice(result === "paid" ? { type: "success", text: "Thanks, your payment was received and applied to your invoice." }
-        : result === "cancelled" ? { type: "info", text: "Payment cancelled. Nothing was charged." }
-          : { type: "error", text: `Payment failed: ${params.get("reason") || "please try again."}` });
-      ["invoice", "reason"].forEach((k) => params.delete(k));
-      window.history.replaceState({}, document.title, `${window.location.pathname}${params.toString() ? `?${params}` : ""}`);
-    }
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const pay = async (inv) => {
     setBusy(inv.id);
@@ -132,12 +106,18 @@ const Invoices = () => {
         setNotice({ type: "success", text: d.message });
         load();
         refreshBalance?.();
-        setBusy(null);
         return;
       }
-      goToCheckout(d); // leaves the page
+      const result = await payWithRazorpay(d.checkout);
+      setNotice({ type: "success", text: result.message });
+      load();
+      refreshBalance?.();
     } catch (e) {
-      setNotice({ type: "error", text: e.message });
+      if (e.message !== "Session expired") setNotice({ type: e.cancelled ? "info" : "error", text: e.message });
+      // The balance may have paid part of it before Checkout opened.
+      load();
+      refreshBalance?.();
+    } finally {
       setBusy(null);
     }
   };

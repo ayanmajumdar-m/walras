@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { authHeaders } from "../consoleApi";
+import { api, authHeaders } from "../consoleApi";
+import { payWithRazorpay } from "../razorpayCheckout";
 import "./Dashboard.css";
 import { useConsole } from "../ConsoleContext";
 import AutoTopup from "./AutoTopup";
 
 const Wallet = () => {
   // Admins can pause top-ups in Settings; the server refuses them too.
-  const topUpsPaused = Boolean(useConsole().platform?.topUpsPaused);
+  const { platform, refreshBalance } = useConsole();
+  const topUpsPaused = Boolean(platform?.topUpsPaused);
   const [balance, setBalance] = useState(0);
   const [nextRenewal, setNextRenewal] = useState(0);
   const [nextInvoiceDate, setNextInvoiceDate] = useState("");
@@ -23,24 +25,6 @@ const Wallet = () => {
   useEffect(() => {
     fetchWallet();
     fetchUserData();
-
-    // Check for return status from CCAvenue
-    const params = new URLSearchParams(window.location.search);
-    const pStatus = params.get("payment_status");
-    if (pStatus === "success") {
-      const creditedAmt = params.get("amount");
-      const trackingId = params.get("tracking_id");
-      alert(`✅ Payment Successful! Your wallet has been credited ₹${creditedAmt || ""}. (Ref: ${trackingId || ""})`);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      fetchWallet();
-    } else if (pStatus === "failed") {
-      const reason = params.get("reason") || "Transaction failed";
-      alert(`❌ Payment Failed: ${reason}`);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (pStatus === "cancelled") {
-      alert("⚠️ Payment was cancelled.");
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
   }, []);
 
   // ✅ Get user ID from JWT token
@@ -107,64 +91,23 @@ const Wallet = () => {
     }
   };
 
-  // ✅ CCAvenue payment handler
-  const handleCcavenuePayment = async (amt) => {
-    try {
-      const res = await fetch(`${API_URL}/api/payment/ccavenue/initiate-wallet`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders(),
-        },
-        body: JSON.stringify({ amount: amt }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.encRequest) {
-        alert(data.error || "Failed to initiate CCAvenue payment");
-        setLoading(false);
-        return;
-      }
-
-      // Create hidden dynamic form and auto-submit to CCAvenue
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = data.actionUrl;
-
-      const encInput = document.createElement("input");
-      encInput.type = "hidden";
-      encInput.name = "encRequest";
-      encInput.value = data.encRequest;
-      form.appendChild(encInput);
-
-      const accessInput = document.createElement("input");
-      accessInput.type = "hidden";
-      accessInput.name = "access_code";
-      accessInput.value = data.accessCode;
-      form.appendChild(accessInput);
-
-      document.body.appendChild(form);
-      form.submit();
-    } catch (err) {
-      console.error("[CCAvenue] Payment initiation error:", err);
-      alert("Failed to start CCAvenue checkout");
-      setLoading(false);
-    }
-  };
-
-  // ✅ Main payment handler
+  // ✅ Add funds: Razorpay Checkout, then the server credits the balance
   const handleAddFunds = async () => {
     const amt = parseFloat(amount);
-    if (isNaN(amt) || amt <= 0) return alert("Enter a valid amount (INR)");
+    if (isNaN(amt) || amt < 1) return alert("Enter an amount of at least ₹1");
     if (!token) return alert("Authentication token missing");
 
+    setLoading(true);
     try {
-      setLoading(true);
-
-      await handleCcavenuePayment(amt);
-
-      setLoading(false);
+      const { checkout } = await api("/api/payment/razorpay/topup", { method: "POST", body: { amount: amt } });
+      const result = await payWithRazorpay(checkout);
+      alert(`✅ ${result.message}`);
+      setAmount("");
+      fetchWallet();
+      refreshBalance?.();
     } catch (err) {
+      if (err.message !== "Session expired") alert(err.cancelled ? `⚠️ ${err.message}` : `❌ ${err.message}`);
+    } finally {
       setLoading(false);
     }
   };
@@ -264,7 +207,7 @@ const Wallet = () => {
         <h2>Add Funds</h2>
         <p>Enter the amount to add to your account balance.</p>
 
-        <p className="wallet-pay-with">Paid securely through CCAvenue: UPI, cards and net banking.</p>
+        <p className="wallet-pay-with">Paid securely through Razorpay: UPI, cards, net banking and wallets.</p>
 
         <div className="wallet-input-row">
           <input

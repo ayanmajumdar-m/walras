@@ -18,7 +18,7 @@ router.get("/", authenticateToken, getWallet);
 router.get("/transactions", authenticateToken, getTransactions);
 router.post("/apply-promo", authenticateToken, applyPromoCode);
 
-// Auto top-up (CCAvenue standing instructions)
+// Auto top-up (Razorpay recurring card payments)
 const AutoTopup = require("../controllers/autoTopup.controllers");
 router.get("/auto-topup", authenticateToken, AutoTopup.get);
 router.put("/auto-topup", authenticateToken, AutoTopup.update);

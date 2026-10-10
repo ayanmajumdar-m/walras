@@ -1,30 +1,31 @@
 /**
  * Auto top-up: when an account's balance falls to its threshold, Walras
- * charges the customer's CCAvenue standing instruction (services/ccavenueSI.js)
- * to bring the balance back up to their target.
+ * charges the customer's saved card (a Razorpay recurring token,
+ * services/razorpay.js) to bring the balance back up to their target.
  *
  *   1. Setup: the customer picks "when balance reaches ₹X, top up to ₹Y" and
- *      pays once through the normal CCAvenue checkout, which also registers
- *      an on-demand standing instruction (approved with OTP). That first
- *      payment is a normal top-up.
- *   2. Trigger (run(), after each hourly billing run and every 15 minutes):
- *      balance ≤ X and nothing already open → a charge is *scheduled* for
- *      Y − balance and the customer is told it's coming (RBI pre-debit
- *      notice). One open charge per account (unique index).
- *   3. When it's due: if the balance is still at or below X, the charge is
- *      sent; otherwise it's cancelled. Success credits the wallet through
- *      the same exactly-once path as other top-ups (utils/walletCredit.js).
+ *      pays once through Razorpay Checkout with recurring on, which saves the
+ *      card as a token (approved with OTP). That first payment is a normal
+ *      top-up. The token can be charged once Razorpay reports it "confirmed";
+ *      run() checks tokens still being confirmed.
+ *   2. Trigger (run(), every 15 minutes): balance ≤ X and no charge already
+ *      open → a charge for Y − balance is requested from Razorpay. Razorpay
+ *      sends the RBI pre-debit notification and debits about 36 hours later;
+ *      we also email the customer. One open charge per account (unique index).
+ *   3. Razorpay reports the result (webhook, or utils/payments.js reconcile):
+ *      success credits the wallet through the same exactly-once path as other
+ *      payments; a failure is counted.
  *   4. Guards: at most MAX_CHARGES_PER_DAY charges a day; after MAX_FAILURES
- *      failures in a row auto top-up switches itself off and the customer
- *      is emailed; nothing runs while top-ups are paused, during
- *      maintenance, or while the admin switch is off.
+ *      failures in a row auto top-up switches itself off and the customer is
+ *      emailed; nothing runs while top-ups are paused, during maintenance,
+ *      while the admin switch is off, or before Razorpay has enabled
+ *      recurring payments on the account (RAZORPAY_RECURRING=enabled).
  *
  * Amounts are in paise.
  */
 const connection = require('../config/db');
-const ccavenue = require('../services/ccavenueService');
-const si = require('../services/ccavenueSI');
-const { creditPendingTopup, failPendingTopup } = require('./walletCredit');
+const razorpay = require('../services/razorpay');
+const payments = require('./payments');
 const { ensureWallet } = require('./wallets');
 const { sendRawEmail, escapeHtml } = require('./sendEmail');
 const integrations = require('./integrations');
@@ -32,10 +33,11 @@ const { getPlatform } = require('./platformSettings');
 
 const MIN_THRESHOLD = 100 * 100;
 const MIN_GAP = 100 * 100; // target must be at least this much above the threshold
-const MAX_TARGET = si.MAX_DEBIT_PAISE;
+const MAX_TARGET = razorpay.MAX_DEBIT_PAISE;
 const MAX_CHARGES_PER_DAY = 3;
 const MAX_FAILURES = 2;
-const RETRY_AFTER_FAILURE_HOURS = 6; // pause before scheduling again after a failed charge
+const RETRY_AFTER_FAILURE_HOURS = 6; // pause before charging again after a failed charge
+const TOKEN_YEARS = 10; // how long a saved card stays authorised for auto top-up
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -76,7 +78,8 @@ const view = async (userId) => {
         enabled: Boolean(row?.enabled) && row?.si_status === 'active',
         threshold: row ? Number(row.threshold) / 100 : 500,
         target: row ? Number(row.target) / 100 : 2000,
-        mandate: row?.si_status === 'active' ? 'active' : row?.si_status === 'pending' ? 'pending' : 'none',
+        // 'pending': a card is saved and Razorpay hasn't confirmed it yet (not just a setup started).
+        mandate: row?.si_status === 'active' ? 'active' : row?.si_status === 'pending' && row?.si_ref ? 'pending' : 'none',
         paymentMethod: row?.si_status === 'active' ? row.si_card_label : null,
         lastError: row?.last_error || null,
         upcoming: open[0] ? { amount: Number(open[0].amount) / 100, status: open[0].status, dueAt: open[0].due_at } : null,
@@ -86,7 +89,7 @@ const view = async (userId) => {
             minGap: MIN_GAP / 100,
             maxTarget: MAX_TARGET / 100,
             maxPerDay: MAX_CHARGES_PER_DAY,
-            noticeHours: si.PRE_DEBIT_HOURS,
+            noticeHours: razorpay.DEBIT_DELAY_HOURS,
         },
     };
 };
@@ -102,12 +105,12 @@ const readAmounts = ({ threshold, target }) => {
 };
 
 /**
- * Change the amounts or switch it on/off. Switching on needs an approved
- * standing instruction (setup); without one, use startSetup.
+ * Change the amounts or switch it on/off. Switching on needs a confirmed
+ * saved card (setup); without one, use startSetup.
  */
 const update = async (userId, body) => {
     const row = await getRow(userId);
-    if (!row || row.si_status !== 'active') throw new AutoTopupError(409, 'Set up auto top-up first: it needs one payment to approve automatic charges.');
+    if (!row || row.si_status !== 'active') throw new AutoTopupError(409, 'Set up auto top-up first: it needs one payment to save your card for automatic charges.');
     const amounts = readAmounts({ threshold: body.threshold ?? Number(row.threshold) / 100, target: body.target ?? Number(row.target) / 100 });
     const enabled = body.enabled === undefined ? row.enabled : Boolean(body.enabled);
     await q(
@@ -115,111 +118,86 @@ const update = async (userId, body) => {
             last_error = CASE WHEN ? THEN NULL ELSE last_error END, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
         [amounts.threshold, amounts.target, enabled, enabled && !row.enabled, enabled && !row.enabled, userId],
     );
-    // Turned off: drop a charge that hasn't been sent yet.
-    if (!enabled) await q("UPDATE wallet_auto_topup_charges SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND status = 'scheduled'", [userId]);
     return view(userId);
 };
 
 /**
- * Starts setup: a CCAvenue checkout that tops up the balance to the target
- * (at least ₹1) and registers the standing instruction. Returns the form
- * fields the browser posts to CCAvenue, like a normal top-up.
+ * Starts setup: a Razorpay Checkout payment that tops up the balance to the
+ * target (at least ₹1) and saves the card for recurring charges. Returns the
+ * options the browser opens Checkout with.
  */
 const startSetup = async (userId, body) => {
     if (!(await platformOpen())) throw new AutoTopupError(409, 'Auto top-up is not available right now.');
-    const config = ccavenue.getConfig();
-    if (!config.isConfigured) throw new AutoTopupError(503, 'Payments are not available right now.');
     const amounts = readAmounts(body);
     const [user] = await q('SELECT name, email, phone FROM users WHERE id = ?', [userId]);
     const wallet = await walletOf(userId);
     const amount = Math.max(100, amounts.target - wallet.balance);
-    const orderId = `CCAS_${Date.now()}_${userId}`;
+    const customerId = await razorpay.ensureCustomer({ name: user?.name, email: user?.email, contact: user?.phone });
 
+    const checkout = await payments.startCheckout({
+        userId,
+        purpose: 'autotopup_setup',
+        amount,
+        description: 'Auto top-up setup payment',
+        customerId,
+        recurringToken: { maxAmount: MAX_TARGET, expireAt: Math.floor(Date.now() / 1000) + TOKEN_YEARS * 365 * 24 * 3600 },
+    });
     await q(
-        `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, status)
-         VALUES (?, 'credit', ?, ?, ?, 'pending')`,
-        [wallet.id, amount, `Auto top-up setup payment (Order ${orderId})`, orderId],
-    );
-    await q(
-        `INSERT INTO wallet_auto_topup (user_id, enabled, threshold, target, si_status, setup_order_id)
-         VALUES (?, FALSE, ?, ?, 'pending', ?)
+        `INSERT INTO wallet_auto_topup (user_id, enabled, threshold, target, si_status, setup_order_id, customer_ref)
+         VALUES (?, FALSE, ?, ?, 'pending', ?, ?)
          ON CONFLICT (user_id) DO UPDATE SET threshold = EXCLUDED.threshold, target = EXCLUDED.target,
             si_status = CASE WHEN wallet_auto_topup.si_status = 'active' THEN 'active' ELSE 'pending' END,
-            setup_order_id = EXCLUDED.setup_order_id, updated_at = CURRENT_TIMESTAMP
+            setup_order_id = EXCLUDED.setup_order_id, customer_ref = EXCLUDED.customer_ref, updated_at = CURRENT_TIMESTAMP
          RETURNING user_id`, // explicit: pgCompat would otherwise add RETURNING id, and this table has none
-        [userId, amounts.threshold, amounts.target, orderId],
+        [userId, amounts.threshold, amounts.target, checkout.orderId, customerId],
     );
-
-    const params = {
-        merchant_id: config.merchantId,
-        order_id: orderId,
-        currency: 'INR',
-        amount: (amount / 100).toFixed(2),
-        redirect_url: `${config.clientUrl}/api/payment/ccavenue/response`,
-        cancel_url: `${config.clientUrl}/api/payment/ccavenue/cancel`,
-        language: 'EN',
-        billing_name: user?.name || 'Customer',
-        billing_email: user?.email || '',
-        billing_tel: user?.phone || '',
-        merchant_param1: String(userId),
-        merchant_param2: 'autotopup_setup',
-        ...si.registrationFields({ refNo: orderId, maxDebitPaise: amounts.target }),
-    };
-    return {
-        actionUrl: config.actionUrl,
-        encRequest: ccavenue.encrypt(ccavenue.stringifyParams(params), config.workingKey),
-        accessCode: config.accessCode,
-        amount: (amount / 100).toFixed(2),
-    };
+    return { checkout };
 };
 
 /**
- * CCAvenue's checkout response for a setup order (CCAS_…): credits the
- * payment and, if the standing instruction was approved, switches auto
- * top-up on. Returns { ok, message } for the redirect back to Billing.
+ * The setup payment was captured (utils/payments.js, after crediting it):
+ * keep its card token. Charges wait until Razorpay confirms the token.
  */
-const completeSetup = async (data) => {
-    const orderId = data.order_id;
-    const [row] = await q('SELECT * FROM wallet_auto_topup WHERE setup_order_id = ?', [orderId]);
-    const paid = String(data.order_status || '').toLowerCase() === 'success';
-    const ref = data.tracking_id || data.bank_ref_no || orderId;
-
-    if (!paid) {
-        await failPendingTopup(orderId, `CCAvenue Failed: ${data.failure_message || data.order_status || 'Payment failed'}`);
-        if (row && row.si_status === 'pending') {
-            await q("UPDATE wallet_auto_topup SET si_status = 'none', last_error = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
-                ['The setup payment did not go through.', row.user_id]);
-        }
-        return { ok: false, message: data.failure_message || 'Payment failed' };
-    }
-
-    await creditPendingTopup(orderId, { description: `Auto top-up setup payment (Ref: ${ref})`, paymentRef: ref });
-    if (!row) return { ok: false, message: 'Payment received, but the auto top-up setup was not found.' };
-
-    const reg = si.readRegistration(data);
-    if (!reg.ok) {
+const setupCaptured = async (order, payment) => {
+    const [row] = await q('SELECT * FROM wallet_auto_topup WHERE setup_order_id = ?', [order.order_id]);
+    if (!row) return;
+    const full = payment?.id ? await razorpay.fetchPayment(payment.id) : null;
+    const tokenId = full?.token_id || payment?.token_id;
+    if (!tokenId) {
         await q("UPDATE wallet_auto_topup SET si_status = CASE WHEN si_status = 'active' THEN 'active' ELSE 'none' END, last_error = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
-            [reg.error.slice(0, 255), row.user_id]);
-        return { ok: false, message: `Payment received, but automatic payments weren't approved: ${reg.error}` };
+            ['Payment received, but the card was not saved for automatic payments.', row.user_id]);
+        return;
     }
     await q(
-        `UPDATE wallet_auto_topup SET si_status = 'active', si_ref = ?, si_card_label = ?, enabled = TRUE, failures = 0,
-            last_error = NULL, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
-        [reg.ref, reg.cardLabel.slice(0, 100), row.user_id],
+        `UPDATE wallet_auto_topup SET si_status = 'pending', si_ref = ?, si_card_label = ?, failures = 0, last_error = NULL,
+            updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+        [tokenId, razorpay.cardLabel(full).slice(0, 100), row.user_id],
     );
-    return { ok: true, message: 'Auto top-up is on.' };
+    await confirmToken({ ...row, si_ref: tokenId }).catch((e) => console.error('[AutoTopup] Token check failed:', e.message));
 };
 
-/** Switch off and cancel the standing instruction at CCAvenue. */
+/** A saved card waiting for Razorpay's confirmation: switch on once confirmed. */
+const confirmToken = async (row) => {
+    if (!row.si_ref || !row.customer_ref) return;
+    const { status, reason } = await razorpay.tokenStatus(row.customer_ref, row.si_ref);
+    if (status === 'confirmed') {
+        await q("UPDATE wallet_auto_topup SET si_status = 'active', enabled = TRUE, last_error = NULL, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND si_status = 'pending'", [row.user_id]);
+    } else if (['rejected', 'cancelled'].includes(status)) {
+        await q("UPDATE wallet_auto_topup SET si_status = 'none', enabled = FALSE, si_ref = NULL, last_error = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+            [`Your bank didn't approve automatic payments${reason ? ` (${reason})` : ''}.`.slice(0, 255), row.user_id]);
+    }
+};
+
+/** Switch off and remove the saved card at Razorpay. */
 const cancel = async (userId) => {
     const row = await getRow(userId);
     if (!row) return view(userId);
-    if (row.si_ref && row.si_status === 'active') {
+    if (row.si_ref && row.customer_ref) {
         try {
-            await si.cancel(row.si_ref);
+            await razorpay.deleteToken(row.customer_ref, row.si_ref);
         } catch (err) {
             // Ours is switched off regardless; nothing will be charged.
-            console.error(`[AutoTopup] Cancelling the standing instruction for user ${userId} failed:`, err.message);
+            console.error(`[AutoTopup] Deleting the saved card for user ${userId} failed:`, err.message);
         }
     }
     await q(
@@ -227,7 +205,6 @@ const cancel = async (userId) => {
             updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
         [userId],
     );
-    await q("UPDATE wallet_auto_topup_charges SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND status = 'scheduled'", [userId]);
     return view(userId);
 };
 
@@ -248,7 +225,7 @@ const email = async (userId, subject, lines) => {
     }
 };
 
-// ── The run ──────────────────────────────────────────────────────────────
+// ── Charges ──────────────────────────────────────────────────────────────
 
 const recordFailure = async (userId, message) => {
     const [row] = await q(
@@ -259,145 +236,117 @@ const recordFailure = async (userId, message) => {
     if (row && row.failures >= MAX_FAILURES) {
         await q('UPDATE wallet_auto_topup SET enabled = FALSE, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', [userId]);
         await email(userId, 'Auto top-up has been switched off', [
-            `We couldn't charge your saved payment method for an automatic top-up (${message}), so auto top-up is now off.`,
+            `We couldn't charge your saved card for an automatic top-up (${message}), so auto top-up is now off.`,
             'Your servers keep running while your balance lasts. Add funds or switch auto top-up back on from the Billing page.',
         ]);
     } else {
         await email(userId, 'An automatic top-up failed', [
-            `We couldn't charge your saved payment method for an automatic top-up: ${message}.`,
+            `We couldn't charge your saved card for an automatic top-up: ${message}.`,
             'We will try again the next time your balance reaches your threshold. You can also add funds yourself from the Billing page.',
         ]);
     }
 };
 
-/** Schedule a charge for one account if it needs one. */
-const schedule = async (row, wallet) => {
+/** Request a charge for one account that needs one. */
+const charge = async (row, wallet) => {
     const [{ n }] = await q(
         "SELECT COUNT(*)::int AS n FROM wallet_auto_topup_charges WHERE user_id = ? AND status IN ('scheduled', 'pending', 'success') AND created_at > NOW() - INTERVAL '1 day'",
         [row.user_id],
     );
     if (n >= MAX_CHARGES_PER_DAY) return;
-    const amount = Math.min(Number(row.target) - wallet.balance, si.MAX_DEBIT_PAISE);
+    const amount = Math.min(Number(row.target) - wallet.balance, MAX_TARGET);
     if (amount < 100) return;
-    const orderId = `CCAT_${Date.now()}_${row.user_id}`;
-    const dueAt = new Date(Date.now() + si.PRE_DEBIT_HOURS * 3600 * 1000);
+
+    // Claim the account's one open charge first (unique index), then ask Razorpay.
+    const placeholder = `pending_${row.user_id}_${Date.now()}`;
+    const dueAt = new Date(Date.now() + razorpay.DEBIT_DELAY_HOURS * 3600 * 1000);
     try {
-        await q(
-            "INSERT INTO wallet_auto_topup_charges (user_id, order_id, amount, status, due_at) VALUES (?, ?, ?, 'scheduled', ?)",
-            [row.user_id, orderId, amount, dueAt],
-        );
+        await q("INSERT INTO wallet_auto_topup_charges (user_id, order_id, amount, status, due_at) VALUES (?, ?, ?, 'pending', ?)",
+            [row.user_id, placeholder, amount, dueAt]);
     } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') return; // another run scheduled one first
+        if (err.code === 'ER_DUP_ENTRY') return; // another run got there first
         throw err;
     }
+
+    const [user] = await q('SELECT name, email, phone FROM users WHERE id = ?', [row.user_id]);
+    let result;
     try {
-        await si.sendPreDebitNotice({ siRef: row.si_ref, amountPaise: amount, orderId, debitDate: dueAt });
+        result = await razorpay.chargeToken({
+            customerId: row.customer_ref,
+            tokenId: row.si_ref,
+            amount,
+            receipt: `autotopup_${row.user_id}_${Date.now()}`,
+            notes: { purpose: 'autotopup_charge', user_id: String(row.user_id) },
+            email: user?.email,
+            contact: user?.phone,
+            description: 'Walras Cloud auto top-up',
+        });
     } catch (err) {
         await q("UPDATE wallet_auto_topup_charges SET status = 'failed', error = ?, updated_at = CURRENT_TIMESTAMP WHERE order_id = ?",
-            [`Pre-debit notice failed: ${err.message}`.slice(0, 255), orderId]);
-        await recordFailure(row.user_id, 'the payment notice could not be sent');
+            [String(err.message).slice(0, 255), placeholder]);
+        await recordFailure(row.user_id, err.message);
         return;
     }
+
+    // The charge is now a Razorpay order like any other (utils/payments.js settles it).
+    await q('INSERT INTO payment_orders (order_id, user_id, purpose, amount, payment_id) VALUES (?, ?, ?, ?, ?) RETURNING order_id',
+        [result.orderId, row.user_id, 'autotopup_charge', amount, result.paymentId]);
+    await q(
+        `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, razorpay_order_id, razorpay_payment_id, status)
+         VALUES (?, 'credit', ?, ?, ?, ?, ?, 'pending')`,
+        [wallet.id, amount, `Auto top-up (Razorpay order ${result.orderId})`, result.orderId, result.orderId, result.paymentId],
+    );
+    await q('UPDATE wallet_auto_topup_charges SET order_id = ?, tracking_id = ?, updated_at = CURRENT_TIMESTAMP WHERE order_id = ?',
+        [result.orderId, result.paymentId, placeholder]);
+
     const when = dueAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
     await email(row.user_id, `Upcoming automatic top-up of ${rupees(amount)}`, [
         `Your account balance has reached ${rupees(wallet.balance)}, at or below your auto top-up threshold of ${rupees(row.threshold)}.`,
-        `We will charge ${rupees(amount)} to ${row.si_card_label || 'your saved payment method'} on ${when} (IST) to bring it back to ${rupees(row.target)}.`,
-        "If you add funds before then and your balance is above the threshold, we won't charge you.",
+        `We've asked for ${rupees(amount)} to be charged to ${row.si_card_label || 'your saved card'} to bring it back to ${rupees(row.target)}. Your bank will notify you first and the charge is made around ${when} (IST).`,
+        'The amount is added to your account balance once the charge goes through.',
     ]);
 };
 
-/** A charge whose notice period is over: send it, or cancel if no longer needed. */
-const sendDue = async (charge) => {
-    const [claimed] = await q(
-        "UPDATE wallet_auto_topup_charges SET status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'scheduled' RETURNING id",
-        [charge.id],
-    ).then((r) => r.rows || []);
-    if (!claimed) return; // another run took it
+payments.hooks.setupCaptured = setupCaptured;
 
-    const row = await getRow(charge.user_id);
-    const wallet = await walletOf(charge.user_id);
-    if (!row?.enabled || row.si_status !== 'active' || wallet.balance > Number(row.threshold)) {
-        await q("UPDATE wallet_auto_topup_charges SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [charge.id]);
-        return;
-    }
-    // Never more than the customer was told; less if they added funds since.
-    const amount = Math.min(Number(charge.amount), Number(row.target) - wallet.balance);
-    if (amount < 100) {
-        await q("UPDATE wallet_auto_topup_charges SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [charge.id]);
-        return;
-    }
-    await q('UPDATE wallet_auto_topup_charges SET amount = ? WHERE id = ?', [amount, charge.id]);
-    await q(
-        `INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, status)
-         VALUES (?, 'credit', ?, ?, ?, 'pending')`,
-        [wallet.id, amount, `Auto top-up (Order ${charge.order_id})`, charge.order_id],
-    );
-
-    let result;
-    try {
-        result = await si.charge({ siRef: row.si_ref, amountPaise: amount, orderId: charge.order_id });
-    } catch (err) {
-        result = { status: 'failed', error: err.message };
-    }
-    await settle(charge, result, amount);
+payments.hooks.chargeCaptured = async (order) => {
+    await q("UPDATE wallet_auto_topup_charges SET status = 'success', updated_at = CURRENT_TIMESTAMP WHERE order_id = ?", [order.order_id]);
+    await q('UPDATE wallet_auto_topup SET failures = 0, last_error = NULL WHERE user_id = ?', [order.user_id]);
+    console.log(`[AutoTopup] Charged ${rupees(order.amount)} for user ${order.user_id} (${order.order_id})`);
 };
 
-/** Apply a charge result: credit on success, count a failure, or leave pending. */
-const settle = async (charge, result, amount = Number(charge.amount)) => {
-    if (result.status === 'pending') return;
-    if (result.status === 'success') {
-        const ref = result.trackingId || charge.order_id;
-        await creditPendingTopup(charge.order_id, { description: `Auto top-up (Ref: ${ref})`, paymentRef: ref });
-        // Pay any unpaid invoice with it now (required here: monthlyBilling doesn't load this module).
-        await require('./monthlyBilling').applyBalance(charge.user_id).catch((e) => console.error('[AutoTopup] Paying invoices failed:', e.message));
-        await q("UPDATE wallet_auto_topup_charges SET status = 'success', tracking_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [result.trackingId, charge.id]);
-        await q('UPDATE wallet_auto_topup SET failures = 0, last_error = NULL WHERE user_id = ?', [charge.user_id]);
-        console.log(`[AutoTopup] Charged ${rupees(amount)} for user ${charge.user_id} (${charge.order_id})`);
-        return;
-    }
-    const message = result.error || 'Payment declined';
-    await failPendingTopup(charge.order_id, `Auto top-up failed: ${message}`);
-    await q("UPDATE wallet_auto_topup_charges SET status = 'failed', error = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [message.slice(0, 255), charge.id]);
-    await recordFailure(charge.user_id, message);
+payments.hooks.chargeFailed = async (order, reason) => {
+    await q("UPDATE wallet_auto_topup_charges SET status = 'failed', error = ?, updated_at = CURRENT_TIMESTAMP WHERE order_id = ?",
+        [String(reason).slice(0, 255), order.order_id]);
+    await recordFailure(order.user_id, reason);
 };
 
 let running = false;
 
-/** One pass: settle pending charges, send due ones, schedule new ones. */
+/** One pass: confirm saved cards, then charge accounts that need it. */
 const run = async () => {
     if (running) return;
     running = true;
     try {
         if (!(await platformOpen())) return;
 
-        for (const charge of await q("SELECT * FROM wallet_auto_topup_charges WHERE status = 'pending' AND updated_at < NOW() - INTERVAL '10 minutes'")) {
-            try {
-                await settle(charge, await si.chargeStatus(charge.order_id));
-            } catch (err) {
-                console.error(`[AutoTopup] Status check for ${charge.order_id} failed:`, err.message);
-            }
-        }
-
-        for (const charge of await q("SELECT * FROM wallet_auto_topup_charges WHERE status = 'scheduled' AND due_at <= NOW()")) {
-            try {
-                await sendDue(charge);
-            } catch (err) {
-                console.error(`[AutoTopup] Charge ${charge.order_id} failed:`, err.message);
-            }
+        for (const row of await q("SELECT * FROM wallet_auto_topup WHERE si_status = 'pending' AND si_ref IS NOT NULL")) {
+            await confirmToken(row).catch((e) => console.error(`[AutoTopup] Token check for user ${row.user_id} failed:`, e.message));
         }
 
         const due = await q(
             `SELECT a.*, w.balance FROM wallet_auto_topup a JOIN wallets w ON w.user_id = a.user_id
-              WHERE a.enabled AND a.si_status = 'active' AND w.balance <= a.threshold
+              WHERE a.enabled AND a.si_status = 'active' AND a.si_ref IS NOT NULL AND a.customer_ref IS NOT NULL AND w.balance <= a.threshold
                 AND NOT EXISTS (SELECT 1 FROM wallet_auto_topup_charges c WHERE c.user_id = a.user_id AND c.status IN ('scheduled', 'pending'))
                 AND NOT EXISTS (SELECT 1 FROM wallet_auto_topup_charges c WHERE c.user_id = a.user_id AND c.status = 'failed'
                                  AND c.updated_at > NOW() - INTERVAL '${RETRY_AFTER_FAILURE_HOURS} hours')`,
         );
         for (const row of due) {
             try {
-                await schedule(row, { balance: Number(row.balance) });
+                const wallet = await walletOf(row.user_id);
+                await charge(row, wallet);
             } catch (err) {
-                console.error(`[AutoTopup] Scheduling for user ${row.user_id} failed:`, err.message);
+                console.error(`[AutoTopup] Charging user ${row.user_id} failed:`, err.message);
             }
         }
     } catch (err) {
@@ -407,4 +356,4 @@ const run = async () => {
     }
 };
 
-module.exports = { view, update, startSetup, completeSetup, cancel, run, readAmounts, AutoTopupError, MAX_FAILURES, MAX_CHARGES_PER_DAY };
+module.exports = { view, update, startSetup, cancel, run, readAmounts, AutoTopupError, MAX_FAILURES, MAX_CHARGES_PER_DAY };

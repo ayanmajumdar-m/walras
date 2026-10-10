@@ -206,7 +206,7 @@ const PlatformController = {
             autoTopupEnabled: req.body.autoTopupEnabled !== undefined ? Boolean(req.body.autoTopupEnabled) : before.autoTopupEnabled,
         };
         if (next.autoTopupEnabled && !before.autoTopupEnabled && !before.autoTopupReady) {
-            throw new HttpError(409, "Auto top-up can't be turned on until the CCAvenue Standing Instructions setup is finished.");
+            throw new HttpError(409, "Auto top-up can't be turned on until Razorpay has enabled recurring payments on the account (RAZORPAY_RECURRING=enabled) and the Razorpay keys and webhook secret are set.");
         }
         await platform.setPlatform(next);
         audit(req, 'settings.platform', 'settings', 'platform', { before: { maintenanceMode: before.maintenanceMode, paymentsPaused: before.paymentsPaused, topUpsPaused: before.topUpsPaused, autoTopupEnabled: before.autoTopupEnabled }, after: next });
@@ -315,14 +315,18 @@ const PlatformController = {
     listOrders: handle(async (req, res) => {
         const status = ['pending', 'completed', 'failed', 'cancelled'].includes(req.query.status) ? req.query.status : null;
         const limit = Math.min(500, Math.max(10, Number.parseInt(req.query.limit, 10) || 200));
-        // CCAvenue payments: account balance top-ups and invoice payments.
+        // Razorpay payments (payment_orders: top-ups, invoice payments, auto
+        // top-up), plus CCAvenue orders from before the switch (CCA… references).
         const orders = await q(
             `SELECT wt.reference_id AS order_id, w.user_id, u.name AS user_name, u.email,
-                    CASE WHEN wt.reference_id LIKE 'CCAI%' THEN 'Invoice payment' ELSE 'Account balance top-up' END AS item,
+                    CASE po.purpose WHEN 'invoice' THEN 'Invoice payment' WHEN 'autotopup_setup' THEN 'Auto top-up setup'
+                         WHEN 'autotopup_charge' THEN 'Auto top-up' WHEN 'topup' THEN 'Account balance top-up'
+                         ELSE CASE WHEN wt.reference_id LIKE 'CCAI%' THEN 'Invoice payment (CCAvenue)' ELSE 'Account balance top-up (CCAvenue)' END END AS item,
                     wt.amount, wt.status, wt.razorpay_payment_id AS tracking_id, wt.created_at
                FROM wallet_transactions wt
                JOIN wallets w ON w.id = wt.wallet_id LEFT JOIN users u ON u.id = w.user_id
-              WHERE wt.type = 'credit' AND wt.reference_id LIKE 'CCA%'
+               LEFT JOIN payment_orders po ON po.order_id = wt.reference_id
+              WHERE wt.type = 'credit' AND (po.order_id IS NOT NULL OR wt.reference_id LIKE 'CCA%')
               ${status ? 'AND wt.status = ?' : ''}
               ORDER BY wt.created_at DESC LIMIT ?`,
             status ? [status, limit] : [limit],

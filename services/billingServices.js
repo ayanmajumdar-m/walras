@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const autoTopup = require('../utils/autoTopup');
 const monthlyBilling = require('../utils/monthlyBilling');
+const payments = require('../utils/payments');
 
 class BillingService {
     constructor() {
@@ -24,6 +25,8 @@ class BillingService {
             monthlyBilling.run().then(() => autoTopup.run());
         }, { timezone: 'Asia/Kolkata' });
         cron.schedule('*/15 * * * *', () => monthlyBilling.run().then(() => autoTopup.run()));
+        // Razorpay payments whose webhook never arrived (utils/payments.js).
+        cron.schedule('*/15 * * * *', () => payments.reconcile().catch((e) => console.error('[Razorpay] Reconcile failed:', e.message)));
     }
 }
 

@@ -154,8 +154,8 @@ const createWalletTransactionTable = `
   description VARCHAR(255),
   status VARCHAR(19) CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')) DEFAULT 'completed',
   reference_id VARCHAR(255), -- server deployment id or other reference
-  razorpay_payment_id VARCHAR(255) NULL, -- payment gateway reference (CCAvenue tracking id); name kept from an earlier gateway
-  razorpay_order_id VARCHAR(255) NULL, -- unused (earlier gateway)
+  razorpay_payment_id VARCHAR(255) NULL, -- Razorpay payment id (older rows: CCAvenue tracking id)
+  razorpay_order_id VARCHAR(255) NULL, -- Razorpay order id
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (wallet_id) REFERENCES wallets(id) ON DELETE CASCADE
 )
@@ -318,8 +318,10 @@ CREATE TABLE IF NOT EXISTS solus_account_plans (
     PRIMARY KEY (account_id, plan_name)
 )`;
 
-// Auto top-up: when an account's balance falls to threshold, charge its
-// CCAvenue standing instruction up to target. See utils/autoTopup.js.
+// Auto top-up: when an account's balance falls to threshold, charge the
+// customer's saved card (a Razorpay recurring token) up to target. See
+// utils/autoTopup.js. si_* columns: the token (si_ref), its card label and
+// state; customer_ref is the Razorpay customer the token belongs to.
 // Amounts in paise.
 const createAutoTopupTable = `
 CREATE TABLE IF NOT EXISTS wallet_auto_topup (
@@ -336,8 +338,9 @@ CREATE TABLE IF NOT EXISTS wallet_auto_topup (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 )`;
 
-// Each automatic charge: scheduled (customer notified) → pending (sent to
-// CCAvenue) → success / failed. One open charge per account at a time.
+// Each automatic charge: pending (requested from Razorpay, debited about 36
+// hours later after its pre-debit notice) → success / failed. One open
+// charge per account at a time. order_id is the Razorpay order.
 const createAutoTopupChargesTable = `
 CREATE TABLE IF NOT EXISTS wallet_auto_topup_charges (
     id SERIAL PRIMARY KEY,
@@ -348,6 +351,20 @@ CREATE TABLE IF NOT EXISTS wallet_auto_topup_charges (
     due_at TIMESTAMPTZ NOT NULL,
     tracking_id VARCHAR(100),
     error VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// Every Razorpay order we create and what it pays for (utils/payments.js).
+const createPaymentOrdersTable = `
+CREATE TABLE IF NOT EXISTS payment_orders (
+    order_id VARCHAR(40) PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    purpose VARCHAR(20) NOT NULL CHECK (purpose IN ('topup', 'invoice', 'autotopup_setup', 'autotopup_charge')),
+    invoice_id INT,
+    amount BIGINT NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'created' CHECK (status IN ('created', 'paid', 'failed', 'expired')),
+    payment_id VARCHAR(40),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 )`;
@@ -696,6 +713,9 @@ connection.connect((err) => {
         ['servers account', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS solus_account_id INT'],
         ['Auto top-up', createAutoTopupTable],
         ['Auto top-up charges', createAutoTopupChargesTable],
+        ['auto top-up customer', 'ALTER TABLE wallet_auto_topup ADD COLUMN IF NOT EXISTS customer_ref VARCHAR(40)'],
+        ['Payment orders', createPaymentOrdersTable],
+        ['payment orders open index', "CREATE INDEX IF NOT EXISTS payment_orders_open_idx ON payment_orders (created_at) WHERE status = 'created'"],
         // At most one open (scheduled/pending) charge per account.
         ['auto top-up open charge', "CREATE UNIQUE INDEX IF NOT EXISTS wallet_auto_topup_open_idx ON wallet_auto_topup_charges (user_id) WHERE status IN ('scheduled', 'pending')"],
         ['Team members', createTeamMembersTable],

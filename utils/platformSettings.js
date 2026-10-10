@@ -1,6 +1,6 @@
 const appSettings = require('./appSettings');
 const computeStock = require('./computeStock');
-const ccavenueSI = require('../services/ccavenueSI');
+const razorpay = require('../services/razorpay');
 const taxService = require('../services/taxServices');
 
 /**
@@ -49,10 +49,11 @@ const getPlatform = async () => {
         // Account balance top-ups. Off until an admin turns them back on in
         // Settings (unset counts as paused, unlike the other switches).
         topUpsPaused: s['platform.topups_paused'] !== 'false',
-        // Auto top-up (CCAvenue standing instructions). Off by default, and
-        // can't run until the SI integration is confirmed (services/ccavenueSI.js).
+        // Auto top-up (Razorpay recurring card payments). Off by default, and
+        // can't run until Razorpay has enabled recurring on the account
+        // (services/razorpay.js recurringReady).
         autoTopupEnabled: s['platform.auto_topup'] === 'true',
-        autoTopupReady: ccavenueSI.SPEC_CONFIRMED,
+        autoTopupReady: razorpay.recurringReady(),
         planAvailability: {
             // In stock in at least one location (stock and SolusVM in Admin → Virtual Machine stock).
             compute: Object.fromEntries(Object.entries(await computeStock.getAvailability())

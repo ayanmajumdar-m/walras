@@ -386,7 +386,7 @@ const UserController = {
             });
         }
 
-        // Domains are paid from the account balance (topped up through CCAvenue).
+        // Domains are paid from the account balance (topped up through Razorpay).
         if (paymentMethod !== 'wallet') {
             return res.status(400).json({
                 error: 'Domains are paid from your account balance. Add funds in Billing first.'
