@@ -19,7 +19,7 @@ const SignIn = () => {
   useEffect(() => {
     const expiredMessage = localStorage.getItem("sessionExpiredMessage");
     if (localStorage.getItem("sessionExpired") || expiredMessage) {
-      setNotice(expiredMessage || "Your session has expired. Please sign in again.");
+      setNotice(expiredMessage || "Login expired, please relogin");
       localStorage.removeItem("sessionExpired");
       localStorage.removeItem("sessionExpiredMessage");
     }

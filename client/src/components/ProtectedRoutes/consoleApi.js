@@ -2,11 +2,13 @@
 // expired session sends the user back to sign in instead of leaving every
 // card stuck on an error.
 
+export const LOGIN_EXPIRED = "Login expired, please relogin";
+
 const sessionExpired = (message) => {
   localStorage.removeItem("token");
   localStorage.removeItem("userId");
   localStorage.removeItem(ACCOUNT_KEY);
-  localStorage.setItem("sessionExpiredMessage", message || "Your session has expired. Please sign in again.");
+  localStorage.setItem("sessionExpiredMessage", message || LOGIN_EXPIRED);
   window.location.href = "/login";
 };
 
@@ -62,7 +64,8 @@ export const api = async (path, { method = "GET", body } = {}) => {
   const data = await res.json().catch(() => ({}));
 
   if (res.status === 401 || (res.status === 403 && (data.suspended || /token/i.test(data.error || "")))) {
-    sessionExpired(data.error);
+    // A suspended account keeps its reason; a missing or expired login gets the plain message.
+    sessionExpired(data.suspended ? data.error : LOGIN_EXPIRED);
     throw new Error("Session expired");
   }
   if (res.status === 403 && data.teamAccessRevoked) {
