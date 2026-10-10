@@ -1,0 +1,338 @@
+/* ═════════════════════════════════════════════════════════════════════════
+   Legal pages (lg-*): Privacy, Terms, Refund. Same visual language as the
+   About and Pricing pages. Every class is prefixed: the older global
+   .container / .section-title rules stay loaded for other pages.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.lg-page {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.lg-wrap {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
+  box-sizing: border-box;
+}
+
+/* ── Hero ── */
+.lg-hero {
+  position: relative;
+  padding: 56px 0 48px;
+  color: #ffffff;
+  background:
+    radial-gradient(900px 400px at 85% -10%, rgba(31, 196, 162, 0.28), transparent 65%),
+    radial-gradient(700px 300px at 0% 110%, rgba(3, 166, 143, 0.18), transparent 60%),
+    linear-gradient(180deg, #061916 0%, #0b2622 100%);
+  overflow: hidden;
+}
+
+.lg-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+  pointer-events: none;
+}
+
+.lg-hero .lg-wrap { position: relative; }
+
+/* Switch between the three documents */
+.lg-docs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lg-doc {
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lg-doc:hover { color: #ffffff; background: rgba(255, 255, 255, 0.08); }
+
+.lg-doc.is-active {
+  background: var(--color-brand-500);
+  color: #0a0a0c;
+}
+
+.lg-kicker {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(31, 196, 162, 0.45);
+  background: rgba(31, 196, 162, 0.12);
+  color: #5eebc2;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lg-title {
+  margin: 18px 0 14px;
+  font-size: 56px;
+  line-height: 1.02;
+  color: #ffffff;
+}
+
+.lg-intro {
+  max-width: 760px;
+  margin: 0 0 10px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.lg-meta {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 36px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.lg-meta > div { padding: 18px 28px 0 0; }
+.lg-meta > div + div { padding-left: 28px; border-left: 1px solid rgba(255, 255, 255, 0.12); }
+
+.lg-meta dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.lg-meta dd {
+  margin: 6px 0 0;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: #5eebc2;
+}
+
+.lg-meta dd a { color: #5eebc2; }
+.lg-meta dd a:hover { color: #ffffff; }
+
+/* ── Contents rail + document ── */
+.lg-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  padding-top: 56px;
+  padding-bottom: 88px;
+}
+
+.lg-rail {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.lg-rail-title {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+
+.lg-rail ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 1px solid var(--color-divider);
+}
+
+.lg-rail a {
+  display: block;
+  margin-left: -1px;
+  padding: 6px 0 6px 14px;
+  border-left: 2px solid transparent;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.lg-rail a:hover { color: var(--color-text); }
+
+.lg-rail a.is-active {
+  border-left-color: var(--color-brand-500);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.lg-doc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lg-card {
+  scroll-margin-top: 88px;
+  padding: 30px 32px;
+  background: #ffffff;
+  border: 1px solid color-mix(in srgb, #1d1f20 7%, transparent);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.lg-card h2 {
+  margin: 0 0 14px;
+  font-size: 28px;
+  color: var(--color-text);
+}
+
+.lg-card h3 {
+  margin: 22px 0 8px;
+  font-size: 20px;
+  color: var(--color-accent-800);
+}
+
+.lg-card p {
+  margin: 0 0 12px;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--color-neutral-800);
+}
+
+/* A comfortable reading measure on wide screens. */
+.lg-card p,
+.lg-card ul { max-width: 76ch; }
+
+.lg-card p:last-child,
+.lg-card ul:last-child { margin-bottom: 0; }
+
+.lg-card ul {
+  margin: 4px 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.lg-card li {
+  position: relative;
+  padding: 5px 0 5px 22px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--color-neutral-800);
+}
+
+.lg-card li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 14px;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--color-brand-500);
+}
+
+.lg-card a { font-weight: 600; }
+
+/* ── CTA ── */
+.lg-cta {
+  padding: 64px 0;
+  color: #ffffff;
+  background:
+    radial-gradient(700px 260px at 90% 0%, rgba(31, 196, 162, 0.22), transparent 65%),
+    linear-gradient(180deg, #0b2622 0%, #061916 100%);
+}
+
+.lg-cta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.lg-cta h2 {
+  margin: 0 0 8px;
+  font-size: 34px;
+  color: #ffffff;
+}
+
+.lg-cta p {
+  max-width: 560px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.lg-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.lg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 22px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: 15.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.lg-btn svg { width: 17px; height: 17px; }
+
+.lg-btn-primary { background: var(--color-brand-500); color: #0a0a0c; }
+.lg-btn-primary:hover { background: var(--color-brand-400); color: #0a0a0c; }
+
+.lg-btn-ghost { border-color: rgba(255, 255, 255, 0.25); color: #ffffff; }
+.lg-btn-ghost:hover { border-color: #5eebc2; color: #5eebc2; }
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .lg-title { font-size: 44px; }
+  .lg-layout { grid-template-columns: 1fr; gap: 24px; padding-top: 32px; }
+  .lg-rail {
+    position: static;
+    max-height: none;
+    padding: 20px 22px;
+    background: #ffffff;
+    border: 1px solid color-mix(in srgb, #1d1f20 7%, transparent);
+    border-radius: 12px;
+  }
+  .lg-cta-inner { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 640px) {
+  .lg-hero { padding: 36px 0 36px; }
+  .lg-docs { width: auto; margin-bottom: 28px; }
+  .lg-doc { flex: 1 1 auto; text-align: center; padding: 8px 10px; font-size: 13px; }
+  .lg-title { font-size: 36px; }
+  .lg-intro { font-size: 15.5px; }
+  .lg-meta { display: grid; grid-template-columns: 1fr 1fr; }
+  .lg-meta > div, .lg-meta > div + div { padding: 14px 12px 0 0; border-left: 0; }
+  .lg-meta dd { font-size: 17px; overflow-wrap: anywhere; }
+  .lg-card { padding: 22px 20px; }
+  .lg-card h2 { font-size: 24px; }
+  .lg-layout { padding-bottom: 56px; }
+  .lg-cta h2 { font-size: 28px; }
+  .lg-cta-actions { width: 100%; }
+  .lg-btn { flex: 1 1 auto; justify-content: center; }
+}
