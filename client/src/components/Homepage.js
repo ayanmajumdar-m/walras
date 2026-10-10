@@ -64,7 +64,7 @@ const SERVICES = [
     title: "Reserved VMs",
     description: "The same virtual machines, reserved for 3 to 36 months and paid up front, for up to 25% less than monthly.",
     features: ["Save up to 25%", "3 to 36 Month Terms", "Same Plans & Locations", "Renews Automatically"],
-    action: { label: "See savings", href: "/pricing#virtual-machine" }
+    action: { label: "See savings", href: "/pricing#reserved-vm" }
   }
 ];
 
