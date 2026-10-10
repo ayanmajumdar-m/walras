@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
-import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X, ChevronsUpDown, Check } from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
+import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X, ChevronsUpDown, Check, BadgePercent } from "lucide-react";
 import { switchAccount, ACCOUNT_KEY } from "./consoleApi";
 
 const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
@@ -8,6 +8,7 @@ const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png"
 const NAV = [
   { to: "/dashboard/home", label: "Overview", Icon: LayoutGrid },
   { to: "/dashboard/create", label: "Create", Icon: PlusSquare, perm: "servers" },
+  { to: "/dashboard/create?type=reserved", label: "Reserve & Save", Icon: BadgePercent, perm: "servers" },
   { to: "/dashboard/resources", label: "Resources", Icon: Boxes, perm: "servers" },
   { to: "/dashboard/billing", label: "Billing", Icon: CreditCard, perm: "billing" },
 ];
@@ -97,8 +98,14 @@ const Sidebar = ({ open, onClose, profile, account, memberships = [], can = () =
     window.location.href = "/login";
   };
 
+  // Create and "Reserve & Save" share a path; the ?type= tells them apart.
+  const { search } = useLocation();
+  const onReserve = new URLSearchParams(search).get("type") === "reserved";
   const link = ({ to, label, Icon }) => (
-    <NavLink key={to} to={to} className={({ isActive }) => `cx-nav-item${isActive ? " is-active" : ""}`}>
+    <NavLink key={to} to={to} className={({ isActive }) => {
+      const active = to.includes("type=reserved") ? isActive && onReserve : to === "/dashboard/create" ? isActive && !onReserve : isActive;
+      return `cx-nav-item${active ? " is-active" : ""}`;
+    }}>
       <Icon size={18} aria-hidden="true" />
       <span>{label}</span>
     </NavLink>
