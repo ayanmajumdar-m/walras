@@ -4,7 +4,7 @@ import './Pricing.css';
 import { CPU_TYPES, formatRam, formatBandwidth } from '../../data/plans';
 import {
   Layers, Server, Globe, ChevronUp, ChevronDown, ArrowRight, Check, Cpu, MemoryStick,
-  HardDrive, Network, Shield, Clock, BookOpen
+  HardDrive, Network, Shield, Clock, BookOpen, BadgePercent
 } from 'lucide-react';
 
 /*
@@ -39,7 +39,20 @@ const priceOf = (plan, currency) => (currency === "usd" ? plan.usd : plan.monthl
 const formatMoney = (value, currency) =>
   value === null || value === undefined ? "—"
     : currency === "usd" ? `$${Number(value).toLocaleString("en-US", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`
-    : `₹${Number(value).toLocaleString("en-IN")}`;
+    : `₹${Number(value).toLocaleString("en-IN", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+
+// ── Reserved VMs ──────────────────────────────────────────────────────────
+// The same plans reserved for a term, paid up front. Discounts match the
+// server's billing terms (utils/monthlyBilling.js TERMS) and checkout.
+const RESERVE_TERMS = [
+  { months: 3, savings: 0 },
+  { months: 6, savings: 5 },
+  { months: 12, savings: 10 },
+  { months: 24, savings: 15 },
+  { months: 36, savings: 25 },
+];
+const MAX_RESERVE_SAVINGS = Math.max(...RESERVE_TERMS.map((t) => t.savings));
+const discounted = (value, savings) => (value == null ? null : Math.round(value * (100 - savings)) / 100);
 
 // ── Domains (coming soon) ─────────────────────────────────────────────────
 const DOMAIN_INCLUDES = [
@@ -51,6 +64,7 @@ const DOMAIN_INCLUDES = [
 // ── Rail ───────────────────────────────────────────────────────────────────
 const SECTIONS = [
   { id: "virtual-machine", Icon: Layers, title: "Virtual Machine", desc: "General purpose VMs on Intel or AMD.", from: "from ₹350/mo" },
+  { id: "reserved-vm", Icon: BadgePercent, title: "Reserved VMs", desc: "Reserve for 3–36 months and save.", from: `Save up to ${MAX_RESERVE_SAVINGS}%` },
   { id: "bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon" }
 ];
@@ -75,6 +89,9 @@ const Pricing = () => {
   // Which Virtual Machine plans are in stock somewhere (set by admins).
   const [computeStock, setComputeStock] = useState({});
   const [cpu, setCpu] = useState(CPU_TYPES[0].id);
+  // Reserved VMs: the term shown (12 months, the usual choice).
+  const [reserveMonths, setReserveMonths] = useState(12);
+  const reserveTerm = RESERVE_TERMS.find((t) => t.months === reserveMonths) || RESERVE_TERMS[0];
   // ₹ or $, remembered for next time.
   const [currency, setCurrency] = useState(() => {
     try { return localStorage.getItem(CURRENCY_KEY) === "usd" ? "usd" : "inr"; } catch { return "inr"; }
@@ -318,6 +335,108 @@ const Pricing = () => {
               Prices exclude tax; the final amount is shown at checkout.
               {currency === "usd" && " US dollar prices are for reference; your account is billed in Indian rupees."}
               {" "}Every plan includes one IPv4 address and a 1 Gbps network port.
+            </p>
+          </section>
+
+          {/* ── Reserved VMs ── */}
+          <section className="pr-section" id="reserved-vm">
+            <div className="pr-section-head">
+              <span className="pr-section-icon"><BadgePercent aria-hidden="true" /></span>
+              <div>
+                <h2 className="pr-section-title">Reserved VMs</h2>
+                <p className="pr-section-lede">
+                  The same Virtual Machines, reserved for 3 to 36 months from the day you order and paid up
+                  front. The longer the term, the more you save: up to {MAX_RESERVE_SAVINGS}% on the monthly price.
+                </p>
+              </div>
+            </div>
+
+            <div className="pr-family-head">
+              <h3 className="pr-subtitle">Reservation term</h3>
+              <div className="pr-seg pr-term-seg" role="tablist" aria-label="Reservation term">
+                {RESERVE_TERMS.map((t) => (
+                  <button key={t.months} type="button" role="tab" aria-selected={reserveMonths === t.months}
+                    className={reserveMonths === t.months ? "is-active" : ""} onClick={() => setReserveMonths(t.months)}>
+                    {t.months} mo{t.savings > 0 && <span className="pr-term-save">−{t.savings}%</span>}
+                  </button>
+                ))}
+              </div>
+              <div className="pr-seg" role="tablist" aria-label="CPU type">
+                <span className="pr-seg-label">CPU type</span>
+                {CPU_TYPES.map((c) => (
+                  <button key={c.id} type="button" role="tab" aria-selected={cpu === c.id}
+                    className={cpu === c.id ? "is-active" : ""} onClick={() => setCpu(c.id)}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {vmPlans === null ? (
+              <div className="pr-card pr-soon-card"><span>Loading plans…</span></div>
+            ) : vmPlans === false ? (
+              <div className="pr-card pr-soon-card">
+                <strong>Plans couldn't be loaded right now.</strong>
+                <span>Please refresh the page in a moment.</span>
+              </div>
+            ) : sortedPlans.length === 0 ? (
+              <div className="pr-card pr-soon-card">
+                <strong>{CPU_TYPES.find((c) => c.id === cpu)?.label} plans are coming soon.</strong>
+                <span>Choose Intel to see the plans available now.</span>
+              </div>
+            ) : (
+            <div className="pr-card pr-table-card">
+              <table className="pr-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Plan</th>
+                    <th scope="col">vCPUs</th>
+                    <th scope="col">Memory</th>
+                    <th scope="col">Monthly</th>
+                    <th scope="col">Reserved</th>
+                    <th scope="col">{reserveTerm.months} months total</th>
+                    <th scope="col">Availability</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedPlans.map((plan) => {
+                    const monthly = priceOf(plan, currency);
+                    const perMonth = discounted(monthly, reserveTerm.savings);
+                    const total = perMonth == null ? null : Math.round(perMonth * reserveTerm.months * 100) / 100;
+                    const [vcpu, vcpuUnit] = PLAN_COLUMNS[0].show(plan);
+                    const [ram, ramUnit] = PLAN_COLUMNS[1].show(plan);
+                    return (
+                      <tr key={plan.name}>
+                        <td className="pr-plan-name" data-label="Plan">{plan.name}</td>
+                        <td data-label="vCPUs"><strong>{vcpu}</strong> <span className="pr-unit">{vcpuUnit}</span></td>
+                        <td data-label="Memory"><strong>{ram}</strong> <span className="pr-unit">{ramUnit}</span></td>
+                        <td data-label="Monthly" className="pr-price">
+                          {reserveTerm.savings > 0
+                            ? <s className="pr-was">{formatMoney(monthly, currency)}</s>
+                            : <span className="pr-unit">{formatMoney(monthly, currency)}</span>}
+                        </td>
+                        <td data-label="Reserved" className="pr-price is-sorted">
+                          <strong>{formatMoney(perMonth, currency)}</strong> <span className="pr-unit">/mo</span>
+                        </td>
+                        <td data-label={`${reserveTerm.months} months total`} className="pr-price">
+                          <strong>{formatMoney(total, currency)}</strong>
+                        </td>
+                        <td data-label="Availability">
+                          {computeStock[plan.name]
+                            ? <a href="/dashboard/reserve" className="pr-stock is-in">Reserve</a>
+                            : <span className="pr-stock">Out of stock</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            )}
+
+            <p className="pr-footnote">
+              Prices exclude tax; the final amount is shown at checkout. The whole term is paid up front and renews
+              for the same term unless you cancel; a reservation cancelled early isn't refunded.
+              {currency === "usd" && " US dollar prices are for reference; your account is billed in Indian rupees."}
             </p>
           </section>
 
