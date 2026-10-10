@@ -76,10 +76,10 @@ const Overview = () => {
         </div>
         <div className="cx-product-grid">
           {PRODUCTS.map((product) => {
-            const { id, Icon, title, desc } = product;
+            const { id, Icon, title, desc, to } = product;
             const { label, available } = productStatus(product, platform);
             return (
-            <Link to={`/dashboard/create?type=${id}`} className={`cx-product${available ? "" : " is-muted"}`} key={id}>
+            <Link to={to} className={`cx-product${available ? "" : " is-muted"}`} key={id}>
               <span className="cx-product-icon"><Icon size={22} aria-hidden="true" /></span>
               <span className="cx-product-body">
                 <span className="cx-product-title">{title} <ArrowRight size={15} aria-hidden="true" /></span>

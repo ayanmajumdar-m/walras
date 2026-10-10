@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, ShieldCheck, ArrowRight, MapPin, Eye, EyeOff, KeyRound, BadgePercent } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
@@ -58,11 +58,11 @@ const reservationQuote = (monthly, { months, savings }) => {
   return { amount: Math.round((gross - saved) * 100) / 100, saved, until: end.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) };
 };
 
-// mode "monthly" (Virtual Machine) or "reserved" (Reserved VM): the same
-// plans, locations and stock; only the billing step differs.
-const ComputeConfigurator = ({ mode = "monthly" }) => {
+// mode "monthly" (Virtual Machine, on this page) or "reserved" (Reserved VM,
+// its own page: Reserve.js): the same plans, locations and stock; only the
+// billing step differs.
+export const ComputeConfigurator = ({ mode = "monthly" }) => {
   const navigate = useNavigate();
-  const [, setParams] = useSearchParams();
   const reserveMode = mode === "reserved";
   const { balance, refreshBalance } = useConsole();
   const [catalog, setCatalog] = useState(null);
@@ -292,7 +292,7 @@ const ComputeConfigurator = ({ mode = "monthly" }) => {
                 : "Cancel anytime; it ends at the end of the month you've paid for."}
             </p>
             {!reserveMode && maxSavings > 0 && (
-              <button type="button" className="cx-reserve-nudge" onClick={() => setParams({ type: "reserved" }, { replace: true })}>
+              <button type="button" className="cx-reserve-nudge" onClick={() => navigate("/dashboard/reserve")}>
                 <BadgePercent size={18} aria-hidden="true" />
                 <span><strong>Keeping it 6 months or more?</strong> Reserve it instead and save up to {maxSavings}%.</span>
                 <ArrowRight size={16} aria-hidden="true" />
@@ -411,10 +411,15 @@ const ComingSoon = ({ type }) => {
 };
 
 // ── Page ───────────────────────────────────────────────────────────────────
+// Reserved VM has its own page (Reserve.js), so it isn't a tab here.
+const CREATE_PRODUCTS = PRODUCTS.filter((p) => p.id !== "reserved");
+
 const Create = () => {
   const { platform } = useConsole();
   const [params, setParams] = useSearchParams();
-  const type = PRODUCTS.some((p) => p.id === params.get("type")) ? params.get("type") : PRODUCTS[0].id;
+  // Old links to the reserved tab go to its page.
+  if (params.get("type") === "reserved") return <Navigate to="/dashboard/reserve" replace />;
+  const type = CREATE_PRODUCTS.some((p) => p.id === params.get("type")) ? params.get("type") : CREATE_PRODUCTS[0].id;
 
   return (
     <div className="cx-page">
@@ -424,7 +429,7 @@ const Create = () => {
       </div>
 
       <div className="cx-product-tabs" role="tablist" aria-label="Product">
-        {PRODUCTS.map((product) => {
+        {CREATE_PRODUCTS.map((product) => {
           const { id, Icon, title } = product;
           const { label, available } = productStatus(product, platform);
           return (
@@ -447,7 +452,6 @@ const Create = () => {
       </div>
 
       {type === "compute" && <ComputeConfigurator key="monthly" mode="monthly" />}
-      {type === "reserved" && <ComputeConfigurator key="reserved" mode="reserved" />}
       {(type === "domains" || type === "baremetal") && <ComingSoon type={type} />}
     </div>
   );

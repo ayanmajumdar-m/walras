@@ -5,6 +5,7 @@ import ProtectedRoute from "./PrivateRoutes";
 import Sidebar from "./Sidebar";
 import Overview from "./DashboardContent/Overview";
 import Create from "./DashboardContent/Create";
+import Reserve from "./DashboardContent/Reserve";
 import Resources from "./DashboardContent/Resources";
 import Billing from "./DashboardContent/Billing";
 import Profile from "./DashboardContent/Profile";
@@ -20,6 +21,7 @@ import "./Console.css";
 const TITLES = {
   home: "Overview",
   create: "Create",
+  reserve: "Reserve & Save",
   resources: "Resources",
   billing: "Billing",
   wallet: "Billing",
@@ -170,6 +172,7 @@ const DashboardLayout = () => {
                 <Route path="/" element={<Navigate to="home" replace />} />
                 <Route path="/home" element={<Overview />} />
                 <Route path="/create" element={need("servers", <Create />)} />
+                <Route path="/reserve" element={need("servers", <Reserve />)} />
                 <Route path="/resources" element={need("servers", <Resources />)} />
                 <Route path="/billing" element={need("billing", <Billing />)} />
                 <Route path="/profile" element={<Profile />} />
