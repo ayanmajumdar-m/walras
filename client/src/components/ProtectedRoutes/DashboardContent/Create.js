@@ -151,7 +151,7 @@ const ComputeConfigurator = ({ mode = "monthly" }) => {
         {loadError && <div className="cx-alert is-error">{loadError}</div>}
         {catalog && !anyStock && (
           <div className="cx-alert is-info">
-            Virtual Machines are fully booked right now. New capacity is on its way; you can still compare plans below.
+            Capacity is Full
           </div>
         )}
         {reserveMode && (
