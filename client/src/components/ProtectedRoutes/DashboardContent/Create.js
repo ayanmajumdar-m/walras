@@ -151,7 +151,7 @@ const ComputeConfigurator = ({ mode = "monthly" }) => {
         {loadError && <div className="cx-alert is-error">{loadError}</div>}
         {catalog && !anyStock && (
           <div className="cx-alert is-info">
-            Capacity is Full
+            Capacity is Full, New capacity is on its way.
           </div>
         )}
         {reserveMode && (
