@@ -392,10 +392,6 @@ const COMING_SOON = {
     title: "Domains are coming soon",
     points: ["Free lifetime WHOIS privacy on every domain", "Registry lock against unauthorised transfers", "DNS management from this console"],
   },
-  baremetal: {
-    title: "Bare Metal is coming soon",
-    points: ["Single-tenant hardware: the entire server is yours", "Dedicated CPU cores, memory and storage", "Full root access to the machine"],
-  },
 };
 
 const ComingSoon = ({ type }) => {
@@ -456,7 +452,7 @@ const Create = () => {
       {type === "compute" && <ComputeConfigurator key="monthly" mode="monthly" />}
       {type === "database" && <DatabaseConfigurator />}
       {type === "apps" && <AppConfigurator />}
-      {(type === "domains" || type === "baremetal") && <ComingSoon type={type} />}
+      {type === "domains" && <ComingSoon type={type} />}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { Layers, Globe, HardDrive, BadgePercent, Database, Rocket } from "lucide-react";
+import { Layers, Globe, BadgePercent, Database, Rocket } from "lucide-react";
 
 // The products the console can create, in the order they appear on the
 // Overview cards. `to` is where each opens: Reserved VM has its own page
@@ -10,7 +10,6 @@ export const PRODUCTS = [
   { id: "database", Icon: Database, title: "Managed Database", desc: "MySQL or PostgreSQL with daily backups.", from: "from ₹199/mo", status: "available", to: "/dashboard/create?type=database" },
   { id: "apps", Icon: Rocket, title: "App Platform", desc: "Deploy your app on your own domain.", from: "from ₹349/mo", status: "available", to: "/dashboard/create?type=apps" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon", status: "soon", to: "/dashboard/create?type=domains" },
-  { id: "baremetal", Icon: HardDrive, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon", status: "soon", to: "/dashboard/create?type=baremetal" },
 ];
 
 // Live status for a product card/tab.
