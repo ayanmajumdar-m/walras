@@ -123,6 +123,11 @@ router.post('/monthly-invoices/:id/waive-fee', can('manage_billing'), Invoices.w
 router.post('/monthly-invoices/:id/mark-paid', can('manage_billing'), Invoices.markPaid);
 router.post('/generate-monthly-invoices', can('manage_billing'), Invoices.generate);
 
+// ── Support tickets (Zendesk, read-only) ───────────────────────────────────
+const Tickets = require('../controllers/adminTickets.controllers');
+router.get('/support/tickets', can('view_tickets'), Tickets.list);
+router.get('/support/tickets/:id', can('view_tickets'), Tickets.get);
+
 // ── Support + (priority phone support) ─────────────────────────────────────
 const SupportPlus = require('../controllers/adminSupportPlus.controllers');
 router.get('/support-plus/callbacks', can('manage_callbacks'), SupportPlus.list);

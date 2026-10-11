@@ -231,8 +231,43 @@ const countOpenZendeskTickets = async () => {
     return res.count;
 };
 
+// ── Admin panel ────────────────────────────────────────────────────────────
+
+// Status filters for the admin ticket list, as Zendesk search terms.
+const STATUS_TERMS = {
+    open: 'status<solved', new: 'status:new', pending: 'status:pending', hold: 'status:hold',
+    solved: 'status:solved', closed: 'status:closed', all: '',
+};
+
+/**
+ * Walras-brand tickets for the admin panel, most recently updated first,
+ * 50 a page. `text` is free text Zendesk searches (subject, comments,
+ * requester); characters that are search syntax are dropped.
+ */
+const searchZendeskTickets = async ({ status = 'open', text = '', page = 1 } = {}) => {
+    const brand = zendeskBrandId();
+    const terms = String(text || '').replace(/["\\:<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
+    const query = ['type:ticket', STATUS_TERMS[status] ?? STATUS_TERMS.open, brand ? `brand:${brand}` : '', terms].filter(Boolean).join(' ');
+    const res = await zd(`/api/v2/search.json?query=${encodeURIComponent(query)}&sort_by=updated_at&sort_order=desc&per_page=50&page=${page}`, { timeoutMs: 10000 });
+    return {
+        tickets: (res.results || []).filter((r) => !r.result_type || r.result_type === 'ticket'),
+        count: res.count || 0,
+        hasMore: Boolean(res.next_page),
+    };
+};
+
+/** Zendesk users by id (requesters, comment authors), up to 100. */
+const zendeskUsersById = async (ids) => {
+    const list = [...new Set(ids.filter(Boolean))].slice(0, 100);
+    if (!list.length) return [];
+    const res = await zd(`/api/v2/users/show_many.json?ids=${list.join(',')}`, { timeoutMs: 8000 });
+    return res.users || [];
+};
+
 module.exports = {
     ZendeskError,
+    searchZendeskTickets,
+    zendeskUsersById,
     zendeskConfigured,
     zendeskBrandId,
     zendeskUserFor,
