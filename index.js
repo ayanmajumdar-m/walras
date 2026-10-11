@@ -65,6 +65,8 @@ const { getPlatform } = require("./utils/platformSettings");
 app.get("/api/plans/vm", require("./controllers/vmPlans.controllers").publicList);
 // Managed Database plans for the Pricing page (active plans only).
 app.get("/api/plans/database", require("./controllers/adminDatabases.controllers").publicPlans);
+// App Platform plans for the Pricing page (on-sale plans; Dedicated is coming soon).
+app.get("/api/plans/apps", require("./controllers/adminApps.controllers").publicPlans);
 // Server locations shown on the site (active ones).
 app.get("/api/locations", require("./controllers/serverLocations.controllers").publicList);
 
@@ -81,7 +83,9 @@ app.get("/api/settings/public", async (req, res) => {
     const vmFromPrice = vmPlans.length ? Math.min(...vmPlans.map((p) => p.monthly)) : null;
     const dbPlans = await require("./utils/databaseStock").getPlans().catch(() => []);
     const dbFromPrice = dbPlans.length ? Math.min(...dbPlans.map((p) => p.monthly)) : null;
-    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, autoTopup: autoTopupEnabled && autoTopupReady && !topUpsPaused, planAvailability: effective, vmFromPrice, dbFromPrice });
+    const appPlans = await require("./utils/appPlans").getPlans().catch(() => []);
+    const appFromPrice = appPlans.length ? Math.min(...appPlans.map((p) => p.monthly)) : null;
+    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, autoTopup: autoTopupEnabled && autoTopupReady && !topUpsPaused, planAvailability: effective, vmFromPrice, dbFromPrice, appFromPrice });
   } catch (err) {
     console.error("Public settings failed:", err.message);
     res.json({ maintenanceMode: false, paymentsPaused: false, topUpsPaused: true, planAvailability: null });
@@ -101,6 +105,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
 app.use("/api/databases", require("./routes/database.routes"));
+app.use("/api/apps", require("./routes/appPlatform.routes"));
 app.use("/api/invoices", require("./routes/invoices.routes"));
 // An API path nothing handles is a 404 in JSON, not the React app's HTML.
 app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));

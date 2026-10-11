@@ -27,3 +27,11 @@ export const DB_ENGINES = [
 ];
 export const formatStorage = (gb) => (gb < 1 ? `${Math.round(gb * 1000)} MB` : `${gb} GB`);
 export const formatBackups = (days) => (days > 0 ? `Daily, ${days}-day retention` : "None");
+
+// ── App Platform ────────────────────────────────────────────────────────────
+// Plans (Admin → App Platform → Plans) from /api/plans/apps and
+// /api/apps/catalog. Shared is on sale; Dedicated is coming soon.
+export const APP_TYPES = [
+  { id: "shared", label: "Shared", available: true },
+  { id: "dedicated", label: "Dedicated", available: false },
+];

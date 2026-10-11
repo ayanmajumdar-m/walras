@@ -1,4 +1,4 @@
-import { Layers, Globe, HardDrive, BadgePercent, Database } from "lucide-react";
+import { Layers, Globe, HardDrive, BadgePercent, Database, Rocket } from "lucide-react";
 
 // The products the console can create, in the order they appear on the
 // Overview cards. `to` is where each opens: Reserved VM has its own page
@@ -8,6 +8,7 @@ export const PRODUCTS = [
   // The same VMs, reserved for 3–36 months and paid up front (Reserve.js).
   { id: "reserved", Icon: BadgePercent, title: "Reserved VM", desc: "Reserve a VM for 3–36 months and save up to 25%.", from: "Save up to 25%", status: "available", to: "/dashboard/reserve" },
   { id: "database", Icon: Database, title: "Managed Database", desc: "MySQL or PostgreSQL with daily backups.", from: "from ₹199/mo", status: "available", to: "/dashboard/create?type=database" },
+  { id: "apps", Icon: Rocket, title: "App Platform", desc: "Deploy your app on your own domain.", from: "from ₹349/mo", status: "available", to: "/dashboard/create?type=apps" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon", status: "soon", to: "/dashboard/create?type=domains" },
   { id: "baremetal", Icon: HardDrive, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon", status: "soon", to: "/dashboard/create?type=baremetal" },
 ];
@@ -27,6 +28,11 @@ export const productStatus = (product, platform) => {
     const db = platform?.planAvailability?.database;
     if (!db || !Object.values(db).some(Boolean)) return { label: "Out of stock", available: false };
     if (platform?.dbFromPrice) return { label: `from ₹${Number(platform.dbFromPrice).toLocaleString("en-IN")}/mo`, available: true };
+  }
+  // App Platform: no stock; on sale while it has plans.
+  if (product.id === "apps") {
+    if (!platform?.appFromPrice) return { label: "Coming soon", available: false };
+    return { label: `from ₹${Number(platform.appFromPrice).toLocaleString("en-IN")}/mo`, available: true };
   }
   return { label: product.from, available: product.status === "available" };
 };

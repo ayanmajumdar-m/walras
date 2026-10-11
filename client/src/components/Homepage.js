@@ -1,7 +1,7 @@
 import React from "react";
 import "./Homepage.css";
 import { useLocations } from "../data/locations";
-import { Zap, Clock, Gauge, Globe, Cpu, Check, Database } from "lucide-react";
+import { Zap, Clock, Gauge, Globe, Cpu, Check, Database, Rocket } from "lucide-react";
 
 /*
   The homepage as a specification sheet.
@@ -65,6 +65,14 @@ const SERVICES = [
     description: "MySQL or PostgreSQL, set up and looked after for you, with daily backups and monthly billing.",
     features: ["MySQL or PostgreSQL", "Daily Backups", "Same Locations as VMs", "From ₹199/month"],
     action: { label: "View plans", href: "/pricing#managed-database" }
+  },
+  {
+    ref: "S-04",
+    Icon: Rocket,
+    title: "App Platform",
+    description: "Deploy your app on your own domain: choose a plan and your domain, pay, and it's active.",
+    features: ["Your Own Domain", "NVMe SSD Storage", "Shared IP", "From ₹349/month"],
+    action: { label: "View plans", href: "/pricing#app-platform" }
   }
 ];
 

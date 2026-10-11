@@ -191,6 +191,11 @@
 .cta-subtitle { font-size: 17px; color: var(--text-secondary); margin: 0; }
 .cta-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
+/* Four service cards: two per row until the single-column layout below 900px. */
+@media (max-width: 1200px) {
+  .services-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 1024px) {
   .hero-title { font-size: 66px; }
   .services-grid { gap: 16px; }

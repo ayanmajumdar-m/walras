@@ -532,8 +532,54 @@ CREATE TABLE IF NOT EXISTS bulk_emails (
     finished_at TIMESTAMPTZ
 )`;
 
-// Quantity of each Cloud Compute plan an admin allows to be sold, per SolusVM
-// location. Deploying takes one; deleting a server gives it back.
+// App Platform (utils/appPlans.js): hosting for an app on a customer's domain.
+// Shared plans (Dedicated is coming soon). No provisioning integration yet:
+// an app is active as soon as it's paid. Billed like a monthly server
+// (utils/monthlyBilling.js); paid_until = the start of the first month not paid for.
+const createAppPlansTable = `
+CREATE TABLE IF NOT EXISTS app_plans (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(40) NOT NULL UNIQUE,
+    plan_type VARCHAR(10) NOT NULL DEFAULT 'shared' CHECK (plan_type IN ('shared', 'dedicated')),
+    vcpu NUMERIC(6,2) NOT NULL CHECK (vcpu > 0),
+    ram_gb NUMERIC(8,2) NOT NULL CHECK (ram_gb > 0),
+    storage_gb INT NOT NULL CHECK (storage_gb > 0),
+    bandwidth_gb INT NOT NULL CHECK (bandwidth_gb >= 0),
+    dedicated_ip BOOLEAN NOT NULL DEFAULT FALSE,
+    price_inr NUMERIC(12,2) NOT NULL CHECK (price_inr > 0),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// The first plans (Shared). Only when the table is empty.
+const seedAppPlans = `
+INSERT INTO app_plans (name, plan_type, vcpu, ram_gb, storage_gb, bandwidth_gb, price_inr, sort_order)
+SELECT * FROM (VALUES
+    ('DPsAP_1', 'shared', 1, 1, 20, 100, 349, 10),
+    ('DPsAP_2', 'shared', 1, 2, 40, 500, 599, 20),
+    ('DPsAP_3', 'shared', 1, 4, 60, 1024, 1299, 30)
+) AS v(name, plan_type, vcpu, ram_gb, storage_gb, bandwidth_gb, price_inr, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM app_plans)`;
+
+const createAppsTable = `
+CREATE TABLE IF NOT EXISTS app_platform_apps (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    domain VARCHAR(253) NOT NULL,
+    plan_name VARCHAR(40) NOT NULL,
+    plan_type VARCHAR(10) NOT NULL DEFAULT 'shared',
+    monthly_cost NUMERIC(12,2) NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'failed')),
+    paid_until TIMESTAMPTZ,
+    cancel_at TIMESTAMPTZ,
+    suspended_at TIMESTAMPTZ,
+    admin_note VARCHAR(500),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
 // Managed Database (utils/databaseStock.js): plans, stock per plan per
 // location, and the customers' databases. General Purpose plans; the engine
 // (MySQL or PostgreSQL) is chosen per database. No automatic provisioning
@@ -601,6 +647,8 @@ CREATE TABLE IF NOT EXISTS managed_databases (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 )`;
 
+// Quantity of each Cloud Compute plan an admin allows to be sold, per SolusVM
+// location. Deploying takes one; deleting a server gives it back.
 const createComputeStockTable = `
 CREATE TABLE IF NOT EXISTS compute_stock (
     plan VARCHAR(40) NOT NULL,
@@ -725,7 +773,7 @@ END;
 $$ LANGUAGE plpgsql
 `;
 
-const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'support_plus', 'support_callbacks', 'managed_databases', 'db_plans'].map(
+const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'support_plus', 'support_callbacks', 'managed_databases', 'db_plans', 'app_platform_apps', 'app_plans'].map(
     (table) => `
 CREATE OR REPLACE TRIGGER ${table}_touch_updated_at
 BEFORE UPDATE ON ${table}
@@ -850,6 +898,12 @@ connection.connect((err) => {
         // Reservations: 1 = monthly; 3–36 = reserved for that many months (paid up front).
         ['servers term_months', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS term_months INT NOT NULL DEFAULT 1'],
         ['invoice items months', 'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS months INT'],
+        ['App plans', createAppPlansTable],
+        ['App plans seed', seedAppPlans],
+        ['App Platform apps', createAppsTable],
+        ['app platform user index', 'CREATE INDEX IF NOT EXISTS app_platform_apps_user_idx ON app_platform_apps (user_id)'],
+        // A domain can be on only one app at a time, across all customers.
+        ['app platform domain unique', 'CREATE UNIQUE INDEX IF NOT EXISTS app_platform_apps_domain_key ON app_platform_apps (LOWER(domain))'],
         ['Database plans', createDbPlansTable],
         ['Database plans seed', seedDbPlans],
         ['Database plans no USD', 'ALTER TABLE db_plans DROP COLUMN IF EXISTS price_usd'],

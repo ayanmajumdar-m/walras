@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Pricing.css';
-import { CPU_TYPES, formatRam, formatBandwidth, DB_ENGINES, formatStorage } from '../../data/plans';
+import { CPU_TYPES, formatRam, formatBandwidth, DB_ENGINES, formatStorage, APP_TYPES } from '../../data/plans';
 import {
   Layers, Server, Globe, ChevronUp, ChevronDown, ArrowRight, Check, Cpu, MemoryStick,
-  HardDrive, Network, Shield, Clock, BookOpen, Database, DatabaseBackup
+  HardDrive, Network, Shield, Clock, BookOpen, Database, DatabaseBackup, Rocket, Globe2
 } from 'lucide-react';
 
 /*
@@ -36,6 +36,14 @@ const formatMoney = (value) =>
   value === null || value === undefined ? "—"
     : `₹${Number(value).toLocaleString("en-IN", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
+// ── App Platform ───────────────────────────────────────────────────────────
+const APP_INCLUDES = [
+  { Icon: Globe2, text: "Your own domain" },
+  { Icon: HardDrive, text: "NVMe SSD storage" },
+  { Icon: Network, text: "Shared IP" },
+  { Icon: Rocket, text: "Active as soon as it's paid" }
+];
+
 // ── Managed Database ───────────────────────────────────────────────────────
 const DB_INCLUDES = [
   { Icon: Database, text: "MySQL or PostgreSQL" },
@@ -54,6 +62,7 @@ const DOMAIN_INCLUDES = [
 // ── Rail ───────────────────────────────────────────────────────────────────
 const SECTIONS = [
   { id: "virtual-machine", Icon: Layers, title: "Virtual Machine", desc: "General purpose VMs on Intel or AMD.", from: "from ₹350/mo" },
+  { id: "app-platform", Icon: Rocket, title: "App Platform", desc: "Deploy your app on your own domain.", from: "from ₹349/mo" },
   { id: "managed-database", Icon: Database, title: "Managed Database", desc: "MySQL or PostgreSQL, managed for you.", from: "from ₹199/mo" },
   { id: "bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon" }
@@ -84,6 +93,9 @@ const Pricing = () => {
   // Managed Database plans (Admin → Managed Database → Plans); null while loading.
   const [dbPlans, setDbPlans] = useState(null);
   const [dbStock, setDbStock] = useState({});
+  // App Platform plans; null while loading. Shared is on sale, Dedicated coming soon.
+  const [appPlans, setAppPlans] = useState(null);
+  const [appType, setAppType] = useState("shared");
 
   useEffect(() => {
     fetch("/api/plans/vm")
@@ -94,6 +106,10 @@ const Pricing = () => {
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((d) => setDbPlans(d.plans || []))
       .catch(() => setDbPlans(false));
+    fetch("/api/plans/apps")
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then((d) => setAppPlans(d.plans || []))
+      .catch(() => setAppPlans(false));
   }, []);
 
   useEffect(() => {
@@ -168,6 +184,8 @@ const Pricing = () => {
                 <span className="pr-hero-tile-from">
                   {id === "virtual-machine" && vmPlans?.length
                     ? `from ${formatMoney(Math.min(...vmPlans.map((p) => p.monthly)))}/mo`
+                    : id === "app-platform" && appPlans?.length
+                    ? `from ${formatMoney(Math.min(...appPlans.map((p) => p.monthly)))}/mo`
                     : id === "managed-database" && dbPlans?.length
                     ? `from ${formatMoney(Math.min(...dbPlans.map((p) => p.monthly)))}/mo`
                     : from}
@@ -314,6 +332,93 @@ const Pricing = () => {
             <p className="pr-footnote">
               Prices exclude tax; the final amount is shown at checkout.
               {" "}Every plan includes one IPv4 address and a 1 Gbps network port.
+            </p>
+          </section>
+
+          {/* ── App Platform ── */}
+          <section className="pr-section" id="app-platform">
+            <div className="pr-section-head">
+              <span className="pr-section-icon"><Rocket aria-hidden="true" /></span>
+              <div>
+                <h2 className="pr-section-title">App Platform</h2>
+                <p className="pr-section-lede">
+                  Deploy your app on your own domain. Choose a plan and your domain, pay, and your plan is active.
+                </p>
+              </div>
+            </div>
+
+            <ul className="pr-chips">
+              {APP_INCLUDES.map(({ Icon, text }) => (
+                <li key={text}><Icon aria-hidden="true" />{text}</li>
+              ))}
+            </ul>
+
+            <div className="pr-family-head">
+              <div className="pr-seg" role="tablist" aria-label="App Platform type">
+                {APP_TYPES.map((t) => (
+                  <button key={t.id} type="button" role="tab" aria-selected={appType === t.id}
+                    className={appType === t.id ? "is-active" : ""} onClick={() => setAppType(t.id)}>
+                    {t.label}{!t.available && <span className="pr-term-soon"> · Coming soon</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {appType === "dedicated" ? (
+              <div className="pr-card pr-soon-card">
+                <strong>Dedicated App Platform is coming soon.</strong>
+                <span>Dedicated resources for your app. Shared plans are available now.</span>
+              </div>
+            ) : appPlans === null ? (
+              <div className="pr-card pr-soon-card"><span>Loading plans…</span></div>
+            ) : appPlans === false ? (
+              <div className="pr-card pr-soon-card">
+                <strong>Plans couldn't be loaded right now.</strong>
+                <span>Please refresh the page in a moment.</span>
+              </div>
+            ) : appPlans.length === 0 ? (
+              <div className="pr-card pr-soon-card"><strong>App Platform plans are coming soon.</strong></div>
+            ) : (
+            <div className="pr-card pr-table-card">
+              <table className="pr-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Plan</th>
+                    <th scope="col">vCPU</th>
+                    <th scope="col">Memory</th>
+                    <th scope="col">NVMe SSD</th>
+                    <th scope="col">Bandwidth</th>
+                    <th scope="col">IP</th>
+                    <th scope="col">Monthly</th>
+                    <th scope="col" aria-label="Deploy" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {appPlans.map((plan) => {
+                    const [ram, ramUnit] = splitUnit(formatRam(plan.ram));
+                    const [bw, bwUnit] = splitUnit(formatBandwidth(plan.bandwidth));
+                    return (
+                      <tr key={plan.name}>
+                        <td className="pr-plan-name" data-label="Plan">{plan.name}</td>
+                        <td data-label="vCPU"><strong>{plan.vcpu}</strong> <span className="pr-unit">vCPU</span></td>
+                        <td data-label="Memory"><strong>{ram}</strong> <span className="pr-unit">{ramUnit}</span></td>
+                        <td data-label="NVMe SSD"><strong>{plan.storage}</strong> <span className="pr-unit">GB</span></td>
+                        <td data-label="Bandwidth"><strong>{bw}</strong> <span className="pr-unit">{bwUnit}</span></td>
+                        <td data-label="IP">{plan.dedicatedIp ? "Dedicated" : "Shared"}</td>
+                        <td data-label="Monthly price" className="pr-price">
+                          <strong>{formatMoney(plan.monthly)}</strong> <span className="pr-unit">/mo</span>
+                        </td>
+                        <td data-label="Deploy"><a href="/dashboard/create?type=apps" className="pr-stock is-in">Deploy</a></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            )}
+
+            <p className="pr-footnote">
+              Prices exclude tax; the final amount is shown at checkout. Billed monthly: the rest of the month when you
+              deploy, then on the 1st.
             </p>
           </section>
 

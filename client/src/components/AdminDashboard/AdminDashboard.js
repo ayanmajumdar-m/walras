@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard, Users, Receipt, ArrowLeftRight, FileText, Ticket, Layers, Server, Globe,
   UserCog, ScrollText, Settings as SettingsIcon, LogOut, Menu, X, Boxes, Mail, Tags, MapPin, Cloud,
-  Package, Wallet, Megaphone, ChevronDown, LifeBuoy, PhoneCall, MessageSquare, Database,
+  Package, Wallet, Megaphone, ChevronDown, LifeBuoy, PhoneCall, MessageSquare, Database, Rocket,
 } from "lucide-react";
 import AdminProtectedRoute from "./AdminPrivateRoute";
 import { adminApi, adminLogout } from "./adminApi";
@@ -23,6 +23,8 @@ import SupportPlus from "./sections/SupportPlus";
 import DbDatabases from "./sections/DbDatabases";
 import DbPlans from "./sections/DbPlans";
 import DbStock from "./sections/DbStock";
+import Apps from "./sections/Apps";
+import AppPlans from "./sections/AppPlans";
 import Tickets from "./sections/Tickets";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
@@ -67,6 +69,13 @@ const NAV = [
           { id: "databases", label: "Databases", title: "Managed Databases", Icon: Database, perm: "view_services" },
           { id: "db-plans", label: "Plans", title: "Database plans", Icon: Tags, perm: "view_services" },
           { id: "db-stock", label: "Stock", title: "Database stock", Icon: Boxes, perm: "view_services" },
+        ],
+      },
+      {
+        id: "app", label: "App Platform", Icon: Rocket,
+        items: [
+          { id: "apps", label: "Apps", title: "App Platform apps", Icon: Rocket, perm: "view_services" },
+          { id: "app-plans", label: "Plans", title: "App Platform plans", Icon: Tags, perm: "view_services" },
         ],
       },
       { id: "domain", label: "Domains", Icon: Globe, items: [{ id: "domains", label: "Domains", Icon: Globe, perm: "view_services" }] },
@@ -175,6 +184,8 @@ const AdminDashboard = () => {
       case "databases": return <DbDatabases can={can} openCustomer={openCustomer} />;
       case "db-plans": return <DbPlans can={can} />;
       case "db-stock": return <DbStock can={can} />;
+      case "apps": return <Apps openCustomer={openCustomer} />;
+      case "app-plans": return <AppPlans can={can} />;
       case "tickets": return <Tickets openCustomer={openCustomer} />;
       case "support-plus": return <SupportPlus openCustomer={openCustomer} />;
       case "bulk-email": return <BulkEmail />;

@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Layers, Globe, Play, Square, RotateCcw, Trash2, RefreshCw, X, Undo2, Database } from "lucide-react";
+import { Layers, Globe, Play, Square, RotateCcw, Trash2, RefreshCw, X, Undo2, Database, Rocket } from "lucide-react";
 import DatabasesTab from "./DatabasesTab";
+import AppsTab from "./AppsTab";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import EditNSModal from "./EditNSModal";
@@ -10,6 +11,7 @@ import TransferDomainModal from "./TransferDomainModal";
 const TABS = [
   { id: "servers", label: "Virtual Machines", Icon: Layers },
   { id: "databases", label: "Databases", Icon: Database },
+  { id: "apps", label: "Apps", Icon: Rocket },
   { id: "domains", label: "Domains", Icon: Globe },
 ];
 
@@ -191,10 +193,13 @@ const Resources = () => {
   const [servers, setServers] = useState([]);
   const [domains, setDomains] = useState([]);
   const [databases, setDatabases] = useState([]);
+  const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   // Arriving from Create after ordering a server.
   const [message, setMessage] = useState(() => params.get("created")
-    ? { text: params.get("tab") === "databases"
+    ? { text: params.get("tab") === "apps"
+        ? "Your app is deployed and active."
+        : params.get("tab") === "databases"
         ? "Database ordered. We're setting it up: it shows as Provisioning here, and we'll email you when it's ready."
         : "Your server is being created. It shows as Deploying here and is usually ready in a few minutes.", type: "success" }
     : null);
@@ -207,6 +212,7 @@ const Resources = () => {
       api("/api/servers").then((d) => setServers(d.servers || [])),
       api("/api/users/domains/purchased").then((d) => setDomains(d.domains || [])),
       api("/api/databases").then((d) => setDatabases(d.databases || [])),
+      api("/api/apps").then((d) => setApps(d.apps || [])),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -222,7 +228,7 @@ const Resources = () => {
     return () => clearInterval(timer);
   }, [building]);
 
-  const counts = { servers: servers.length, databases: databases.length, domains: domains.length };
+  const counts = { servers: servers.length, databases: databases.length, apps: apps.length, domains: domains.length };
 
   return (
     <div className="cx-page">
@@ -257,6 +263,7 @@ const Resources = () => {
       ) : (
         <>
           {tab === "servers" && <ServersTab servers={servers} reload={load} notify={notify} />}
+          {tab === "apps" && <AppsTab apps={apps} reload={load} notify={notify} />}
           {tab === "databases" && <DatabasesTab databases={databases} reload={load} notify={notify} />}
           {tab === "domains" && <DomainsTab domains={domains} reload={load} notify={notify} />}
         </>

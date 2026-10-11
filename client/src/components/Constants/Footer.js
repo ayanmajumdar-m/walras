@@ -18,6 +18,7 @@ const COLUMNS = [
     title: 'Products',
     links: [
       { label: 'Virtual Machines', to: '/pricing#virtual-machine' },
+      { label: 'App Platform', to: '/pricing#app-platform' },
       { label: 'Managed Database', to: '/pricing#managed-database' },
       { label: 'Domains', to: '/pricing#domains' },
       { label: 'Bare Metal', to: '/pricing#bare-metal' },

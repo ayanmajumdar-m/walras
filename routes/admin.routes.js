@@ -86,6 +86,14 @@ router.get('/db/databases', can('view_services'), Databases.listDatabases);
 router.put('/db/databases/:id/ready', can('manage_services'), Databases.markReady);
 router.post('/db/databases/:id/refund', can('manage_services'), Databases.refund);
 
+// App Platform: plans and customers' apps
+const Apps = require('../controllers/adminApps.controllers');
+router.get('/apps', can('view_services'), Apps.listApps);
+router.get('/apps/plans', can('view_services'), Apps.listPlans);
+router.post('/apps/plans', can('manage_plans'), Apps.createPlan);
+router.put('/apps/plans/:id', can('manage_plans'), Apps.updatePlan);
+router.delete('/apps/plans/:id', can('manage_plans'), Apps.removePlan);
+
 // Server locations
 const Locations = require('../controllers/serverLocations.controllers');
 router.get('/locations', can('view_services'), Locations.list);
