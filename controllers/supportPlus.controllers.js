@@ -55,7 +55,7 @@ module.exports = {
         });
     }),
 
-    // POST /api/support/plus — turn it on (pro rata from the balance)
+    // POST /api/support/plus — turn it on (full monthly price from the balance)
     enable: handle(async (req, res) => {
         needManage(req);
         const out = await plus.enable(req.user.userId);

@@ -32,7 +32,8 @@
  * deleted. No refunds for an unused part.
  *
  * Support + (utils/supportPlus.js, table support_plus) is billed the same way
- * as a monthly server: pro rata when it's enabled, then a line on the 1st's
+ * as a monthly server, except that enabling it charges the full monthly price
+ * (no pro rata); then it's a line on the 1st's
  * renewal invoice. It ends with the servers if that invoice goes unpaid.
  *
  * Amounts in paise, prices excluding GST. GST (services/taxServices.js) is

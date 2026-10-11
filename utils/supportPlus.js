@@ -1,10 +1,11 @@
 /**
  * Support +: priority phone support, ₹2,000 a month + GST.
  *
- * Billed like a monthly server (utils/monthlyBilling.js): enabling it charges
- * the rest of this month, pro rata, from the account balance and records a
- * paid invoice; from the 1st it's a line on the account's monthly services
- * invoice. Cancelling takes effect at the end of the paid month (no refund
+ * Charged up front: enabling it takes the full monthly price from the account
+ * balance, whatever day it is (enabled on the 25th = the full ₹2,000 + GST for
+ * the days to the 1st), and records a paid invoice. It runs until the 1st of
+ * next month; from then it's a line on the account's monthly services invoice
+ * issued on the 1st (utils/monthlyBilling.js). Cancelling takes effect at the end of the paid month (no refund
  * for the unused part). While the account is suspended for an unpaid
  * invoice, call-backs can't be requested.
  *
@@ -54,18 +55,21 @@ const publicSubscription = (row) => (row?.status === 'active'
     }
     : { active: false, endedAt: row?.ended_at || null });
 
-/** What enabling it now costs: the rest of this month, pro rata, plus GST. */
+/** What enabling it now costs: the full monthly price plus GST, until the 1st. */
 const quote = (user, now = new Date()) => {
-    const line = billing.proRata(MONTHLY_PRICE, now);
+    // Not pro rata: the full monthly price, whatever day it's enabled. It runs
+    // from today to the 1st of next month, when the monthly invoice renews it.
+    const rest = billing.proRata(MONTHLY_PRICE, now);
+    const line = { ...rest, daysInMonth: rest.days, amount: MONTHLY_PRICE }; // shown as N/N days of the monthly price
     const tax = taxService.calculateTax(user || {}, line.amount);
     return {
         ...line,
-        lines: [{ ...line, suffix: '', months: null }],
+        lines: [{ ...line, suffix: ` · until 1 ${billing.monthLabel(line.y, line.m + 1)}`, months: null }],
         subtotal: line.amount,
         tax,
         total: tax.totalAmount,
         paidUntil: billing.nextMonthStart(now),
-        notes: `Support +, ${line.days} of ${line.daysInMonth} days of ${billing.monthLabel(line.y, line.m)}`,
+        notes: `Support +, full monthly price, ${line.days} days until 1 ${billing.monthLabel(line.y, line.m + 1)}`,
     };
 };
 
@@ -80,7 +84,7 @@ const publicQuote = (qt) => ({
 });
 
 /**
- * Turns Support + on: the pro rata price comes from the balance (only if it
+ * Turns Support + on: the full monthly price comes from the balance (only if it
  * covers it) and is recorded as a paid invoice.
  */
 const enable = (userId, now = new Date()) => billing.withUserLock(userId, async () => {
@@ -95,7 +99,7 @@ const enable = (userId, now = new Date()) => billing.withUserLock(userId, async 
 
     if (!(await billing.chargeBalance(userId, qt.total))) {
         const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [userId]);
-        throw new HttpError(402, `Your account balance is too low. Support + costs ${rupees(qt.total)} now (${qt.days} days of this month, incl. GST). Add funds and try again.`, {
+        throw new HttpError(402, `Your account balance is too low. Support+ costs ${rupees(qt.total)} now (${rupees(MONTHLY_PRICE)} + GST, until 1 ${billing.monthLabel(qt.y, qt.m + 1)}). Add funds and try again.`, {
             insufficient: true, required: qt.total / 100, available: Number(wallet?.balance || 0) / 100,
         });
     }

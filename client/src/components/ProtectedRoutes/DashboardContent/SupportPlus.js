@@ -73,8 +73,8 @@ const Offer = ({ data, onEnabled }) => {
         <div className="cx-splus-mini-more">
           <p><strong>Needed help? Yes, we are there!</strong> With Support+ you can ask a Walras engineer to call you back from this page; once we accept the request, you'll get a call within {data.callWithinMinutes} minutes.</p>
           <p className="cx-splus-hint">
-            Enabling it today costs {inr(q.total)} ({q.days} of {q.daysInMonth} days of this month, incl. {inr(q.tax)} GST), paid from your account balance ({inr(balance)}).
-            From {day(q.paidUntil)}, {price(data.price)} + GST is added to your monthly services invoice. Cancel anytime.
+            It's charged up front: enabling it today costs the full {price(data.price)} + {inr(q.tax)} GST = {inr(q.total)}, paid from your account balance ({inr(balance)}),
+            and it runs until {day(q.paidUntil)}. From then, {price(data.price)} + GST is added to your monthly services invoice on the 1st. Cancel anytime.
           </p>
           <div className="cx-splus-confirm-actions">
             <button type="button" className="cx-btn cx-btn-ghost" onClick={enable} disabled={busy || !data.canManage}>
