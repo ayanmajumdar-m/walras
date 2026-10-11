@@ -1557,10 +1557,3 @@
   .pr-table th:last-child, .pr-table td:last-child { padding-right: 16px; }
   .pr-table th { font-size: 13px; }
 }
-
-/* Reserved VMs: the term picker's discount, and the struck-through monthly price */
-.pr-term-save { margin-left: 5px; font-size: 11.5px; font-weight: 700; color: var(--color-accent-700, #037566); }
-.pr-was { color: var(--text-muted, #6b6b75); font-weight: 400; }
-@media (max-width: 640px) {
-  .pr-term-seg { flex-wrap: wrap; }
-}

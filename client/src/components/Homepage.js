@@ -1,7 +1,7 @@
 import React from "react";
 import "./Homepage.css";
 import { useLocations } from "../data/locations";
-import { Zap, Clock, Gauge, Globe, Cpu, Check, BadgePercent } from "lucide-react";
+import { Zap, Clock, Gauge, Globe, Cpu, Check } from "lucide-react";
 
 /*
   The homepage as a specification sheet.
@@ -57,14 +57,6 @@ const SERVICES = [
     description: "General purpose virtual machines on Intel or AMD, with NVMe SSD storage, prepaid monthly with the first month pro rata.",
     features: ["Intel or AMD CPUs", "NVMe SSD Storage", "Instant Deployment", "99.9% Uptime"],
     action: { label: "View plans", href: "/pricing#virtual-machine" }
-  },
-  {
-    ref: "S-03",
-    Icon: BadgePercent,
-    title: "Reserved VMs",
-    description: "The same virtual machines, reserved for 3 to 36 months and paid up front, for up to 25% less than monthly.",
-    features: ["Save up to 25%", "3 to 36 Month Terms", "Same Plans & Locations", "Renews Automatically"],
-    action: { label: "See savings", href: "/pricing#reserved-vm" }
   }
 ];
 
