@@ -33,7 +33,6 @@ const toPlan = (r) => ({
     storage: Number(r.storage_gb),    // GB; 0.5 = 500 MB
     backupDays: Number(r.backup_days), // daily backups kept this many days
     monthly: Number(r.price_inr),     // rupees per month, excluding GST
-    usd: r.price_usd === null ? null : Number(r.price_usd),
     active: Boolean(r.active),
     sortOrder: Number(r.sort_order),
 });

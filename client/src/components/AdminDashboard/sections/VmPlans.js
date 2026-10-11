@@ -11,7 +11,7 @@ import { formatRam, formatBandwidth } from "../../../data/plans";
   orders; servers already running keep the price they were bought at.
 */
 
-const EMPTY = { name: "", cpu: "intel", vcpu: "", ram: "", storage: "", bandwidth: "", network: "1", monthly: "", usd: "", sortOrder: "", active: true };
+const EMPTY = { name: "", cpu: "intel", vcpu: "", ram: "", storage: "", bandwidth: "", network: "1", monthly: "", sortOrder: "", active: true };
 
 const Modal = ({ title, onClose, children }) => (
   <div className="cx-modal-scrim" onClick={onClose}>
@@ -45,7 +45,7 @@ const PlanForm = ({ initial, cpuTypes, editing, onSaved, onDeleted, onClose }) =
     setError("");
     const body = {
       cpu: f.cpu, vcpu: f.vcpu, ram: f.ram, storage: f.storage, bandwidth: f.bandwidth, network: f.network,
-      monthly: f.monthly, usd: f.usd === "" ? null : f.usd, active: f.active,
+      monthly: f.monthly, active: f.active,
       ...(f.sortOrder !== "" ? { sortOrder: f.sortOrder } : {}),
       ...(editing ? {} : { name: f.name.trim() }),
     };
@@ -97,7 +97,6 @@ const PlanForm = ({ initial, cpuTypes, editing, onSaved, onDeleted, onClose }) =
           <Field label="Bandwidth (GB / month)" hint="1024 = 1 TB"><input type="number" min="0" step="1" value={f.bandwidth} onChange={set("bandwidth")} required /></Field>
           <Field label="Network (Gbps)"><input type="number" min="0.1" step="0.1" value={f.network} onChange={set("network")} required /></Field>
           <Field label="Price (₹ / month)" hint="Excluding GST. What customers are charged."><input type="number" min="1" step="0.01" value={f.monthly} onChange={set("monthly")} required /></Field>
-          <Field label="Price ($ / month)" hint="Optional, for reference."><input type="number" min="0" step="0.01" value={f.usd} onChange={set("usd")} /></Field>
           <Field label="Order" hint="Lower shows first."><input type="number" step="1" value={f.sortOrder} onChange={set("sortOrder")} /></Field>
         </div>
         <label className="ap-plan-active">
@@ -175,7 +174,7 @@ const VmPlans = ({ can }) => {
             <div className="cx-card cx-table-wrap">
               <table className="cx-table ap-plan-table">
                 <thead>
-                  <tr><th>Plan</th><th>vCPUs</th><th>RAM</th><th>NVMe SSD</th><th>Bandwidth</th><th>Network</th><th>₹ / month</th><th>$ / month</th><th>Servers</th><th>Status</th><th /></tr>
+                  <tr><th>Plan</th><th>vCPUs</th><th>RAM</th><th>NVMe SSD</th><th>Bandwidth</th><th>Network</th><th>₹ / month</th><th>Servers</th><th>Status</th><th /></tr>
                 </thead>
                 <tbody>
                   {g.plans.map((p) => (
@@ -187,7 +186,6 @@ const VmPlans = ({ can }) => {
                       <td data-label="Bandwidth">{formatBandwidth(p.bandwidth)}</td>
                       <td data-label="Network">{p.network} Gbps</td>
                       <td data-label="₹ / month"><strong>₹{p.monthly.toLocaleString("en-IN")}</strong></td>
-                      <td data-label="$ / month">{p.usd === null ? "—" : `$${p.usd.toLocaleString("en-US", { minimumFractionDigits: p.usd % 1 ? 2 : 0, maximumFractionDigits: 2 })}`}</td>
                       <td data-label="Servers">{p.servers}</td>
                       <td data-label="Status">
                         <span className={`cx-status ${p.active ? "is-active" : "is-stopped"}`}>{p.active ? "On sale" : "Hidden"}</span>
@@ -217,7 +215,7 @@ const VmPlans = ({ can }) => {
         <PlanForm
           editing={editing !== "new"}
           initial={editing === "new" ? EMPTY : {
-            ...editing, usd: editing.usd ?? "", sortOrder: editing.sortOrder, network: editing.network,
+            ...editing, sortOrder: editing.sortOrder, network: editing.network,
           }}
           cpuTypes={data.cpuTypes}
           onSaved={done}

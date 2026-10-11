@@ -233,7 +233,6 @@ CREATE TABLE IF NOT EXISTS vm_plans (
     bandwidth_gb INT NOT NULL CHECK (bandwidth_gb >= 0),
     network_gbps NUMERIC(6,2) NOT NULL DEFAULT 1,
     price_inr NUMERIC(12,2) NOT NULL CHECK (price_inr > 0),
-    price_usd NUMERIC(12,2),
     active BOOLEAN NOT NULL DEFAULT TRUE,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -243,18 +242,18 @@ CREATE TABLE IF NOT EXISTS vm_plans (
 // The first plans (Intel, General Purpose). Only when the table is empty, so
 // plans an admin deletes later don't come back on restart.
 const seedVmPlans = `
-INSERT INTO vm_plans (name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, price_usd, sort_order)
+INSERT INTO vm_plans (name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, sort_order)
 SELECT * FROM (VALUES
-    ('VMgIN_0.5', 'intel', 1, 0.5, 10, 256, 1, 350, 3.5, 10),
-    ('VMgIN_1', 'intel', 1, 1, 20, 512, 1, 450, 4.5, 20),
-    ('VMgIN_2', 'intel', 1, 2, 40, 1024, 1, 980, 10, 30),
-    ('VMgIN_4', 'intel', 2, 4, 60, 2048, 1, 1400, 15, 40),
-    ('VMgIN_8', 'intel', 4, 8, 80, 4096, 1, 2400, 25, 50),
-    ('VMgIN_16', 'intel', 6, 16, 120, 5120, 1, 4000, 40, 60),
-    ('VMgIN_24', 'intel', 8, 24, 160, 8192, 1, 6000, 65, 70),
-    ('VMgIN_32', 'intel', 10, 32, 200, 10240, 1, 9000, 95, 80),
-    ('VMgIN_64', 'intel', 14, 64, 400, 20480, 1, 12000, 125, 90)
-) AS seed(name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, price_usd, sort_order)
+    ('VMgIN_0.5', 'intel', 1, 0.5, 10, 256, 1, 350, 10),
+    ('VMgIN_1', 'intel', 1, 1, 20, 512, 1, 450, 20),
+    ('VMgIN_2', 'intel', 1, 2, 40, 1024, 1, 980, 30),
+    ('VMgIN_4', 'intel', 2, 4, 60, 2048, 1, 1400, 40),
+    ('VMgIN_8', 'intel', 4, 8, 80, 4096, 1, 2400, 50),
+    ('VMgIN_16', 'intel', 6, 16, 120, 5120, 1, 4000, 60),
+    ('VMgIN_24', 'intel', 8, 24, 160, 8192, 1, 6000, 70),
+    ('VMgIN_32', 'intel', 10, 32, 200, 10240, 1, 9000, 80),
+    ('VMgIN_64', 'intel', 14, 64, 400, 20480, 1, 12000, 90)
+) AS seed(name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, sort_order)
 WHERE NOT EXISTS (SELECT 1 FROM vm_plans)`;
 
 // Server locations, managed in Admin → Locations (utils/serverLocations.js).
@@ -549,7 +548,6 @@ CREATE TABLE IF NOT EXISTS db_plans (
     storage_gb NUMERIC(10,2) NOT NULL CHECK (storage_gb > 0),
     backup_days INT NOT NULL DEFAULT 0 CHECK (backup_days >= 0),
     price_inr NUMERIC(12,2) NOT NULL CHECK (price_inr > 0),
-    price_usd NUMERIC(12,2),
     active BOOLEAN NOT NULL DEFAULT TRUE,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -696,7 +694,7 @@ CREATE TABLE IF NOT EXISTS domain_transactions (
     domain_extension VARCHAR(10) NOT NULL,
     full_domain VARCHAR(255) NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(10) DEFAULT 'USD',
+    currency VARCHAR(10) DEFAULT 'INR',
     registration_period INT DEFAULT 1, -- in years
     payment_method VARCHAR(50),
     payment_reference VARCHAR(255),
@@ -808,6 +806,8 @@ connection.connect((err) => {
         ['Compute stock', createComputeStockTable],
         ['VM plans', createVmPlansTable],
         ['VM plans seed', seedVmPlans],
+        // Prices are in rupees only; the old reference $ prices are gone.
+        ['VM plans no USD', 'ALTER TABLE vm_plans DROP COLUMN IF EXISTS price_usd'],
         ['Server locations', createServerLocationsTable],
         ['Server locations seed', seedServerLocations],
         // A flag image shown with the location (Admin → Locations).
@@ -852,6 +852,7 @@ connection.connect((err) => {
         ['invoice items months', 'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS months INT'],
         ['Database plans', createDbPlansTable],
         ['Database plans seed', seedDbPlans],
+        ['Database plans no USD', 'ALTER TABLE db_plans DROP COLUMN IF EXISTS price_usd'],
         ['Database stock', createDbStockTable],
         ['Managed databases', createManagedDatabasesTable],
         ['managed databases user index', 'CREATE INDEX IF NOT EXISTS managed_databases_user_idx ON managed_databases (user_id)'],

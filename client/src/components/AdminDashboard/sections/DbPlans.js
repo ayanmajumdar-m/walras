@@ -10,7 +10,7 @@ import { formatRam, formatStorage, formatBackups } from "../../../data/plans";
   only be hidden. Databases already running keep the price they were bought at.
 */
 
-const EMPTY = { name: "", vcpu: "", ram: "", storage: "", backupDays: "7", monthly: "", usd: "", sortOrder: "", active: true };
+const EMPTY = { name: "", vcpu: "", ram: "", storage: "", backupDays: "7", monthly: "", sortOrder: "", active: true };
 
 const Field = ({ label, hint, children }) => (
   <label className="cx-field">
@@ -31,8 +31,7 @@ const PlanForm = ({ initial, editing, onDone, onClose }) => {
     setBusy(true);
     setError("");
     const body = {
-      vcpu: f.vcpu, ram: f.ram, storage: f.storage, backupDays: f.backupDays, monthly: f.monthly,
-      usd: f.usd === "" ? null : f.usd, active: f.active,
+      vcpu: f.vcpu, ram: f.ram, storage: f.storage, backupDays: f.backupDays, monthly: f.monthly, active: f.active,
       ...(f.sortOrder !== "" ? { sortOrder: f.sortOrder } : {}),
       ...(editing ? {} : { name: f.name.trim() }),
     };
@@ -78,7 +77,6 @@ const PlanForm = ({ initial, editing, onDone, onClose }) => {
             <Field label="Storage (GB)" hint="0.5 = 500 MB"><input type="number" min="0.1" step="0.1" value={f.storage} onChange={set("storage")} required /></Field>
             <Field label="Backup retention (days)" hint="Daily backups kept this long. 0 = none."><input type="number" min="0" step="1" value={f.backupDays} onChange={set("backupDays")} required /></Field>
             <Field label="Price (₹ / month)" hint="Excluding GST."><input type="number" min="1" step="0.01" value={f.monthly} onChange={set("monthly")} required /></Field>
-            <Field label="Price ($ / month)" hint="Optional, for reference."><input type="number" min="0" step="0.01" value={f.usd} onChange={set("usd")} /></Field>
             <Field label="Order" hint="Lower shows first."><input type="number" step="1" value={f.sortOrder} onChange={set("sortOrder")} /></Field>
           </div>
           <label className="ap-plan-active">
@@ -140,7 +138,7 @@ const DbPlans = ({ can }) => {
       ) : (
         <div className="cx-card cx-table-wrap">
           <table className="cx-table ap-plan-table">
-            <thead><tr><th>Plan</th><th>vCPUs</th><th>RAM</th><th>Storage</th><th>Backups</th><th>₹ / month</th><th>$ / month</th><th>Databases</th><th>Status</th><th /></tr></thead>
+            <thead><tr><th>Plan</th><th>vCPUs</th><th>RAM</th><th>Storage</th><th>Backups</th><th>₹ / month</th><th>Databases</th><th>Status</th><th /></tr></thead>
             <tbody>
               {data.plans.map((p) => (
                 <tr key={p.id} className={p.active ? "" : "is-hidden-plan"}>
@@ -150,7 +148,6 @@ const DbPlans = ({ can }) => {
                   <td data-label="Storage">{formatStorage(p.storage)}</td>
                   <td data-label="Backups">{formatBackups(p.backupDays)}</td>
                   <td data-label="₹ / month"><strong>₹{p.monthly.toLocaleString("en-IN")}</strong></td>
-                  <td data-label="$ / month">{p.usd === null ? "—" : `$${p.usd}`}</td>
                   <td data-label="Databases">{p.databases}</td>
                   <td data-label="Status"><span className={`cx-status ${p.active ? "is-active" : "is-stopped"}`}>{p.active ? "On sale" : "Hidden"}</span></td>
                   <td className="cx-actions">
@@ -169,7 +166,7 @@ const DbPlans = ({ can }) => {
       )}
       <p className="ap-muted">Customers can buy a plan only when it's on sale here <em>and</em> has stock in Database stock. Prices exclude GST.</p>
       {editing && (
-        <PlanForm editing={editing !== "new"} initial={editing === "new" ? EMPTY : { ...editing, usd: editing.usd ?? "" }}
+        <PlanForm editing={editing !== "new"} initial={editing === "new" ? EMPTY : { ...editing }}
           onDone={done} onClose={() => setEditing(null)} />
       )}
     </div>

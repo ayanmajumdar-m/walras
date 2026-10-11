@@ -59,9 +59,7 @@ const readPlan = (body, { partial = false } = {}) => {
     num('bandwidth', 'Bandwidth (GB)', { min: 0, max: 10000000, int: true });
     num('network', 'Network (Gbps)', { min: 0.1, max: 400 });
     num('monthly', 'Monthly price (₹)', { min: 1, max: 10000000 });
-    // Optional: the $ price (cleared with null or "") and the display order.
-    if (body.usd === null || body.usd === '') out.usd = null;
-    else if (body.usd !== undefined) num('usd', 'Monthly price ($)', { min: 0, max: 100000 });
+    // Optional: the display order.
     if (has('sortOrder')) num('sortOrder', 'Order', { min: -100000, max: 100000, int: true });
     if (body.active !== undefined) out.active = Boolean(body.active);
     return out;
@@ -69,7 +67,7 @@ const readPlan = (body, { partial = false } = {}) => {
 
 const COLUMNS = {
     cpu: 'cpu', vcpu: 'vcpu', ram: 'ram_gb', storage: 'storage_gb', bandwidth: 'bandwidth_gb',
-    network: 'network_gbps', monthly: 'price_inr', usd: 'price_usd', sortOrder: 'sort_order', active: 'active',
+    network: 'network_gbps', monthly: 'price_inr', sortOrder: 'sort_order', active: 'active',
 };
 
 const PLAN_NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{1,39}$/;
@@ -102,9 +100,9 @@ const VmPlansController = {
         }
         const p = readPlan(req.body);
         const ins = await q(
-            `INSERT INTO vm_plans (name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, price_usd, active, sort_order)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, p.cpu, p.vcpu, p.ram, p.storage, p.bandwidth, p.network, p.monthly, p.usd ?? null, p.active ?? true, p.sortOrder ?? 0],
+            `INSERT INTO vm_plans (name, cpu, vcpu, ram_gb, storage_gb, bandwidth_gb, network_gbps, price_inr, active, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, p.cpu, p.vcpu, p.ram, p.storage, p.bandwidth, p.network, p.monthly, p.active ?? true, p.sortOrder ?? 0],
         );
         computeStock.forgetPlans();
         audit(req, 'plans.create', 'vm_plan', ins.insertId, { name, ...p });

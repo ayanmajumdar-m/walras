@@ -31,14 +31,9 @@ const COMPUTE_INCLUDES = [
   { Icon: HardDrive, text: "NVMe SSD storage" }
 ];
 
-// Monthly price in the chosen currency. USD is shown for reference; plans
-// without a $ price show a dash.
-const CURRENCIES = [{ id: "inr", label: "₹ INR" }, { id: "usd", label: "$ USD" }];
-const CURRENCY_KEY = "walrasCurrency";
-const priceOf = (plan, currency) => (currency === "usd" ? plan.usd : plan.monthly);
-const formatMoney = (value, currency) =>
+// Monthly price in rupees, excluding GST.
+const formatMoney = (value) =>
   value === null || value === undefined ? "—"
-    : currency === "usd" ? `$${Number(value).toLocaleString("en-US", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`
     : `₹${Number(value).toLocaleString("en-IN", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
 // ── Managed Database ───────────────────────────────────────────────────────
@@ -84,14 +79,6 @@ const Pricing = () => {
   // Which Virtual Machine plans are in stock somewhere (set by admins).
   const [computeStock, setComputeStock] = useState({});
   const [cpu, setCpu] = useState(CPU_TYPES[0].id);
-  // ₹ or $, remembered for next time.
-  const [currency, setCurrency] = useState(() => {
-    try { return localStorage.getItem(CURRENCY_KEY) === "usd" ? "usd" : "inr"; } catch { return "inr"; }
-  });
-  const chooseCurrency = (c) => {
-    setCurrency(c);
-    try { localStorage.setItem(CURRENCY_KEY, c); } catch { /* not remembered */ }
-  };
   // Plans and prices are managed in admin; null while loading.
   const [vmPlans, setVmPlans] = useState(null);
   // Managed Database plans (Admin → Managed Database → Plans); null while loading.
@@ -155,7 +142,7 @@ const Pricing = () => {
     window.history.replaceState(null, "", `#${id}`);
   };
 
-  const sortValue = (p) => (sort.key === "monthly" ? (priceOf(p, currency) ?? Infinity) : p[sort.key]);
+  const sortValue = (p) => (sort.key === "monthly" ? p.monthly : p[sort.key]);
   const sortedPlans = (vmPlans || []).filter((p) => p.cpu === cpu).sort((a, b) =>
     sort.dir === "asc" ? sortValue(a) - sortValue(b) : sortValue(b) - sortValue(a)
   );
@@ -179,8 +166,10 @@ const Pricing = () => {
                 <Icon className="pr-hero-tile-icon" aria-hidden="true" />
                 <span className="pr-hero-tile-title">{title}</span>
                 <span className="pr-hero-tile-from">
-                  {id === "virtual-machine" && vmPlans?.length && vmPlans.some((p) => priceOf(p, currency) != null)
-                    ? `from ${formatMoney(Math.min(...vmPlans.map((p) => priceOf(p, currency)).filter((v) => v != null)), currency)}/mo`
+                  {id === "virtual-machine" && vmPlans?.length
+                    ? `from ${formatMoney(Math.min(...vmPlans.map((p) => p.monthly)))}/mo`
+                    : id === "managed-database" && dbPlans?.length
+                    ? `from ${formatMoney(Math.min(...dbPlans.map((p) => p.monthly)))}/mo`
                     : from}
                 </span>
                 <ArrowRight className="pr-hero-tile-arrow" aria-hidden="true" />
@@ -241,14 +230,6 @@ const Pricing = () => {
                   </button>
                 ))}
               </div>
-              <div className="pr-seg" role="group" aria-label="Currency">
-                {CURRENCIES.map((c) => (
-                  <button key={c.id} type="button" aria-pressed={currency === c.id}
-                    className={currency === c.id ? "is-active" : ""} onClick={() => chooseCurrency(c.id)}>
-                    {c.label}
-                  </button>
-                ))}
-              </div>
             </div>
             {vmPlans === null ? (
               <div className="pr-card pr-soon-card"><span>Loading plans…</span></div>
@@ -303,7 +284,7 @@ const Pricing = () => {
                       {PLAN_COLUMNS.map(({ key, label, show, price }) => {
                         const cls = sort.key === key ? "is-sorted" : "";
                         if (price) {
-                          const amount = formatMoney(priceOf(plan, currency), currency);
+                          const amount = formatMoney(plan.monthly);
                           const per = "/mo";
                           return (
                             <td key={key} data-label={`${label} price`} className={`pr-price ${cls}`}>
@@ -332,7 +313,6 @@ const Pricing = () => {
 
             <p className="pr-footnote">
               Prices exclude tax; the final amount is shown at checkout.
-              {currency === "usd" && " US dollar prices are for reference; your account is billed in Indian rupees."}
               {" "}Every plan includes one IPv4 address and a 1 Gbps network port.
             </p>
           </section>
@@ -398,7 +378,7 @@ const Pricing = () => {
                         <td data-label="Storage"><strong>{disk}</strong> <span className="pr-unit">{diskUnit}</span></td>
                         <td data-label="Backups"><strong>Daily</strong> <span className="pr-unit">{plan.backupDays}-day retention</span></td>
                         <td data-label="Monthly price" className="pr-price">
-                          <strong>{formatMoney(priceOf(plan, currency), currency)}</strong> <span className="pr-unit">/mo</span>
+                          <strong>{formatMoney(plan.monthly)}</strong> <span className="pr-unit">/mo</span>
                         </td>
                         <td data-label="Availability">
                           {dbStock[plan.name]
@@ -415,7 +395,6 @@ const Pricing = () => {
 
             <p className="pr-footnote">
               Prices exclude tax; the final amount is shown at checkout.
-              {currency === "usd" && " US dollar prices are for reference; your account is billed in Indian rupees."}
               {" "}Billed monthly like Virtual Machines: the rest of the month when you order, then on the 1st.
             </p>
           </section>

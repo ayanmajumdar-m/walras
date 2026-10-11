@@ -38,7 +38,6 @@ const toPlan = (r) => ({
     bandwidth: Number(r.bandwidth_gb), // GB per month; 1024 = 1 TB
     network: Number(r.network_gbps),
     monthly: Number(r.price_inr),    // rupees per month, excluding GST
-    usd: r.price_usd === null ? null : Number(r.price_usd),
     active: Boolean(r.active),
     sortOrder: Number(r.sort_order),
 });

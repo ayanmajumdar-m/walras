@@ -68,8 +68,6 @@ const readPlan = (body, { partial = false } = {}) => {
     num('storage', 'Storage (GB)', { min: 0.1, max: 100000 });
     num('backupDays', 'Backup retention (days)', { min: 0, max: 365, int: true });
     num('monthly', 'Monthly price (₹)', { min: 1, max: 10000000 });
-    if (body.usd === null || body.usd === '') out.usd = null;
-    else if (body.usd !== undefined) num('usd', 'Monthly price ($)', { min: 0, max: 100000 });
     if (has('sortOrder')) num('sortOrder', 'Order', { min: -100000, max: 100000, int: true });
     if (body.active !== undefined) out.active = Boolean(body.active);
     return out;
@@ -77,7 +75,7 @@ const readPlan = (body, { partial = false } = {}) => {
 
 const COLUMNS = {
     vcpu: 'vcpu', ram: 'ram_gb', storage: 'storage_gb', backupDays: 'backup_days', monthly: 'price_inr',
-    usd: 'price_usd', sortOrder: 'sort_order', active: 'active',
+    sortOrder: 'sort_order', active: 'active',
 };
 const PLAN_NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{1,39}$/;
 
@@ -136,9 +134,9 @@ module.exports = {
         if (!PLAN_NAME.test(name)) throw new HttpError(400, 'Plan name: 2 to 40 letters, numbers, dots, dashes or underscores (e.g. MDsIN_xlarge).');
         const p = readPlan(req.body);
         const ins = await q(
-            `INSERT INTO db_plans (name, vcpu, ram_gb, storage_gb, backup_days, price_inr, price_usd, active, sort_order)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, p.vcpu, p.ram, p.storage, p.backupDays, p.monthly, p.usd ?? null, p.active ?? true, p.sortOrder ?? 0],
+            `INSERT INTO db_plans (name, vcpu, ram_gb, storage_gb, backup_days, price_inr, active, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, p.vcpu, p.ram, p.storage, p.backupDays, p.monthly, p.active ?? true, p.sortOrder ?? 0],
         );
         dbStock.forgetPlans();
         audit(req, 'db_plans.create', 'db_plan', ins.insertId, { name, ...p });
