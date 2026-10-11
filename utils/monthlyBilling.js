@@ -53,6 +53,7 @@ const { sendRawEmail, escapeHtml } = require('./sendEmail');
 const integrations = require('./integrations');
 const platformSettings = require('./platformSettings');
 const databaseStock = require('./databaseStock');
+const appPlans = require('./appPlans');
 
 // The overdue timeline (Terms of Service §5, Refund and Billing Policy §3),
 // measured from the moment an invoice is issued. See deadlines().
@@ -229,9 +230,12 @@ const destroyDatabase = async (db) => {
     return true;
 };
 
-/** Deletes an App Platform app (our record; no provisioning integration yet). */
+/** Deletes an App Platform app: our record and its unit of stock (no provisioning integration yet). */
 const destroyApp = async (app) => {
     await q('DELETE FROM app_platform_apps WHERE id = ?', [app.id]);
+    if (app.location_id && (await appPlans.findPlan(app.plan_name, { all: true }))) {
+        await appPlans.release(app.plan_name, app.location_id).catch((e) => console.error('[Billing] App stock return failed:', e.message));
+    }
     return true;
 };
 

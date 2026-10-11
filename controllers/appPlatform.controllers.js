@@ -62,14 +62,15 @@ const ownApp = async (userId, id) => {
 
 // GET /api/apps/catalog — types and plans
 exports.getCatalog = handle('App Platform catalogue', async (req, res) => {
-    const [all, places] = await Promise.all([appPlans.getPlans(), productLocations.catalogLocations('apps')]);
-    const plans = all.map(({ id, active, sortOrder, ...p }) => p);
+    const [all, places, availability] = await Promise.all([appPlans.getPlans(), productLocations.catalogLocations('apps'), appPlans.getAvailability()]);
+    // Each plan with the locations it's in stock in, like Virtual Machines and Managed Database.
+    const plans = all.map(({ id, active, sortOrder, ...p }) => ({ ...p, locations: Object.keys(availability[p.name] || {}).map(Number) }));
     res.json({
         // Every active location, like Virtual Machines; comingSoon = not offered yet.
         locations: places,
         types: Object.entries(appPlans.TYPES).map(([id, t]) => ({ id, label: t.label, available: t.available })),
         plans,
-        enabled: plans.length > 0 && places.some((l) => !l.comingSoon),
+        enabled: plans.some((p) => p.locations.length > 0),
     });
 });
 
@@ -97,7 +98,12 @@ exports.createApp = handle('Create app', async (req, res) => {
     const quote = billing.quotePurchase(user, plan.monthly, now, 1);
     quote.notes = quote.notes.replace(/^New server, /, 'New app, ');
 
+    // 1. A unit of stock. 2. The pro rata price from the balance.
+    if (!(await appPlans.reserve(plan.name, location.id))) {
+        throw new HttpError(409, `${plan.name} is out of stock in ${location.name}.`, { outOfStock: true });
+    }
     if (!(await billing.chargeBalance(userId, quote.total))) {
+        await appPlans.release(plan.name, location.id);
         const [wallet] = await q('SELECT balance FROM wallets WHERE user_id = ?', [userId]);
         throw new HttpError(402, `Your account balance is too low. This app costs ₹${(quote.total / 100).toFixed(2)} now (${quote.days} days of this month, incl. GST). Add funds and try again.`, {
             insufficient: true, required: quote.total / 100, available: Number(wallet?.balance || 0) / 100,
@@ -112,6 +118,7 @@ exports.createApp = handle('Create app', async (req, res) => {
         )).rows;
     } catch (err) {
         await billing.refundBalance(userId, quote.total).catch((e) => console.error('App refund failed:', e.message));
+        await appPlans.release(plan.name, location.id).catch(() => {});
         throw err;
     }
     await billing.recordPurchase({ userId, label: billing.appLabel(app), ref: `A${app.id}`, quote, now })

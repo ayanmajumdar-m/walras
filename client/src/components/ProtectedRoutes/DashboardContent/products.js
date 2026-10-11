@@ -28,9 +28,11 @@ export const productStatus = (product, platform) => {
     if (!db || !Object.values(db).some(Boolean)) return { label: "Out of stock", available: false };
     if (platform?.dbFromPrice) return { label: `from ₹${Number(platform.dbFromPrice).toLocaleString("en-IN")}/mo`, available: true };
   }
-  // App Platform: no stock; on sale while it has plans.
+  // App Platform: the same, with its own plans and stock.
   if (product.id === "apps") {
-    if (!platform?.appFromPrice) return { label: "Coming soon", available: false };
+    const apps = platform?.planAvailability?.apps;
+    if (!apps || !Object.values(apps).some(Boolean)) return { label: "Out of stock", available: false };
+    if (!platform?.appFromPrice) return { label: product.from, available: true };
     return { label: `from ₹${Number(platform.appFromPrice).toLocaleString("en-IN")}/mo`, available: true };
   }
   return { label: product.from, available: product.status === "available" };

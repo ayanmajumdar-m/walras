@@ -90,6 +90,8 @@ router.post('/db/databases/:id/refund', can('manage_services'), Databases.refund
 const Apps = require('../controllers/adminApps.controllers');
 router.get('/apps', can('view_services'), Apps.listApps);
 router.get('/apps/plans', can('view_services'), Apps.listPlans);
+router.get('/apps/stock', can('view_services'), Apps.getStock);
+router.put('/apps/stock', can('manage_services'), Apps.updateStock);
 router.post('/apps/plans', can('manage_plans'), Apps.createPlan);
 router.put('/apps/plans/:id', can('manage_plans'), Apps.updatePlan);
 router.delete('/apps/plans/:id', can('manage_plans'), Apps.removePlan);

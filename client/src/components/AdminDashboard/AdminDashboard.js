@@ -25,6 +25,7 @@ import DbPlans from "./sections/DbPlans";
 import DbStock from "./sections/DbStock";
 import Apps from "./sections/Apps";
 import AppPlans from "./sections/AppPlans";
+import AppStock from "./sections/AppStock";
 import Tickets from "./sections/Tickets";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
@@ -76,6 +77,7 @@ const NAV = [
         items: [
           { id: "apps", label: "Apps", title: "App Platform apps", Icon: Rocket, perm: "view_services" },
           { id: "app-plans", label: "Plans", title: "App Platform plans", Icon: Tags, perm: "view_services" },
+          { id: "app-stock", label: "Stock", title: "App Platform stock", Icon: Boxes, perm: "view_services" },
         ],
       },
       { id: "domain", label: "Domains", Icon: Globe, items: [{ id: "domains", label: "Domains", Icon: Globe, perm: "view_services" }] },
@@ -186,6 +188,7 @@ const AdminDashboard = () => {
       case "db-stock": return <DbStock can={can} />;
       case "apps": return <Apps openCustomer={openCustomer} />;
       case "app-plans": return <AppPlans can={can} />;
+      case "app-stock": return <AppStock can={can} />;
       case "tickets": return <Tickets openCustomer={openCustomer} />;
       case "support-plus": return <SupportPlus openCustomer={openCustomer} />;
       case "bulk-email": return <BulkEmail />;

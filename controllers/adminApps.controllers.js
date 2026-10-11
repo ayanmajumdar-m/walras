@@ -126,6 +126,7 @@ module.exports = {
         if (!plan) throw new HttpError(404, 'Plan not found.');
         const [{ n }] = await q('SELECT COUNT(*) AS n FROM app_platform_apps WHERE plan_name = ?', [plan.name]);
         if (Number(n) > 0) throw new HttpError(409, `${plan.name} is used by ${n} app${Number(n) === 1 ? '' : 's'}, so it can't be deleted. Hide it instead.`);
+        await q('DELETE FROM app_stock WHERE plan = ?', [plan.name]);
         await q('DELETE FROM app_plans WHERE id = ?', [id]);
         appPlans.forgetPlans();
         audit(req, 'app_plans.delete', 'app_plan', id, { name: plan.name });
@@ -149,6 +150,44 @@ module.exports = {
         await productLocations.setLocations(product, ids);
         audit(req, 'product.locations', 'settings', product, { before, after: ids });
         res.json({ message: ids.length ? 'Locations saved.' : 'Saved. With no locations, nothing can be ordered.' });
+    }),
+
+    // GET /api/admin/apps/stock — stock per plan for the locations App Platform is offered in
+    getStock: handle(async (req, res) => {
+        const [plans, stock, locations, offered, running] = await Promise.all([
+            appPlans.getPlans({ all: true }), appPlans.getStock(), serverLocations.getLocations({ all: true }), productLocations.getLocationIds('apps'),
+            q('SELECT plan_name, location_id, COUNT(*) AS n FROM app_platform_apps GROUP BY plan_name, location_id'),
+        ]);
+        const inUse = {};
+        for (const r of running) (inUse[r.plan_name] ||= {})[r.location_id] = Number(r.n);
+        res.json({
+            locations: locations.filter((l) => offered.has(l.id)).map((l) => ({ id: l.id, name: l.active ? l.name : `${l.name} (hidden)` })),
+            plans: plans.map((p) => ({ ...p, stock: stock[p.name] || {}, inUse: inUse[p.name] || {} })),
+        });
+    }),
+
+    // PUT /api/admin/apps/stock { plans: [{ name, stock: { [locationId]: quantity } }] }
+    updateStock: handle(async (req, res) => {
+        const list = Array.isArray(req.body.plans) ? req.body.plans : [];
+        const known = new Set((await appPlans.getPlans({ all: true })).map((p) => p.name));
+        const locations = new Set((await serverLocations.getLocations({ all: true })).map((l) => l.id));
+        const entries = [];
+        for (const p of list) {
+            if (!known.has(p?.name)) continue;
+            for (const [loc, qty] of Object.entries(p.stock || {})) {
+                const locationId = Number(loc);
+                const quantity = Number(qty);
+                if (!locations.has(locationId)) continue;
+                if (!Number.isInteger(quantity) || quantity < 0 || quantity > 100000) {
+                    throw new HttpError(400, `Stock for ${p.name} must be a whole number from 0 to 100000.`);
+                }
+                entries.push({ plan: p.name, locationId, quantity });
+            }
+        }
+        const before = await appPlans.getStock();
+        await appPlans.setStock(entries);
+        audit(req, 'apps.stock', 'settings', 'apps', { before, after: await appPlans.getStock() });
+        res.json({ message: 'App Platform stock saved' });
     }),
 
     // GET /api/admin/apps — every customer's apps

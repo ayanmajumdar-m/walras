@@ -1,6 +1,7 @@
 const appSettings = require('./appSettings');
 const computeStock = require('./computeStock');
 const databaseStock = require('./databaseStock');
+const appPlans = require('./appPlans');
 const razorpay = require('../services/razorpay');
 const taxService = require('../services/taxServices');
 
@@ -61,6 +62,9 @@ const getPlatform = async () => {
                 .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
             // Managed Database plans in stock in at least one location (Admin → Managed Database → Stock).
             database: Object.fromEntries(Object.entries(await databaseStock.getAvailability())
+                .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
+            // App Platform plans in stock in at least one location (Admin → App Platform → Stock).
+            apps: Object.fromEntries(Object.entries(await appPlans.getAvailability())
                 .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
         },
         invoice: invoiceDetailsFrom(s),

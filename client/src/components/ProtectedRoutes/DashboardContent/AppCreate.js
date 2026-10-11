@@ -35,13 +35,29 @@ const AppConfigurator = () => {
 
   useEffect(() => {
     api("/api/apps/catalog")
-      .then((c) => { setCatalog(c); if (c.plans[0]) setSelected(c.plans[0].name); const loc = (c.locations || []).find((l) => !l.comingSoon); if (loc) setLocationId(loc.id); })
+      .then((c) => {
+        setCatalog(c);
+        // Like Virtual Machines: start on an open location with stock, and a plan in stock there.
+        const open = (c.locations || []).filter((l) => !l.comingSoon);
+        const loc = open.find((l) => c.plans.some((p) => (p.locations || []).includes(l.id))) || open[0];
+        if (loc) {
+          setLocationId(loc.id);
+          const pick = c.plans.find((p) => (p.locations || []).includes(loc.id));
+          if (pick) setSelected(pick.name);
+        } else if (c.plans[0]) setSelected(c.plans[0].name);
+      })
       .catch((e) => setLoadError(e.message));
   }, []);
 
   const types = catalog?.types?.length ? catalog.types : APP_TYPES;
   const plans = (catalog?.plans || []).filter((p) => p.type === "shared");
-  const plan = plans.find((p) => p.name === selected) || plans[0] || null;
+  const inStock = (p) => Boolean(locationId != null && (p.locations || []).includes(locationId));
+  const plan = plans.find((p) => p.name === selected && inStock(p)) || plans.find((p) => inStock(p)) || null;
+  const pickLocation = (id) => {
+    setLocationId(id);
+    const keep = plans.find((p) => p.name === selected && (p.locations || []).includes(id));
+    if (!keep) { const next = plans.find((p) => (p.locations || []).includes(id)); if (next) setSelected(next.name); }
+  };
   const host = cleanDomain(domain);
   const domainOk = DOMAIN_RE.test(host);
   const due = plan ? proRataNow(plan.monthly) : { days: 0, dim: 0, amount: 0 };
@@ -65,6 +81,7 @@ const AppConfigurator = () => {
     <div className="cx-create-body">
       <div className="cx-config">
         {loadError && <div className="cx-alert is-error">{loadError}</div>}
+        {catalog && !catalog.enabled && <div className="cx-alert is-info">Capacity is Full, New capacity is on its way.</div>}
 
         <section className="cx-card cx-step">
           <h3><span className="cx-step-num">1</span> Type</h3>
@@ -92,14 +109,15 @@ const AppConfigurator = () => {
                 // Like Virtual Machines: a location App Platform isn't offered in yet is "coming soon".
                 const soon = Boolean(l.comingSoon);
                 const on = !soon && locationId === l.id;
+                const hasStock = !soon && plans.some((p) => (p.locations || []).includes(l.id));
                 return (
-                  <label key={l.id} className={`cx-term${on ? " is-selected" : ""}${soon ? " is-muted is-soon" : ""}`}>
-                    <input type="radio" name="app-location" className="cx-visually-hidden" checked={on} disabled={soon} onChange={() => setLocationId(l.id)} />
+                  <label key={l.id} className={`cx-term${on ? " is-selected" : ""}${hasStock ? "" : " is-muted"}${soon ? " is-soon" : ""}`}>
+                    <input type="radio" name="app-location" className="cx-visually-hidden" checked={on} disabled={soon} onChange={() => pickLocation(l.id)} />
                     {!l.flagUrl && <MapPin size={18} aria-hidden="true" />}
                     <span>
                       {l.flagUrl && <img src={l.flagUrl} alt="" className="cx-flag" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
                       <strong>{l.name}</strong>
-                      <small>{l.country ? `${l.country} · ` : ""}{soon ? "Coming soon" : "Available"}</small>
+                      <small>{l.country ? `${l.country} · ` : ""}{soon ? "Coming soon" : hasStock ? "Available" : "Out of stock"}</small>
                     </span>
                   </label>
                 );
@@ -121,9 +139,9 @@ const AppConfigurator = () => {
                 <thead><tr><th /><th>Plan</th><th>vCPU</th><th>Memory</th><th>NVMe SSD</th><th>Bandwidth</th><th>IP</th><th>Price</th></tr></thead>
                 <tbody>
                   {plans.map((p) => (
-                    <tr key={p.name} className={p.name === plan.name ? "is-selected" : ""} onClick={() => setSelected(p.name)}>
-                      <td><input type="radio" name="app-plan" checked={p.name === plan.name} onChange={() => setSelected(p.name)} aria-label={p.name} /></td>
-                      <td><strong>{p.name}</strong></td>
+                    <tr key={p.name} className={`${plan && p.name === plan.name ? "is-selected" : ""}${inStock(p) ? "" : " is-off"}`} onClick={() => inStock(p) && setSelected(p.name)}>
+                      <td><input type="radio" name="app-plan" checked={Boolean(plan && p.name === plan.name)} disabled={!inStock(p)} onChange={() => setSelected(p.name)} aria-label={p.name} /></td>
+                      <td><strong>{p.name}</strong>{!inStock(p) && <span className="cx-tag is-off">Out of stock</span>}</td>
                       <td>{p.vcpu}</td>
                       <td>{formatRam(p.ram)}</td>
                       <td>{p.storage} GB</td>
@@ -137,10 +155,10 @@ const AppConfigurator = () => {
             </div>
             <div className="cx-plan-cards" role="radiogroup" aria-label="Plan">
               {plans.map((p) => (
-                <label key={p.name} className={`cx-plan-card${p.name === plan.name ? " is-selected" : ""}`}>
-                  <input type="radio" name="app-plan-card" checked={p.name === plan.name} onChange={() => setSelected(p.name)} />
+                <label key={p.name} className={`cx-plan-card${plan && p.name === plan.name ? " is-selected" : ""}${inStock(p) ? "" : " is-off"}`}>
+                  <input type="radio" name="app-plan-card" checked={Boolean(plan && p.name === plan.name)} disabled={!inStock(p)} onChange={() => setSelected(p.name)} />
                   <span className="cx-plan-card-main">
-                    <span className="cx-plan-card-name"><strong>{p.name}</strong></span>
+                    <span className="cx-plan-card-name"><strong>{p.name}</strong>{!inStock(p) && <span className="cx-tag is-off">Out of stock</span>}</span>
                     <small>{p.vcpu} vCPU · {formatRam(p.ram)} RAM · {p.storage} GB NVMe SSD · {formatBandwidth(p.bandwidth)} bandwidth · {p.dedicatedIp ? "dedicated" : "shared"} IP</small>
                   </span>
                   <span className="cx-plan-card-price"><strong>{formatINR(p.monthly)}</strong><small>/mo</small></span>
@@ -198,7 +216,7 @@ const AppConfigurator = () => {
             </p>
           )}
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={deploy} disabled={!plan || !location || !domainOk || busy}>
-            {busy ? <><Loader2 size={18} className="cx-spin" /> Deploying…</> : <><Rocket size={18} /> Pay and deploy</>}
+            {busy ? <><Loader2 size={18} className="cx-spin" /> Deploying…</> : !plan ? "Out of stock" : <><Rocket size={18} /> Pay and deploy</>}
           </button>
           <p className="cx-summary-note">
             Paid from your account balance ({formatINR(balance, 2)}): the rest of this month now, pro rata, then the full month on the 1st. Prices exclude GST.

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, X, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { adminApi } from "../adminApi";
 import { formatRam, formatBandwidth } from "../../../data/plans";
-import ProductLocations from "./ProductLocations";
 
 /*
   App Platform → Plans: Shared plans (on sale) and Dedicated plans (the type
@@ -146,7 +145,6 @@ const AppPlans = ({ can }) => {
         </div>
       </div>
       {notice && <div className={`cx-alert is-${notice.type}`} role="status">{notice.text}</div>}
-      <ProductLocations product="apps" label="App Platform" editable={editable} />
       {!data ? <div className="cx-card cx-empty"><p>Loading plans…</p></div> : groups.map((g) => (
         <section key={g.id} className="cx-section">
           <div className="cx-section-head"><h3>{g.label}{g.id === "dedicated" ? " (coming soon)" : ""}</h3><span className="cx-count">{g.plans.length}</span></div>

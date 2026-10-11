@@ -96,6 +96,7 @@ const Pricing = () => {
   // App Platform plans; null while loading. Shared is on sale, Dedicated coming soon.
   const [appPlans, setAppPlans] = useState(null);
   const [appType, setAppType] = useState("shared");
+  const [appStock, setAppStock] = useState({});
 
   useEffect(() => {
     fetch("/api/plans/vm")
@@ -115,7 +116,7 @@ const Pricing = () => {
   useEffect(() => {
     fetch("/api/settings/public")
       .then((r) => r.json())
-      .then((d) => { setComputeStock(d?.planAvailability?.compute || {}); setDbStock(d?.planAvailability?.database || {}); })
+      .then((d) => { setComputeStock(d?.planAvailability?.compute || {}); setDbStock(d?.planAvailability?.database || {}); setAppStock(d?.planAvailability?.apps || {}); })
       .catch(() => {});
   }, []);
 
@@ -389,7 +390,7 @@ const Pricing = () => {
                     <th scope="col">Bandwidth</th>
                     <th scope="col">IP</th>
                     <th scope="col">Monthly</th>
-                    <th scope="col" aria-label="Deploy" />
+                    <th scope="col">Availability</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -407,7 +408,11 @@ const Pricing = () => {
                         <td data-label="Monthly price" className="pr-price">
                           <strong>{formatMoney(plan.monthly)}</strong> <span className="pr-unit">/mo</span>
                         </td>
-                        <td data-label="Deploy"><a href="/dashboard/create?type=apps" className="pr-stock is-in">Deploy</a></td>
+                        <td data-label="Availability">
+                          {appStock[plan.name]
+                            ? <a href="/dashboard/create?type=apps" className="pr-stock is-in">Available</a>
+                            : <span className="pr-stock">Out of stock</span>}
+                        </td>
                       </tr>
                     );
                   })}

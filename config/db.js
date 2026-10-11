@@ -273,11 +273,11 @@ CREATE TABLE IF NOT EXISTS server_locations (
 
 // First locations, only while the table is empty (deleted ones stay deleted).
 const seedServerLocations = `
-INSERT INTO server_locations (name, country, note, sort_order)
+INSERT INTO server_locations (name, country, note, flag_url, sort_order)
 SELECT * FROM (VALUES
-    ('Mumbai', 'India', 'Our home region, close to customers across India.', 10),
-    ('Los Angeles', 'United States', 'Our region for customers across the Americas.', 20)
-) AS seed(name, country, note, sort_order)
+    ('Mumbai', 'India', 'Our home region, close to customers across India.', 'https://flagcdn.com/w80/in.png', 10),
+    ('Los Angeles', 'United States', 'Our region for customers across the Americas.', 'https://flagcdn.com/w80/us.png', 20)
+) AS seed(name, country, note, flag_url, sort_order)
 WHERE NOT EXISTS (SELECT 1 FROM server_locations)`;
 
 // SolusVM accounts (panels), managed in Admin → SolusVM accounts
@@ -860,6 +860,15 @@ connection.connect((err) => {
         ['Server locations seed', seedServerLocations],
         // A flag image shown with the location (Admin → Locations).
         ['server locations flag', "ALTER TABLE server_locations ADD COLUMN IF NOT EXISTS flag_url VARCHAR(500) NOT NULL DEFAULT ''"],
+        // Flags for the first two locations, once, only where none is set (changeable in Admin → Locations).
+        ['server locations flags', `WITH first AS (
+                INSERT INTO app_settings (key, value) VALUES ('seed.location_flags', '1')
+                ON CONFLICT (key) DO NOTHING RETURNING key
+            )
+            UPDATE server_locations l SET flag_url = CASE WHEN l.name ILIKE 'mumbai%' THEN 'https://flagcdn.com/w80/in.png' ELSE 'https://flagcdn.com/w80/us.png' END
+              FROM first
+             WHERE l.flag_url = '' AND (l.name ILIKE 'mumbai%' OR l.name ILIKE 'los angeles%')
+            RETURNING l.id`],
         ['SolusVM accounts', createSolusAccountsTable],
         ['SolusVM account locations', createSolusAccountLocationsTable],
         ['SolusVM account plans', createSolusAccountPlansTable],
@@ -919,6 +928,13 @@ connection.connect((err) => {
         ['App Platform apps', createAppsTable],
         ['app platform user index', 'CREATE INDEX IF NOT EXISTS app_platform_apps_user_idx ON app_platform_apps (user_id)'],
         // A domain can be on only one app at a time, across all customers.
+        // App Platform stock: how many apps of each plan may be sold per location (utils/appPlans.js).
+        ['App Platform stock', `CREATE TABLE IF NOT EXISTS app_stock (
+            plan VARCHAR(40) NOT NULL,
+            location_id INT NOT NULL,
+            quantity INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (plan, location_id))`],
         ['app platform domain unique', 'CREATE UNIQUE INDEX IF NOT EXISTS app_platform_apps_domain_key ON app_platform_apps (LOWER(domain))'],
         ['App Platform location', 'ALTER TABLE app_platform_apps ADD COLUMN IF NOT EXISTS location_id INT'],
         ['App Platform location name', 'ALTER TABLE app_platform_apps ADD COLUMN IF NOT EXISTS location VARCHAR(100)'],
