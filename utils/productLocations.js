@@ -3,6 +3,10 @@
  * ('apps') are offered in (table product_locations). They start with Mumbai
  * only (config/db.js); admins change it on each product's admin page. A
  * location must also be active (Admin → Locations) to be offered.
+ *
+ * Like Virtual Machines, customers see every active location: one the product
+ * isn't offered in yet is listed as "coming soon" and can't be ordered
+ * (catalogLocations), the way a VM location no SolusVM account serves is.
  */
 const connection = require('../config/db');
 const serverLocations = require('./serverLocations');
@@ -34,6 +38,12 @@ const getLocations = async (product) => {
 /** An offered, active location by id, or null. */
 const findLocation = async (product, id) => (await getLocations(product)).find((l) => l.id === Number(id)) || null;
 
+/** Every active location for a catalog, with comingSoon where the product isn't offered yet. */
+const catalogLocations = async (product) => {
+    const [ids, active] = await Promise.all([getLocationIds(product), serverLocations.getLocations()]);
+    return active.map((l) => ({ id: l.id, name: l.name, country: l.country, flagUrl: l.flagUrl, comingSoon: !ids.has(l.id) }));
+};
+
 /** Replaces the product's locations. */
 const setLocations = async (product, locationIds) => {
     if (!PRODUCTS.includes(product)) throw new Error('Unknown product');
@@ -44,4 +54,4 @@ const setLocations = async (product, locationIds) => {
     cache.delete(product);
 };
 
-module.exports = { PRODUCTS, getLocationIds, getLocations, findLocation, setLocations };
+module.exports = { PRODUCTS, getLocationIds, getLocations, findLocation, catalogLocations, setLocations };

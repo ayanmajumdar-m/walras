@@ -35,7 +35,7 @@ const AppConfigurator = () => {
 
   useEffect(() => {
     api("/api/apps/catalog")
-      .then((c) => { setCatalog(c); if (c.plans[0]) setSelected(c.plans[0].name); if (c.locations?.[0]) setLocationId(c.locations[0].id); })
+      .then((c) => { setCatalog(c); if (c.plans[0]) setSelected(c.plans[0].name); const loc = (c.locations || []).find((l) => !l.comingSoon); if (loc) setLocationId(loc.id); })
       .catch((e) => setLoadError(e.message));
   }, []);
 
@@ -46,7 +46,7 @@ const AppConfigurator = () => {
   const domainOk = DOMAIN_RE.test(host);
   const due = plan ? proRataNow(plan.monthly) : { days: 0, dim: 0, amount: 0 };
   const locations = catalog?.locations || [];
-  const location = locations.find((l) => l.id === locationId) || null;
+  const location = locations.find((l) => l.id === locationId && !l.comingSoon) || null;
 
   const deploy = async () => {
     setError("");
@@ -88,17 +88,22 @@ const AppConfigurator = () => {
             <div className="cx-soon-inline"><strong>No locations are open for App Platform right now.</strong></div>
           ) : (
             <div className="cx-choice-grid">
-              {locations.map((l) => (
-                <label key={l.id} className={`cx-term${locationId === l.id ? " is-selected" : ""}`}>
-                  <input type="radio" name="app-location" className="cx-visually-hidden" checked={locationId === l.id} onChange={() => setLocationId(l.id)} />
-                  {!l.flagUrl && <MapPin size={18} aria-hidden="true" />}
-                  <span>
-                    {l.flagUrl && <img src={l.flagUrl} alt="" className="cx-flag" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
-                    <strong>{l.name}</strong>
-                    <small>{l.country || "Available"}</small>
-                  </span>
-                </label>
-              ))}
+              {locations.map((l) => {
+                // Like Virtual Machines: a location App Platform isn't offered in yet is "coming soon".
+                const soon = Boolean(l.comingSoon);
+                const on = !soon && locationId === l.id;
+                return (
+                  <label key={l.id} className={`cx-term${on ? " is-selected" : ""}${soon ? " is-muted is-soon" : ""}`}>
+                    <input type="radio" name="app-location" className="cx-visually-hidden" checked={on} disabled={soon} onChange={() => setLocationId(l.id)} />
+                    {!l.flagUrl && <MapPin size={18} aria-hidden="true" />}
+                    <span>
+                      {l.flagUrl && <img src={l.flagUrl} alt="" className="cx-flag" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+                      <strong>{l.name}</strong>
+                      <small>{l.country ? `${l.country} · ` : ""}{soon ? "Coming soon" : "Available"}</small>
+                    </span>
+                  </label>
+                );
+              })}
             </div>
           )}
         </section>

@@ -40,7 +40,8 @@ const DatabaseConfigurator = () => {
       .then((c) => {
         setCatalog(c);
         // Start on a location with stock, and the first plan in stock there.
-        const loc = c.locations.find((l) => c.plans.some((p) => p.locations.includes(l.id))) || c.locations[0];
+        // Prefer a location with stock; never one that's coming soon.
+        const loc = c.locations.find((l) => !l.comingSoon && c.plans.some((p) => p.locations.includes(l.id))) || c.locations.find((l) => !l.comingSoon);
         if (loc) {
           setLocationId(loc.id);
           const pick = c.plans.find((p) => p.locations.includes(loc.id));
@@ -104,16 +105,18 @@ const DatabaseConfigurator = () => {
             <h3>{step(2)} Location</h3>
             <div className="cx-choice-grid">
               {catalog.locations.map((l) => {
-                const hasStock = plans.some((p) => p.locations.includes(l.id));
-                const on = locationId === l.id;
+                // Like Virtual Machines: a location Managed Database isn't offered in yet is "coming soon".
+                const soon = Boolean(l.comingSoon);
+                const hasStock = !soon && plans.some((p) => p.locations.includes(l.id));
+                const on = !soon && locationId === l.id;
                 return (
-                  <label key={l.id} className={`cx-term${on ? " is-selected" : ""}${hasStock ? "" : " is-muted"}`}>
-                    <input type="radio" name="db-location" className="cx-visually-hidden" checked={on} onChange={() => pickLocation(l.id)} />
+                  <label key={l.id} className={`cx-term${on ? " is-selected" : ""}${hasStock ? "" : " is-muted"}${soon ? " is-soon" : ""}`}>
+                    <input type="radio" name="db-location" className="cx-visually-hidden" checked={on} disabled={soon} onChange={() => pickLocation(l.id)} />
                     {!l.flagUrl && <MapPin size={18} aria-hidden="true" />}
                     <span>
                       {l.flagUrl && <img src={l.flagUrl} alt="" className="cx-flag" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
                       <strong>{l.name}</strong>
-                      <small>{l.country ? `${l.country} · ` : ""}{hasStock ? "Available" : "Out of stock"}</small>
+                      <small>{l.country ? `${l.country} · ` : ""}{soon ? "Coming soon" : hasStock ? "Available" : "Out of stock"}</small>
                     </span>
                   </label>
                 );

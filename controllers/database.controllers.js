@@ -69,13 +69,14 @@ const ownDatabase = async (userId, id) => {
 
 // GET /api/databases/catalog — plans, engines, locations and where each plan is in stock
 exports.getCatalog = handle('Database catalogue', async (req, res) => {
-    const [availability, plans, places] = await Promise.all([dbStock.getAvailability(), dbStock.getPlans(), productLocations.getLocations('database')]);
+    const [availability, plans, places] = await Promise.all([dbStock.getAvailability(), dbStock.getPlans(), productLocations.catalogLocations('database')]);
     const list = plans.map(({ id, active, sortOrder, ...p }) => ({ ...p, locations: Object.keys(availability[p.name] || {}).map(Number) }));
     res.json({
         enabled: list.some((p) => p.locations.length > 0),
         engines: Object.entries(dbStock.ENGINES).map(([id, label]) => ({ id, label })),
         plans: list,
-        locations: places.map((l) => ({ id: l.id, name: l.name, country: l.country, flagUrl: l.flagUrl })),
+        // Every active location, like Virtual Machines; comingSoon = not offered yet.
+        locations: places,
     });
 });
 

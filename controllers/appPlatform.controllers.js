@@ -62,13 +62,14 @@ const ownApp = async (userId, id) => {
 
 // GET /api/apps/catalog — types and plans
 exports.getCatalog = handle('App Platform catalogue', async (req, res) => {
-    const [all, places] = await Promise.all([appPlans.getPlans(), productLocations.getLocations('apps')]);
+    const [all, places] = await Promise.all([appPlans.getPlans(), productLocations.catalogLocations('apps')]);
     const plans = all.map(({ id, active, sortOrder, ...p }) => p);
     res.json({
-        locations: places.map((l) => ({ id: l.id, name: l.name, country: l.country, flagUrl: l.flagUrl })),
+        // Every active location, like Virtual Machines; comingSoon = not offered yet.
+        locations: places,
         types: Object.entries(appPlans.TYPES).map(([id, t]) => ({ id, label: t.label, available: t.available })),
         plans,
-        enabled: plans.length > 0 && places.length > 0,
+        enabled: plans.length > 0 && places.some((l) => !l.comingSoon),
     });
 });
 
