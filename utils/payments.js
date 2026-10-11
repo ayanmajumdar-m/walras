@@ -19,7 +19,7 @@ const connection = require('../config/db');
 const razorpay = require('../services/razorpay');
 const { creditPendingTopup, creditExpiredTopup, failPendingTopup } = require('./walletCredit');
 
-// An unpaid checkout's pending transaction is removed this long after it started.
+// An unpaid checkout's pending transaction is marked failed this long after it started.
 const PENDING_TTL_HOURS = 3;
 const { ensureWallet } = require('./wallets');
 
@@ -158,7 +158,7 @@ const handleWebhook = async (event) => {
  * Safety net for missed webhooks (every 15 minutes, services/billingServices
  * cron): orders still open after 10 minutes are checked with Razorpay. A
  * checkout nobody paid within 3 hours is expired and its pending transaction
- * removed; it's still checked for a day after that (and the webhook still
+ * marked failed; it's still checked for a day after that (and the webhook still
  * works), so a UPI or bank payment that completes late is still credited.
  */
 const reconcile = async () => {
@@ -180,15 +180,16 @@ const reconcile = async () => {
             console.error(`[Razorpay] Checking order ${orderId} failed:`, err.message);
         }
     }
-    // Abandoned checkouts: nobody paid within 3 hours. The order is kept (a late
-    // payment is matched to it); its pending (or older cancelled) transaction goes.
-    // Auto top-up charges are excluded: Razorpay debits those about 36 hours later.
+    // Abandoned checkouts: nobody paid within 3 hours. The order is expired and
+    // its pending (or older cancelled) transaction kept as failed; a late payment
+    // is still matched to it and credited. Auto top-up charges are excluded:
+    // Razorpay debits those about 36 hours later.
     await q(
         `UPDATE payment_orders SET status = 'expired', updated_at = NOW()
           WHERE status = 'created' AND purpose <> 'autotopup_charge' AND created_at <= NOW() - INTERVAL '${PENDING_TTL_HOURS} hours'`,
     );
     await q(
-        `DELETE FROM wallet_transactions
+        `UPDATE wallet_transactions SET status = 'failed', description = LEFT(CONCAT('Not completed: ', description), 255)
           WHERE type = 'credit' AND status IN ('pending', 'cancelled')
             AND reference_id IN (SELECT order_id FROM payment_orders WHERE status = 'expired')`,
     );

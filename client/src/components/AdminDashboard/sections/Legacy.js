@@ -64,12 +64,26 @@ export const DashboardSection = () => {
   );
 };
 
+// Older abandoned checkouts were saved as cancelled; they count as failed.
+const TX_FILTERS = [["all", "All"], ["completed", "Completed"], ["pending", "Pending"], ["failed", "Failed"]];
+const txGroup = (s) => (s === "cancelled" ? "failed" : s);
+
 export const TransactionsSection = () => {
   const { data, error } = useLoad(() => adminApi("/getAllTransactions"));
+  const [filter, setFilter] = useState("all");
+  const all = Array.isArray(data) ? data : [];
+  const count = (id) => all.filter((t) => id === "all" || txGroup(t.status) === id).length;
+  const shown = all.filter((t) => filter === "all" || txGroup(t.status) === filter);
   return (
-    <Page title="Transactions" subtitle="Every account balance credit and debit.">
+    <Page title="Transactions" subtitle="Every account balance credit and debit. A payment not completed within 3 hours is marked failed.">
       <ErrorNote error={error} />
-      <Transactions transactions={data || []} formatCurrency={formatCurrency} formatDate={formatDate} />
+      <div className="ap-subtabs" role="tablist" aria-label="Filter by status">
+        {TX_FILTERS.map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={filter === id} className={`ap-subtab${filter === id ? " is-active" : ""}`}
+            onClick={() => setFilter(id)}>{label} ({count(id)})</button>
+        ))}
+      </div>
+      <Transactions transactions={shown} formatCurrency={formatCurrency} formatDate={formatDate} />
     </Page>
   );
 };

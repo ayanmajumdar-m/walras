@@ -1683,3 +1683,15 @@
 .cx-splus-mini-text p { margin: 0; font-size: 13.5px; color: var(--text-muted); }
 .cx-splus-mini-more { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-divider); }
 .cx-splus-mini-more p { margin: 0; font-size: 14px; }
+
+/* Billing → Usage & activity: transaction status filter */
+.lg-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.lg-filter {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1px solid var(--color-divider); border-radius: 999px;
+  background: #ffffff; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer;
+}
+.lg-filter span { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+.lg-filter:hover { border-color: var(--color-accent); color: var(--color-accent-700); }
+.lg-filter.is-active { background: var(--color-accent-100); border-color: transparent; color: var(--color-accent-700); }
+.lg-filter.is-active span { color: var(--color-accent-700); }

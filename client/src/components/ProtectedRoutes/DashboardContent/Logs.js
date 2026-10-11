@@ -17,10 +17,20 @@ const STATUS = {
   completed: { label: "Completed", cls: "is-active" },
   pending: { label: "Pending", cls: "is-pending" },
   failed: { label: "Failed", cls: "is-failed" },
-  cancelled: { label: "Cancelled", cls: "is-stopped" },
+  cancelled: { label: "Failed", cls: "is-failed" },
 };
 
+const FILTERS = [
+  { id: "all", label: "All" },
+  { id: "completed", label: "Completed" },
+  { id: "pending", label: "Pending" },
+  { id: "failed", label: "Failed" },
+];
+// Older abandoned checkouts were saved as cancelled; they count as failed.
+const statusGroup = (s) => (s === "cancelled" ? "failed" : s);
+
 const Logs = () => {
+  const [filter, setFilter] = useState("all");
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState(null);
   const [usage, setUsage] = useState([]);
@@ -50,6 +60,8 @@ const Logs = () => {
     return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
   }, [load]);
 
+  const count = (id) => (transactions || []).filter((t) => id === "all" || statusGroup(t.status) === id).length;
+  const shown = (transactions || []).filter((t) => filter === "all" || statusGroup(t.status) === filter);
   const credits = (transactions || []).filter((t) => t.type === "credit" && t.status === "completed").reduce((n, t) => n + parseFloat(t.amount), 0);
   const debits = (transactions || []).filter((t) => t.type === "debit" && t.status === "completed").reduce((n, t) => n + parseFloat(t.amount), 0);
 
@@ -84,18 +96,30 @@ const Logs = () => {
       <section className="cx-card lg-section">
         <div className="lg-section-head">
           <h3>Wallet transactions</h3>
-          <small>Money added to and spent from your account balance.</small>
+          <small>Money added to and spent from your account balance. A payment not completed within 3 hours is marked failed.</small>
         </div>
+        {transactions?.length > 0 && (
+          <div className="lg-filters" role="tablist" aria-label="Filter by status">
+            {FILTERS.map((f) => (
+              <button key={f.id} type="button" role="tab" aria-selected={filter === f.id}
+                className={`lg-filter${filter === f.id ? " is-active" : ""}`} onClick={() => setFilter(f.id)}>
+                {f.label} <span>{count(f.id)}</span>
+              </button>
+            ))}
+          </div>
+        )}
         {transactions === null ? (
           <p className="lg-empty">Loading…</p>
         ) : transactions.length === 0 ? (
           <p className="lg-empty">No wallet transactions yet. Top-ups, purchases and invoice payments appear here.</p>
+        ) : shown.length === 0 ? (
+          <p className="lg-empty">No {filter} transactions.</p>
         ) : (
           <div className="cx-table-wrap">
             <table className="cx-table">
               <thead><tr><th>Date</th><th>Description</th><th>Status</th><th className="lg-num">Amount</th></tr></thead>
               <tbody>
-                {transactions.map((t, i) => {
+                {shown.map((t, i) => {
                   const st = STATUS[t.status] || STATUS.completed;
                   const credit = t.type === "credit";
                   return (

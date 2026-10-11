@@ -15,9 +15,10 @@ const q = (sql, params = []) => new Promise((resolve, reject) => {
 /**
  * Credits the pending top-up with reference_id = orderId.
  * Resolves { credited: true, amount, walletId, userId, balance } or
- * { credited: false } when it was already completed, failed or unknown.
- * 'cancelled' is an abandoned checkout we expired (utils/payments.js): a
- * payment Razorpay captures for it after all is still credited.
+ * { credited: false } when it was already completed or is unknown.
+ * 'failed' (and the older 'cancelled') can be an abandoned checkout we
+ * expired (utils/payments.js): a payment Razorpay captures for it after all
+ * is still credited, once.
  */
 // paymentRef goes in razorpay_payment_id: the Razorpay payment id.
 const creditPendingTopup = async (orderId, { description, paymentRef } = {}) => {
@@ -27,7 +28,7 @@ const creditPendingTopup = async (orderId, { description, paymentRef } = {}) => 
                SET status = 'completed',
                    description = COALESCE(?, description),
                    razorpay_payment_id = COALESCE(?, razorpay_payment_id)
-             WHERE reference_id = ? AND status IN ('pending', 'cancelled') AND type = 'credit'
+             WHERE reference_id = ? AND status IN ('pending', 'cancelled', 'failed') AND type = 'credit'
          RETURNING wallet_id, amount
         )
         UPDATE wallets w SET balance = w.balance + tx.amount
