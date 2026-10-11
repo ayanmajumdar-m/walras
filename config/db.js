@@ -535,6 +535,74 @@ CREATE TABLE IF NOT EXISTS bulk_emails (
 
 // Quantity of each Cloud Compute plan an admin allows to be sold, per SolusVM
 // location. Deploying takes one; deleting a server gives it back.
+// Managed Database (utils/databaseStock.js): plans, stock per plan per
+// location, and the customers' databases. General Purpose plans; the engine
+// (MySQL or PostgreSQL) is chosen per database. No automatic provisioning
+// yet: an order is charged and waits as 'provisioning' until an admin sets it
+// up and enters the connection details (Admin → Products → Managed Database).
+const createDbPlansTable = `
+CREATE TABLE IF NOT EXISTS db_plans (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(40) NOT NULL UNIQUE,
+    vcpu NUMERIC(6,2) NOT NULL CHECK (vcpu > 0),
+    ram_gb NUMERIC(8,2) NOT NULL CHECK (ram_gb > 0),
+    storage_gb NUMERIC(10,2) NOT NULL CHECK (storage_gb > 0),
+    backup_days INT NOT NULL DEFAULT 0 CHECK (backup_days >= 0),
+    price_inr NUMERIC(12,2) NOT NULL CHECK (price_inr > 0),
+    price_usd NUMERIC(12,2),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// The first plans. Only when the table is empty, so deleted plans stay deleted.
+const seedDbPlans = `
+INSERT INTO db_plans (name, vcpu, ram_gb, storage_gb, backup_days, price_inr, sort_order)
+SELECT * FROM (VALUES
+    ('MDsIN_micro', 0.5, 0.5, 0.5, 3, 199, 10),
+    ('MDsIN_medium', 1, 1, 5, 7, 499, 20),
+    ('MDsIN_large', 2, 4, 25, 14, 1499, 30)
+) AS v(name, vcpu, ram_gb, storage_gb, backup_days, price_inr, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM db_plans)`;
+
+const createDbStockTable = `
+CREATE TABLE IF NOT EXISTS db_stock (
+    plan VARCHAR(40) NOT NULL,
+    location_id INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (plan, location_id)
+)`;
+
+// A customer's database. Billed like a monthly server (utils/monthlyBilling.js):
+// paid_until = the start of the first month not paid for. The password an
+// admin enters is stored encrypted (utils/secrets.js).
+const createManagedDatabasesTable = `
+CREATE TABLE IF NOT EXISTS managed_databases (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(40) NOT NULL,
+    engine VARCHAR(12) NOT NULL CHECK (engine IN ('mysql', 'postgresql')),
+    plan_name VARCHAR(40) NOT NULL,
+    location_id INT,
+    location VARCHAR(100),
+    monthly_cost NUMERIC(12,2) NOT NULL,
+    status VARCHAR(12) NOT NULL DEFAULT 'provisioning' CHECK (status IN ('provisioning', 'active', 'failed')),
+    paid_until TIMESTAMPTZ,
+    cancel_at TIMESTAMPTZ,
+    suspended_at TIMESTAMPTZ,
+    host VARCHAR(255),
+    port INT,
+    db_name VARCHAR(64),
+    db_user VARCHAR(64),
+    password_encrypted TEXT,
+    admin_note VARCHAR(500),
+    ready_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
 const createComputeStockTable = `
 CREATE TABLE IF NOT EXISTS compute_stock (
     plan VARCHAR(40) NOT NULL,
@@ -659,7 +727,7 @@ END;
 $$ LANGUAGE plpgsql
 `;
 
-const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'support_plus', 'support_callbacks'].map(
+const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'support_plus', 'support_callbacks', 'managed_databases', 'db_plans'].map(
     (table) => `
 CREATE OR REPLACE TRIGGER ${table}_touch_updated_at
 BEFORE UPDATE ON ${table}
@@ -782,6 +850,11 @@ connection.connect((err) => {
         // Reservations: 1 = monthly; 3–36 = reserved for that many months (paid up front).
         ['servers term_months', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS term_months INT NOT NULL DEFAULT 1'],
         ['invoice items months', 'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS months INT'],
+        ['Database plans', createDbPlansTable],
+        ['Database plans seed', seedDbPlans],
+        ['Database stock', createDbStockTable],
+        ['Managed databases', createManagedDatabasesTable],
+        ['managed databases user index', 'CREATE INDEX IF NOT EXISTS managed_databases_user_idx ON managed_databases (user_id)'],
         ['Support +', createSupportPlusTable],
         ['Support + call-backs', createSupportCallbacksTable],
         // One open (pending or accepted) call-back per account at a time.

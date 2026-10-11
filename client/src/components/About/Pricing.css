@@ -1557,3 +1557,6 @@
   .pr-table th:last-child, .pr-table td:last-child { padding-right: 16px; }
   .pr-table th { font-size: 13px; }
 }
+
+/* Managed Database: engine names in the family head */
+.pr-engine { padding: 6px 12px; font-size: 13px; font-weight: 600; }

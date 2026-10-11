@@ -1,5 +1,6 @@
 const appSettings = require('./appSettings');
 const computeStock = require('./computeStock');
+const databaseStock = require('./databaseStock');
 const razorpay = require('../services/razorpay');
 const taxService = require('../services/taxServices');
 
@@ -57,6 +58,9 @@ const getPlatform = async () => {
         planAvailability: {
             // In stock in at least one location (stock and SolusVM in Admin → Virtual Machine stock).
             compute: Object.fromEntries(Object.entries(await computeStock.getAvailability())
+                .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
+            // Managed Database plans in stock in at least one location (Admin → Managed Database → Stock).
+            database: Object.fromEntries(Object.entries(await databaseStock.getAvailability())
                 .map(([name, locations]) => [name, Object.keys(locations).length > 0])),
         },
         invoice: invoiceDetailsFrom(s),

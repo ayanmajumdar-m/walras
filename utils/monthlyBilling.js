@@ -31,6 +31,11 @@
  * reservation): the server keeps running until then, isn't renewed, and is
  * deleted. No refunds for an unused part.
  *
+ * Managed Databases (table managed_databases, utils/databaseStock.js) are
+ * billed exactly like monthly servers: pro rata when ordered, renewed on the
+ * 1st on the same invoice, suspended and deleted with the servers if it goes
+ * unpaid, and ended at cancel_at when cancelled.
+ *
  * Support + (utils/supportPlus.js, table support_plus) is billed the same way
  * as a monthly server, except that enabling it charges the full monthly price
  * (no pro rata); then it's a line on the 1st's
@@ -46,6 +51,7 @@ const stock = require('./computeStock');
 const { sendRawEmail, escapeHtml } = require('./sendEmail');
 const integrations = require('./integrations');
 const platformSettings = require('./platformSettings');
+const databaseStock = require('./databaseStock');
 
 // The overdue timeline (Terms of Service §5, Refund and Billing Policy §3),
 // measured from the moment an invoice is issued. See deadlines().
@@ -213,6 +219,21 @@ const destroyServer = async (server) => {
     return true;
 };
 
+/** Deletes a managed database for good: our record and its unit of stock. */
+const destroyDatabase = async (db) => {
+    await q('DELETE FROM managed_databases WHERE id = ?', [db.id]);
+    if (db.location_id && (await databaseStock.findPlan(db.plan_name, { all: true }))) {
+        await databaseStock.release(db.plan_name, db.location_id).catch((e) => console.error('[Billing] Database stock return failed:', e.message));
+    }
+    return true;
+};
+
+/** Marks the account's databases suspended (unpaid invoice). Returns how many. */
+const suspendDatabases = async (userId) => rowsOf(await q(
+    "UPDATE managed_databases SET suspended_at = NOW() WHERE user_id = ? AND suspended_at IS NULL AND status <> 'failed' RETURNING id",
+    [userId],
+)).length;
+
 /**
  * Stops the account's running servers; they're marked so paying restarts
  * them. A server is only marked once SolusVM accepted the stop (or says it's
@@ -289,6 +310,7 @@ const hasOverdue = async (userId) => {
  */
 const resumeIfClear = async (userId) => {
     if (await isSuspended(userId)) return 0;
+    await q('UPDATE managed_databases SET suspended_at = NULL WHERE user_id = ? AND suspended_at IS NOT NULL', [userId]);
     const servers = await q('SELECT * FROM servers WHERE user_id = ? AND suspended_at IS NOT NULL', [userId]);
     let started = 0;
     for (const s of servers) {
@@ -376,6 +398,7 @@ const applyBalance = (userId, { first = null } = {}) => withUserLock(userId, asy
 
 const mm = (y, m) => `${y}${String(m + 1).padStart(2, '0')}`;
 const billingMonthOf = (y, m) => `${y}-${String(m + 1).padStart(2, '0')}-01`;
+const databaseLabel = (d) => `Managed Database ${d.name} (${d.plan_name}, ${databaseStock.ENGINES[d.engine] || d.engine})`.slice(0, 255);
 const serverLabel = (s) => `Virtual Machine ${s.hostname || s.name} (${s.plan_name || s.planName})`.slice(0, 255);
 
 /** An invoice number not used yet: base, or base-2, base-3… */
@@ -499,8 +522,11 @@ const renewMonth = async (now = new Date()) => {
         `SELECT user_id FROM servers
           WHERE status <> 'failed' AND COALESCE(term_months, 1) = 1 AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)
          UNION
+         SELECT user_id FROM managed_databases
+          WHERE status <> 'failed' AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)
+         UNION
          SELECT user_id FROM support_plus WHERE status = 'active' AND paid_until <= ? AND (cancel_at IS NULL OR cancel_at > ?)`,
-        [start, start, start, start, start],
+        [start, start, start, start, start, start, start, start],
     );
     let created = 0;
     for (const { user_id: userId } of due) {
@@ -518,10 +544,17 @@ const renewMonth = async (now = new Date()) => {
                      RETURNING monthly_price`,
                     [next, userId, start, start],
                 ));
-                if (!claimed.length && !plus.length) return null;
+                const dbs = rowsOf(await q(
+                    `UPDATE managed_databases SET paid_until = ?
+                      WHERE user_id = ? AND status <> 'failed' AND created_at < ? AND (paid_until IS NULL OR paid_until <= ?) AND (cancel_at IS NULL OR cancel_at > ?)
+                     RETURNING id, name, engine, plan_name, monthly_cost`,
+                    [next, userId, start, start, start],
+                ));
+                if (!claimed.length && !plus.length && !dbs.length) return null;
                 const [user] = await q('SELECT id, name, email, address, gstin FROM users WHERE id = ?', [userId]);
                 const lines = [
                     ...claimed.map((s) => ({ ...proRata(Math.round(Number(s.monthly_cost || 0) * 100), start), description: serverLabel(s) })),
+                    ...dbs.map((d) => ({ ...proRata(Math.round(Number(d.monthly_cost || 0) * 100), start), description: databaseLabel(d) })),
                     ...plus.map((p) => ({ ...proRata(Number(p.monthly_price), start), description: SUPPORT_PLUS_LABEL })),
                 ];
                 const subtotal = lines.reduce((n, l) => n + l.amount, 0);
@@ -631,6 +664,14 @@ const processCancellations = async (now = new Date()) => {
         [now],
     ));
     if (ended.length) console.log(`[Billing] Cancelled Support + ended for ${ended.length} account(s)`);
+    for (const db of await q('SELECT * FROM managed_databases WHERE cancel_at IS NOT NULL AND cancel_at <= ?', [now])) {
+        try {
+            await destroyDatabase(db);
+            console.log(`[Billing] Cancelled plan ended: database ${db.id} deleted`);
+        } catch (err) {
+            console.error(`[Billing] Cancelling database ${db.id} failed:`, err.message);
+        }
+    }
     const due = await q('SELECT * FROM servers WHERE cancel_at IS NOT NULL AND cancel_at <= ?', [now]);
     for (const s of due) {
         try {
@@ -676,17 +717,19 @@ const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
     if (now >= suspendAt && !cur.suspended_at) {
         await q('UPDATE monthly_invoices SET suspended_at = ? WHERE id = ? AND suspended_at IS NULL', [now, cur.id]);
         const n = await suspendServers(cur.user_id);
+        const dbCount = await suspendDatabases(cur.user_id);
         const plus = await hasSupportPlus(cur.user_id);
-        if (n || plus) {
+        if (n || dbCount || plus) {
             const fee = Number(cur.penalty_amount);
             const what = [
                 n ? `your ${n === 1 ? 'server has' : `${n} servers have`} been stopped` : null,
+                dbCount ? `your ${dbCount === 1 ? 'database is' : `${dbCount} databases are`} suspended` : null,
                 plus ? 'Support + call-backs are paused' : null,
             ].filter(Boolean).join(', and ');
             await email(cur.user_id, `Invoice ${label} is overdue: services suspended`, [
                 `Invoice ${label} is still unpaid${fee ? `, including a ${pct}% late fee of ${rupees(fee)}` : ''}.`,
                 `Your services have been suspended: ${what}. ${rupees(Number(cur.total_amount) - Number(cur.amount_paid))} is now due; paying it restores them.`,
-                n ? `If it's still unpaid on ${fmtWhen(deleteAt)}, your servers and their data will be deleted permanently.`
+                n || dbCount ? `If it's still unpaid on ${fmtWhen(deleteAt)}, your ${n && dbCount ? 'servers and databases' : n ? 'servers' : 'databases'} and their data will be deleted permanently.`
                     : `If it's still unpaid on ${fmtWhen(deleteAt)}, Support + is cancelled.`,
             ], 'Pay your invoice');
         }
@@ -695,10 +738,10 @@ const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
     // The day before deletion: final notice.
     if (now >= warnAt && now < deleteAt && !cur.delete_warned_at) {
         await q('UPDATE monthly_invoices SET delete_warned_at = ? WHERE id = ?', [now, cur.id]);
-        const [{ n }] = await q('SELECT COUNT(*)::int AS n FROM servers WHERE user_id = ?', [cur.user_id]);
-        if (n) {
-            await email(cur.user_id, 'Final notice: your servers will be deleted tomorrow', [
-                `Invoice ${label} is still unpaid. Your servers and all their data will be deleted permanently on ${fmtWhen(deleteAt)}.`,
+        const [{ n }] = await q('SELECT (SELECT COUNT(*) FROM servers WHERE user_id = ?) + (SELECT COUNT(*) FROM managed_databases WHERE user_id = ?) AS n', [cur.user_id, cur.user_id]);
+        if (Number(n)) {
+            await email(cur.user_id, 'Final notice: your services will be deleted tomorrow', [
+                `Invoice ${label} is still unpaid. Your servers and databases and all their data will be deleted permanently on ${fmtWhen(deleteAt)}.`,
                 'Pay the invoice before then to keep them; they start again as soon as it is paid.',
             ], 'Pay your invoice');
         } else if (await hasSupportPlus(cur.user_id)) {
@@ -714,6 +757,14 @@ const enforceInvoice = (inv, now) => withUserLock(inv.user_id, async () => {
         const servers = await q('SELECT * FROM servers WHERE user_id = ?', [cur.user_id]);
         let deleted = 0;
         for (const s of servers) if (await destroyServer(s)) deleted += 1;
+        const dbs = await q('SELECT * FROM managed_databases WHERE user_id = ?', [cur.user_id]);
+        for (const d of dbs) await destroyDatabase(d);
+        if (dbs.length) {
+            await email(cur.user_id, 'Your databases have been deleted', [
+                `Invoice ${label} was still unpaid, so your ${dbs.length === 1 ? 'database and its data have' : `${dbs.length} databases and their data have`} been deleted.`,
+                'The invoice is still due. Please pay it to keep using Walras Cloud.',
+            ], 'Pay your invoice');
+        }
         const plusEnded = rowsOf(await q(
             "UPDATE support_plus SET status = 'ended', ended_at = ? WHERE user_id = ? AND status = 'active' RETURNING user_id",
             [now, cur.user_id],
@@ -772,7 +823,7 @@ const run = async (now = new Date()) => {
             await withUserLock(userId, () => enforceSuspension(userId, now)).catch((e) => console.error(`[Billing] Suspension check for user ${userId} failed:`, e.message));
         }
         // Paid up since: restart anything still stopped (a start that failed before).
-        const toResume = await q('SELECT DISTINCT user_id FROM servers WHERE suspended_at IS NOT NULL');
+        const toResume = await q('SELECT user_id FROM servers WHERE suspended_at IS NOT NULL UNION SELECT user_id FROM managed_databases WHERE suspended_at IS NOT NULL');
         for (const { user_id: userId } of toResume) {
             await withUserLock(userId, () => resumeIfClear(userId)).catch((e) => console.error(`[Billing] Restart for user ${userId} failed:`, e.message));
         }
@@ -832,9 +883,11 @@ const nextRenewal = async (userId, now = new Date()) => {
     const [r] = await q(
         `SELECT (SELECT COALESCE(SUM(ROUND(COALESCE(monthly_cost, 0) * 100)), 0) FROM servers
                   WHERE user_id = ? AND status <> 'failed' AND COALESCE(term_months, 1) = 1 AND (cancel_at IS NULL OR cancel_at > ?))
+               + (SELECT COALESCE(SUM(ROUND(monthly_cost * 100)), 0) FROM managed_databases
+                  WHERE user_id = ? AND status <> 'failed' AND (cancel_at IS NULL OR cancel_at > ?))
                + (SELECT COALESCE(SUM(monthly_price), 0) FROM support_plus
                   WHERE user_id = ? AND status = 'active' AND (cancel_at IS NULL OR cancel_at > ?)) AS total`,
-        [userId, next, userId, next],
+        [userId, next, userId, next, userId, next],
     );
     return Number(r?.total || 0);
 };
@@ -876,7 +929,7 @@ module.exports = {
     // dates
     istParts, monthStart, monthLabel, daysInMonth, nextMonthStart, proRata, addMonths, TERMS, termFor,
     // servers
-    destroyServer, isSuspended, hasOverdue, hasSupportPlus, SUPPORT_PLUS_LABEL, resumeIfClear, suspendServers, enforceSuspension,
+    destroyServer, destroyDatabase, databaseLabel, isSuspended, hasOverdue, hasSupportPlus, SUPPORT_PLUS_LABEL, resumeIfClear, suspendServers, enforceSuspension,
     // purchase
     quotePurchase, chargeBalance, refundBalance, recordPurchase,
     // invoices

@@ -5,6 +5,7 @@ import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
 import { CPU_TYPES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
+import DatabaseConfigurator from "./DatabaseCreate";
 
 /*
   One page to create anything, CloudPe style: pick the product at the top,
@@ -452,6 +453,7 @@ const Create = () => {
       </div>
 
       {type === "compute" && <ComputeConfigurator key="monthly" mode="monthly" />}
+      {type === "database" && <DatabaseConfigurator />}
       {(type === "domains" || type === "baremetal") && <ComingSoon type={type} />}
     </div>
   );

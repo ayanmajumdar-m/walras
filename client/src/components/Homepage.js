@@ -1,7 +1,7 @@
 import React from "react";
 import "./Homepage.css";
 import { useLocations } from "../data/locations";
-import { Zap, Clock, Gauge, Globe, Cpu, Check } from "lucide-react";
+import { Zap, Clock, Gauge, Globe, Cpu, Check, Database } from "lucide-react";
 
 /*
   The homepage as a specification sheet.
@@ -57,6 +57,14 @@ const SERVICES = [
     description: "General purpose virtual machines on Intel or AMD, with NVMe SSD storage, prepaid monthly with the first month pro rata.",
     features: ["Intel or AMD CPUs", "NVMe SSD Storage", "Instant Deployment", "99.9% Uptime"],
     action: { label: "View plans", href: "/pricing#virtual-machine" }
+  },
+  {
+    ref: "S-03",
+    Icon: Database,
+    title: "Managed Database",
+    description: "MySQL or PostgreSQL, set up and looked after for you, with daily backups and monthly billing.",
+    features: ["MySQL or PostgreSQL", "Daily Backups", "Same Locations as VMs", "From ₹199/month"],
+    action: { label: "View plans", href: "/pricing#managed-database" }
   }
 ];
 

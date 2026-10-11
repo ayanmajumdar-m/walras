@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Layers, Globe, Play, Square, RotateCcw, Trash2, RefreshCw, X, Undo2 } from "lucide-react";
+import { Layers, Globe, Play, Square, RotateCcw, Trash2, RefreshCw, X, Undo2, Database } from "lucide-react";
+import DatabasesTab from "./DatabasesTab";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import EditNSModal from "./EditNSModal";
@@ -8,6 +9,7 @@ import TransferDomainModal from "./TransferDomainModal";
 
 const TABS = [
   { id: "servers", label: "Virtual Machines", Icon: Layers },
+  { id: "databases", label: "Databases", Icon: Database },
   { id: "domains", label: "Domains", Icon: Globe },
 ];
 
@@ -188,10 +190,13 @@ const Resources = () => {
   const tab = TABS.some((t) => t.id === params.get("tab")) ? params.get("tab") : TABS[0].id;
   const [servers, setServers] = useState([]);
   const [domains, setDomains] = useState([]);
+  const [databases, setDatabases] = useState([]);
   const [loading, setLoading] = useState(true);
   // Arriving from Create after ordering a server.
   const [message, setMessage] = useState(() => params.get("created")
-    ? { text: "Your server is being created. It shows as Deploying here and is usually ready in a few minutes.", type: "success" }
+    ? { text: params.get("tab") === "databases"
+        ? "Database ordered. We're setting it up: it shows as Provisioning here, and we'll email you when it's ready."
+        : "Your server is being created. It shows as Deploying here and is usually ready in a few minutes.", type: "success" }
     : null);
 
   const notify = (text, type) => setMessage({ text, type });
@@ -201,6 +206,7 @@ const Resources = () => {
     Promise.allSettled([
       api("/api/servers").then((d) => setServers(d.servers || [])),
       api("/api/users/domains/purchased").then((d) => setDomains(d.domains || [])),
+      api("/api/databases").then((d) => setDatabases(d.databases || [])),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -216,7 +222,7 @@ const Resources = () => {
     return () => clearInterval(timer);
   }, [building]);
 
-  const counts = { servers: servers.length, domains: domains.length };
+  const counts = { servers: servers.length, databases: databases.length, domains: domains.length };
 
   return (
     <div className="cx-page">
@@ -251,6 +257,7 @@ const Resources = () => {
       ) : (
         <>
           {tab === "servers" && <ServersTab servers={servers} reload={load} notify={notify} />}
+          {tab === "databases" && <DatabasesTab databases={databases} reload={load} notify={notify} />}
           {tab === "domains" && <DomainsTab domains={domains} reload={load} notify={notify} />}
         </>
       )}

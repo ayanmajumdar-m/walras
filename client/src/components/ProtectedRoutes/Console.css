@@ -1695,3 +1695,20 @@
 .lg-filter:hover { border-color: var(--color-accent); color: var(--color-accent-700); }
 .lg-filter.is-active { background: var(--color-accent-100); border-color: transparent; color: var(--color-accent-700); }
 .lg-filter.is-active span { color: var(--color-accent-700); }
+
+/* ── Resources → Databases (DashboardContent/DatabasesTab.js) ── */
+.cx-db-list { display: flex; flex-direction: column; gap: 12px; }
+.cx-db-card { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; }
+.cx-db-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cx-db-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--color-accent-100); color: var(--color-accent-700); flex-shrink: 0; }
+.cx-db-title { flex: 1; min-width: 180px; display: flex; flex-direction: column; }
+.cx-db-title strong { font-size: 15.5px; overflow-wrap: anywhere; }
+.cx-db-title small { font-size: 13px; color: var(--text-muted); }
+.cx-db-line { margin: 0; font-size: 13.5px; color: var(--text-secondary); }
+.cx-db-line.is-warn { color: #b45309; }
+.cx-db-line.is-danger { color: #b91c1c; }
+.cx-db-conn { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 16px; margin: 0; padding: 12px 14px; border-radius: 10px; background: #f7f9f8; }
+.cx-db-conn dt { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.cx-db-conn dd { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; min-width: 0; }
+.cx-db-conn code { overflow-wrap: anywhere; font-size: 13.5px; }
+.cx-db-copy { width: 26px; height: 26px; flex-shrink: 0; }

@@ -74,6 +74,18 @@ router.put('/solus-accounts/:id', can('manage_integrations'), SolusAccounts.upda
 router.post('/solus-accounts/:id/test', can('manage_integrations'), SolusAccounts.test);
 router.delete('/solus-accounts/:id', can('manage_integrations'), SolusAccounts.remove);
 
+// Managed Database: plans, stock and customers' databases (set up by admins for now)
+const Databases = require('../controllers/adminDatabases.controllers');
+router.get('/db/plans', can('view_services'), Databases.listPlans);
+router.post('/db/plans', can('manage_plans'), Databases.createPlan);
+router.put('/db/plans/:id', can('manage_plans'), Databases.updatePlan);
+router.delete('/db/plans/:id', can('manage_plans'), Databases.removePlan);
+router.get('/db/stock', can('view_services'), Databases.getStock);
+router.put('/db/stock', can('manage_services'), Databases.updateStock);
+router.get('/db/databases', can('view_services'), Databases.listDatabases);
+router.put('/db/databases/:id/ready', can('manage_services'), Databases.markReady);
+router.post('/db/databases/:id/refund', can('manage_services'), Databases.refund);
+
 // Server locations
 const Locations = require('../controllers/serverLocations.controllers');
 router.get('/locations', can('view_services'), Locations.list);

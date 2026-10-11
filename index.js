@@ -63,6 +63,8 @@ const authRouter = require("./routes/auth.routes");
 const { getPlatform } = require("./utils/platformSettings");
 // Virtual Machine plans for the Pricing page (active plans only).
 app.get("/api/plans/vm", require("./controllers/vmPlans.controllers").publicList);
+// Managed Database plans for the Pricing page (active plans only).
+app.get("/api/plans/database", require("./controllers/adminDatabases.controllers").publicPlans);
 // Server locations shown on the site (active ones).
 app.get("/api/locations", require("./controllers/serverLocations.controllers").publicList);
 
@@ -77,7 +79,9 @@ app.get("/api/settings/public", async (req, res) => {
     // Cheapest active VM plan, for "from ₹…/mo" labels.
     const vmPlans = await require("./utils/computeStock").getPlans().catch(() => []);
     const vmFromPrice = vmPlans.length ? Math.min(...vmPlans.map((p) => p.monthly)) : null;
-    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, autoTopup: autoTopupEnabled && autoTopupReady && !topUpsPaused, planAvailability: effective, vmFromPrice });
+    const dbPlans = await require("./utils/databaseStock").getPlans().catch(() => []);
+    const dbFromPrice = dbPlans.length ? Math.min(...dbPlans.map((p) => p.monthly)) : null;
+    res.json({ maintenanceMode, allOutOfStock: paymentsPaused, paymentsPaused, topUpsPaused, autoTopup: autoTopupEnabled && autoTopupReady && !topUpsPaused, planAvailability: effective, vmFromPrice, dbFromPrice });
   } catch (err) {
     console.error("Public settings failed:", err.message);
     res.json({ maintenanceMode: false, paymentsPaused: false, topUpsPaused: true, planAvailability: null });
@@ -96,6 +100,7 @@ app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
+app.use("/api/databases", require("./routes/database.routes"));
 app.use("/api/invoices", require("./routes/invoices.routes"));
 // An API path nothing handles is a 404 in JSON, not the React app's HTML.
 app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));

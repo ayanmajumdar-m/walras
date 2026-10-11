@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Pricing.css';
-import { CPU_TYPES, formatRam, formatBandwidth } from '../../data/plans';
+import { CPU_TYPES, formatRam, formatBandwidth, DB_ENGINES, formatStorage } from '../../data/plans';
 import {
   Layers, Server, Globe, ChevronUp, ChevronDown, ArrowRight, Check, Cpu, MemoryStick,
-  HardDrive, Network, Shield, Clock, BookOpen
+  HardDrive, Network, Shield, Clock, BookOpen, Database, DatabaseBackup
 } from 'lucide-react';
 
 /*
@@ -41,6 +41,14 @@ const formatMoney = (value, currency) =>
     : currency === "usd" ? `$${Number(value).toLocaleString("en-US", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`
     : `₹${Number(value).toLocaleString("en-IN", { minimumFractionDigits: Number(value) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
+// ── Managed Database ───────────────────────────────────────────────────────
+const DB_INCLUDES = [
+  { Icon: Database, text: "MySQL or PostgreSQL" },
+  { Icon: DatabaseBackup, text: "Daily backups" },
+  { Icon: Shield, text: "Set up and looked after for you" },
+  { Icon: HardDrive, text: "NVMe SSD storage" }
+];
+
 // ── Domains (coming soon) ─────────────────────────────────────────────────
 const DOMAIN_INCLUDES = [
   "Free lifetime WHOIS privacy on every domain",
@@ -51,6 +59,7 @@ const DOMAIN_INCLUDES = [
 // ── Rail ───────────────────────────────────────────────────────────────────
 const SECTIONS = [
   { id: "virtual-machine", Icon: Layers, title: "Virtual Machine", desc: "General purpose VMs on Intel or AMD.", from: "from ₹350/mo" },
+  { id: "managed-database", Icon: Database, title: "Managed Database", desc: "MySQL or PostgreSQL, managed for you.", from: "from ₹199/mo" },
   { id: "bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon" }
 ];
@@ -85,18 +94,25 @@ const Pricing = () => {
   };
   // Plans and prices are managed in admin; null while loading.
   const [vmPlans, setVmPlans] = useState(null);
+  // Managed Database plans (Admin → Managed Database → Plans); null while loading.
+  const [dbPlans, setDbPlans] = useState(null);
+  const [dbStock, setDbStock] = useState({});
 
   useEffect(() => {
     fetch("/api/plans/vm")
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then((d) => setVmPlans(d.plans || []))
       .catch(() => setVmPlans(false)); // false = couldn't load (not "no plans")
+    fetch("/api/plans/database")
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then((d) => setDbPlans(d.plans || []))
+      .catch(() => setDbPlans(false));
   }, []);
 
   useEffect(() => {
     fetch("/api/settings/public")
       .then((r) => r.json())
-      .then((d) => setComputeStock(d?.planAvailability?.compute || {}))
+      .then((d) => { setComputeStock(d?.planAvailability?.compute || {}); setDbStock(d?.planAvailability?.database || {}); })
       .catch(() => {});
   }, []);
 
@@ -318,6 +334,89 @@ const Pricing = () => {
               Prices exclude tax; the final amount is shown at checkout.
               {currency === "usd" && " US dollar prices are for reference; your account is billed in Indian rupees."}
               {" "}Every plan includes one IPv4 address and a 1 Gbps network port.
+            </p>
+          </section>
+
+          {/* ── Managed Database ── */}
+          <section className="pr-section" id="managed-database">
+            <div className="pr-section-head">
+              <span className="pr-section-icon"><Database aria-hidden="true" /></span>
+              <div>
+                <h2 className="pr-section-title">Managed Database</h2>
+                <p className="pr-section-lede">
+                  MySQL or PostgreSQL, set up and looked after for you, with daily backups. Pick a location,
+                  an engine and a plan; the price is the same for both engines.
+                </p>
+              </div>
+            </div>
+
+            <ul className="pr-chips">
+              {DB_INCLUDES.map(({ Icon, text }) => (
+                <li key={text}><Icon aria-hidden="true" />{text}</li>
+              ))}
+            </ul>
+
+            <div className="pr-family-head">
+              <h3 className="pr-subtitle">General Purpose</h3>
+              <div className="pr-seg" role="group" aria-label="Engines">
+                <span className="pr-seg-label">Engines</span>
+                {DB_ENGINES.map((e) => <span key={e.id} className="pr-engine">{e.label}</span>)}
+              </div>
+            </div>
+            {dbPlans === null ? (
+              <div className="pr-card pr-soon-card"><span>Loading plans…</span></div>
+            ) : dbPlans === false ? (
+              <div className="pr-card pr-soon-card">
+                <strong>Plans couldn't be loaded right now.</strong>
+                <span>Please refresh the page in a moment.</span>
+              </div>
+            ) : dbPlans.length === 0 ? (
+              <div className="pr-card pr-soon-card"><strong>Managed Database plans are coming soon.</strong></div>
+            ) : (
+            <div className="pr-card pr-table-card">
+              <table className="pr-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Plan</th>
+                    <th scope="col">vCPU</th>
+                    <th scope="col">Memory</th>
+                    <th scope="col">Storage</th>
+                    <th scope="col">Backups</th>
+                    <th scope="col">Monthly</th>
+                    <th scope="col">Availability</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dbPlans.map((plan) => {
+                    const [ram, ramUnit] = splitUnit(formatRam(plan.ram));
+                    const [disk, diskUnit] = splitUnit(formatStorage(plan.storage));
+                    return (
+                      <tr key={plan.name}>
+                        <td className="pr-plan-name" data-label="Plan">{plan.name}</td>
+                        <td data-label="vCPU"><strong>{plan.vcpu}</strong> <span className="pr-unit">vCPU</span></td>
+                        <td data-label="Memory"><strong>{ram}</strong> <span className="pr-unit">{ramUnit}</span></td>
+                        <td data-label="Storage"><strong>{disk}</strong> <span className="pr-unit">{diskUnit}</span></td>
+                        <td data-label="Backups"><strong>Daily</strong> <span className="pr-unit">{plan.backupDays}-day retention</span></td>
+                        <td data-label="Monthly price" className="pr-price">
+                          <strong>{formatMoney(priceOf(plan, currency), currency)}</strong> <span className="pr-unit">/mo</span>
+                        </td>
+                        <td data-label="Availability">
+                          {dbStock[plan.name]
+                            ? <a href="/dashboard/create?type=database" className="pr-stock is-in">Available</a>
+                            : <span className="pr-stock">Out of stock</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            )}
+
+            <p className="pr-footnote">
+              Prices exclude tax; the final amount is shown at checkout.
+              {currency === "usd" && " US dollar prices are for reference; your account is billed in Indian rupees."}
+              {" "}Billed monthly like Virtual Machines: the rest of the month when you order, then on the 1st.
             </p>
           </section>
 
