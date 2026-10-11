@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { LifeBuoy, Plus, RefreshCw, ArrowLeft, Paperclip, Send, X, Download, Mail } from "lucide-react";
 import { api, authHeaders } from "../consoleApi";
-import SupportPlus from "./SupportPlus";
+import { useSupportPlus, SupportPlusActive, SupportPlusOffer } from "./SupportPlus";
 
 /*
   Support tickets, backed by Zendesk through /api/support (like Fantom), and
-  Support + (priority phone call-backs, SupportPlus.js) above the list.
+  Support+ (optional paid phone call-backs, SupportPlus.js): a subscriber's
+  call-back card above the list; for everyone else a low-key offer below it.
   The list, a new-ticket form and a ticket's conversation are one page; the
   open ticket lives in ?ticket=<id> so it can be linked and survives reloads.
 */
@@ -270,6 +271,7 @@ const Support = () => {
   const [message, setMessage] = useState(null);
 
   const notify = (text, type) => setMessage({ text, type });
+  const plus = useSupportPlus();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -289,7 +291,7 @@ const Support = () => {
       <div className="cx-page-head cx-page-head-row">
         <div>
           <h2>Support</h2>
-          <p>Talk to us on the phone with Support +, or open a ticket and our team will reply here and by email.</p>
+          <p>Open a ticket and our team will reply here and by email. Ticket support is free for every account.</p>
         </div>
         {configured && !openId && !composing && (
           <div className="cx-welcome-actions">
@@ -310,7 +312,7 @@ const Support = () => {
         </div>
       )}
 
-      {!openId && !composing && <SupportPlus notify={notify} />}
+      {!openId && !composing && <SupportPlusActive plus={plus} notify={notify} />}
       {configured && !openId && !composing && <div className="cx-section-head"><h3>Tickets</h3></div>}
 
       {!configured ? (
@@ -357,6 +359,8 @@ const Support = () => {
           </table>
         </div>
       )}
+
+      {!openId && !composing && <SupportPlusOffer plus={plus} notify={notify} />}
     </div>
   );
 };

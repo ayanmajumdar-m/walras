@@ -35,10 +35,10 @@ const ErrorHelp = ({ error }) => {
   return null;
 };
 
-// ── Not on yet: the offer ─────────────────────────────────────────────────
+// ── Not on yet: a quiet, optional add-on (tickets stay free) ────────────────
 const Offer = ({ data, onEnabled }) => {
   const { balance, refreshBalance } = useConsole();
-  const [confirming, setConfirming] = useState(false);
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const q = data.quote;
@@ -49,7 +49,7 @@ const Offer = ({ data, onEnabled }) => {
     try {
       await api("/api/support/plus", { method: "POST" });
       refreshBalance();
-      onEnabled("Support + is on. You can request a call back now.");
+      onEnabled("Support+ is on. You can request a call back now.");
     } catch (e) {
       setError(e);
     } finally {
@@ -58,48 +58,38 @@ const Offer = ({ data, onEnabled }) => {
   };
 
   return (
-    <section className="cx-splus-offer" aria-labelledby="splus-title">
-      <div className="cx-splus-offer-main">
-        <span className="cx-eyebrow cx-eyebrow-light">Support +</span>
-        <h3 id="splus-title">Needed help? Yes, we are there!</h3>
-        <p>Talk to a Walras engineer on the phone. Request a call back from here and, once we accept it, you'll get a call within {data.callWithinMinutes} minutes.</p>
-        <ul className="cx-splus-points">
-          <li><Check size={15} aria-hidden="true" /> Priority phone call-backs</li>
-          <li><Check size={15} aria-hidden="true" /> A call within {data.callWithinMinutes} minutes of accepting</li>
-          <li><Check size={15} aria-hidden="true" /> Follow every request right here</li>
-        </ul>
-      </div>
-      <div className="cx-splus-offer-side">
-        <div className="cx-splus-price">
-          <strong>{price(data.price)}</strong><span>/month + GST</span>
+    <section className="cx-card cx-splus-mini" aria-labelledby="splus-title">
+      <div className="cx-splus-mini-row">
+        <span className="cx-splus-mini-icon"><Headphones size={18} aria-hidden="true" /></span>
+        <div className="cx-splus-mini-text">
+          <h4 id="splus-title">Prefer to talk on the phone? <span className="cx-pill">Optional add-on</span></h4>
+          <p>Ticket support is free for every account. If you'd also like phone call-backs, Support+ adds them for {price(data.price)}/month + GST.</p>
         </div>
-        <small>Billed with your monthly services invoice. Cancel anytime.</small>
-        {!confirming ? (
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-lg" onClick={() => setConfirming(true)} disabled={!data.canManage}>
-            <PhoneCall size={17} /> Enable Support+
-          </button>
-        ) : (
-          <div className="cx-splus-confirm">
-            <p>
-              Today you pay <strong>{inr(q.total)}</strong> ({q.days} of {q.daysInMonth} days of this month, incl. {inr(q.tax)} GST) from your account balance ({inr(balance)}).
-              From {day(q.paidUntil)}, {price(data.price)} + GST is added to your monthly services invoice.
-            </p>
-            <div className="cx-splus-confirm-actions">
-              <button type="button" className="cx-btn cx-btn-primary" onClick={enable} disabled={busy}>
-                {busy ? <RefreshCw size={15} className="cx-spin" /> : <Check size={15} />} Enable Support+
-              </button>
-              <button type="button" className="cx-btn cx-btn-ghost-light" onClick={() => { setConfirming(false); setError(null); }} disabled={busy}>Not now</button>
-            </div>
-          </div>
-        )}
-        {!data.canManage && <small>Ask an account admin, or someone with Billing access, to enable it.</small>}
-        {error && (
-          <div className="cx-alert is-error cx-splus-error" role="alert">
-            <span>{error.message}</span>
-            <ErrorHelp error={error} />
-          </div>
-        )}
+        <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => setOpen(!open)} aria-expanded={open}>
+          {open ? "Hide" : "About Support+"}
+        </button>
       </div>
+      {open && (
+        <div className="cx-splus-mini-more">
+          <p><strong>Needed help? Yes, we are there!</strong> With Support+ you can ask a Walras engineer to call you back from this page; once we accept the request, you'll get a call within {data.callWithinMinutes} minutes.</p>
+          <p className="cx-splus-hint">
+            Enabling it today costs {inr(q.total)} ({q.days} of {q.daysInMonth} days of this month, incl. {inr(q.tax)} GST), paid from your account balance ({inr(balance)}).
+            From {day(q.paidUntil)}, {price(data.price)} + GST is added to your monthly services invoice. Cancel anytime.
+          </p>
+          <div className="cx-splus-confirm-actions">
+            <button type="button" className="cx-btn cx-btn-ghost" onClick={enable} disabled={busy || !data.canManage}>
+              {busy ? <RefreshCw size={15} className="cx-spin" /> : <PhoneCall size={15} />} Enable Support+
+            </button>
+          </div>
+          {!data.canManage && <p className="cx-splus-hint">Ask an account admin, or someone with Billing access, to enable it.</p>}
+          {error && (
+            <div className="cx-alert is-error" role="alert">
+              <span>{error.message}</span>
+              <ErrorHelp error={error} />
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 };
@@ -275,28 +265,26 @@ const Active = ({ data, reload, notify }) => {
   );
 };
 
-const SupportPlus = ({ notify }) => {
+/** Support+ state for the Support page, refreshed while a request is open. */
+export const useSupportPlus = () => {
   const [data, setData] = useState(null);
-  const [failed, setFailed] = useState(false);
-
   const load = useCallback(() => {
-    api("/api/support/plus").then((d) => { setData(d); setFailed(false); }).catch(() => setFailed(true));
+    api("/api/support/plus").then(setData).catch(() => {});
   }, []);
   useEffect(load, [load]);
-
-  // While a request is open, keep its status fresh.
   const waiting = Boolean(data?.open);
   useEffect(() => {
     if (!waiting) return undefined;
     const t = setInterval(() => { if (!document.hidden) load(); }, POLL_MS);
     return () => clearInterval(t);
   }, [waiting, load]);
-
-  if (failed && !data) return null; // the tickets below still work
-  if (!data) return <div className="cx-card cx-splus-loading"><RefreshCw size={18} className="cx-spin" /> Loading Support +…</div>;
-  return data.subscription.active
-    ? <Active data={data} reload={load} notify={notify} />
-    : <Offer data={data} onEnabled={(m) => { notify(m, "success"); load(); }} />;
+  return { data, load };
 };
 
-export default SupportPlus;
+// Subscribers: the call-back card, at the top of the page.
+export const SupportPlusActive = ({ plus, notify }) => (plus.data?.subscription.active
+  ? <Active data={plus.data} reload={plus.load} notify={notify} /> : null);
+
+// Everyone else: the optional add-on, below the tickets.
+export const SupportPlusOffer = ({ plus, notify }) => (plus.data && !plus.data.subscription.active
+  ? <Offer data={plus.data} onEnabled={(m) => { notify(m, "success"); plus.load(); window.scrollTo(0, 0); }} /> : null);
