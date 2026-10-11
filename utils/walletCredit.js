@@ -41,10 +41,42 @@ const creditPendingTopup = async (orderId, { description, paymentRef } = {}) => 
         : { credited: false };
 };
 
+/**
+ * A payment captured for an order whose pending transaction was already
+ * removed (an abandoned checkout, see utils/payments.js reconcile). Claims
+ * the expired order once, then records the credit and adds it to the balance.
+ */
+const creditExpiredTopup = async (orderId, { description, paymentRef } = {}) => {
+    const rows = await q(
+        `WITH claim AS (
+            UPDATE payment_orders SET status = 'paid', payment_id = COALESCE(?, payment_id), updated_at = NOW()
+             WHERE order_id = ? AND status = 'expired'
+               AND NOT EXISTS (SELECT 1 FROM wallet_transactions WHERE reference_id = ? AND type = 'credit' AND status = 'completed')
+         RETURNING user_id, amount
+        ),
+        w AS (
+            UPDATE wallets w SET balance = w.balance + claim.amount
+              FROM claim WHERE w.user_id = claim.user_id
+            RETURNING w.id AS wallet_id, w.user_id, w.balance, claim.amount
+        ),
+        tx AS (
+            INSERT INTO wallet_transactions (wallet_id, type, amount, description, reference_id, razorpay_order_id, razorpay_payment_id, status)
+            SELECT w.wallet_id, 'credit', w.amount, ?, ?, ?, ?, 'completed' FROM w
+            RETURNING id
+        )
+        SELECT w.* FROM w, tx`,
+        [paymentRef || null, orderId, orderId, String(description || 'Payment').slice(0, 255), orderId, orderId, paymentRef || null],
+    );
+    const row = rows[0];
+    return row
+        ? { credited: true, amount: Number(row.amount), walletId: row.wallet_id, userId: row.user_id, balance: Number(row.balance) }
+        : { credited: false };
+};
+
 /** Marks a pending top-up failed (no balance change). */
 const failPendingTopup = (orderId, description) => q(
     "UPDATE wallet_transactions SET status = 'failed', description = ? WHERE reference_id = ? AND status = 'pending'",
     [String(description || 'Payment failed').slice(0, 255), orderId],
 );
 
-module.exports = { creditPendingTopup, failPendingTopup };
+module.exports = { creditPendingTopup, creditExpiredTopup, failPendingTopup };

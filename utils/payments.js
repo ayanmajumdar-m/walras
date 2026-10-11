@@ -17,7 +17,10 @@
  */
 const connection = require('../config/db');
 const razorpay = require('../services/razorpay');
-const { creditPendingTopup, failPendingTopup } = require('./walletCredit');
+const { creditPendingTopup, creditExpiredTopup, failPendingTopup } = require('./walletCredit');
+
+// An unpaid checkout's pending transaction is removed this long after it started.
+const PENDING_TTL_HOURS = 3;
 const { ensureWallet } = require('./wallets');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
@@ -90,10 +93,10 @@ const handleCaptured = async (orderId, payment) => {
         return { credited: false, purpose: order.purpose };
     }
     const paymentId = payment?.id || null;
-    const result = await creditPendingTopup(orderId, {
-        description: `${PURPOSES[order.purpose] || 'Payment'} (Razorpay ${paymentId || orderId})`,
-        paymentRef: paymentId,
-    });
+    const credit = { description: `${PURPOSES[order.purpose] || 'Payment'} (Razorpay ${paymentId || orderId})`, paymentRef: paymentId };
+    let result = await creditPendingTopup(orderId, credit);
+    // Paid after the abandoned checkout's pending transaction was removed: still credited, once.
+    if (!result.credited && order.status === 'expired') result = await creditExpiredTopup(orderId, credit);
     await q('UPDATE payment_orders SET status = ?, payment_id = COALESCE(?, payment_id), updated_at = NOW() WHERE order_id = ?', ['paid', paymentId, orderId]);
     if (result.credited) {
         // Required lazily: monthlyBilling pulls in most of the billing code.
@@ -152,15 +155,19 @@ const handleWebhook = async (event) => {
 };
 
 /**
- * Safety net for missed webhooks (every 15 minutes, utils/monthlyBilling's
- * cron): orders still open after 10 minutes are checked with Razorpay for
- * up to 3 days, so a UPI or bank payment that completes late is still credited.
+ * Safety net for missed webhooks (every 15 minutes, services/billingServices
+ * cron): orders still open after 10 minutes are checked with Razorpay. A
+ * checkout nobody paid within 3 hours is expired and its pending transaction
+ * removed; it's still checked for a day after that (and the webhook still
+ * works), so a UPI or bank payment that completes late is still credited.
  */
 const reconcile = async () => {
     if (!razorpay.isConfigured()) return;
     const open = await q(
         `SELECT order_id, purpose FROM payment_orders
-          WHERE status = 'created' AND created_at < NOW() - INTERVAL '10 minutes' AND created_at > NOW() - INTERVAL '3 days'
+          WHERE created_at < NOW() - INTERVAL '10 minutes'
+            AND ((status = 'created' AND created_at > NOW() - INTERVAL '3 days')
+              OR (status = 'expired' AND created_at > NOW() - INTERVAL '1 day'))
           ORDER BY created_at LIMIT 100`,
     );
     for (const { order_id: orderId, purpose } of open) {
@@ -173,12 +180,18 @@ const reconcile = async () => {
             console.error(`[Razorpay] Checking order ${orderId} failed:`, err.message);
         }
     }
-    // Abandoned checkouts: nobody paid within 3 days.
-    await q("UPDATE payment_orders SET status = 'expired', updated_at = NOW() WHERE status = 'created' AND purpose <> 'autotopup_charge' AND created_at <= NOW() - INTERVAL '3 days'");
+    // Abandoned checkouts: nobody paid within 3 hours. The order is kept (a late
+    // payment is matched to it); its pending (or older cancelled) transaction goes.
+    // Auto top-up charges are excluded: Razorpay debits those about 36 hours later.
     await q(
-        `UPDATE wallet_transactions SET status = 'cancelled'
-          WHERE status = 'pending' AND reference_id IN (SELECT order_id FROM payment_orders WHERE status = 'expired')`,
+        `UPDATE payment_orders SET status = 'expired', updated_at = NOW()
+          WHERE status = 'created' AND purpose <> 'autotopup_charge' AND created_at <= NOW() - INTERVAL '${PENDING_TTL_HOURS} hours'`,
+    );
+    await q(
+        `DELETE FROM wallet_transactions
+          WHERE type = 'credit' AND status IN ('pending', 'cancelled')
+            AND reference_id IN (SELECT order_id FROM payment_orders WHERE status = 'expired')`,
     );
 };
 
-module.exports = { PURPOSES, PaymentError, startCheckout, handleCaptured, handleFailed, verifyCheckout, handleWebhook, reconcile, hooks };
+module.exports = { PENDING_TTL_HOURS, PURPOSES, PaymentError, startCheckout, handleCaptured, handleFailed, verifyCheckout, handleWebhook, reconcile, hooks };
