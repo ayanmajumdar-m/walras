@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Rocket, Server, Globe, MapPin } from "lucide-react";
+import { Loader2, Rocket, Server, Globe, MapPin, Wallet } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { APP_TYPES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
@@ -206,14 +206,24 @@ const AppConfigurator = () => {
             )}
           </dl>
           {plan && balance < due.amount && (
-            <p className="cx-alert is-info">
-              Your balance is {formatINR(balance, 2)}. <Link to="/dashboard/billing" className="cx-link">Add funds</Link> to deploy this app.
-            </p>
+            <div className="cx-alert is-info cx-balance-alert">
+              <div className="cx-balance-alert-msg">
+                Your balance is <strong>{formatINR(balance, 2)}</strong>. Add funds to deploy this app.
+              </div>
+              <Link to="/dashboard/billing" className="cx-balance-alert-btn">
+                <Wallet size={15} aria-hidden="true" /> Add funds
+              </Link>
+            </div>
           )}
           {error && (
-            <p className="cx-alert is-error" role="alert">
-              {error}{/balance is too low/i.test(error) && <> <Link to="/dashboard/billing" className="cx-link">Add funds</Link></>}
-            </p>
+            <div className="cx-alert is-error cx-balance-alert" role="alert">
+              <div className="cx-balance-alert-msg">{error}</div>
+              {/balance is too low/i.test(error) && (
+                <Link to="/dashboard/billing" className="cx-balance-alert-btn is-error-btn">
+                  <Wallet size={15} aria-hidden="true" /> Add funds
+                </Link>
+              )}
+            </div>
           )}
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={deploy} disabled={!plan || !location || !domainOk || busy}>
             {busy ? <><Loader2 size={18} className="cx-spin" /> Deploying…</> : !plan ? "Out of stock" : <><Rocket size={18} /> Pay and deploy</>}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, MapPin, Database, Layers } from "lucide-react";
+import { Loader2, MapPin, Database, Layers, Wallet } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { DB_ENGINES, formatINR, formatRam, formatStorage, formatBackups } from "../../../data/plans";
@@ -225,14 +225,24 @@ const DatabaseConfigurator = () => {
             )}
           </dl>
           {plan && balance < due.amount && (
-            <p className="cx-alert is-info">
-              Your balance is {formatINR(balance, 2)}. <Link to="/dashboard/billing" className="cx-link">Add funds</Link> to create this database.
-            </p>
+            <div className="cx-alert is-info cx-balance-alert">
+              <div className="cx-balance-alert-msg">
+                Your balance is <strong>{formatINR(balance, 2)}</strong>. Add funds to create this database.
+              </div>
+              <Link to="/dashboard/billing" className="cx-balance-alert-btn">
+                <Wallet size={15} aria-hidden="true" /> Add funds
+              </Link>
+            </div>
           )}
           {error && (
-            <p className="cx-alert is-error" role="alert">
-              {error}{/balance is too low/i.test(error) && <> <Link to="/dashboard/billing" className="cx-link">Add funds</Link></>}
-            </p>
+            <div className="cx-alert is-error cx-balance-alert" role="alert">
+              <div className="cx-balance-alert-msg">{error}</div>
+              {/balance is too low/i.test(error) && (
+                <Link to="/dashboard/billing" className="cx-balance-alert-btn is-error-btn">
+                  <Wallet size={15} aria-hidden="true" /> Add funds
+                </Link>
+              )}
+            </div>
           )}
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={order} disabled={!canOrder}>
             {busy ? <><Loader2 size={18} className="cx-spin" /> Ordering…</> : !catalog?.enabled ? "Out of stock" : "Create database"}
