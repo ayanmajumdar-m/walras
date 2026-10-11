@@ -76,7 +76,7 @@ const Offer = ({ data, onEnabled }) => {
         <small>Billed with your monthly services invoice. Cancel anytime.</small>
         {!confirming ? (
           <button type="button" className="cx-btn cx-btn-primary cx-btn-lg" onClick={() => setConfirming(true)} disabled={!data.canManage}>
-            <PhoneCall size={17} /> Enable phone support
+            <PhoneCall size={17} /> Enable Support+
           </button>
         ) : (
           <div className="cx-splus-confirm">
@@ -86,7 +86,7 @@ const Offer = ({ data, onEnabled }) => {
             </p>
             <div className="cx-splus-confirm-actions">
               <button type="button" className="cx-btn cx-btn-primary" onClick={enable} disabled={busy}>
-                {busy ? <RefreshCw size={15} className="cx-spin" /> : <Check size={15} />} Enable Support +
+                {busy ? <RefreshCw size={15} className="cx-spin" /> : <Check size={15} />} Enable Support+
               </button>
               <button type="button" className="cx-btn cx-btn-ghost-light" onClick={() => { setConfirming(false); setError(null); }} disabled={busy}>Not now</button>
             </div>
