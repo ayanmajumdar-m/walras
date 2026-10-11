@@ -93,6 +93,9 @@ router.get('/apps/plans', can('view_services'), Apps.listPlans);
 router.post('/apps/plans', can('manage_plans'), Apps.createPlan);
 router.put('/apps/plans/:id', can('manage_plans'), Apps.updatePlan);
 router.delete('/apps/plans/:id', can('manage_plans'), Apps.removePlan);
+// Where Managed Database and App Platform are offered (Mumbai to start)
+router.get('/product-locations/:product', can('view_services'), Apps.getProductLocations);
+router.put('/product-locations/:product', can('manage_plans'), Apps.setProductLocations);
 
 // Server locations
 const Locations = require('../controllers/serverLocations.controllers');

@@ -1,5 +1,6 @@
 /**
- * App Platform for customers (utils/appPlans.js): choose a Shared plan and a
+ * App Platform for customers (utils/appPlans.js): choose a location (where
+ * App Platform is offered: utils/productLocations.js), a Shared plan and a
  * domain, pay, and the app is active. Billed like a monthly server
  * (utils/monthlyBilling.js): the rest of this month pro rata from the
  * balance, then on the 1st. No provisioning integration yet.
@@ -8,6 +9,7 @@ const connection = require('../config/db');
 const appPlans = require('../utils/appPlans');
 const billing = require('../utils/monthlyBilling');
 const platformSettings = require('../utils/platformSettings');
+const productLocations = require('../utils/productLocations');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -41,6 +43,7 @@ const publicApp = (a) => ({
     domain: a.domain,
     plan: a.plan_name,
     type: a.plan_type,
+    location: a.location || '',
     monthlyCost: Number(a.monthly_cost),
     status: a.status,
     suspended: Boolean(a.suspended_at),
@@ -59,20 +62,24 @@ const ownApp = async (userId, id) => {
 
 // GET /api/apps/catalog — types and plans
 exports.getCatalog = handle('App Platform catalogue', async (req, res) => {
-    const plans = (await appPlans.getPlans()).map(({ id, active, sortOrder, ...p }) => p);
+    const [all, places] = await Promise.all([appPlans.getPlans(), productLocations.getLocations('apps')]);
+    const plans = all.map(({ id, active, sortOrder, ...p }) => p);
     res.json({
+        locations: places.map((l) => ({ id: l.id, name: l.name, country: l.country, flagUrl: l.flagUrl })),
         types: Object.entries(appPlans.TYPES).map(([id, t]) => ({ id, label: t.label, available: t.available })),
         plans,
-        enabled: plans.length > 0,
+        enabled: plans.length > 0 && places.length > 0,
     });
 });
 
-// POST /api/apps { plan, domain } — paid now and active straight away
+// POST /api/apps { plan, location, domain } — paid now and active straight away
 exports.createApp = handle('Create app', async (req, res) => {
     const userId = req.user.userId;
     const plan = typeof req.body.plan === 'string' ? await appPlans.findPlan(req.body.plan) : null;
     const domain = cleanDomain(req.body.domain);
     if (!plan) throw new HttpError(400, 'Choose a plan.');
+    const location = /^\d{1,10}$/.test(String(req.body.location ?? '')) ? await productLocations.findLocation('apps', req.body.location) : null;
+    if (!location) throw new HttpError(400, 'Choose a location.');
     if (!DOMAIN.test(domain)) throw new HttpError(400, 'Enter a valid domain, e.g. example.com or app.example.com.');
     const [taken] = await q('SELECT user_id FROM app_platform_apps WHERE LOWER(domain) = ?', [domain]);
     if (taken) {
@@ -98,9 +105,9 @@ exports.createApp = handle('Create app', async (req, res) => {
     let app;
     try {
         [app] = (await q(
-            `INSERT INTO app_platform_apps (user_id, domain, plan_name, plan_type, monthly_cost, paid_until)
-             VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
-            [userId, domain, plan.name, plan.type, plan.monthly, quote.paidUntil],
+            `INSERT INTO app_platform_apps (user_id, domain, plan_name, plan_type, location_id, location, monthly_cost, paid_until)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+            [userId, domain, plan.name, plan.type, location.id, location.name, plan.monthly, quote.paidUntil],
         )).rows;
     } catch (err) {
         await billing.refundBalance(userId, quote.total).catch((e) => console.error('App refund failed:', e.message));

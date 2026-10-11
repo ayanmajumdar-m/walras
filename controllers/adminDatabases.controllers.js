@@ -12,6 +12,7 @@
 const connection = require('../config/db');
 const dbStock = require('../utils/databaseStock');
 const serverLocations = require('../utils/serverLocations');
+const productLocations = require('../utils/productLocations');
 const billing = require('../utils/monthlyBilling');
 const audit = require('../utils/audit');
 const integrations = require('../utils/integrations');
@@ -176,14 +177,16 @@ module.exports = {
 
     // GET /api/admin/db/stock
     getStock: handle(async (req, res) => {
-        const [plans, stock, locations, running] = await Promise.all([
-            dbStock.getPlans({ all: true }), dbStock.getStock(), serverLocations.getLocations({ all: true }),
+        const [plans, stock, locations, offered, running] = await Promise.all([
+            dbStock.getPlans({ all: true }), dbStock.getStock(), serverLocations.getLocations({ all: true }), productLocations.getLocationIds('database'),
             q('SELECT plan_name, location_id, COUNT(*) AS n FROM managed_databases GROUP BY plan_name, location_id'),
         ]);
         const inUse = {};
         for (const r of running) (inUse[r.plan_name] ||= {})[r.location_id] = Number(r.n);
         res.json({
-            locations: locations.map((l) => ({ id: l.id, name: l.active ? l.name : `${l.name} (hidden)` })),
+            // Stock is edited for the locations Managed Database is offered in; the rest can be switched on.
+            locations: locations.filter((l) => offered.has(l.id)).map((l) => ({ id: l.id, name: l.active ? l.name : `${l.name} (hidden)` })),
+            allLocations: locations.map((l) => ({ id: l.id, name: l.name, active: l.active, offered: offered.has(l.id) })),
             plans: plans.map((p) => ({ ...p, stock: stock[p.name] || {}, inUse: inUse[p.name] || {} })),
         });
     }),

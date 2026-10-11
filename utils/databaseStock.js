@@ -11,11 +11,12 @@
  * Stock is a quantity per plan per location (table db_stock, location_id =
  * server_locations.id), set in Admin → Managed Database → Stock. Ordering
  * takes one unit; deleting a database gives it back. A plan is on sale in a
- * location while the plan and the location are active and stock is above
- * zero. (No provisioning integration yet: admins set databases up.)
+ * location while the plan and the location are active, the location is one
+ * Managed Database is offered in (utils/productLocations.js: Mumbai to start)
+ * and stock is above zero. (No provisioning integration yet: admins set databases up.)
  */
 const connection = require('../config/db');
-const serverLocations = require('./serverLocations');
+const productLocations = require('./productLocations');
 
 const ENGINES = { mysql: 'MySQL', postgresql: 'PostgreSQL' };
 
@@ -100,7 +101,7 @@ const release = (plan, locationId) => q(
  */
 const getAvailability = async () => {
     try {
-        const [plans, locations, rows] = await Promise.all([getPlans(), serverLocations.getLocations(), getStockRows()]);
+        const [plans, locations, rows] = await Promise.all([getPlans(), productLocations.getLocations('database'), getStockRows()]);
         const out = Object.fromEntries(plans.map((p) => [p.name, {}]));
         const active = new Set(locations.map((l) => l.id));
         for (const r of rows) {

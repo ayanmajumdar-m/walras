@@ -587,3 +587,11 @@
 .ap-tk-file small { color: var(--text-muted); }
 .ap-tk-more { align-self: center; }
 .ap-tk-table td small { display: block; margin-left: 0; }
+
+/* Products: where Managed Database / App Platform are offered (sections/ProductLocations.js) */
+.ap-prodloc { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.ap-prodloc-head { display: flex; align-items: center; gap: 8px; font-size: 14.5px; }
+.ap-prodloc-head .cx-btn { margin-left: auto; }
+.ap-prodloc-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.ap-prodloc-item { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--color-divider); border-radius: 999px; font-size: 13.5px; cursor: pointer; }
+.ap-prodloc-item.is-on { border-color: var(--color-accent); background: var(--color-accent-100); }

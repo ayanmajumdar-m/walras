@@ -6,6 +6,8 @@
 const connection = require('../config/db');
 const appPlans = require('../utils/appPlans');
 const audit = require('../utils/audit');
+const serverLocations = require('../utils/serverLocations');
+const productLocations = require('../utils/productLocations');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -130,6 +132,25 @@ module.exports = {
         res.json({ message: `${plan.name} deleted.` });
     }),
 
+    // GET /api/admin/product-locations/:product — where Managed Database ('database') or App Platform ('apps') is offered
+    getProductLocations: handle(async (req, res) => {
+        if (!productLocations.PRODUCTS.includes(req.params.product)) throw new HttpError(404, 'Unknown product.');
+        const [all, offered] = await Promise.all([serverLocations.getLocations({ all: true }), productLocations.getLocationIds(req.params.product)]);
+        res.json({ locations: all.map((l) => ({ id: l.id, name: l.name, country: l.country, active: l.active, offered: offered.has(l.id) })) });
+    }),
+
+    // PUT /api/admin/product-locations/:product { locationIds: [..] }
+    setProductLocations: handle(async (req, res) => {
+        const product = req.params.product;
+        if (!productLocations.PRODUCTS.includes(product)) throw new HttpError(404, 'Unknown product.');
+        const known = new Set((await serverLocations.getLocations({ all: true })).map((l) => l.id));
+        const ids = [...new Set((Array.isArray(req.body.locationIds) ? req.body.locationIds : []).map(Number))].filter((id) => known.has(id));
+        const before = [...(await productLocations.getLocationIds(product))];
+        await productLocations.setLocations(product, ids);
+        audit(req, 'product.locations', 'settings', product, { before, after: ids });
+        res.json({ message: ids.length ? 'Locations saved.' : 'Saved. With no locations, nothing can be ordered.' });
+    }),
+
     // GET /api/admin/apps — every customer's apps
     listApps: handle(async (req, res) => {
         const rows = await q(
@@ -139,7 +160,7 @@ module.exports = {
         res.json({
             apps: rows.map((a) => ({
                 id: a.id, userId: a.user_id, customer: a.customer, email: a.email, waladminId: a.waladmin_id,
-                domain: a.domain, plan: a.plan_name, type: a.plan_type, monthlyCost: Number(a.monthly_cost),
+                domain: a.domain, location: a.location || '', plan: a.plan_name, type: a.plan_type, monthlyCost: Number(a.monthly_cost),
                 status: a.status, suspended: Boolean(a.suspended_at), paidUntil: a.paid_until, cancelAt: a.cancel_at, createdAt: a.created_at,
             })),
         });

@@ -45,11 +45,12 @@ const AppsTab = ({ apps, reload, notify }) => {
   return (
     <div className="cx-card cx-table-wrap">
       <table className="cx-table">
-        <thead><tr><th>Domain</th><th>Plan</th><th>Status</th><th>Cost</th><th /></tr></thead>
+        <thead><tr><th>Domain</th><th>Location</th><th>Plan</th><th>Status</th><th>Cost</th><th /></tr></thead>
         <tbody>
           {apps.map((a) => (
             <tr key={a.id}>
               <td data-label="Domain"><strong>{a.domain}</strong></td>
+              <td data-label="Location">{a.location || "—"}</td>
               <td data-label="Plan">{a.plan}<small>{a.type === "dedicated" ? "Dedicated" : "Shared"}</small></td>
               <td data-label="Status">
                 {a.suspended ? <span className="cx-status is-suspended">suspended</span> : <span className={`cx-status is-${a.status}`}>{a.status}</span>}

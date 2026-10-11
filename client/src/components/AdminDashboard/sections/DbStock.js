@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Save, RefreshCw } from "lucide-react";
 import { adminApi } from "../adminApi";
 import { formatRam, formatStorage } from "../../../data/plans";
+import ProductLocations from "./ProductLocations";
 
 /*
   Managed Database → Stock: how many databases of each plan may be sold in
@@ -52,9 +53,10 @@ const DbStock = ({ can }) => {
         <button type="button" className="cx-btn cx-btn-ghost" onClick={load}><RefreshCw size={15} /> Refresh</button>
       </div>
       {notice && <div className={`cx-alert is-${notice.type}`} role="status">{notice.text}</div>}
-      <div className="cx-alert is-info">New databases are set up by your team (Databases tab), so keep stock to what you can provision.</div>
+      <ProductLocations product="database" label="Managed Database" editable={can("manage_plans")} onSaved={load} />
+      <div className="cx-alert is-info">New databases are set up by your team (Databases tab), so keep stock to what you can provision. Stock is set for the locations above.</div>
       {!data ? <div className="cx-card cx-empty"><p>Loading stock…</p></div> : data.locations.length === 0 ? (
-        <div className="cx-alert is-info">No locations yet. Add one in <a className="cx-link" href="?section=locations">Locations</a>.</div>
+        <div className="cx-alert is-info">Managed Database isn't offered in any location. Tick one above.</div>
       ) : (<>
         <div className="cx-card cx-table-wrap">
           <table className="cx-table ap-stock-table">

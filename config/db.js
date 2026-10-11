@@ -898,12 +898,30 @@ connection.connect((err) => {
         // Reservations: 1 = monthly; 3–36 = reserved for that many months (paid up front).
         ['servers term_months', 'ALTER TABLE servers ADD COLUMN IF NOT EXISTS term_months INT NOT NULL DEFAULT 1'],
         ['invoice items months', 'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS months INT'],
+        // Which locations Managed Database and App Platform are offered in
+        // (utils/productLocations.js, Admin → each product). Starts with Mumbai only, once.
+        ['Product locations', `CREATE TABLE IF NOT EXISTS product_locations (
+            product VARCHAR(20) NOT NULL CHECK (product IN ('database', 'apps')),
+            location_id INT NOT NULL REFERENCES server_locations(id) ON DELETE CASCADE,
+            PRIMARY KEY (product, location_id))`],
+        // One statement: the "done" marker and the rows go in together or not at all.
+        ['Product locations seed', `WITH first AS (
+                INSERT INTO app_settings (key, value) VALUES ('seed.product_locations', '1')
+                ON CONFLICT (key) DO NOTHING RETURNING key
+            )
+            INSERT INTO product_locations (product, location_id)
+            SELECT p.product, l.id FROM first, (VALUES ('database'), ('apps')) AS p(product)
+              JOIN server_locations l ON l.name ILIKE 'mumbai%'
+            ON CONFLICT DO NOTHING
+            RETURNING product`],
         ['App plans', createAppPlansTable],
         ['App plans seed', seedAppPlans],
         ['App Platform apps', createAppsTable],
         ['app platform user index', 'CREATE INDEX IF NOT EXISTS app_platform_apps_user_idx ON app_platform_apps (user_id)'],
         // A domain can be on only one app at a time, across all customers.
         ['app platform domain unique', 'CREATE UNIQUE INDEX IF NOT EXISTS app_platform_apps_domain_key ON app_platform_apps (LOWER(domain))'],
+        ['App Platform location', 'ALTER TABLE app_platform_apps ADD COLUMN IF NOT EXISTS location_id INT'],
+        ['App Platform location name', 'ALTER TABLE app_platform_apps ADD COLUMN IF NOT EXISTS location VARCHAR(100)'],
         ['Database plans', createDbPlansTable],
         ['Database plans seed', seedDbPlans],
         ['Database plans no USD', 'ALTER TABLE db_plans DROP COLUMN IF EXISTS price_usd'],

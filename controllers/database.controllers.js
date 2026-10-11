@@ -9,7 +9,7 @@
  */
 const connection = require('../config/db');
 const dbStock = require('../utils/databaseStock');
-const serverLocations = require('../utils/serverLocations');
+const productLocations = require('../utils/productLocations');
 const billing = require('../utils/monthlyBilling');
 const platformSettings = require('../utils/platformSettings');
 const { decryptSecret } = require('../utils/secrets');
@@ -69,7 +69,7 @@ const ownDatabase = async (userId, id) => {
 
 // GET /api/databases/catalog — plans, engines, locations and where each plan is in stock
 exports.getCatalog = handle('Database catalogue', async (req, res) => {
-    const [availability, plans, places] = await Promise.all([dbStock.getAvailability(), dbStock.getPlans(), serverLocations.getLocations()]);
+    const [availability, plans, places] = await Promise.all([dbStock.getAvailability(), dbStock.getPlans(), productLocations.getLocations('database')]);
     const list = plans.map(({ id, active, sortOrder, ...p }) => ({ ...p, locations: Object.keys(availability[p.name] || {}).map(Number) }));
     res.json({
         enabled: list.some((p) => p.locations.length > 0),
@@ -89,7 +89,7 @@ exports.createDatabase = handle('Create database', async (req, res) => {
     if (!plan) throw new HttpError(400, 'Choose a plan.');
     if (!dbStock.ENGINES[engine]) throw new HttpError(400, 'Choose MySQL or PostgreSQL.');
     if (!DB_NAME.test(name)) throw new HttpError(400, 'Name: 3 to 40 lowercase letters, numbers or hyphens, starting with a letter (e.g. app-db).');
-    const location = Number.isInteger(locationId) ? await serverLocations.findLocation(locationId) : null;
+    const location = Number.isInteger(locationId) ? await productLocations.findLocation('database', locationId) : null;
     if (!location) throw new HttpError(400, 'Choose a location.');
     const [dupe] = await q('SELECT id FROM managed_databases WHERE user_id = ? AND name = ?', [userId, name]);
     if (dupe) throw new HttpError(409, `You already have a database called ${name}.`);

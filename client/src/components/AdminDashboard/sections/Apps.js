@@ -43,11 +43,12 @@ const Apps = ({ openCustomer }) => {
       ) : (
         <div className="cx-card cx-table-wrap">
           <table className="cx-table">
-            <thead><tr><th>Domain</th><th>Customer</th><th>Plan</th><th>Status</th><th>Since</th></tr></thead>
+            <thead><tr><th>Domain</th><th>Location</th><th>Customer</th><th>Plan</th><th>Status</th><th>Since</th></tr></thead>
             <tbody>
               {shown.map((a) => (
                 <tr key={a.id}>
                   <td data-label="Domain"><strong>{a.domain}</strong></td>
+                  <td data-label="Location">{a.location || "—"}</td>
                   <td data-label="Customer">
                     <button type="button" className="cx-link ap-link-btn" onClick={() => openCustomer(a.userId)}>{a.customer}</button>
                     <small>{a.waladminId} · {a.email}</small>

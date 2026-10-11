@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Rocket, Server, Globe } from "lucide-react";
+import { Loader2, Rocket, Server, Globe, MapPin } from "lucide-react";
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { APP_TYPES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
 
 /*
-  Create → App Platform: pick the type (Shared; Dedicated is coming soon) and
-  a plan, choose the domain, pay, and the app is active. Billed like a
+  Create → App Platform: pick the type (Shared; Dedicated is coming soon), the
+  location and a plan, choose the domain, pay, and the app is active. Billed like a
   monthly VM: the rest of this month now, pro rata, then the full month on
   the 1st (utils/monthlyBilling.js).
 */
@@ -28,13 +28,14 @@ const AppConfigurator = () => {
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [selected, setSelected] = useState(null);
+  const [locationId, setLocationId] = useState(null);
   const [domain, setDomain] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     api("/api/apps/catalog")
-      .then((c) => { setCatalog(c); if (c.plans[0]) setSelected(c.plans[0].name); })
+      .then((c) => { setCatalog(c); if (c.plans[0]) setSelected(c.plans[0].name); if (c.locations?.[0]) setLocationId(c.locations[0].id); })
       .catch((e) => setLoadError(e.message));
   }, []);
 
@@ -44,12 +45,14 @@ const AppConfigurator = () => {
   const host = cleanDomain(domain);
   const domainOk = DOMAIN_RE.test(host);
   const due = plan ? proRataNow(plan.monthly) : { days: 0, dim: 0, amount: 0 };
+  const locations = catalog?.locations || [];
+  const location = locations.find((l) => l.id === locationId) || null;
 
   const deploy = async () => {
     setError("");
     setBusy(true);
     try {
-      await api("/api/apps", { method: "POST", body: { plan: plan.name, domain: host } });
+      await api("/api/apps", { method: "POST", body: { plan: plan.name, location: locationId, domain: host } });
       refreshBalance();
       navigate("/dashboard/resources?tab=apps&created=1");
     } catch (err) {
@@ -80,7 +83,28 @@ const AppConfigurator = () => {
         </section>
 
         <section className="cx-card cx-step">
-          <h3><span className="cx-step-num">2</span> Choose a plan</h3>
+          <h3><span className="cx-step-num">2</span> Location</h3>
+          {catalog && locations.length === 0 ? (
+            <div className="cx-soon-inline"><strong>No locations are open for App Platform right now.</strong></div>
+          ) : (
+            <div className="cx-choice-grid">
+              {locations.map((l) => (
+                <label key={l.id} className={`cx-term${locationId === l.id ? " is-selected" : ""}`}>
+                  <input type="radio" name="app-location" className="cx-visually-hidden" checked={locationId === l.id} onChange={() => setLocationId(l.id)} />
+                  {!l.flagUrl && <MapPin size={18} aria-hidden="true" />}
+                  <span>
+                    {l.flagUrl && <img src={l.flagUrl} alt="" className="cx-flag" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+                    <strong>{l.name}</strong>
+                    <small>{l.country || "Available"}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="cx-card cx-step">
+          <h3><span className="cx-step-num">3</span> Choose a plan</h3>
           <div className="cx-family-head"><h4 className="cx-plan-family">Shared</h4></div>
           {!catalog ? (
             <div className="cx-soon-inline"><span>{loadError ? "Plans couldn't be loaded." : "Loading plans…"}</span></div>
@@ -122,7 +146,7 @@ const AppConfigurator = () => {
         </section>
 
         <section className="cx-card cx-step">
-          <h3><span className="cx-step-num">3</span> Choose domain</h3>
+          <h3><span className="cx-step-num">4</span> Choose domain</h3>
           <div className="cx-form-grid">
             <label className="cx-field">
               <span>Domain</span>
@@ -144,6 +168,7 @@ const AppConfigurator = () => {
           <dl>
             <div><dt>Product</dt><dd>App Platform</dd></div>
             <div><dt>Type</dt><dd>Shared</dd></div>
+            <div><dt>Location</dt><dd>{location ? location.name : "—"}</dd></div>
             <div><dt>Plan</dt><dd>{plan ? plan.name : "—"}</dd></div>
             {plan && <div><dt>Resources</dt><dd>{plan.vcpu} vCPU · {formatRam(plan.ram)} · {plan.storage} GB</dd></div>}
             <div><dt>Domain</dt><dd>{domainOk ? host : "—"}</dd></div>
@@ -167,7 +192,7 @@ const AppConfigurator = () => {
               {error}{/balance is too low/i.test(error) && <> <Link to="/dashboard/billing" className="cx-link">Add funds</Link></>}
             </p>
           )}
-          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={deploy} disabled={!plan || !domainOk || busy}>
+          <button type="button" className="cx-btn cx-btn-primary cx-btn-block cx-btn-lg" onClick={deploy} disabled={!plan || !location || !domainOk || busy}>
             {busy ? <><Loader2 size={18} className="cx-spin" /> Deploying…</> : <><Rocket size={18} /> Pay and deploy</>}
           </button>
           <p className="cx-summary-note">
