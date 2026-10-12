@@ -26,8 +26,9 @@ const GROUPS = [
         ],
     },
     {
-        id: 'email', label: 'Email (SMTP)', desc: 'Outgoing email through Brevo. The sender name and address are set in Settings.',
+        id: 'email', label: 'Email (Brevo)', desc: 'Outgoing email through Brevo: the API key if set, otherwise SMTP. The sender name and address are set in Settings.',
         fields: [
+            { name: 'BREVO_API_KEY', label: 'Brevo API key', secret: true, hint: 'An xkeysib- API key (or Brevo\'s MCP token). Used instead of SMTP when set.' },
             { name: 'SMTP_HOST', label: 'SMTP host', placeholder: 'smtp-relay.brevo.com' },
             { name: 'SMTP_PORT', label: 'SMTP port', placeholder: '587' },
             { name: 'SMTP_USER', label: 'SMTP login' },

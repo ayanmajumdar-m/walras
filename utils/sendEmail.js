@@ -4,17 +4,19 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 /**
- * Transactional email over SMTP (Brevo's relay).
- *
- * This used to go through Brevo's HTTP API with an `xkeysib-` API key. It now
- * uses SMTP with an `xsmtpsib-` key — one credential to rotate, one place for
- * deliverability to be right or wrong.
+ * Transactional email through Brevo, by one of two transports:
+ *   - Brevo's email API (https://api.brevo.com/v3/smtp/email) with an
+ *     `xkeysib-` API key, when BREVO_API_KEY is set. Used first.
+ *   - SMTP (Brevo's relay, smtp-relay.brevo.com) with an `xsmtpsib-` SMTP key
+ *     (SMTP_HOST / SMTP_USER / SMTP_PASS), otherwise.
+ * Both look the same to the rest of this file: sendMail(message) and verify().
+ * Brevo's "Authorised IPs" security setting applies to both.
  *
  * Missing credentials do not stop the server. They used to call process.exit(1)
  * at import time, which killed Express before it bound a port and looked like a
  * crash-loop with no explanation. Now mail simply no-ops with a warning.
  */
-// SMTP settings come from Admin → Integrations, falling back to the env.
+// Settings come from Admin → Integrations (stored encrypted), falling back to the env.
 const integrations = require('./integrations');
 const smtp = () => ({
     host: integrations.get('SMTP_HOST'),
@@ -52,7 +54,71 @@ const resolveSender = async () => {
 // backwards is the classic "greeting never received" hang.
 // The transport is rebuilt whenever the SMTP settings change.
 let transport = null; // { key, transporter }
+
+const BREVO_API = 'https://api.brevo.com/v3';
+
+/** The Brevo API key: an `xkeysib-` key, or Brevo's MCP token (base64 JSON with api_key) that wraps one. */
+const brevoApiKey = () => {
+    const raw = String(integrations.get('BREVO_API_KEY') || '').trim();
+    if (!raw || raw.startsWith('xkeysib-')) return raw;
+    try {
+        const inner = JSON.parse(Buffer.from(raw, 'base64').toString('utf8')).api_key;
+        return typeof inner === 'string' ? inner.trim() : raw;
+    } catch {
+        return raw;
+    }
+};
+
+/** "Name <a@b>" / { name, address } / "a@b" → Brevo's { email, name }. */
+const brevoAddress = (v) => {
+    if (v && typeof v === 'object') return { email: v.address || v.email, ...(v.name ? { name: v.name } : {}) };
+    const m = String(v).match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
+    return m ? { email: m[2].trim(), ...(m[1].trim() ? { name: m[1].trim() } : {}) } : { email: String(v).trim() };
+};
+
+/** A transporter with nodemailer's shape that sends through Brevo's email API. */
+const brevoTransporter = (apiKey) => {
+    const call = async (path, init = {}) => {
+        const res = await fetch(`${BREVO_API}${path}`, {
+            ...init,
+            headers: { 'api-key': apiKey, accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}) },
+            signal: AbortSignal.timeout(20000),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            const err = new Error(`Brevo API ${res.status}: ${body.message || body.code || res.statusText}`);
+            err.status = res.status;
+            throw err;
+        }
+        return body;
+    };
+    return {
+        sendMail: async ({ from, to, subject, html, text, headers }) => {
+            const out = await call('/smtp/email', {
+                method: 'POST',
+                body: JSON.stringify({
+                    sender: brevoAddress(from),
+                    to: (Array.isArray(to) ? to : String(to).split(',')).filter(Boolean).map(brevoAddress),
+                    subject,
+                    ...(html ? { htmlContent: html } : {}),
+                    ...(text ? { textContent: text } : {}),
+                    ...(headers && Object.keys(headers).length ? { headers } : {}),
+                }),
+            });
+            return { messageId: out.messageId || out.messageIds?.[0] || 'brevo-api' };
+        },
+        // The account endpoint checks the key (and Brevo's IP allowlist) without sending.
+        verify: async () => { await call('/account'); return true; },
+    };
+};
+
 const getTransporter = () => {
+    const apiKey = brevoApiKey();
+    if (apiKey) {
+        const key = `api:${apiKey}`;
+        if (!transport || transport.key !== key) transport = { key, transporter: brevoTransporter(apiKey), via: 'Brevo API' };
+        return transport.transporter;
+    }
     const s = smtp();
     if (!(s.host && s.user && s.pass)) return null;
     const key = JSON.stringify(s);
@@ -60,6 +126,7 @@ const getTransporter = () => {
         transport = {
             key,
             transporter: nodemailer.createTransport({ host: s.host, port: s.port, secure: s.port === 465, auth: { user: s.user, pass: s.pass } }),
+            via: 'SMTP',
         };
     }
     return transport.transporter;
@@ -74,16 +141,16 @@ const isEmailConfigured = () => Boolean(getTransporter());
 const verifyEmailTransport = async () => {
     const transporter = getTransporter();
     if (!transporter) {
-        console.warn('⚠️  SMTP isn\'t set (Admin → Integrations, or SMTP_HOST / SMTP_USER / SMTP_PASS) — email is disabled.');
+        console.warn('⚠️  Email isn\'t set up (BREVO_API_KEY, or SMTP_HOST / SMTP_USER / SMTP_PASS) — email is disabled.');
         return false;
     }
     try {
         await transporter.verify();
-        const s = smtp();
-        console.log(`✅ SMTP ready (${s.user} via ${s.host}:${s.port})`);
+        if (transport?.via === 'Brevo API') console.log('✅ Email ready (Brevo API)');
+        else { const s = smtp(); console.log(`✅ SMTP ready (${s.user} via ${s.host}:${s.port})`); }
         return true;
     } catch (error) {
-        console.error('⚠️  SMTP verification failed:', error.message);
+        console.error(`⚠️  Email (${transport?.via || 'SMTP'}) verification failed:`, error.message);
         if (/unauthorized ip/i.test(error.message)) {
             console.error("   Brevo restricts the relay to allowlisted IPs. Add this server's" +
                 ' public IP under Brevo → Security → Authorised IPs.');
@@ -193,7 +260,7 @@ const sendAuthCodeEmail = async (to, name, code, purpose, minutes) => {
         return { messageId: 'dev-log' };
     }
     if (!isEmailConfigured()) {
-        throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
+        throw new Error('Email is not configured (set BREVO_API_KEY, or SMTP_HOST, SMTP_USER and SMTP_PASS, in the server environment)');
     }
     const copy = AUTH_CODE_COPY[purpose];
     const info = await getTransporter().sendMail({
@@ -239,7 +306,7 @@ const sendDomainPurchaseEmail = async (to, name, domainName, purchaseDate) => {
  * a new sender address is accepted by Brevo before customers depend on it.
  */
 const sendTestEmail = async (to) => {
-    if (!isEmailConfigured()) throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
+    if (!isEmailConfigured()) throw new Error('Email is not configured (set BREVO_API_KEY, or SMTP_HOST, SMTP_USER and SMTP_PASS, in the server environment)');
     const from = await resolveSender();
     const info = await getTransporter().sendMail({
         from,
@@ -268,7 +335,7 @@ const sendTeamInviteEmail = async (to, ownerName, accessLabels) => {
         console.log(`📧 [MAIL_DEV_LOG] team invite for ${to} from ${ownerName} (${access})`);
         return { messageId: 'dev-log' };
     }
-    if (!isEmailConfigured()) throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
+    if (!isEmailConfigured()) throw new Error('Email is not configured (set BREVO_API_KEY, or SMTP_HOST, SMTP_USER and SMTP_PASS, in the server environment)');
     const info = await getTransporter().sendMail({
         from: await resolveSender(),
         to,
@@ -319,7 +386,7 @@ const sendRawEmail = async ({ to, subject, html, text, headers }) => {
         console.log(`📧 [MAIL_DEV_LOG] "${subject}" to ${to}`);
         return { messageId: 'dev-log' };
     }
-    if (!isEmailConfigured()) throw new Error('Email is not configured (set SMTP_HOST, SMTP_USER and SMTP_PASS in the server environment)');
+    if (!isEmailConfigured()) throw new Error('Email is not configured (set BREVO_API_KEY, or SMTP_HOST, SMTP_USER and SMTP_PASS, in the server environment)');
     return getTransporter().sendMail({ from: await resolveSender(), to, subject, html, text, headers });
 };
 
