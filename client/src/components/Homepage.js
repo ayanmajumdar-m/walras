@@ -95,12 +95,12 @@ const UPCOMING = [
 
 const SUPPORT_STATS = [
   { number: "24/7", label: "Support Availability" },
-  { number: "5min", label: "Avg Response Time" },
+  { number: "20min", label: "Avg Response Time" },
   { number: "99.9%", label: "Customer Satisfaction" }
 ];
 
 const SUPPORT_FEATURES = [
-  "Phone, Chat & Email Support",
+  "Chat & Email Support",
   "Technical Experts",
   "Documentation & Tutorials"
 ];
@@ -250,7 +250,7 @@ const Homepage = () => {
         <div>
           <h2 className="support-title">24×7 Expert Support</h2>
           <p className="support-desc">
-            Our certified experts are available 24×7. Get instant support via chat, phone, or email.
+            Our certified experts are available 24×7. Get instant support via chat or email.
           </p>
           <div className="support-features">
             {SUPPORT_FEATURES.map((f) => (
