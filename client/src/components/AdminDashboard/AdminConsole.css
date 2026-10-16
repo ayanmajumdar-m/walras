@@ -134,6 +134,14 @@
 .ap-profile-main h2 { margin: 0 0 6px; font-size: 28px; }
 .ap-profile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* Customer → KYC, and Settings → KYC. */
+.ap-kyc { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 16px; padding: 16px 22px; }
+.ap-kyc-main { min-width: 0; flex: 1 1 320px; }
+.ap-kyc-main h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 15px; }
+.ap-kyc-main p { margin: 2px 0 0; }
+.ap-seg.ap-seg-3 { grid-template-columns: repeat(3, 1fr); }
+.ap-kyc-products { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 12px 0 8px; }
+
 .ap-avatar {
   display: grid;
   place-items: center;

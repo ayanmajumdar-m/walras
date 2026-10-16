@@ -50,6 +50,8 @@ const ACCESS_ROUTES = [
     ['/api/payment/razorpay/verify', 'billing'],
     ['/api/invoices', 'billing'],
     ['/api/support', 'support'],
+    // Whether KYC locks ordering here. Sending KYC documents is the owner's own.
+    ['/api/kyc/status', 'servers'],
     ['/api/team/members', 'team'],
 ];
 

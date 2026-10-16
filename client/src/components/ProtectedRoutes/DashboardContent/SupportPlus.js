@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PhoneCall, Check, RefreshCw, X, Clock, Headphones } from "lucide-react";
-import { api } from "../consoleApi";
+import { api, actingAccount } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 
 /*
@@ -32,6 +32,7 @@ const STATUS = {
 const ErrorHelp = ({ error }) => {
   if (error?.data?.insufficient) return <Link to="/dashboard/billing?tab=wallet" className="cx-btn cx-btn-primary cx-btn-sm">Add funds</Link>;
   if (error?.data?.overdue || error?.data?.suspended) return <Link to="/dashboard/billing?tab=invoices" className="cx-btn cx-btn-primary cx-btn-sm">Pay invoice</Link>;
+  if (error?.data?.kycRequired && error.data.kycStatus !== "pending" && !actingAccount()) return <Link to="/dashboard/kyc" className="cx-btn cx-btn-primary cx-btn-sm">Complete KYC</Link>;
   return null;
 };
 

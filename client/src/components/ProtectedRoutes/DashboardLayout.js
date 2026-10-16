@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
-import { Menu, Plus, Wallet as WalletIcon, Wrench, Users, Lock, X } from "lucide-react";
+import { Menu, Plus, Wallet as WalletIcon, Wrench, Users, Lock, X, ShieldCheck } from "lucide-react";
 import ProtectedRoute from "./PrivateRoutes";
 import Sidebar from "./Sidebar";
 import Overview from "./DashboardContent/Overview";
@@ -10,6 +10,7 @@ import Resources from "./DashboardContent/Resources";
 import Billing from "./DashboardContent/Billing";
 import Profile from "./DashboardContent/Profile";
 import Support from "./DashboardContent/Support";
+import Kyc from "./DashboardContent/Kyc";
 import { api, rupees, actingAccount, switchAccount, ACCOUNT_KEY } from "./consoleApi";
 import { ConsoleContext } from "./ConsoleContext";
 // The retired Home page's stylesheet carries generic global classes
@@ -29,6 +30,7 @@ const TITLES = {
   support: "Support",
   submitTicket: "Support",
   profile: "Account",
+  kyc: "KYC verification",
 };
 
 const DashboardLayout = () => {
@@ -59,6 +61,12 @@ const DashboardLayout = () => {
     return (account.areas || []).includes(perm);
   }, [actingId, account]);
 
+  // KYC status of the account being worked in, and which services wait on it.
+  const [kyc, setKyc] = useState(null);
+  const refreshKyc = useCallback(() => {
+    api("/api/kyc/status").then(setKyc).catch(() => {});
+  }, []);
+
   const refreshBalance = useCallback(() => {
     api("/api/wallet").then((d) => setBalance(rupees(d.balance))).catch(() => {});
   }, []);
@@ -67,9 +75,10 @@ const DashboardLayout = () => {
     const userId = localStorage.getItem("userId");
     if (userId) api(`/api/users/profile/${userId}`).then(setProfile).catch(() => {});
     refreshBalance();
+    refreshKyc();
     fetch("/api/settings/public").then((r) => r.json()).then(setPlatform).catch(() => {});
     api("/api/team").then((d) => setMemberships(d.memberships || [])).catch(() => setMemberships([]));
-  }, [refreshBalance]);
+  }, [refreshBalance, refreshKyc]);
 
   // Stored team account I'm no longer in: back to my own.
   useEffect(() => {
@@ -108,7 +117,7 @@ const DashboardLayout = () => {
 
   return (
     <ProtectedRoute>
-      <ConsoleContext.Provider value={{ profile, balance, refreshBalance, platform, account, memberships: memberships || [], can }}>
+      <ConsoleContext.Provider value={{ profile, balance, refreshBalance, platform, account, memberships: memberships || [], can, kyc, refreshKyc }}>
         <div className="cx-shell">
           <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} profile={profile} account={account} memberships={memberships || []} can={can} />
 
@@ -152,6 +161,18 @@ const DashboardLayout = () => {
                   <Link to="/dashboard/billing?tab=invoices" className="cx-btn cx-btn-primary cx-btn-sm">Pay invoice</Link>
                 </div>
               )}
+              {!account && kyc && kyc.status !== "verified" && kyc.required.length > 0 && !location.pathname.startsWith("/dashboard/kyc") && (
+                <div className={`cx-alert ${kyc.status === "rejected" ? "is-error" : "is-info"} cx-due-banner`} role="status">
+                  <span>
+                    {kyc.status === "pending"
+                      ? <><strong>We're checking your KYC documents.</strong> {kyc.required.map((r) => r.label).join(", ")} unlock once you're verified.</>
+                      : kyc.status === "rejected"
+                        ? <><strong>We couldn't verify your KYC documents.</strong> Please send them again.</>
+                        : <><strong>Complete your KYC</strong> to order {kyc.required.map((r) => r.label).join(", ")}.</>}
+                  </span>
+                  {kyc.status !== "pending" && <Link to="/dashboard/kyc" className="cx-btn cx-btn-primary cx-btn-sm"><ShieldCheck size={15} /> Complete KYC</Link>}
+                </div>
+              )}
               {teamNotice && (
                 <div className="cx-alert is-info" role="status">
                   <span>{teamNotice}</span>
@@ -176,6 +197,7 @@ const DashboardLayout = () => {
                 <Route path="/resources" element={need("servers", <Resources />)} />
                 <Route path="/billing" element={need("billing", <Billing />)} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/kyc" element={account ? <Navigate to="/dashboard/home" replace /> : <Kyc />} />
                 <Route path="/support" element={need("support", <Support />)} />
 
                 {/* Old per-service pages fold into Create / Resources / Billing. */}

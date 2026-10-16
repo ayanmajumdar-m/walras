@@ -28,7 +28,7 @@ const SupportPlus = require('../controllers/supportPlus.controllers');
 const planLimit = rateLimit({ windowMs: 15 * MINUTE, max: 10, keyFn: userKey('support-plus') });
 const callbackLimit = rateLimit({ windowMs: 60 * MINUTE, max: 10, keyFn: userKey('support-callback'), message: 'Too many call-back requests. Please wait a while.' });
 supportRouter.get('/plus', readLimit, SupportPlus.overview);
-supportRouter.post('/plus', planLimit, SupportPlus.enable);
+supportRouter.post('/plus', planLimit, require('../utils/kyc').requireKyc('supportPlus'), SupportPlus.enable);
 supportRouter.delete('/plus', planLimit, SupportPlus.cancel);
 supportRouter.post('/plus/keep', planLimit, SupportPlus.keep);
 supportRouter.get('/callbacks', readLimit, SupportPlus.callbacks);

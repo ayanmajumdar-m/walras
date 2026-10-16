@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck, ArrowRight, MapPin, Eye, EyeOff, KeyRound, BadgeP
 import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 import { PRODUCTS, productStatus } from "./products";
+import { KycLocked, kycLocked } from "./Kyc";
 import { CPU_TYPES, formatINR, formatRam, formatBandwidth } from "../../../data/plans";
 import DatabaseConfigurator from "./DatabaseCreate";
 import AppConfigurator from "./AppCreate";
@@ -423,7 +424,7 @@ const ComingSoon = ({ type }) => {
 const CREATE_PRODUCTS = PRODUCTS.filter((p) => p.id !== "reserved");
 
 const Create = () => {
-  const { platform } = useConsole();
+  const { platform, kyc } = useConsole();
   const [params, setParams] = useSearchParams();
   // Old links to the reserved tab go to its page.
   if (params.get("type") === "reserved") return <Navigate to="/dashboard/reserve" replace />;
@@ -459,9 +460,13 @@ const Create = () => {
         })}
       </div>
 
-      {type === "compute" && <ComputeConfigurator key="monthly" mode="monthly" />}
-      {type === "database" && <DatabaseConfigurator />}
-      {type === "apps" && <AppConfigurator />}
+      {kycLocked(kyc, type) ? <KycLocked product={type} /> : (
+        <>
+          {type === "compute" && <ComputeConfigurator key="monthly" mode="monthly" />}
+          {type === "database" && <DatabaseConfigurator />}
+          {type === "apps" && <AppConfigurator />}
+        </>
+      )}
       {type === "domains" && <ComingSoon type={type} />}
     </div>
   );

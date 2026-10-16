@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Bell, UserPlus, Receipt, AlertTriangle, PhoneCall } from "lucide-react";
+import { Bell, UserPlus, Receipt, AlertTriangle, PhoneCall, FileCheck } from "lucide-react";
 import { adminApi, fmtDate } from "../adminApi";
 
-const ICONS = { signup: UserPlus, order: Receipt, payment_failed: AlertTriangle, callback: PhoneCall };
+const ICONS = { signup: UserPlus, order: Receipt, payment_failed: AlertTriangle, callback: PhoneCall, kyc: FileCheck };
 const POLL_MS = 60 * 1000;
 
 /**
- * Header bell: recent sign-ups, failed payments and waiting Support +
- * call-back requests.
+ * Header bell: recent sign-ups, failed payments, waiting Support +
+ * call-back requests and KYC documents to check.
  * Polls every minute; opening it marks everything as seen for this admin.
  */
 const NotificationsBell = ({ openCustomer, openSection }) => {

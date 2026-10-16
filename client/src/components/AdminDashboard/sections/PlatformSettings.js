@@ -3,6 +3,7 @@ import { Power, PackageX, FileText, Save, WalletCards, RefreshCw } from "lucide-
 import { adminApi } from "../adminApi";
 import EmailSender from "../components/Settings";
 import SupportDepartments from "./SupportDepartments";
+import KycSettings from "./KycSettings";
 
 const INVOICE_FIELDS = [
   { key: "legalName", label: "Legal name", wide: true },
@@ -63,7 +64,7 @@ const PlatformSettings = () => {
     <div className="cx-page ap-settings">
       <div className="cx-page-head">
         <h2>Settings</h2>
-        <p>Platform switches, plan availability, invoice details and email. Every change is recorded in the audit log.</p>
+        <p>Platform switches, plan availability, invoice details, KYC and email. Every change is recorded in the audit log.</p>
       </div>
 
       {notice && <div className={`cx-alert is-${notice.type}`} role="status">{notice.text}</div>}
@@ -129,6 +130,8 @@ const PlatformSettings = () => {
           </button>
         </div>
       </section>
+
+      <KycSettings />
 
       <SupportDepartments />
 

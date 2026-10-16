@@ -42,6 +42,8 @@ app.use(
 // Support tickets carry attachments, so they get their own larger body limit;
 // mounted before the global parser (100kb) so that one never sees them.
 app.use("/api/support", require("./routes/support.routes"));
+// KYC documents (utils/kyc.js), likewise.
+app.use("/api/kyc", require("./routes/kyc.routes"));
 // Payments: the Razorpay webhook needs the raw body to check its signature,
 // so this router parses its own bodies too.
 app.use("/api/payment", require("./routes/payment.routes"));

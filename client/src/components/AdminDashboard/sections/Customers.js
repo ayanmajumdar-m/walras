@@ -7,6 +7,7 @@ const FILTERS = [
   { id: "personal", label: "Personal" },
   { id: "business", label: "Business" },
   { id: "unverified", label: "Unverified" },
+  { id: "kyc", label: "KYC to check" },
   { id: "suspended", label: "Suspended" },
 ];
 
@@ -31,6 +32,7 @@ const Customers = ({ openCustomer }) => {
       if (filter === "business" && u.account_type !== "business") return false;
       if (filter === "unverified" && (u.isemailverified ?? u.isEmailVerified)) return false;
       if (filter === "suspended" && !u.suspended_at) return false;
+      if (filter === "kyc" && u.kyc_status !== "pending") return false;
       if (!q) return true;
       return [u.name, u.email, u.phone, u.company, u.waladmin_id, String(u.id)].some((v) => (v || "").toLowerCase().includes(q));
     });
@@ -72,7 +74,7 @@ const Customers = ({ openCustomer }) => {
         <div className="cx-card cx-table-wrap">
           <table className="cx-table ap-click-rows">
             <thead>
-              <tr><th>Customer</th><th>WALADMIN ID</th><th>Type</th><th>Status</th><th>Account balance</th><th>VMs</th><th>Joined</th><th /></tr>
+              <tr><th>Customer</th><th>WALADMIN ID</th><th>Type</th><th>Status</th><th>KYC</th><th>Account balance</th><th>VMs</th><th>Joined</th><th /></tr>
             </thead>
             <tbody>
               {shown.map((u) => {
@@ -87,8 +89,14 @@ const Customers = ({ openCustomer }) => {
                     </td>
                     <td data-label="Status">
                       {u.suspended_at ? <span className="cx-status is-suspended">suspended</span>
-                        : verified ? <span className="cx-status is-active">verified</span>
+                        : verified ? <span className="cx-status is-active">email verified</span>
                         : <span className="cx-status is-pending">unverified</span>}
+                    </td>
+                    <td data-label="KYC">
+                      {u.kyc_status === "verified" ? <span className="cx-status is-active">verified</span>
+                        : u.kyc_status === "pending" ? <span className="cx-status is-pending">to check</span>
+                        : u.kyc_status === "rejected" ? <span className="cx-status is-suspended">rejected</span>
+                        : <span className="ap-muted">not sent</span>}
                     </td>
                     <td data-label="Account balance">{inr(u.balance)}</td>
                     <td data-label="VMs">{u.server_count ?? 0}</td>

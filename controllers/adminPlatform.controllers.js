@@ -17,6 +17,9 @@ const computeStock = require('../utils/computeStock');
 const serverLocations = require('../utils/serverLocations');
 const { ensureWallet } = require('../utils/wallets');
 const supportPlus = require('../utils/supportPlus');
+const kyc = require('../utils/kyc');
+const { sendRawEmail, escapeHtml } = require('../utils/sendEmail');
+const integrations = require('../utils/integrations');
 
 const q = (sql, params = []) => new Promise((resolve, reject) => {
     connection.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -56,6 +59,23 @@ const passwordProblem = (pw) => {
 
 const activeSuperAdmins = async () =>
     Number((await q("SELECT COUNT(*) AS n FROM admins WHERE role = 'super_admin' AND is_active = true"))[0].n);
+
+// Tells the customer their KYC was verified, or why it wasn't. Never fails the request.
+const emailKyc = async (user, status, note) => {
+    try {
+        const url = `${(integrations.get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '')}/dashboard/kyc`;
+        const lines = status === 'verified'
+            ? ['Your KYC verification is complete. Every Walras Cloud service is now unlocked in your console.']
+            : ["We couldn't verify your KYC documents.", `Reason: ${note}`, 'Please send your documents again from the console.'];
+        const subject = status === 'verified' ? 'Your KYC is verified' : 'Your KYC needs another look';
+        const text = [`Hi ${user.name || 'there'},`, '', ...lines, '', `KYC verification: ${url}`, '', 'Walras Cloud'].join('\n');
+        const html = `<p>Hi ${escapeHtml(user.name || 'there')},</p>${lines.map((l) => `<p>${escapeHtml(l)}</p>`).join('')}`
+            + `<p><a href="${escapeHtml(url)}">Open KYC verification</a></p><p>Walras Cloud</p>`;
+        await sendRawEmail({ to: user.email, subject, text, html });
+    } catch (err) {
+        console.warn(`KYC email to user ${user.id} failed:`, err.message);
+    }
+};
 
 const PlatformController = {
     // ── Me ───────────────────────────────────────────────────────────────
@@ -230,6 +250,7 @@ const PlatformController = {
         const [user] = await q(
             `SELECT id, waladmin_id, account_type, name, email, phone, company, gstin, role, address,
                     isverified, isemailverified, suspended_at, suspension_reason,
+                    kyc_status, kyc_submitted_at, kyc_ticket_id, kyc_reviewed_at, kyc_reviewed_by, kyc_note,
                     lastloginat, lastloginip, createdat
              FROM users WHERE id = ?`,
             [id]
@@ -248,8 +269,10 @@ const PlatformController = {
             settle(q('SELECT ip_address, user_agent, login_time FROM user_sessions WHERE user_id = ? ORDER BY login_time DESC LIMIT 10', [id])),
         ]);
 
+        const agentUrl = zendesk.zendeskAgentUrl();
         res.json({
             user,
+            kycTicketUrl: agentUrl && user.kyc_ticket_id ? `${agentUrl}/tickets/${user.kyc_ticket_id}` : null,
             wallet: wallet[0] || null,
             servers, domains, transactions, invoices, sessions,
         });
@@ -273,6 +296,44 @@ const PlatformController = {
         forgetUserStatus(id);
         audit(req, 'user.unsuspend', 'user', id);
         res.json({ message: 'Customer reinstated' });
+    }),
+
+    /**
+     * KYC, set by hand once the documents on their KYC VERIFICATION ticket
+     * are checked: verified unlocks the services that need KYC; rejected
+     * (with a reason the customer sees) lets them send documents again;
+     * unverified takes a verification back. The customer is emailed for
+     * verified and rejected.
+     */
+    setKyc: handle(async (req, res) => {
+        const id = toInt(req.params.id);
+        const status = ['verified', 'rejected', 'unverified'].includes(req.body.status) ? req.body.status : null;
+        const note = String(req.body.note || '').trim().slice(0, 500);
+        if (!status) throw new HttpError(400, 'Choose verified, rejected or unverified');
+        if (status === 'rejected' && note.length < 3) throw new HttpError(400, 'Give a reason; the customer sees it and can send their documents again');
+        const [admin] = await q('SELECT username, full_name FROM admins WHERE id = ?', [req.admin.adminId]);
+        const updated = await q(
+            `UPDATE users SET kyc_status = ?, kyc_note = ?, kyc_reviewed_at = NOW(), kyc_reviewed_by = ?
+              WHERE id = ? RETURNING id, name, email`,
+            [status, note || null, admin?.full_name || admin?.username || 'Admin', id]
+        );
+        const user = updated.rows?.[0];
+        if (!user) throw new HttpError(404, 'Customer not found');
+        audit(req, 'user.kyc', 'user', id, { status, note: note || undefined });
+        if (status !== 'unverified') emailKyc(user, status, note);
+        res.json({ message: status === 'verified' ? 'KYC verified: the customer can now order every service' : status === 'rejected' ? 'KYC rejected: the customer can send their documents again' : 'KYC set back to unverified' });
+    }),
+
+    // Settings → KYC: which services can't be ordered until KYC is verified.
+    getKycSettings: handle(async (req, res) => {
+        const required = await kyc.getRequired();
+        res.json({ products: Object.entries(kyc.PRODUCTS).map(([id, label]) => ({ id, label, required: required.includes(id) })) });
+    }),
+
+    updateKycSettings: handle(async (req, res) => {
+        const required = await kyc.setRequired(req.body.required);
+        audit(req, 'settings.kyc', 'settings', 'kyc', { required });
+        res.json({ products: Object.entries(kyc.PRODUCTS).map(([id, label]) => ({ id, label, required: required.includes(id) })) });
     }),
 
     /**
@@ -343,7 +404,7 @@ const PlatformController = {
      */
     listNotifications: handle(async (req, res) => {
         const settle = (p) => p.catch(() => []);
-        const [signups, failedTopups, [me], callbacks] = await Promise.all([
+        const [signups, failedTopups, [me], callbacks, kycWaiting] = await Promise.all([
             settle(q(`SELECT id, name, email, account_type, createdat AS at FROM users
                       WHERE createdat > NOW() - INTERVAL '14 days' ORDER BY createdat DESC LIMIT 20`)),
             settle(q(`SELECT wt.reference_id, wt.amount, w.user_id, u.name, wt.created_at AS at
@@ -353,10 +414,16 @@ const PlatformController = {
             q('SELECT notifications_seen_at FROM admins WHERE id = ?', [req.admin.adminId]),
             // Support + call-backs waiting for someone to pick them up.
             req.admin.permissions.includes('manage_callbacks') ? settle(supportPlus.pendingForBell()) : [],
+            // KYC documents waiting to be checked.
+            req.admin.permissions.includes('manage_users')
+                ? settle(q(`SELECT id, name, email, kyc_submitted_at AS at FROM users
+                            WHERE kyc_status = 'pending' ORDER BY kyc_submitted_at DESC LIMIT 20`))
+                : [],
         ]);
 
         const items = [
             ...signups.map((u) => ({ kind: 'signup', title: `New ${u.account_type || 'personal'} sign-up`, body: `${u.name} · ${u.email}`, userId: u.id, at: u.at })),
+            ...kycWaiting.map((u) => ({ kind: 'kyc', title: 'KYC documents to check', body: `${u.name} · ${u.email}`, userId: u.id, at: u.at })),
             ...callbacks.map((c) => ({ kind: 'callback', title: 'Support + call-back requested', body: `${c.account_name || 'Customer'} · ${c.phone}`, section: 'support-plus', at: c.at })),
             ...failedTopups.map((t) => ({ kind: 'payment_failed', title: 'Account balance top-up failed', body: `${t.name || 'Customer'} · ₹${(Number(t.amount) / 100).toFixed(2)}`, userId: t.user_id, at: t.at })),
         ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 30);

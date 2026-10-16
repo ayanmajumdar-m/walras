@@ -511,6 +511,28 @@ const migrateWaladminIds = [
      END $$`,
 ];
 
+// KYC (utils/kyc.js): kyc_status is set to pending when the customer sends
+// their documents (kyc_ticket_id = that Zendesk ticket) and to verified or
+// rejected by an admin (kyc_reviewed_*; kyc_note = why, for a rejection).
+// Customers who already had an account when KYC arrived are marked verified,
+// once (the app_settings marker and the update go in one statement).
+const migrateKyc = [
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_status VARCHAR(12) NOT NULL DEFAULT 'unverified' CHECK (kyc_status IN ('unverified', 'pending', 'verified', 'rejected'))",
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_submitted_at TIMESTAMPTZ',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_ticket_id BIGINT',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_reviewed_at TIMESTAMPTZ',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_reviewed_by VARCHAR(100)',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_note VARCHAR(500)',
+    `WITH first AS (
+        INSERT INTO app_settings (key, value) VALUES ('seed.kyc_existing_verified', '1')
+        ON CONFLICT (key) DO NOTHING RETURNING key
+     )
+     UPDATE users u SET kyc_status = 'verified', kyc_reviewed_at = NOW(), kyc_reviewed_by = 'Existing customer'
+       FROM first
+      WHERE u.kyc_status = 'unverified'
+     RETURNING u.id`,
+];
+
 // Bulk email campaigns sent from the admin panel (services/bulkEmail.js).
 // last_user_id lets an interrupted campaign resume without repeats.
 const createBulkEmailsTable = `
@@ -885,6 +907,7 @@ connection.connect((err) => {
         ['Bulk emails', createBulkEmailsTable],
         ['bulk emails target', 'ALTER TABLE bulk_emails ADD COLUMN IF NOT EXISTS target_user_id INT'],
         ['users marketing opt-out', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_out BOOLEAN NOT NULL DEFAULT FALSE'],
+        ...migrateKyc.map((sql, i) => [`KYC ${i + 1}`, sql]),
         ['team members index', 'CREATE INDEX IF NOT EXISTS team_members_member_idx ON team_members (member_user_id)'],
         ['team invites index', 'CREATE INDEX IF NOT EXISTS team_members_email_idx ON team_members (LOWER(email))'],
         ['User sessions', createUserSessionsTable],

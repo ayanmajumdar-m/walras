@@ -5,8 +5,10 @@ import { createContext, useContext } from "react";
 // every console page.
 // `account` is the team account being worked in (null = your own); `can(perm)`
 // says whether this page may use servers / billing / support there.
+// `kyc` is that account's KYC status and the services waiting on it (/api/kyc/status).
 export const ConsoleContext = createContext({
   profile: null, balance: 0, refreshBalance: () => {}, platform: null,
   account: null, memberships: [], can: () => true,
+  kyc: null, refreshKyc: () => {},
 });
 export const useConsole = () => useContext(ConsoleContext);

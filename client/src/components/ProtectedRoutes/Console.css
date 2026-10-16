@@ -1794,3 +1794,28 @@ p.cx-alert,
 .cx-db-conn dd { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; min-width: 0; }
 .cx-db-conn code { overflow-wrap: anywhere; font-size: 13.5px; }
 .cx-db-copy { width: 26px; height: 26px; flex-shrink: 0; }
+
+/* Account → KYC verification (DashboardContent/Kyc.js) */
+.cx-kyc-status { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; margin-bottom: 16px; }
+.cx-kyc-status > svg { flex-shrink: 0; margin-top: 2px; }
+.cx-kyc-status h3 { margin: 0 0 4px; font-size: 17px; }
+.cx-kyc-status p { margin: 4px 0 0; color: var(--text-secondary); font-size: 14px; }
+.cx-kyc-status.is-verified > svg { color: var(--color-accent-700); }
+.cx-kyc-status.is-pending > svg,
+.cx-kyc-status.is-todo > svg { color: #b45309; }
+.cx-kyc-status.is-rejected > svg { color: #b91c1c; }
+.cx-kyc-form { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+.cx-kyc-form .cx-seg { align-self: flex-start; flex-wrap: wrap; }
+.cx-kyc-form > .cx-btn { align-self: flex-start; }
+@media (max-width: 480px) { .cx-kyc-form .cx-seg-label { display: none; } }
+.cx-kyc-slot { padding: 14px 16px; border: 1px solid var(--color-divider); border-radius: 12px; }
+.cx-kyc-slot-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cx-kyc-optional { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.cx-kyc-hint { margin: 6px 0 0; font-size: 13px; color: var(--text-muted); }
+.cx-kyc-slot-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.cx-kyc-slot-row .cx-field { flex: 1 1 220px; max-width: 340px; }
+.cx-kyc-single { font-size: 14px; font-weight: 600; }
+.cx-kyc-file { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; font-size: 13.5px; }
+.cx-kyc-file small { color: var(--text-muted); white-space: nowrap; }
+.cx-kyc-contact { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 14px; }
+.cx-kyc-contact li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

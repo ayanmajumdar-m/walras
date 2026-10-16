@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Wallet, ShieldOff, ShieldCheck, Trash2, BadgeCheck, X, Mail, Phone, Building2, MapPin, Copy, Check } from "lucide-react";
+import { ArrowLeft, Wallet, ShieldOff, ShieldCheck, Trash2, BadgeCheck, X, Mail, Phone, Building2, MapPin, Copy, Check, FileCheck, ExternalLink } from "lucide-react";
 import { adminApi, inr, fmtDate } from "../adminApi";
 
 const TABS = [
@@ -51,14 +51,22 @@ const WaladminId = ({ value }) => {
   );
 };
 
+// users.kyc_status, in admin words (utils/kyc.js).
+const KYC = {
+  unverified: { label: "KYC not sent", tone: "pending", text: "No KYC documents yet. Services that need KYC (Settings → KYC) are locked." },
+  pending: { label: "KYC to check", tone: "pending", text: "Documents sent on their KYC VERIFICATION ticket. Check them, then verify or reject." },
+  verified: { label: "KYC verified", tone: "active", text: "Every service is unlocked." },
+  rejected: { label: "KYC rejected", tone: "suspended", text: "They can send their documents again." },
+};
+
 const CustomerDetail = ({ userId, can, onBack }) => {
   const [data, setData] = useState(null);
   const [audit, setAudit] = useState([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState(null);
   const [tab, setTab] = useState("services");
-  const [modal, setModal] = useState(null); // 'wallet' | 'suspend' | 'delete'
-  const [form, setForm] = useState({ type: "credit", amount: "", reason: "", confirm: "" });
+  const [modal, setModal] = useState(null); // 'wallet' | 'suspend' | 'delete' | 'kyc'
+  const [form, setForm] = useState({ type: "credit", amount: "", reason: "", confirm: "", kyc: "verified" });
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -76,7 +84,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
       await fn();
       setNotice({ type: "success", text: success });
       setModal(null);
-      setForm({ type: "credit", amount: "", reason: "", confirm: "" });
+      setForm({ type: "credit", amount: "", reason: "", confirm: "", kyc: "verified" });
       load();
     } catch (e) {
       setNotice({ type: "error", text: e.message });
@@ -88,7 +96,8 @@ const CustomerDetail = ({ userId, can, onBack }) => {
   if (error) return <div className="cx-page"><button type="button" className="cx-btn cx-btn-ghost ap-back" onClick={onBack}><ArrowLeft size={16} /> Customers</button><div className="cx-alert is-error">{error}</div></div>;
   if (!data) return <div className="cx-page"><div className="cx-card cx-empty"><p>Loading customer…</p></div></div>;
 
-  const { user, wallet, servers, domains, transactions, invoices, sessions } = data;
+  const { user, wallet, servers, domains, transactions, invoices, sessions, kycTicketUrl } = data;
+  const kyc = KYC[user.kyc_status] || KYC.unverified;
   const suspended = Boolean(user.suspended_at);
   const verified = user.isemailverified;
   const address = (user.address || "").split("\n").filter(Boolean).join(", ");
@@ -105,8 +114,9 @@ const CustomerDetail = ({ userId, can, onBack }) => {
             <div className="ap-badges">
               <span className="cx-pill">{user.account_type === "business" ? "Business" : "Personal"}</span>
               {suspended ? <span className="cx-status is-suspended">suspended</span>
-                : verified ? <span className="cx-status is-active">verified</span>
+                : verified ? <span className="cx-status is-active">email verified</span>
                 : <span className="cx-status is-pending">email unverified</span>}
+              <span className={`cx-status is-${kyc.tone}`}>{kyc.label}</span>
               <span className="ap-muted">Joined {fmtDate(user.createdat)}</span>
             </div>
             <WaladminId value={user.waladmin_id} />
@@ -138,6 +148,30 @@ const CustomerDetail = ({ userId, can, onBack }) => {
 
       {suspended && <div className="cx-alert is-error">Suspended {fmtDate(user.suspended_at, true)}{user.suspension_reason ? `: ${user.suspension_reason}` : ""}. They can't sign in or use the console.</div>}
       {notice && <div className={`cx-alert is-${notice.type}`} role="status">{notice.text}<button type="button" className="cx-icon-btn" onClick={() => setNotice(null)} aria-label="Dismiss"><X size={15} /></button></div>}
+
+      <section className="cx-card ap-kyc">
+        <div className="ap-kyc-main">
+          <h3><FileCheck size={17} /> KYC <span className={`cx-status is-${kyc.tone}`}>{kyc.label}</span></h3>
+          <p className="ap-muted">{kyc.text}</p>
+          {(user.kyc_submitted_at || user.kyc_reviewed_at || user.kyc_note) && (
+            <p className="ap-muted">
+              {user.kyc_submitted_at && <>Documents sent {fmtDate(user.kyc_submitted_at, true)}. </>}
+              {user.kyc_reviewed_at && <>Last set by {user.kyc_reviewed_by || "an admin"} on {fmtDate(user.kyc_reviewed_at, true)}. </>}
+              {user.kyc_note && <>Note: {user.kyc_note}</>}
+            </p>
+          )}
+        </div>
+        <div className="ap-profile-actions">
+          {user.kyc_ticket_id && (kycTicketUrl ? (
+            <a className="cx-btn cx-btn-ghost" href={kycTicketUrl} target="_blank" rel="noreferrer"><ExternalLink size={15} /> Ticket #{user.kyc_ticket_id}</a>
+          ) : <span className="ap-muted">Ticket #{user.kyc_ticket_id}</span>)}
+          {can("manage_users") && (
+            <button type="button" className="cx-btn cx-btn-ghost" onClick={() => { setForm({ ...form, kyc: user.kyc_status === "verified" ? "unverified" : "verified", reason: "" }); setModal("kyc"); }}>
+              <BadgeCheck size={16} /> {user.kyc_status === "verified" ? "Change KYC" : "Review KYC"}
+            </button>
+          )}
+        </div>
+      </section>
 
       <div className="ap-grid-3">
         <div className="cx-card ap-kv">
@@ -223,6 +257,25 @@ const CustomerDetail = ({ userId, can, onBack }) => {
           <button type="button" className="cx-btn cx-btn-primary cx-btn-block" disabled={busy || !form.amount || form.reason.trim().length < 3}
             onClick={() => run(() => adminApi(`/users/${user.id}/wallet-adjust`, { method: "POST", body: { type: form.type, amount: Number(form.amount), reason: form.reason } }), `Account balance ${form.type === "credit" ? "credited" : "debited"}`)}>
             {form.type === "credit" ? "Credit" : "Debit"} ₹{form.amount || "0"}
+          </button>
+        </Modal>
+      )}
+
+      {modal === "kyc" && (
+        <Modal title={`KYC for ${user.name}`} onClose={() => setModal(null)}>
+          <p className="ap-muted">Check the documents on their KYC VERIFICATION ticket first. Verified unlocks the services that need KYC; the customer is emailed for verified and rejected.</p>
+          <div className="ap-seg ap-seg-3">
+            {[["verified", "Verified"], ["rejected", "Rejected"], ["unverified", "Unverified"]].map(([id, label]) => (
+              <button key={id} type="button" className={form.kyc === id ? "is-active" : ""} onClick={() => setForm({ ...form, kyc: id })}>{label}</button>
+            ))}
+          </div>
+          <label className="cx-field"><span>{form.kyc === "rejected" ? "Reason (the customer sees this)" : "Note (optional, for admins)"}</span>
+            <input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} maxLength={500}
+              placeholder={form.kyc === "rejected" ? "Address proof is older than 3 months" : "Checked PAN and Aadhaar"} />
+          </label>
+          <button type="button" className="cx-btn cx-btn-primary cx-btn-block" disabled={busy || (form.kyc === "rejected" && form.reason.trim().length < 3)}
+            onClick={() => run(() => adminApi(`/users/${user.id}/kyc`, { method: "PUT", body: { status: form.kyc, note: form.reason } }), form.kyc === "verified" ? "KYC verified" : form.kyc === "rejected" ? "KYC rejected" : "KYC set to unverified")}>
+            {form.kyc === "verified" ? "Mark KYC verified" : form.kyc === "rejected" ? "Reject KYC" : "Mark KYC unverified"}
           </button>
         </Modal>
       )}

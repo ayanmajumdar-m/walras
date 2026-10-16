@@ -214,3 +214,4 @@ const SupportController = {
 };
 
 module.exports = SupportController;
+module.exports.accountNote = accountNote; // also on KYC tickets (controllers/kyc.controllers.js)
