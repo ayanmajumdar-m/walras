@@ -31,12 +31,13 @@ const DEFAULT_REQUIRED = ['compute', 'database', 'apps'];
 const SETTING = 'kyc.required_products';
 
 /*
-  The documents we accept. Each slot is one file; the customer says which of
+  The documents we accept, by the account type chosen at sign-up
+  (users.account_type 'personal' → individual, 'business' → business). Each slot is one file; the customer says which of
   the listed documents it is, and that name goes on the ticket.
 */
 const DOCUMENTS = {
     individual: {
-        label: 'Individual',
+        label: 'Personal',
         slots: [
             { id: 'identity', label: 'Identity proof', required: true, options: ['PAN Card', 'Aadhaar Card', 'Passport', 'Voter ID'] },
             { id: 'address', label: 'Address proof', required: true, options: ['Aadhaar Card', 'Passport', 'Voter ID', 'Driving Licence'] },

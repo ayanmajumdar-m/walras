@@ -5,8 +5,8 @@ import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 
 /*
-  Account → KYC verification. The customer picks Individual or Business,
-  adds one file per document (saying which document it is) and sends them.
+  Account → KYC verification. Which documents depends on the account type
+  chosen at sign-up (Personal or Business). The customer adds one file per document (saying which document it is) and sends them.
   That opens a "KYC VERIFICATION" support ticket listing every document by
   name; our team checks them and marks the account verified, which unlocks
   the services that need KYC (utils/kyc.js).
@@ -110,7 +110,6 @@ const StatusCard = ({ kyc }) => {
 
 const Kyc = () => {
   const { profile, kyc, refreshKyc } = useConsole();
-  const [type, setType] = useState(null);
   const [docs, setDocs] = useState({});
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -118,11 +117,10 @@ const Kyc = () => {
 
   if (!kyc) return <div className="cx-page"><div className="cx-card cx-empty"><p>Loading…</p></div></div>;
 
-  const accountType = type || kyc.accountType;
+  const accountType = kyc.accountType;
   const spec = kyc.documents[accountType];
   const canSend = kyc.status === "unverified" || kyc.status === "rejected";
 
-  const switchType = (t) => { setType(t); setDocs({}); setNotice(null); };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -144,7 +142,7 @@ const Kyc = () => {
           fileName: d.file.name, mimeType: d.file.type, data: await readBase64(d.file),
         };
       }
-      await api("/api/kyc", { method: "POST", body: { type: accountType, documents, note: note.trim() } });
+      await api("/api/kyc", { method: "POST", body: { documents, note: note.trim() } });
       setDocs({});
       setNote("");
       setNotice({ type: "success", text: "Documents sent. We'll email you once your KYC is verified." });
@@ -168,13 +166,13 @@ const Kyc = () => {
 
       {canSend && (
         <form className="cx-card cx-kyc-form" onSubmit={submit}>
-          <div className="cx-seg" role="tablist" aria-label="Customer type">
-            <span className="cx-seg-label">I'm verifying as</span>
-            {Object.entries(kyc.documents).map(([id, d]) => (
-              <button key={id} type="button" role="tab" aria-selected={accountType === id}
-                className={accountType === id ? "is-active" : ""} onClick={() => switchType(id)}>{d.label}</button>
-            ))}
-          </div>
+          <p className="cx-kyc-type">
+            <span className="cx-pill">{spec.label} account</span>
+            {accountType === "business"
+              ? "You signed up with a Business account, so we need your business's documents."
+              : "You signed up with a Personal account, so we need your own documents."}
+            {" "}Wrong account type? <Link className="cx-link" to="/dashboard/support">Contact support</Link>.
+          </p>
 
           {accountType === "individual" && (
             <div className="cx-kyc-slot">

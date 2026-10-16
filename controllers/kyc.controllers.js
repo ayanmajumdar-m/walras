@@ -66,7 +66,8 @@ const KycController = {
         });
     }),
 
-    // POST /api/kyc { type: 'individual' | 'business', documents: { slotId: { document, fileName, mimeType, data } }, note? }
+    // POST /api/kyc { documents: { slotId: { document, fileName, mimeType, data } }, note? }
+    // Which documents follows the account type chosen at sign-up.
     submit: handle(async (req, res) => {
         const userId = req.user.userId;
         const mine = await kyc.statusOf(userId);
@@ -75,8 +76,7 @@ const KycController = {
         if (mine.status === 'pending') throw new KycError(409, "We're already checking your documents. To add or change one, reply on your KYC VERIFICATION ticket in Support.");
         if (!zendesk.zendeskConfigured()) throw new KycError(503, 'Document upload is unavailable right now. Please email your KYC documents to support@walras.net.');
 
-        const type = req.body.type === 'business' ? 'business' : req.body.type === 'individual' ? 'individual' : null;
-        if (!type) throw new KycError(400, 'Choose Individual or Business.');
+        const type = mine.accountType;
         const given = req.body.documents && typeof req.body.documents === 'object' ? req.body.documents : {};
         const docs = kyc.DOCUMENTS[type].slots.map((slot) => fileFor(slot, given[slot.id])).filter(Boolean);
         const note = String(req.body.note || '').trim().slice(0, 1000);
