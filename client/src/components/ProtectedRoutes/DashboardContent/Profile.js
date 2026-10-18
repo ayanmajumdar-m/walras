@@ -142,11 +142,7 @@ const ProfileDetails = () => {
     }
   };
 
-  if (loading) return (
-    <div className="profile-container">
-      <div className="loading-spinner">Loading...</div>
-    </div>
-  );
+  if (loading) return <div className="cx-card cx-empty"><p>Loading your profile…</p></div>;
 
   return (
     <div className="profile-container">
