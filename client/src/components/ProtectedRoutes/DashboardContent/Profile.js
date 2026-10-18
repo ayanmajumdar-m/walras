@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { UserCircle, Users } from "lucide-react";
+import { UserCircle, Users, ShieldCheck } from "lucide-react";
 import Team from "./Team";
+import Kyc from "./Kyc";
+import { useConsole } from "../ConsoleContext";
 import "./Profile.css";
 
 const ProfileDetails = () => {
@@ -360,26 +362,30 @@ const ProfileDetails = () => {
   );
 };
 
-// Account: your profile, and your team (sub-users) on a second tab.
+// Account: your profile, your team (sub-users) and KYC verification, on tabs.
+// KYC is the account owner's, so it isn't shown while working in a team account.
 const TABS = [
   { id: "profile", label: "Profile", Icon: UserCircle },
   { id: "team", label: "Team", Icon: Users },
+  { id: "kyc", label: "KYC verification", Icon: ShieldCheck, own: true },
 ];
 
 const Profile = () => {
+  const { account } = useConsole();
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") === "team" ? "team" : "profile";
+  const tabs = TABS.filter((t) => !(t.own && account));
+  const tab = tabs.find((t) => t.id === params.get("tab"))?.id || "profile";
   return (
     <div className="cx-page">
       <div className="cx-tabs" role="tablist">
-        {TABS.map(({ id, label, Icon }) => (
+        {tabs.map(({ id, label, Icon }) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id}
-            className={`cx-tab${tab === id ? " is-active" : ""}`} onClick={() => setParams(id === "team" ? { tab: "team" } : {}, { replace: true })}>
+            className={`cx-tab${tab === id ? " is-active" : ""}`} onClick={() => setParams(id === "profile" ? {} : { tab: id }, { replace: true })}>
             <Icon size={16} aria-hidden="true" /> {label}
           </button>
         ))}
       </div>
-      {tab === "team" ? <Team /> : <ProfileDetails />}
+      {tab === "team" ? <Team /> : tab === "kyc" ? <Kyc /> : <ProfileDetails />}
     </div>
   );
 };

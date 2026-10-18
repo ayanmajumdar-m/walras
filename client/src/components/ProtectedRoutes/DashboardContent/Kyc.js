@@ -5,7 +5,7 @@ import { api } from "../consoleApi";
 import { useConsole } from "../ConsoleContext";
 
 /*
-  Account → KYC verification. Which documents depends on the account type
+  Account → KYC verification (a tab of the Account page, Profile.js). Which documents depends on the account type
   chosen at sign-up (Personal or Business). The customer adds one file per document (saying which document it is) and sends them.
   That opens a "KYC VERIFICATION" support ticket listing every document by
   name; our team checks them and marks the account verified, which unlocks
@@ -115,7 +115,7 @@ const Kyc = () => {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
 
-  if (!kyc) return <div className="cx-page"><div className="cx-card cx-empty"><p>Loading…</p></div></div>;
+  if (!kyc) return <div className="cx-card cx-empty"><p>Loading…</p></div>;
 
   const accountType = kyc.accountType;
   const spec = kyc.documents[accountType];
@@ -155,7 +155,7 @@ const Kyc = () => {
   };
 
   return (
-    <div className="cx-page">
+    <div className="cx-kyc-page">
       <div className="cx-page-head">
         <h2>KYC verification</h2>
         <p>We verify who our customers are before some services can be ordered. Send your documents once and we check them by hand.</p>
@@ -228,7 +228,7 @@ export const KycLocked = ({ product }) => {
       ) : (
         <>
           <p>Send your KYC documents once and we'll unlock {label} after checking them.</p>
-          <Link to="/dashboard/kyc" className="cx-btn cx-btn-primary">Complete KYC</Link>
+          <Link to="/dashboard/profile?tab=kyc" className="cx-btn cx-btn-primary">Complete KYC</Link>
         </>
       )}
     </div>

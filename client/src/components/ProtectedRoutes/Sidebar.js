@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X, ChevronsUpDown, Check, BadgePercent, ShieldCheck } from "lucide-react";
+import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X, ChevronsUpDown, Check, BadgePercent } from "lucide-react";
 import { switchAccount, ACCOUNT_KEY } from "./consoleApi";
 
 const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
@@ -16,8 +16,6 @@ const NAV = [
 const NAV_SECONDARY = [
   { to: "/dashboard/support", label: "Support", Icon: LifeBuoy, perm: "support" },
   { to: "/dashboard/profile", label: "Account", Icon: UserCircle },
-  // Your own account only: KYC is the account owner's.
-  { to: "/dashboard/kyc", label: "KYC verification", Icon: ShieldCheck, own: true },
 ];
 
 const initials = (name) =>
@@ -127,7 +125,7 @@ const Sidebar = ({ open, onClose, profile, account, memberships = [], can = () =
         <nav className="cx-nav" aria-label="Console">
           {NAV.filter((n) => !n.perm || can(n.perm)).map(link)}
           <span className="cx-nav-sep" aria-hidden="true" />
-          {NAV_SECONDARY.filter((n) => (!n.perm || can(n.perm)) && !(n.own && account)).map(link)}
+          {NAV_SECONDARY.filter((n) => !n.perm || can(n.perm)).map(link)}
         </nav>
 
         <div className="cx-user">

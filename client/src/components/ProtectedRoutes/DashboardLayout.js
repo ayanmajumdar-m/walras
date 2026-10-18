@@ -10,7 +10,6 @@ import Resources from "./DashboardContent/Resources";
 import Billing from "./DashboardContent/Billing";
 import Profile from "./DashboardContent/Profile";
 import Support from "./DashboardContent/Support";
-import Kyc from "./DashboardContent/Kyc";
 import { api, rupees, actingAccount, switchAccount, ACCOUNT_KEY } from "./consoleApi";
 import { ConsoleContext } from "./ConsoleContext";
 // The retired Home page's stylesheet carries generic global classes
@@ -30,7 +29,6 @@ const TITLES = {
   support: "Support",
   submitTicket: "Support",
   profile: "Account",
-  kyc: "KYC verification",
 };
 
 const DashboardLayout = () => {
@@ -161,7 +159,7 @@ const DashboardLayout = () => {
                   <Link to="/dashboard/billing?tab=invoices" className="cx-btn cx-btn-primary cx-btn-sm">Pay invoice</Link>
                 </div>
               )}
-              {!account && kyc && kyc.status !== "verified" && kyc.required.length > 0 && !location.pathname.startsWith("/dashboard/kyc") && (
+              {!account && kyc && kyc.status !== "verified" && kyc.required.length > 0 && !(location.pathname.startsWith("/dashboard/profile") && location.search.includes("tab=kyc")) && (
                 <div className={`cx-alert ${kyc.status === "rejected" ? "is-error" : "is-info"} cx-due-banner`} role="status">
                   <span>
                     {kyc.status === "pending"
@@ -170,7 +168,7 @@ const DashboardLayout = () => {
                         ? <><strong>We couldn't verify your KYC documents.</strong> Please send them again.</>
                         : <><strong>Complete your KYC</strong> to order {kyc.required.map((r) => r.label).join(", ")}.</>}
                   </span>
-                  {kyc.status !== "pending" && <Link to="/dashboard/kyc" className="cx-btn cx-btn-primary cx-btn-sm"><ShieldCheck size={15} /> Complete KYC</Link>}
+                  {kyc.status !== "pending" && <Link to="/dashboard/profile?tab=kyc" className="cx-btn cx-btn-primary cx-btn-sm"><ShieldCheck size={15} /> Complete KYC</Link>}
                 </div>
               )}
               {teamNotice && (
@@ -197,7 +195,8 @@ const DashboardLayout = () => {
                 <Route path="/resources" element={need("servers", <Resources />)} />
                 <Route path="/billing" element={need("billing", <Billing />)} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/kyc" element={account ? <Navigate to="/dashboard/home" replace /> : <Kyc />} />
+                {/* KYC is a tab of Account now; emails sent earlier link here. */}
+                <Route path="/kyc" element={<Navigate to="/dashboard/profile?tab=kyc" replace />} />
                 <Route path="/support" element={need("support", <Support />)} />
 
                 {/* Old per-service pages fold into Create / Resources / Billing. */}

@@ -63,7 +63,7 @@ const activeSuperAdmins = async () =>
 // Tells the customer their KYC was verified, or why it wasn't. Never fails the request.
 const emailKyc = async (user, status, note) => {
     try {
-        const url = `${(integrations.get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '')}/dashboard/kyc`;
+        const url = `${(integrations.get('CLIENT_URL') || 'https://www.walras.net').replace(/\/+$/, '')}/dashboard/profile?tab=kyc`;
         const lines = status === 'verified'
             ? ['Your KYC verification is complete. Every Walras Cloud service is now unlocked in your console.']
             : ["We couldn't verify your KYC documents.", `Reason: ${note}`, 'Please send your documents again from the console.'];
