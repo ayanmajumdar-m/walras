@@ -14,9 +14,9 @@ import Homepage from './components/Homepage';
 import Navbar from './components/Constants/Navbar';
 import AdminLogin from './components/AdminDashboard/AdminLogin';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
-// The Domains and Bare Metal pages are folded into /pricing, but their
-// stylesheets carry global rules other pages (and the /domains/buy flow)
-// still use, so they stay loaded in their original order.
+// The Domains page is folded into /pricing, but its stylesheet carries
+// global rules other pages (and the /domains/buy flow) still use, so it
+// stays loaded in its original order.
 import './components/DomainCheck.css';
 import Domain from './components/ProtectedRoutes/DashboardContent/Domain';
 import Footer from './components/Constants/Footer';
@@ -24,7 +24,6 @@ import Contact from './components/About/Contact';
 import Privacy from './components/Privacy';
 import Refund from './components/Refund';
 import Terms from './components/Terms';
-import './components/BareMetal.css';
 import FlareMail from './components/FlareMail';
 
 // Public pages open at the top, or at the #section a link names (footer
@@ -78,7 +77,6 @@ function App() {
         <Route path='/privacy' element={<PublicLayout><Privacy /></PublicLayout>} />
         <Route path='/refund' element={<PublicLayout><Refund /></PublicLayout>} />
         <Route path='/terms' element={<PublicLayout><Terms /></PublicLayout>} />
-        <Route path='/bare-metal' element={<Navigate to={{ pathname: "/pricing", hash: "#bare-metal" }} replace />} />
         <Route path='/flare-mail' element={<PublicLayout><FlareMail /></PublicLayout>} />
 
         {/* Accounts: email + password, email confirmed with a code sent via Brevo. */}

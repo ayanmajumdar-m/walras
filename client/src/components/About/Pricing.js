@@ -10,7 +10,7 @@ import {
 /*
   One page for every price on the site. A sticky rail on the left jumps
   between sections (and follows the scroll); each section is a product.
-  /domains, /bare-metal and /about/pricing redirect here with a hash.
+  /domains and /about/pricing redirect here with a hash.
 */
 
 // ── Virtual Machine ────────────────────────────────────────────────────────
@@ -64,7 +64,6 @@ const SECTIONS = [
   { id: "virtual-machine", Icon: Layers, title: "Virtual Machine", desc: "General purpose VMs on Intel or AMD.", from: "from ₹350/mo" },
   { id: "app-platform", Icon: Rocket, title: "App Platform", desc: "Deploy your app on your own domain.", from: "from ₹349/mo" },
   { id: "managed-database", Icon: Database, title: "Managed Database", desc: "MySQL or PostgreSQL, managed for you.", from: "from ₹199/mo" },
-  { id: "bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon" }
 ].filter((s) => s.id !== "app-platform" || APP_PLATFORM_ON); // App Platform hidden for now (data/plans.js)
 
@@ -511,34 +510,6 @@ const Pricing = () => {
             </p>
           </section>
 
-          {/* ── Bare Metal ── */}
-          <section className="pr-section" id="bare-metal">
-            <div className="pr-section-head">
-              <span className="pr-section-icon"><Server aria-hidden="true" /></span>
-              <div>
-                <h2 className="pr-section-title">Bare Metal <span className="pr-soon">Coming soon</span></h2>
-                <p className="pr-section-lede">
-                  Dedicated servers for workloads that need the whole machine: no hypervisor,
-                  no neighbours.
-                </p>
-              </div>
-            </div>
-
-            <div className="pr-card pr-bm">
-              <ul className="pr-checklist">
-                <li><Check aria-hidden="true" />Single-tenant hardware: the entire server is yours</li>
-                <li><Check aria-hidden="true" />Dedicated CPU cores, memory and storage</li>
-                <li><Check aria-hidden="true" />Full root access to the machine</li>
-              </ul>
-              <div className="pr-bm-cta">
-                <p>Plans and pricing are being finalised. Tell us what you need and we'll reach out when it launches.</p>
-                <a href="/contact" className="pr-btn pr-btn-primary">
-                  Talk to us <ArrowRight aria-hidden="true" />
-                </a>
-              </div>
-            </div>
-          </section>
-
           {/* ── Domains ── */}
           <section className="pr-section" id="domains">
             <div className="pr-section-head">
@@ -551,13 +522,13 @@ const Pricing = () => {
               </div>
             </div>
 
-            <div className="pr-card pr-bm">
+            <div className="pr-card pr-soon-panel">
               <ul className="pr-checklist">
                 {DOMAIN_INCLUDES.map((text) => (
                   <li key={text}><Check aria-hidden="true" />{text}</li>
                 ))}
               </ul>
-              <div className="pr-bm-cta">
+              <div className="pr-soon-panel-cta">
                 <p>Domain registration is on its way. Get in touch and we'll let you know as soon as it opens.</p>
                 <a href="/contact" className="pr-btn pr-btn-primary">
                   Talk to us <ArrowRight aria-hidden="true" />

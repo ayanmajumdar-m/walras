@@ -223,9 +223,9 @@ const Homepage = () => {
       <div className="container coming-soon-grid">
         <div>
           <span className="kicker">Coming Soon</span>
-          <h2 className="coming-soon-title">GPU &amp; Bare Metal Servers</h2>
+          <h2 className="coming-soon-title">GPU Servers</h2>
           <p className="coming-soon-desc">
-            Get ready for GPU-accelerated bare metal servers built for AI, ML, and high-performance workloads.
+            Get ready for GPU-accelerated servers built for AI, ML, and high-performance workloads.
           </p>
           <form className="notify-form" onSubmit={(e) => e.preventDefault()}>
             <input type="email" placeholder="Enter your email for early access" className="input" />
