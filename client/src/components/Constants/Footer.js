@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
 import './Footer.css';
+import { APP_PLATFORM_ON } from '../../data/plans';
 
 /*
   Site footer, in the homepage's blueprint language: a dark field, kicker
@@ -18,7 +19,8 @@ const COLUMNS = [
     title: 'Products',
     links: [
       { label: 'Virtual Machines', to: '/pricing#virtual-machine' },
-      { label: 'App Platform', to: '/pricing#app-platform' },
+      // App Platform hidden for now (data/plans.js).
+      ...(APP_PLATFORM_ON ? [{ label: 'App Platform', to: '/pricing#app-platform' }] : []),
       { label: 'Managed Database', to: '/pricing#managed-database' },
       { label: 'Domains', to: '/pricing#domains' },
       { label: 'Bare Metal', to: '/pricing#bare-metal' },

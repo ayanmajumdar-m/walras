@@ -111,4 +111,9 @@ const getAvailability = async () => {
     }
 };
 
-module.exports = { TYPES, getPlans, findPlan, forgetPlans, getStock, setStock, reserve, release, getAvailability };
+// App Platform is hidden for now (also client/src/data/plans.js): new apps
+// are refused and it isn't listed as needing KYC. Existing apps keep
+// working and can be cancelled. Set both back to true to bring it back.
+const APP_PLATFORM_ON = false;
+
+module.exports = { APP_PLATFORM_ON, TYPES, getPlans, findPlan, forgetPlans, getStock, setStock, reserve, release, getAvailability };

@@ -29,6 +29,12 @@ export const formatStorage = (gb) => (gb < 1 ? `${Math.round(gb * 1000)} MB` : `
 export const formatBackups = (days) => (days > 0 ? `Daily, ${days}-day retention` : "None");
 
 // ── App Platform ────────────────────────────────────────────────────────────
+// Hidden for now: off = App Platform is left out of the homepage, pricing,
+// footer and console (customers who already have an app still see it under
+// Resources → Apps). New orders are refused on the server too
+// (utils/appPlans.js). Set both back to true to bring it back.
+export const APP_PLATFORM_ON = false;
+
 // Plans (Admin → App Platform → Plans) from /api/plans/apps and
 // /api/apps/catalog. Shared is on sale; Dedicated is coming soon.
 export const APP_TYPES = [

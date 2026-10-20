@@ -1,6 +1,7 @@
 import React from "react";
 import "./Homepage.css";
 import { useLocations } from "../data/locations";
+import { APP_PLATFORM_ON } from "../data/plans";
 import { Zap, Clock, Gauge, Globe, Cpu, Check, Database, Rocket } from "lucide-react";
 
 /*
@@ -74,7 +75,7 @@ const SERVICES = [
     features: ["Your Own Domain", "NVMe SSD Storage", "Shared IP", "From ₹349/month"],
     action: { label: "View plans", href: "/pricing#app-platform" }
   }
-];
+].filter((s) => s.title !== "App Platform" || APP_PLATFORM_ON); // App Platform hidden for now (data/plans.js)
 
 /* Every figure here is a commitment made elsewhere on the site — uptime from
    the commitments band, response and trial from support, regions and entry

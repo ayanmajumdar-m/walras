@@ -6,6 +6,7 @@ const connection = require('../config/db');
 const zendesk = require('../services/zendesk');
 const kyc = require('../utils/kyc');
 const { accountNote } = require('./support.controllers');
+const { APP_PLATFORM_ON } = require('../utils/appPlans');
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf'];
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -59,7 +60,8 @@ const KycController = {
         if (!mine) throw new KycError(404, 'Account not found.');
         res.json({
             ...mine,
-            required: required.map((id) => ({ id, label: kyc.PRODUCTS[id] })),
+            // App Platform is hidden for now, so it isn't named as locked.
+            required: required.filter((id) => id !== 'apps' || APP_PLATFORM_ON).map((id) => ({ id, label: kyc.PRODUCTS[id] })),
             documents: kyc.DOCUMENTS,
             ticketSubject: kyc.TICKET_SUBJECT,
             supportConfigured: zendesk.zendeskConfigured(),

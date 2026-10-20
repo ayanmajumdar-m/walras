@@ -4,6 +4,7 @@ import { Layers, Globe, Play, Square, RotateCcw, Trash2, RefreshCw, X, Undo2, Da
 import DatabasesTab from "./DatabasesTab";
 import AppsTab from "./AppsTab";
 import { api } from "../consoleApi";
+import { APP_PLATFORM_ON } from "../../../data/plans";
 import { useConsole } from "../ConsoleContext";
 import EditNSModal from "./EditNSModal";
 import TransferDomainModal from "./TransferDomainModal";
@@ -243,7 +244,8 @@ const Resources = () => {
       </div>
 
       <div className="cx-tabs" role="tablist">
-        {TABS.map(({ id, label, Icon }) => (
+        {/* App Platform is hidden for now (data/plans.js): Apps only for accounts that already have one. */}
+        {TABS.filter(({ id }) => id !== "apps" || APP_PLATFORM_ON || apps.length > 0).map(({ id, label, Icon }) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id}
             className={`cx-tab${tab === id ? " is-active" : ""}`} onClick={() => setParams({ tab: id }, { replace: true })}>
             <Icon size={16} aria-hidden="true" /> {label} <span className="cx-count">{counts[id]}</span>

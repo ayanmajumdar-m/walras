@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Pricing.css';
-import { CPU_TYPES, formatRam, formatBandwidth, DB_ENGINES, formatStorage, APP_TYPES } from '../../data/plans';
+import { CPU_TYPES, formatRam, formatBandwidth, DB_ENGINES, formatStorage, APP_TYPES, APP_PLATFORM_ON } from '../../data/plans';
 import {
   Layers, Server, Globe, ChevronUp, ChevronDown, ArrowRight, Check, Cpu, MemoryStick,
   HardDrive, Network, Shield, Clock, BookOpen, Database, DatabaseBackup, Rocket, Globe2
@@ -66,7 +66,7 @@ const SECTIONS = [
   { id: "managed-database", Icon: Database, title: "Managed Database", desc: "MySQL or PostgreSQL, managed for you.", from: "from ₹199/mo" },
   { id: "bare-metal", Icon: Server, title: "Bare Metal", desc: "Single-tenant dedicated servers.", from: "Coming soon" },
   { id: "domains", Icon: Globe, title: "Domains", desc: "Register and protect your name.", from: "Coming soon" }
-];
+].filter((s) => s.id !== "app-platform" || APP_PLATFORM_ON); // App Platform hidden for now (data/plans.js)
 
 const PLATFORM_INCLUDES = [
   { Icon: Clock, text: "24/7 email and ticket support" },
@@ -336,7 +336,8 @@ const Pricing = () => {
             </p>
           </section>
 
-          {/* ── App Platform ── */}
+          {/* ── App Platform (hidden for now, data/plans.js) ── */}
+          {APP_PLATFORM_ON && (
           <section className="pr-section" id="app-platform">
             <div className="pr-section-head">
               <span className="pr-section-icon"><Rocket aria-hidden="true" /></span>
@@ -426,6 +427,7 @@ const Pricing = () => {
               deploy, then on the 1st.
             </p>
           </section>
+          )}
 
           {/* ── Managed Database ── */}
           <section className="pr-section" id="managed-database">
