@@ -26,6 +26,8 @@ import DbStock from "./sections/DbStock";
 import Apps from "./sections/Apps";
 import AppPlans from "./sections/AppPlans";
 import AppStock from "./sections/AppStock";
+import DedicatedServers from "./sections/DedicatedServers";
+import DedicatedOrders from "./sections/DedicatedOrders";
 import Tickets from "./sections/Tickets";
 import NotificationsBell from "./sections/NotificationsBell";
 import {
@@ -78,6 +80,13 @@ const NAV = [
           { id: "apps", label: "Apps", title: "App Platform apps", Icon: Rocket, perm: "view_services" },
           { id: "app-plans", label: "Plans", title: "App Platform plans", Icon: Tags, perm: "view_services" },
           { id: "app-stock", label: "Stock", title: "App Platform stock", Icon: Boxes, perm: "view_services" },
+        ],
+      },
+      {
+        id: "dedicated", label: "Dedicated Servers", Icon: Server,
+        items: [
+          { id: "dedicated-orders", label: "Orders", title: "Dedicated server orders", Icon: Receipt, perm: "view_services" },
+          { id: "dedicated-servers", label: "Listings", title: "Dedicated server listings", Icon: Tags, perm: "view_services" },
         ],
       },
       { id: "domain", label: "Domains", Icon: Globe, items: [{ id: "domains", label: "Domains", Icon: Globe, perm: "view_services" }] },
@@ -189,6 +198,8 @@ const AdminDashboard = () => {
       case "apps": return <Apps openCustomer={openCustomer} />;
       case "app-plans": return <AppPlans can={can} />;
       case "app-stock": return <AppStock can={can} />;
+      case "dedicated-orders": return <DedicatedOrders can={can} openCustomer={openCustomer} />;
+      case "dedicated-servers": return <DedicatedServers can={can} />;
       case "tickets": return <Tickets openCustomer={openCustomer} />;
       case "support-plus": return <SupportPlus openCustomer={openCustomer} />;
       case "bulk-email": return <BulkEmail />;

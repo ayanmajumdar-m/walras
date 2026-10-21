@@ -101,6 +101,15 @@ router.delete('/apps/plans/:id', can('manage_plans'), Apps.removePlan);
 router.get('/product-locations/:product', can('view_services'), Apps.getProductLocations);
 router.put('/product-locations/:product', can('manage_plans'), Apps.setProductLocations);
 
+// Dedicated Servers: listings and orders (no payment or provisioning yet)
+const Dedicated = require('../controllers/adminDedicated.controllers');
+router.get('/dedicated/servers', can('view_services'), Dedicated.listServers);
+router.post('/dedicated/servers', can('manage_plans'), Dedicated.createServer);
+router.put('/dedicated/servers/:id', can('manage_plans'), Dedicated.updateServer);
+router.delete('/dedicated/servers/:id', can('manage_plans'), Dedicated.removeServer);
+router.get('/dedicated/orders', can('view_services'), Dedicated.listOrders);
+router.put('/dedicated/orders/:id', can('manage_services'), Dedicated.setOrderStatus);
+
 // Server locations
 const Locations = require('../controllers/serverLocations.controllers');
 router.get('/locations', can('view_services'), Locations.list);

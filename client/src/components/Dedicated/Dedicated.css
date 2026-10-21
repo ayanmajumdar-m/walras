@@ -1,0 +1,206 @@
+/* ═════════════════════════════════════════════════════════════════════════
+   Dedicated Servers catalog (ds-*) — metal.walras.net and the console.
+   Filter rail on the left, category pills, a rounded search bar, then cards
+   with a corner ribbon. Uses the site's tokens (theme.css).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.ds-catalog {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+.ds-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── Filters ── */
+.ds-filters { position: sticky; top: 88px; }
+.ds-filters-head { display: flex; align-items: baseline; gap: 12px; margin: 6px 0 18px; }
+.ds-filters-head h2 { margin: 0; font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; letter-spacing: 0.01em; }
+.ds-filters-head .ds-filters-close { display: none; margin-left: auto; }
+
+.ds-group { border-bottom: 1px solid var(--color-divider); padding: 4px 0 16px; margin-bottom: 14px; }
+.ds-group:last-child { border-bottom: 0; }
+.ds-group-head {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  padding: 10px 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 17px; font-weight: 600; color: var(--text-primary); text-align: left;
+}
+.ds-group-head svg { color: var(--text-secondary); transition: transform 0.15s ease; transform: rotate(-90deg); }
+.ds-group-head svg.is-open { transform: none; }
+
+.ds-options { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.ds-radio { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.ds-radio input {
+  appearance: none; flex-shrink: 0; width: 18px; height: 18px; margin: 0;
+  border: 1.5px solid var(--color-neutral-400); border-radius: 50%; background: #fff; cursor: pointer;
+  display: grid; place-items: center;
+}
+.ds-radio input::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--color-text); transform: scale(0); transition: transform 0.12s ease; }
+.ds-radio input:checked { border-color: var(--color-text); }
+.ds-radio input:checked::after { transform: scale(1); }
+.ds-radio input:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 2px; }
+.ds-radio.is-empty { color: var(--text-muted); }
+
+/* ── Pills, search, toolbar ── */
+.ds-main { min-width: 0; }
+.ds-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.ds-pill {
+  padding: 11px 26px; border: 1px solid transparent; border-radius: 999px;
+  background: var(--color-accent-100); color: var(--color-accent-900);
+  font: inherit; font-size: 17px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ds-pill:hover { background: var(--color-accent-200); }
+.ds-pill.is-active { background: var(--color-accent-800); color: #fff; }
+
+.ds-search {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px; height: 52px; border: 1px solid var(--color-accent-900); border-radius: 999px; background: #fff;
+}
+.ds-search:focus-within { box-shadow: 0 0 0 3px var(--color-accent-200); }
+.ds-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 16px; color: var(--text-primary); }
+.ds-search input::placeholder { color: var(--text-muted); }
+.ds-search > svg { color: var(--color-accent-900); flex-shrink: 0; }
+
+.ds-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin: 28px 0 18px; }
+.ds-count { font-size: 16px; }
+.ds-pager { display: flex; align-items: center; gap: 2px; }
+.ds-page {
+  min-width: 34px; height: 34px; border: 0; border-radius: 8px; background: none; cursor: pointer;
+  font: inherit; font-size: 16px; color: var(--text-muted);
+}
+.ds-page:hover { background: var(--color-neutral-200); }
+.ds-page.is-active { color: var(--text-primary); font-weight: 600; }
+.ds-toolbar-spacer { flex: 1; }
+
+.ds-icon-btn {
+  display: inline-grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 8px;
+  background: none; color: var(--text-primary); cursor: pointer;
+}
+.ds-icon-btn:hover:not(:disabled) { background: var(--color-neutral-200); }
+.ds-icon-btn:disabled { color: var(--color-neutral-400); cursor: default; }
+
+.ds-sort { position: relative; display: inline-flex; align-items: center; }
+.ds-sort select {
+  appearance: none; border: 0; background: none; padding: 8px 30px 8px 8px; cursor: pointer;
+  font: inherit; font-size: 16px; color: var(--text-primary);
+}
+.ds-sort svg { position: absolute; right: 4px; pointer-events: none; }
+
+.ds-link { border: 0; background: none; padding: 0; color: var(--color-accent-700); font: inherit; font-size: 14px; cursor: pointer; text-decoration: underline; }
+
+.ds-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 20px; border-radius: 999px; border: 1px solid transparent;
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+.ds-btn-primary { background: var(--color-accent-700); color: #fff; }
+.ds-btn-primary:hover { background: var(--color-accent-800); }
+.ds-btn-ghost { background: #fff; border-color: var(--color-neutral-300); color: var(--text-primary); }
+.ds-btn-ghost:hover { border-color: var(--color-accent-700); }
+.ds-btn:disabled, .ds-btn[aria-disabled="true"] { background: var(--color-neutral-200); color: var(--text-muted); border-color: transparent; cursor: not-allowed; }
+.ds-filters-toggle { display: none; }
+
+/* ── Cards ── */
+.ds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+.ds-grid.is-list { grid-template-columns: 1fr; }
+
+.ds-card {
+  position: relative; overflow: hidden; display: flex; flex-direction: column;
+  padding: 26px 20px 20px; border: 1px solid var(--color-accent-900); border-radius: 4px; background: #fff;
+}
+.ds-card.is-out { border-color: var(--color-neutral-300); }
+.ds-card.is-out .ds-card-cpu { color: var(--text-secondary); }
+
+.ds-ribbon { position: absolute; top: 0; right: 0; width: 140px; height: 140px; overflow: hidden; pointer-events: none; }
+.ds-ribbon span {
+  position: absolute; top: 34px; right: -42px; width: 200px; padding: 9px 0;
+  transform: rotate(45deg); background: var(--color-accent-900); color: #fff; text-align: center;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 17px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+.ds-card-head { padding-right: 70px; border-bottom: 1px solid var(--color-divider); padding-bottom: 18px; margin-bottom: 18px; }
+.ds-card-model { margin: 0 0 4px; font-size: 15px; color: var(--text-secondary); }
+.ds-card-cpu { margin: 0 0 16px; font-family: var(--font-body); font-weight: 500; font-size: 24px; line-height: 1.2; }
+.ds-card-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.ds-loc, .ds-delivery {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 14px;
+}
+.ds-loc { background: var(--color-accent-100); color: var(--color-accent-900); }
+.ds-loc img { width: 18px; height: 13px; object-fit: cover; border-radius: 2px; }
+.ds-delivery { background: var(--color-neutral-100); color: var(--text-secondary); }
+
+.ds-specs { display: flex; flex-direction: column; gap: 14px; margin: 0 0 20px; }
+.ds-specs div { margin: 0; }
+.ds-specs dt { font-size: 14px; color: var(--text-muted); margin-bottom: 3px; }
+.ds-specs dd { margin: 0; font-size: 16px; }
+.ds-specs dd small { display: block; margin-top: 3px; font-size: 16px; color: var(--text-primary); }
+
+.ds-card-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ds-price strong { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 28px; }
+.ds-price span { margin-left: 3px; font-size: 14px; color: var(--text-secondary); }
+.ds-price small { display: block; font-size: 13px; color: var(--text-muted); }
+
+/* List view: specs in a row. */
+.ds-card.is-list { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr) auto; gap: 20px; align-items: center; padding: 20px; }
+.ds-card.is-list .ds-card-head { border: 0; margin: 0; padding: 0 0 0 0; }
+.ds-card.is-list .ds-card-cpu { font-size: 21px; margin-bottom: 10px; }
+.ds-card.is-list .ds-specs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0; }
+.ds-card.is-list .ds-specs dd, .ds-card.is-list .ds-specs dd small { font-size: 14px; }
+.ds-card.is-list .ds-card-foot { flex-direction: column; align-items: flex-end; margin: 0; }
+.ds-card.is-list .ds-ribbon { display: none; }
+
+.ds-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 56px 24px; border: 1px dashed var(--color-neutral-300); border-radius: 8px; background: #fff;
+}
+.ds-empty h3 { margin: 6px 0 0; font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 24px; }
+.ds-empty p { margin: 0 0 10px; color: var(--text-secondary); }
+.ds-empty svg { color: var(--color-accent-700); }
+
+.ds-scrim { display: none; }
+
+/* ── Smaller screens: filters become a drawer ── */
+@media (max-width: 960px) {
+  .ds-catalog { grid-template-columns: 1fr; }
+  .ds-filters {
+    position: fixed; z-index: 60; top: 0; bottom: 0; left: 0; width: min(320px, 86vw);
+    padding: 16px 20px; overflow-y: auto; background: #fff; box-shadow: var(--shadow-lg);
+    transform: translateX(-105%); transition: transform 0.2s ease;
+  }
+  .ds-filters.is-open { transform: none; }
+  .ds-filters-head .ds-filters-close { display: inline-grid; }
+  .ds-scrim { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.35); }
+  .ds-filters-toggle { display: inline-flex; padding: 8px 14px; }
+  .ds-card.is-list { grid-template-columns: 1fr; }
+  .ds-card.is-list .ds-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ds-card.is-list .ds-card-foot { flex-direction: row; align-items: center; }
+}
+
+@media (max-width: 560px) {
+  .ds-pills { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px 18px; padding: 0 16px; scrollbar-width: none; }
+  .ds-pill { flex-shrink: 0; padding: 9px 18px; font-size: 15px; }
+  .ds-toolbar { margin-top: 20px; }
+  .ds-grid { grid-template-columns: 1fr; }
+  .ds-card-cpu { font-size: 22px; }
+}
+
+/* The public page (DedicatedServers.js) */
+.ds-public { padding-top: 40px; padding-bottom: 72px; }
+@media (max-width: 560px) { .ds-public { padding-top: 24px; } }
+
+/* Console → Dedicated Servers (DashboardContent/Dedicated.js) */
+.ds-confirm-specs { display: flex; flex-direction: column; gap: 9px; margin: 4px 0 14px; }
+.ds-confirm-specs > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; font-size: 14px; }
+.ds-confirm-specs dt { color: var(--text-muted); }
+.ds-confirm-specs dd { margin: 0; }
+.ds-confirm-note { margin: 0 0 14px; font-size: 13.5px; color: var(--text-secondary); }
+.ds-order-note { color: var(--color-accent-700) !important; }
+.ds-order-loc { display: inline-flex; align-items: center; gap: 7px; }
+.ds-order-loc img { width: 18px; height: 13px; object-fit: cover; border-radius: 2px; }
+.cx-section-head h3 svg { vertical-align: -2px; margin-right: 4px; }
+.cx-page .ds-filters { top: 84px; }
+@media (min-width: 961px) and (max-width: 1200px) { .cx-page .ds-catalog { grid-template-columns: 230px minmax(0, 1fr); gap: 24px; } }

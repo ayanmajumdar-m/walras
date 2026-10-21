@@ -11,6 +11,8 @@ import DashboardLayout from './components/ProtectedRoutes/DashboardLayout';
 import ProtectedRoute from './components/ProtectedRoutes/PrivateRoutes';
 import Cart from './components/Cart';
 import Homepage from './components/Homepage';
+import DedicatedServers from './components/Dedicated/DedicatedServers';
+import { isMetalHost } from './data/site';
 import Navbar from './components/Constants/Navbar';
 import AdminLogin from './components/AdminDashboard/AdminLogin';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
@@ -67,7 +69,9 @@ function App() {
     <Router>
       <Routes>
         {/* Public routes with Navbar */}
-        <Route path="/" element={<PublicLayout><Homepage /></PublicLayout>} />
+        {/* metal.walras.net opens on the Dedicated Servers catalog (data/site.js). */}
+        <Route path="/" element={<PublicLayout>{isMetalHost ? <DedicatedServers /> : <Homepage />}</PublicLayout>} />
+        <Route path="/dedicated-servers" element={<PublicLayout><DedicatedServers /></PublicLayout>} />
         <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
         <Route path="/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
         <Route path="/about/pricing" element={<Navigate to="/pricing" replace />} />

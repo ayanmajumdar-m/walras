@@ -258,7 +258,7 @@ const PlatformController = {
         if (!user) throw new HttpError(404, 'Customer not found');
 
         const settle = (p) => p.catch((e) => { console.error('User overview part failed:', e.message); return []; });
-        const [wallet, servers, domains, transactions, invoices, sessions] = await Promise.all([
+        const [wallet, servers, domains, transactions, invoices, sessions, dedicatedServers] = await Promise.all([
             settle(q('SELECT id, balance, currency, updated_at FROM wallets WHERE user_id = ?', [id])),
             settle(q('SELECT id, name, ip_address, plan_name, location, status, hourly_cost, created_at FROM servers WHERE user_id = ? ORDER BY created_at DESC', [id])),
             settle(q('SELECT id, full_domain, status, amount, currency, registration_date, expiration_date, created_at FROM domain_transactions WHERE user_id = ? ORDER BY created_at DESC', [id])),
@@ -267,6 +267,7 @@ const PlatformController = {
                       WHERE w.user_id = ? ORDER BY wt.created_at DESC LIMIT 50`, [id])),
             settle(q('SELECT id, invoice_number, billing_month, total_amount, status, generated_at, due_date FROM monthly_invoices WHERE user_id = ? ORDER BY generated_at DESC LIMIT 24', [id])),
             settle(q('SELECT ip_address, user_agent, login_time FROM user_sessions WHERE user_id = ? ORDER BY login_time DESC LIMIT 10', [id])),
+            settle(q('SELECT id, title, location, monthly_price, status, created_at FROM dedicated_orders WHERE user_id = ? ORDER BY created_at DESC', [id])),
         ]);
 
         const agentUrl = zendesk.zendeskAgentUrl();
@@ -274,7 +275,7 @@ const PlatformController = {
             user,
             kycTicketUrl: agentUrl && user.kyc_ticket_id ? `${agentUrl}/tickets/${user.kyc_ticket_id}` : null,
             wallet: wallet[0] || null,
-            servers, domains, transactions, invoices, sessions,
+            servers, domains, transactions, invoices, sessions, dedicatedServers,
         });
     }),
 

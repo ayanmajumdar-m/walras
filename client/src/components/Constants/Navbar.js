@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./Constants.css";
 import { HeadphonesIcon, Menu, X } from "lucide-react";
+import { DEDICATED_URL, isMetalHost, siteHref } from "../../data/site";
 const Logo = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
 
 /*
@@ -11,17 +12,19 @@ const Logo = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png"
 */
 
 // Domains, Virtual Machines and Managed Database all live on the one Pricing page.
+// Dedicated Servers has its own site, metal.walras.net (data/site.js).
 const SECTIONS = [
-  { name: "Pricing", href: "/pricing" },
-  { name: "About", href: "/about" },
-  { name: "Contact", href: "/contact" }
+  { name: "Pricing", href: siteHref("/pricing") },
+  { name: "Dedicated Servers", href: DEDICATED_URL, dedicated: true },
+  { name: "About", href: siteHref("/about") },
+  { name: "Contact", href: siteHref("/contact") }
 ];
 
 const MOBILE_LINKS = [
   ...SECTIONS,
-  { name: "Privacy Policy", href: "/privacy" },
-  { name: "Terms of Service", href: "/terms" },
-  { name: "Support", href: "/contact" }
+  { name: "Privacy Policy", href: siteHref("/privacy") },
+  { name: "Terms of Service", href: siteHref("/terms") },
+  { name: "Support", href: siteHref("/contact") }
 ];
 
 const Navbar = () => {
@@ -34,6 +37,8 @@ const Navbar = () => {
     user = localStorage.getItem("userId");
   }
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
+  const isActive = (section) => (section.dedicated ? isMetalHost || path === "/dedicated-servers" : !isMetalHost && path === section.href);
+  const consoleHref = siteHref(user ? "/dashboard" : "/login");
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -41,7 +46,7 @@ const Navbar = () => {
     <>
       <header className="top-nav">
         <div className="top-nav-inner">
-          <a href="/" className="logo-container">
+          <a href={siteHref("/")} className="logo-container">
             <img src={Logo} height={52} alt="Walras Cloud" className="logo-image" />
           </a>
 
@@ -50,7 +55,7 @@ const Navbar = () => {
               <a
                 key={section.href}
                 href={section.href}
-                className={`nav-link${path === section.href ? " is-active" : ""}`}
+                className={`nav-link${isActive(section) ? " is-active" : ""}`}
               >
                 {section.name}
               </a>
@@ -58,15 +63,11 @@ const Navbar = () => {
           </nav>
 
           <div className="top-nav-right">
-            <a href="/contact" className="btn btn-secondary nav-support">
+            <a href={siteHref("/contact")} className="btn btn-secondary nav-support">
               <HeadphonesIcon size={16} strokeWidth={1.5} />
               <span>Support</span>
             </a>
-            {user ? (
-              <a href="/dashboard" className="btn btn-primary">Console</a>
-            ) : (
-              <a href="/login" className="btn btn-primary">Console</a>
-            )}
+            <a href={consoleHref} className="btn btn-primary">Console</a>
           </div>
 
           <button
@@ -98,7 +99,7 @@ const Navbar = () => {
         </div>
 
         <div className="mobile-menu-footer">
-          <a href={user ? "/dashboard" : "/login"} className="btn btn-primary btn-block" onClick={closeMenu}>
+          <a href={consoleHref} className="btn btn-primary btn-block" onClick={closeMenu}>
             Console
           </a>
         </div>

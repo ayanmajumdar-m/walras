@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X, ChevronsUpDown, Check, BadgePercent } from "lucide-react";
+import { LayoutGrid, PlusSquare, Boxes, CreditCard, LifeBuoy, UserCircle, LogOut, X, ChevronsUpDown, Check, BadgePercent, Server } from "lucide-react";
 import { switchAccount, ACCOUNT_KEY } from "./consoleApi";
 
 const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
@@ -10,6 +10,8 @@ const NAV = [
   { to: "/dashboard/create", label: "Create", Icon: PlusSquare, perm: "servers" },
   { to: "/dashboard/reserve", label: "Reserve & Save", Icon: BadgePercent, perm: "servers" },
   { to: "/dashboard/resources", label: "Resources", Icon: Boxes, perm: "servers" },
+  // Dedicated Servers: ordered and listed on their own (catalog on metal.walras.net too).
+  { to: "/dashboard/dedicated", label: "Dedicated Servers", Icon: Server, perm: "servers" },
   { to: "/dashboard/billing", label: "Billing", Icon: CreditCard, perm: "billing" },
 ];
 

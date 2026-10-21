@@ -10,6 +10,7 @@ import Resources from "./DashboardContent/Resources";
 import Billing from "./DashboardContent/Billing";
 import Profile from "./DashboardContent/Profile";
 import Support from "./DashboardContent/Support";
+import Dedicated from "./DashboardContent/Dedicated";
 import { api, rupees, actingAccount, switchAccount, ACCOUNT_KEY } from "./consoleApi";
 import { ConsoleContext } from "./ConsoleContext";
 // The retired Home page's stylesheet carries generic global classes
@@ -23,6 +24,7 @@ const TITLES = {
   create: "Create",
   reserve: "Reserve & Save",
   resources: "Resources",
+  dedicated: "Dedicated Servers",
   billing: "Billing",
   wallet: "Billing",
   logs: "Billing",
@@ -193,6 +195,7 @@ const DashboardLayout = () => {
                 <Route path="/create" element={need("servers", <Create />)} />
                 <Route path="/reserve" element={need("servers", <Reserve />)} />
                 <Route path="/resources" element={need("servers", <Resources />)} />
+                <Route path="/dedicated" element={need("servers", <Dedicated />)} />
                 <Route path="/billing" element={need("billing", <Billing />)} />
                 <Route path="/profile" element={<Profile />} />
                 {/* KYC is a tab of Account now; emails sent earlier link here. */}

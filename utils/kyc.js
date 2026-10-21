@@ -25,9 +25,10 @@ const PRODUCTS = {
     compute: 'Virtual Machines',
     database: 'Managed Database',
     apps: 'App Platform',
+    dedicated: 'Dedicated Servers',
     supportPlus: 'Support +',
 };
-const DEFAULT_REQUIRED = ['compute', 'database', 'apps'];
+const DEFAULT_REQUIRED = ['compute', 'database', 'apps', 'dedicated'];
 const SETTING = 'kyc.required_products';
 
 /*

@@ -30,7 +30,7 @@ const ROLES = {
 const ROLE_KEYS = Object.keys(ROLES);
 
 const AREAS = {
-    servers: { label: 'Servers', desc: 'Virtual Machines, Managed Databases, App Platform and domains. New ones are paid from the account balance.' },
+    servers: { label: 'Servers', desc: 'Virtual Machines, Managed Databases, App Platform, Dedicated Servers and domains. New ones are paid from the account balance.' },
     billing: { label: 'Billing', desc: 'Account balance, adding funds, promo codes and usage.' },
     support: { label: 'Support', desc: 'Support tickets for the account.' },
 };
@@ -42,6 +42,7 @@ const ACCESS_ROUTES = [
     ['/api/servers', 'servers'],
     ['/api/databases', 'servers'],
     ['/api/apps', 'servers'],
+    ['/api/dedicated', 'servers'],
     ['/api/users/domains/purchased', 'servers'],
     ['/api/users/openprovider/', 'servers'],
     ['/api/wallet', 'billing'],

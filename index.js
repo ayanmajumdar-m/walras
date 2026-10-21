@@ -108,6 +108,7 @@ app.use("/api/wallet", walletRouter);
 app.use("/api/servers", serverRouter);
 app.use("/api/databases", require("./routes/database.routes"));
 app.use("/api/apps", require("./routes/appPlatform.routes"));
+app.use("/api/dedicated", require("./routes/dedicated.routes"));
 app.use("/api/invoices", require("./routes/invoices.routes"));
 // An API path nothing handles is a 404 in JSON, not the React app's HTML.
 app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));

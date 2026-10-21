@@ -795,7 +795,7 @@ END;
 $$ LANGUAGE plpgsql
 `;
 
-const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'support_plus', 'support_callbacks', 'managed_databases', 'db_plans', 'app_platform_apps', 'app_plans'].map(
+const touchTriggers = ['admins', 'wallets', 'transactions', 'domain_transactions', 'support_plus', 'support_callbacks', 'managed_databases', 'db_plans', 'app_platform_apps', 'app_plans', 'dedicated_servers', 'dedicated_orders'].map(
     (table) => `
 CREATE OR REPLACE TRIGGER ${table}_touch_updated_at
 BEFORE UPDATE ON ${table}
@@ -952,6 +952,51 @@ connection.connect((err) => {
         ['app platform user index', 'CREATE INDEX IF NOT EXISTS app_platform_apps_user_idx ON app_platform_apps (user_id)'],
         // A domain can be on only one app at a time, across all customers.
         // App Platform stock: how many apps of each plan may be sold per location (utils/appPlans.js).
+        // Dedicated Servers (utils/dedicated.js): listings managed in Admin →
+        // Products → Dedicated Servers, shown on metal.walras.net and in the
+        // console. No payment or provisioning yet: an order is recorded as
+        // bought ('pending') and an admin marks it active or cancelled.
+        ['Dedicated servers', `CREATE TABLE IF NOT EXISTS dedicated_servers (
+            id SERIAL PRIMARY KEY,
+            brand VARCHAR(40) NOT NULL DEFAULT '',
+            model VARCHAR(60) NOT NULL DEFAULT '',
+            cpu VARCHAR(80) NOT NULL,
+            cores INT NOT NULL CHECK (cores > 0),
+            threads INT NOT NULL CHECK (threads > 0),
+            ghz NUMERIC(4,2) NOT NULL CHECK (ghz > 0),
+            memory_gb INT NOT NULL CHECK (memory_gb > 0),
+            storage VARCHAR(120) NOT NULL,
+            network VARCHAR(80) NOT NULL DEFAULT '1Gbit/s Guaranteed',
+            uplink_gbps NUMERIC(6,2) NOT NULL DEFAULT 1 CHECK (uplink_gbps > 0),
+            traffic_tb INT NOT NULL DEFAULT 0 CHECK (traffic_tb >= 0),
+            country_code CHAR(2) NOT NULL,
+            location VARCHAR(60) NOT NULL,
+            delivery VARCHAR(10) NOT NULL DEFAULT '24h' CHECK (delivery IN ('instant', '24h', '7d')),
+            categories VARCHAR(200) NOT NULL DEFAULT '',
+            badge VARCHAR(30) NOT NULL DEFAULT '',
+            price_inr NUMERIC(12,2) NOT NULL CHECK (price_inr > 0),
+            stock INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
+            active BOOLEAN NOT NULL DEFAULT TRUE,
+            sort_order INT NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)`],
+        // What the customer bought, as it was listed then (spec), whatever the listing becomes.
+        ['Dedicated orders', `CREATE TABLE IF NOT EXISTS dedicated_orders (
+            id SERIAL PRIMARY KEY,
+            user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            ordered_by INT REFERENCES users(id) ON DELETE SET NULL,
+            server_id INT REFERENCES dedicated_servers(id) ON DELETE SET NULL,
+            title VARCHAR(160) NOT NULL,
+            spec JSONB NOT NULL,
+            location VARCHAR(80) NOT NULL,
+            monthly_price NUMERIC(12,2) NOT NULL,
+            status VARCHAR(10) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'cancelled')),
+            admin_note VARCHAR(500),
+            activated_at TIMESTAMPTZ,
+            cancelled_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)`],
+        ['dedicated orders user index', 'CREATE INDEX IF NOT EXISTS dedicated_orders_user_idx ON dedicated_orders (user_id)'],
         ['App Platform stock', `CREATE TABLE IF NOT EXISTS app_stock (
             plan VARCHAR(40) NOT NULL,
             location_id INT NOT NULL,
