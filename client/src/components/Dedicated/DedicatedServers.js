@@ -5,8 +5,8 @@ import { siteHref } from "../../data/site";
 import "../About/Pricing.css";
 
 /*
-  Dedicated Servers, the public catalog: metal.walras.net (and
-  /dedicated-servers on the main site). Ordering happens in the console on
+  Dedicated, the public catalog: metal.walras.net (and
+  /dedicated on the main site). Ordering happens in the console on
   the main site, where the customer is signed in.
 */
 const DedicatedServers = () => {
@@ -14,7 +14,7 @@ const DedicatedServers = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    document.title = "Dedicated Servers | Walras Cloud";
+    document.title = "Dedicated | Walras Cloud";
     fetch("/api/dedicated/catalog")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error())))
       .then(setData)
@@ -33,7 +33,7 @@ const DedicatedServers = () => {
     <div className="pr-page">
       <header className="pr-hero">
         <div className="pr-wrap">
-          <span className="pr-kicker">Dedicated Servers</span>
+          <span className="pr-kicker">Dedicated</span>
           <h1 className="pr-hero-title">The whole machine. Yours.</h1>
           <p className="pr-hero-sub">
             Single-tenant servers with dedicated cores, memory and storage, full root access and no neighbours. Priced monthly, in rupees.

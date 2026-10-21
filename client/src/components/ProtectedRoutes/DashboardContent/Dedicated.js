@@ -7,7 +7,7 @@ import DedicatedCatalog, { countryName, flagUrl, formatInr, formatTraffic, forma
 import { KycLocked, kycLocked } from "./Kyc";
 
 /*
-  Console → Dedicated Servers: the account's dedicated servers, then the
+  Console → Dedicated: the account's dedicated servers, then the
   catalog to order another. Ordering charges nothing and starts nothing
   yet: the server is recorded as bought and our team sets it up by hand,
   then marks it active (utils/dedicated.js). metal.walras.net's Order
@@ -112,7 +112,7 @@ const Dedicated = () => {
   return (
     <div className="cx-page">
       <div className="cx-page-head">
-        <h2>Dedicated Servers</h2>
+        <h2>Dedicated</h2>
         <p>Single-tenant machines with dedicated cores, memory and storage, set up for you by our team.</p>
       </div>
 

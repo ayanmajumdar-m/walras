@@ -1,5 +1,5 @@
 /**
- * Dedicated Servers for customers (utils/dedicated.js): the public catalog
+ * Dedicated for customers (utils/dedicated.js): the public catalog
  * (metal.walras.net and the console) and the account's orders. Ordering
  * charges nothing and starts nothing yet: the server is recorded as bought
  * and our team sets it up.

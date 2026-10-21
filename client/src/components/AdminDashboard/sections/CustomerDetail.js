@@ -206,7 +206,7 @@ const CustomerDetail = ({ userId, can, onBack }) => {
             <Table head={["Name", "IP", "Plan", "Location", "Status"]} empty="No servers."
               rows={servers.map((s) => <tr key={s.id}><td><strong>{s.name}</strong></td><td><code>{s.ip_address || "—"}</code></td><td>{s.plan_name}</td><td>{s.location}</td><td><span className={`cx-status is-${s.status}`}>{s.status}</span></td></tr>)} />
           </div>
-          <div className="cx-card"><h3 className="ap-card-title">Dedicated Servers ({dedicatedServers.length})</h3>
+          <div className="cx-card"><h3 className="ap-card-title">Dedicated ({dedicatedServers.length})</h3>
             <Table head={["Server", "Location", "Price", "Status", "Ordered"]} empty="No dedicated servers."
               rows={dedicatedServers.map((d) => <tr key={d.id}><td><strong>{d.title}</strong></td><td>{d.location}</td><td>{inr(Number(d.monthly_price) * 100)}/mo</td><td><span className={`cx-status is-${d.status === "active" ? "active" : d.status === "cancelled" ? "stopped" : "pending"}`}>{d.status === "pending" ? "bought" : d.status}</span></td><td>{fmtDate(d.created_at)}</td></tr>)} />
           </div>

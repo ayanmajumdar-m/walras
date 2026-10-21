@@ -83,7 +83,7 @@ const NAV = [
         ],
       },
       {
-        id: "dedicated", label: "Dedicated Servers", Icon: Server,
+        id: "dedicated", label: "Dedicated", Icon: Server,
         items: [
           { id: "dedicated-orders", label: "Orders", title: "Dedicated server orders", Icon: Receipt, perm: "view_services" },
           { id: "dedicated-servers", label: "Listings", title: "Dedicated server listings", Icon: Tags, perm: "view_services" },

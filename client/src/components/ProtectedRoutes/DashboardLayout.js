@@ -24,7 +24,7 @@ const TITLES = {
   create: "Create",
   reserve: "Reserve & Save",
   resources: "Resources",
-  dedicated: "Dedicated Servers",
+  dedicated: "Dedicated",
   billing: "Billing",
   wallet: "Billing",
   logs: "Billing",

@@ -1,5 +1,5 @@
 /**
- * Admin → Products → Dedicated Servers (utils/dedicated.js): the listings
+ * Admin → Products → Dedicated (utils/dedicated.js): the listings
  * customers can order (add, edit, hide, delete) and every order, with who
  * bought it and its status.
  */

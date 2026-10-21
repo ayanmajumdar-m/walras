@@ -1,5 +1,5 @@
 /* ═════════════════════════════════════════════════════════════════════════
-   Dedicated Servers catalog (ds-*) — metal.walras.net and the console.
+   Dedicated catalog (ds-*) — metal.walras.net and the console.
    Filter rail on the left, category pills, a rounded search bar, then cards
    with a corner ribbon. Uses the site's tokens (theme.css).
    ═════════════════════════════════════════════════════════════════════════ */
@@ -192,7 +192,7 @@
 .ds-public { padding-top: 40px; padding-bottom: 72px; }
 @media (max-width: 560px) { .ds-public { padding-top: 24px; } }
 
-/* Console → Dedicated Servers (DashboardContent/Dedicated.js) */
+/* Console → Dedicated (DashboardContent/Dedicated.js) */
 .ds-confirm-specs { display: flex; flex-direction: column; gap: 9px; margin: 4px 0 14px; }
 .ds-confirm-specs > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; font-size: 14px; }
 .ds-confirm-specs dt { color: var(--text-muted); }

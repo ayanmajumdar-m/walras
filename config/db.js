@@ -952,8 +952,8 @@ connection.connect((err) => {
         ['app platform user index', 'CREATE INDEX IF NOT EXISTS app_platform_apps_user_idx ON app_platform_apps (user_id)'],
         // A domain can be on only one app at a time, across all customers.
         // App Platform stock: how many apps of each plan may be sold per location (utils/appPlans.js).
-        // Dedicated Servers (utils/dedicated.js): listings managed in Admin →
-        // Products → Dedicated Servers, shown on metal.walras.net and in the
+        // Dedicated (utils/dedicated.js): listings managed in Admin →
+        // Products → Dedicated, shown on metal.walras.net and in the
         // console. No payment or provisioning yet: an order is recorded as
         // bought ('pending') and an admin marks it active or cancelled.
         ['Dedicated servers', `CREATE TABLE IF NOT EXISTS dedicated_servers (

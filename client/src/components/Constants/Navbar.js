@@ -12,10 +12,10 @@ const Logo = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png"
 */
 
 // Domains, Virtual Machines and Managed Database all live on the one Pricing page.
-// Dedicated Servers has its own site, metal.walras.net (data/site.js).
+// Dedicated has its own site, metal.walras.net (data/site.js).
 const SECTIONS = [
   { name: "Pricing", href: siteHref("/pricing") },
-  { name: "Dedicated Servers", href: DEDICATED_URL, dedicated: true },
+  { name: "Dedicated", href: DEDICATED_URL, dedicated: true },
   { name: "About", href: siteHref("/about") },
   { name: "Contact", href: siteHref("/contact") }
 ];
@@ -37,7 +37,7 @@ const Navbar = () => {
     user = localStorage.getItem("userId");
   }
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
-  const isActive = (section) => (section.dedicated ? isMetalHost || path === "/dedicated-servers" : !isMetalHost && path === section.href);
+  const isActive = (section) => (section.dedicated ? isMetalHost || path === "/dedicated" : !isMetalHost && path === section.href);
   const consoleHref = siteHref(user ? "/dashboard" : "/login");
 
   const closeMenu = () => setIsMenuOpen(false);

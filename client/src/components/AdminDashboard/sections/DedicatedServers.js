@@ -4,7 +4,7 @@ import { adminApi } from "../adminApi";
 import { formatInr, formatUplink, processorLine } from "../../Dedicated/DedicatedCatalog";
 
 /*
-  Products → Dedicated Servers → Listings: the servers customers can order on
+  Products → Dedicated → Listings: the servers customers can order on
   metal.walras.net and in the console. Stock is how many can still be
   ordered: each order takes one, a cancelled order gives it back. A listing
   anyone ordered can only be hidden. Nothing is charged or provisioned yet.
@@ -192,7 +192,7 @@ const DedicatedServers = ({ can }) => {
           </table>
         </div>
       )}
-      <p className="ap-muted">Prices exclude GST. Orders are listed under Dedicated Servers → Orders.</p>
+      <p className="ap-muted">Prices exclude GST. Orders are listed under Dedicated → Orders.</p>
       {editing && data && (
         <ServerForm editing={editing !== "new"} meta={data} initial={editing === "new" ? EMPTY : toForm(editing)}
           onDone={done} onClose={() => setEditing(null)} />

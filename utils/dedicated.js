@@ -1,7 +1,7 @@
 /**
- * Dedicated Servers: listings (dedicated_servers) managed in Admin →
- * Products → Dedicated Servers, shown on metal.walras.net and in the console
- * (Dedicated Servers), and customers' orders (dedicated_orders).
+ * Dedicated: listings (dedicated_servers) managed in Admin →
+ * Products → Dedicated, shown on metal.walras.net and in the console
+ * (Dedicated), and customers' orders (dedicated_orders).
  *
  * Nothing is charged or provisioned yet. Ordering records the server as
  * bought (status 'pending') and takes one from the listing's stock; an admin
@@ -205,7 +205,7 @@ const placeOrder = async ({ userId, actorId, serverId }) => {
     }
 };
 
-/** Every order with its customer, newest first (Admin → Dedicated Servers → Orders). */
+/** Every order with its customer, newest first (Admin → Dedicated → Orders). */
 const adminOrders = async () => (await q(
     `SELECT o.*, u.name AS customer, u.email, u.waladmin_id, u.company
        FROM dedicated_orders o JOIN users u ON u.id = o.user_id

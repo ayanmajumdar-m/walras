@@ -4,7 +4,7 @@ import { adminApi } from "../adminApi";
 import { formatInr, processorLine } from "../../Dedicated/DedicatedCatalog";
 
 /*
-  Products → Dedicated Servers → Orders: who bought which server and where it
+  Products → Dedicated → Orders: who bought which server and where it
   stands. Bought (being set up) → Active once it's handed over, or
   Cancelled (its stock goes back). The note is shown to the customer, e.g.
   the server's IP address. Nothing is charged or provisioned automatically.

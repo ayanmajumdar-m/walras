@@ -6,7 +6,7 @@ const { requireKyc } = require('../utils/kyc');
 const rateLimit = require('../utils/rateLimit');
 const Dedicated = require('../controllers/dedicated.controllers');
 
-// Dedicated Servers (controllers/dedicated.controllers.js). The catalog is
+// Dedicated (controllers/dedicated.controllers.js). The catalog is
 // public (metal.walras.net); orders need a session. Team members need
 // Servers access (utils/team.js).
 router.get('/catalog', Dedicated.catalog);

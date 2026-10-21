@@ -69,9 +69,10 @@ function App() {
     <Router>
       <Routes>
         {/* Public routes with Navbar */}
-        {/* metal.walras.net opens on the Dedicated Servers catalog (data/site.js). */}
+        {/* metal.walras.net opens on the Dedicated catalog (data/site.js). */}
         <Route path="/" element={<PublicLayout>{isMetalHost ? <DedicatedServers /> : <Homepage />}</PublicLayout>} />
-        <Route path="/dedicated-servers" element={<PublicLayout><DedicatedServers /></PublicLayout>} />
+        <Route path="/dedicated" element={<PublicLayout><DedicatedServers /></PublicLayout>} />
+        <Route path="/dedicated-servers" element={<Navigate to="/dedicated" replace />} />
         <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
         <Route path="/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
         <Route path="/about/pricing" element={<Navigate to="/pricing" replace />} />

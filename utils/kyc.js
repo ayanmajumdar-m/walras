@@ -25,7 +25,7 @@ const PRODUCTS = {
     compute: 'Virtual Machines',
     database: 'Managed Database',
     apps: 'App Platform',
-    dedicated: 'Dedicated Servers',
+    dedicated: 'Dedicated',
     supportPlus: 'Support +',
 };
 const DEFAULT_REQUIRED = ['compute', 'database', 'apps', 'dedicated'];

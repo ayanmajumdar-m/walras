@@ -10,8 +10,8 @@ const NAV = [
   { to: "/dashboard/create", label: "Create", Icon: PlusSquare, perm: "servers" },
   { to: "/dashboard/reserve", label: "Reserve & Save", Icon: BadgePercent, perm: "servers" },
   { to: "/dashboard/resources", label: "Resources", Icon: Boxes, perm: "servers" },
-  // Dedicated Servers: ordered and listed on their own (catalog on metal.walras.net too).
-  { to: "/dashboard/dedicated", label: "Dedicated Servers", Icon: Server, perm: "servers" },
+  // Dedicated: ordered and listed on their own (catalog on metal.walras.net too).
+  { to: "/dashboard/dedicated", label: "Dedicated", Icon: Server, perm: "servers" },
   { to: "/dashboard/billing", label: "Billing", Icon: CreditCard, perm: "billing" },
 ];
 

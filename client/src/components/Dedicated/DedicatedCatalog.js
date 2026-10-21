@@ -3,7 +3,7 @@ import { Search, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, List, Slide
 import "./Dedicated.css";
 
 /*
-  The Dedicated Servers catalog, shared by metal.walras.net (DedicatedServers.js)
+  The Dedicated catalog, shared by metal.walras.net (DedicatedServers.js)
   and the console (DashboardContent/Dedicated.js): category pills, search,
   filters with counts (location, delivery time, uplink, memory), sort, pages
   of 12 and a grid or list view. `action(server)` renders each card's button.

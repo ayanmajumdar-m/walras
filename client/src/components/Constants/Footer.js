@@ -23,7 +23,7 @@ const COLUMNS = [
       // App Platform hidden for now (data/plans.js).
       ...(APP_PLATFORM_ON ? [{ label: 'App Platform', to: '/pricing#app-platform' }] : []),
       { label: 'Managed Database', to: '/pricing#managed-database' },
-      { label: 'Dedicated Servers', url: DEDICATED_URL },
+      { label: 'Dedicated', url: DEDICATED_URL },
       { label: 'Domains', to: '/pricing#domains' },
     ],
   },
