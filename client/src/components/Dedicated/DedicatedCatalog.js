@@ -8,8 +8,9 @@ import "./Dedicated.css";
   filters, sort, pages of 12 and a grid or list view. `action(server)`
   renders each card's button.
 
-  Filters: Region, Price (a range slider), CPU, RAM, Storage, Uplink and Time
-  to deliver. Options are only what the listings actually have, each with a
+  Filters: Region, Price (a range slider), CPU, RAM, Storage, Uplink, Server
+  type / purpose (the same as the category pills above the search), Availability
+  and Time to deliver. Options are only what the listings actually have, each with a
   count; several can be ticked in a group (any of them), and groups combine
   (all of them). A group with a single option isn't shown. What's selected
   shows as chips above the results, each removable, with Clear all.
@@ -49,8 +50,12 @@ const GROUPS = [
       const [g, t] = v.split("|").map(Number);
       return `${formatUplink(g)} - ${t > 0 ? `${t}TB` : "Unmetered"}`;
     }, sort: (a, b) => { const [ga, ta] = a.split("|").map(Number); const [gb, tb] = b.split("|").map(Number); return ga - gb || ta - tb; } },
-  { id: "delivery", title: "Time to deliver", value: (s) => s.delivery, label: (v, delivery) => delivery[v] || v, order: (delivery) => Object.keys(delivery) },
+  // A server can have several purposes (its categories); the pills above the search tick these too.
+  { id: "purpose", title: "Server type / purpose", values: (s) => s.categories, label: (v, ctx) => ctx.categories[v] || v, order: (ctx) => Object.keys(ctx.categories) },
+  { id: "availability", title: "Availability", value: (s) => (s.inStock ? "in" : "out"), label: (v) => (v === "in" ? "In stock" : "Out of stock"), order: () => ["in", "out"] },
+  { id: "delivery", title: "Time to deliver", value: (s) => s.delivery, label: (v, ctx) => ctx.delivery[v] || v, order: (ctx) => Object.keys(ctx.delivery) },
 ];
+const valuesOf = (g, s) => (g.values ? g.values(s) : [g.value(s)]);
 const SHOW_FIRST = 6; // longer groups show "Show more"
 
 // Price slider steps: about 100 across the range, in round rupees.
@@ -118,7 +123,6 @@ const Card = ({ s, delivery, action, view }) => (
 
 const DedicatedCatalog = ({ servers, categories, delivery: deliveryLabels, action, loading, error }) => {
   const delivery = deliveryLabels || {};
-  const [category, setCategory] = useState(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({}); // group id → ticked values
   const [price, setPrice] = useState(null); // [min, max], or null for any price
@@ -137,9 +141,10 @@ const DedicatedCatalog = ({ servers, categories, delivery: deliveryLabels, actio
 
   // Category and search narrow everything; each filter group then counts
   // what the other groups (and the price range) leave.
-  const base = useMemo(() => list.filter((s) => (!category || s.categories.includes(category)) && matchesSearch(s, term)), [list, category, term]);
+  const base = useMemo(() => list.filter((s) => matchesSearch(s, term)), [list, term]);
+  const ctx = { delivery, categories: categories || {} };
   const passes = (s, except) => (except === "price" || !price || (s.monthly >= price[0] && s.monthly <= price[1]))
-    && GROUPS.every((g) => g.id === except || !filters[g.id]?.length || filters[g.id].includes(g.value(s)));
+    && GROUPS.every((g) => g.id === except || !filters[g.id]?.length || valuesOf(g, s).some((v) => filters[g.id].includes(v)));
   const shown = useMemo(() => {
     const out = base.filter((s) => passes(s));
     const by = {
@@ -170,18 +175,18 @@ const DedicatedCatalog = ({ servers, categories, delivery: deliveryLabels, actio
   const facets = GROUPS.map((g) => {
     const pool = base.filter((s) => passes(s, g.id));
     const counts = new Map();
-    pool.forEach((s) => counts.set(g.value(s), (counts.get(g.value(s)) || 0) + 1));
-    let values = [...new Set(list.map(g.value))];
-    if (g.order) values = g.order(delivery).filter((v) => values.includes(v));
+    pool.forEach((s) => valuesOf(g, s).forEach((v) => counts.set(v, (counts.get(v) || 0) + 1)));
+    let values = [...new Set(list.flatMap((s) => valuesOf(g, s)))];
+    if (g.order) values = g.order(ctx).filter((v) => values.includes(v));
     else values.sort(g.sort || ((a, b) => a.localeCompare(b)));
-    return { ...g, options: values.map((v) => ({ v, label: g.label(v, delivery), n: counts.get(v) || 0 })) };
+    return { ...g, options: values.map((v) => ({ v, label: g.label(v, ctx), n: counts.get(v) || 0 })) };
   }).filter((g) => g.options.length > 1 || filters[g.id]?.length);
 
   // Selected filters, as chips above the results.
   const chips = [
     ...(price ? [{ key: "price", label: `${formatInr(price[0])} – ${formatInr(price[1])}`, remove: () => changePrice(null) }] : []),
     ...GROUPS.flatMap((g) => (filters[g.id] || []).map((v) => ({
-      key: `${g.id}:${v}`, label: (g.chip || g.label)(v, delivery), remove: () => toggle(g.id, v),
+      key: `${g.id}:${v}`, label: (g.chip || g.label)(v, ctx), remove: () => toggle(g.id, v),
     }))),
   ];
   const activeFilters = chips.length;
@@ -258,8 +263,8 @@ const DedicatedCatalog = ({ servers, categories, delivery: deliveryLabels, actio
       <div className="ds-main">
         <div className="ds-pills" role="group" aria-label="Category">
           {Object.entries(categories || {}).map(([id, label]) => (
-            <button key={id} type="button" className={`ds-pill${category === id ? " is-active" : ""}`} aria-pressed={category === id}
-              onClick={() => { setCategory(category === id ? null : id); setPage(1); }}>
+            <button key={id} type="button" className={`ds-pill${filters.purpose?.includes(id) ? " is-active" : ""}`} aria-pressed={Boolean(filters.purpose?.includes(id))}
+              onClick={() => toggle("purpose", id)}>
               {label}
             </button>
           ))}
