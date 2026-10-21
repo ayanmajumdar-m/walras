@@ -204,3 +204,58 @@
 .cx-section-head h3 svg { vertical-align: -2px; margin-right: 4px; }
 .cx-page .ds-filters { top: 84px; }
 @media (min-width: 961px) and (max-width: 1200px) { .cx-page .ds-catalog { grid-template-columns: 230px minmax(0, 1fr); gap: 24px; } }
+
+/* Checkbox filters, price slider and selected-filter chips */
+.ds-check { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.35; cursor: pointer; }
+.ds-check input {
+  appearance: none; flex-shrink: 0; width: 18px; height: 18px; margin: 1px 0 0;
+  border: 1.5px solid var(--color-neutral-400); border-radius: 4px; background: #fff; cursor: pointer;
+  display: grid; place-items: center;
+}
+.ds-check input::after {
+  content: ""; width: 9px; height: 5px; margin-top: -2px; border: 2px solid #fff; border-top: 0; border-right: 0;
+  transform: rotate(-45deg) scale(0); transition: transform 0.12s ease;
+}
+.ds-check input:checked { background: var(--color-accent-800); border-color: var(--color-accent-800); }
+.ds-check input:checked::after { transform: rotate(-45deg) scale(1); }
+.ds-check input:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 2px; }
+.ds-check em { font-style: normal; color: var(--text-muted); }
+.ds-check.is-empty { color: var(--text-muted); }
+.ds-options .ds-link { align-self: flex-start; margin-top: 2px; }
+.ds-group-count {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 8px; padding: 0 6px;
+  border-radius: 999px; background: var(--color-accent-800); color: #fff; font-size: 12px; font-weight: 600; vertical-align: 2px;
+}
+
+.ds-price-filter { padding: 8px 2px 0; }
+.ds-price-values { display: flex; justify-content: space-between; font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.ds-price-note { display: block; margin-top: 10px; font-size: 12.5px; color: var(--text-muted); }
+.ds-range { position: relative; height: 22px; }
+.ds-range-track, .ds-range-fill { position: absolute; top: 9px; height: 4px; border-radius: 4px; }
+.ds-range-track { left: 0; right: 0; background: var(--color-neutral-300); }
+.ds-range-fill { background: var(--color-accent-700); }
+.ds-range input[type="range"] {
+  position: absolute; inset: 0; width: 100%; height: 22px; margin: 0;
+  appearance: none; -webkit-appearance: none; background: none; pointer-events: none;
+}
+.ds-range input[type="range"]::-webkit-slider-runnable-track { background: none; border: 0; }
+.ds-range input[type="range"]::-moz-range-track { background: none; border: 0; }
+.ds-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: pointer;
+  width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid var(--color-accent-800); box-shadow: var(--shadow-sm);
+}
+.ds-range input[type="range"]::-moz-range-thumb {
+  pointer-events: auto; cursor: pointer;
+  width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid var(--color-accent-800); box-shadow: var(--shadow-sm);
+}
+.ds-range input[type="range"]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--color-accent-500); outline-offset: 2px; }
+
+.ds-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 16px; }
+.ds-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px 7px 14px; border-radius: 999px;
+  border: 1px solid var(--color-accent-800); background: #fff; color: var(--color-accent-900);
+  font: inherit; font-size: 14px; cursor: pointer;
+}
+.ds-chip:hover { background: var(--color-accent-100); }
+.ds-chip svg { flex-shrink: 0; }
+.ds-chips + .ds-toolbar { margin-top: 16px; }
