@@ -12,7 +12,7 @@ import ProtectedRoute from './components/ProtectedRoutes/PrivateRoutes';
 import Cart from './components/Cart';
 import Homepage from './components/Homepage';
 import DedicatedServers from './components/Dedicated/DedicatedServers';
-import { isMetalHost } from './data/site';
+import { isMetalHost, MAIN_ORIGIN } from './data/site';
 import Navbar from './components/Constants/Navbar';
 import AdminLogin from './components/AdminDashboard/AdminLogin';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
@@ -53,6 +53,17 @@ function ScrollManager() {
   return null;
 }
 
+// metal.walras.net is only the Dedicated catalog: any other page (reached
+// in-app, without a page load the server could redirect) opens on the main site.
+function MetalGuard() {
+  const { pathname, search, hash } = useLocation();
+  const elsewhere = isMetalHost && pathname !== '/';
+  useEffect(() => {
+    if (elsewhere) window.location.replace(pathname === '/dedicated' ? '/' : `${MAIN_ORIGIN}${pathname}${search}${hash}`);
+  }, [elsewhere, pathname, search, hash]);
+  return null;
+}
+
 function PublicLayout({ children }) {
   return (
     <>
@@ -67,6 +78,7 @@ function PublicLayout({ children }) {
 function App() {
   return (
     <Router>
+      <MetalGuard />
       <Routes>
         {/* Public routes with Navbar */}
         {/* metal.walras.net opens on the Dedicated catalog (data/site.js). */}

@@ -11,8 +11,17 @@ const local = !host || host === "localhost" || host === "127.0.0.1" || host.ends
 /** True on metal.walras.net (or metal.localhost when testing). */
 export const isMetalHost = /^metal\./i.test(host);
 
-/** A main-site path, as a link that works from either host. */
-export const siteHref = (path) => (isMetalHost && !local ? `${MAIN_SITE}${path}` : path);
+/** The main site's address: www.walras.net, or localhost:<port> when testing. */
+export const MAIN_ORIGIN = local && typeof window !== "undefined"
+  ? `${window.location.protocol}//localhost${window.location.port ? `:${window.location.port}` : ""}`
+  : MAIN_SITE;
+
+/**
+ * A main-site path, as a link that works from either host. metal.walras.net
+ * shows only the catalog, so from there every other page is on the main site
+ * (the server redirects there too, index.js).
+ */
+export const siteHref = (path) => (isMetalHost ? `${MAIN_ORIGIN}${path}` : path);
 
 /** The Dedicated catalog: its own address in production, a path when testing. */
-export const DEDICATED_URL = local ? "/dedicated" : isMetalHost ? "/" : METAL_SITE;
+export const DEDICATED_URL = isMetalHost ? "/" : local ? "/dedicated" : METAL_SITE;

@@ -125,6 +125,18 @@ connection.connect((err) => {
 // ✅ Step 6: Serve static files from React build
 // ✅ FIXED
 app.use(express.static(path.join(process.cwd(), "client/build")));
+// metal.walras.net is only the Dedicated catalog (its "/", client/src/data/site.js).
+// Any other page asked for there goes to the same page on the main site;
+// the built files (scripts, styles, images) were already served above.
+app.use((req, res, next) => {
+  const host = String(req.headers["x-forwarded-host"] || req.hostname || "").split(",")[0].trim().toLowerCase();
+  if (!host.startsWith("metal.") || req.path === "/") return next();
+  if (req.path === "/dedicated") return res.redirect(301, "/");
+  const main = host.endsWith(".localhost")
+    ? `${req.protocol}://localhost:${port}`
+    : (require("./utils/integrations").get("CLIENT_URL") || "https://www.walras.net").replace(/\/+$/, "");
+  res.redirect(301, `${main}${req.originalUrl}`);
+});
 app.use((req, res) => {
   res.sendFile(path.join(process.cwd(), "client/build", "index.html"));
 });
