@@ -18,6 +18,7 @@ const serverLocations = require('../utils/serverLocations');
 const { ensureWallet } = require('../utils/wallets');
 const supportPlus = require('../utils/supportPlus');
 const kyc = require('../utils/kyc');
+const { APP_PLATFORM_ON } = require('../utils/appPlans');
 const { sendRawEmail, escapeHtml } = require('../utils/sendEmail');
 const integrations = require('../utils/integrations');
 
@@ -76,6 +77,11 @@ const emailKyc = async (user, status, note) => {
         console.warn(`KYC email to user ${user.id} failed:`, err.message);
     }
 };
+
+// Settings → KYC: the services, without App Platform while it's hidden (utils/appPlans.js).
+const kycProductList = (required) => Object.entries(kyc.PRODUCTS)
+    .filter(([id]) => id !== 'apps' || APP_PLATFORM_ON)
+    .map(([id, label]) => ({ id, label, required: required.includes(id) }));
 
 const PlatformController = {
     // ── Me ───────────────────────────────────────────────────────────────
@@ -328,13 +334,17 @@ const PlatformController = {
     // Settings → KYC: which services can't be ordered until KYC is verified.
     getKycSettings: handle(async (req, res) => {
         const required = await kyc.getRequired();
-        res.json({ products: Object.entries(kyc.PRODUCTS).map(([id, label]) => ({ id, label, required: required.includes(id) })) });
+        res.json({ products: kycProductList(required) });
     }),
 
+    // App Platform isn't shown while it's hidden, and saving keeps its setting as it was.
     updateKycSettings: handle(async (req, res) => {
-        const required = await kyc.setRequired(req.body.required);
+        let wanted = Array.isArray(req.body.required) ? req.body.required.filter((id) => id !== 'apps') : [];
+        if (!APP_PLATFORM_ON && (await kyc.getRequired()).includes('apps')) wanted = [...wanted, 'apps'];
+        else if (APP_PLATFORM_ON && Array.isArray(req.body.required) && req.body.required.includes('apps')) wanted = [...wanted, 'apps'];
+        const required = await kyc.setRequired(wanted);
         audit(req, 'settings.kyc', 'settings', 'kyc', { required });
-        res.json({ products: Object.entries(kyc.PRODUCTS).map(([id, label]) => ({ id, label, required: required.includes(id) })) });
+        res.json({ products: kycProductList(required) });
     }),
 
     /**

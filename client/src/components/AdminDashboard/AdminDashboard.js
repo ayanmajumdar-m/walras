@@ -36,6 +36,7 @@ import {
 } from "./sections/Legacy";
 // AdminDashboard.css still styles the pre-existing views (Dashboard,
 // Transactions, Invoices, …); the console + admin sheets come after it.
+import { APP_PLATFORM_ON } from "../../data/plans";
 import "./AdminDashboard.css";
 // Users.css outlived the old Users view: its .modal* rules style the promo
 // form and the console's nameserver/transfer dialogs.
@@ -74,7 +75,8 @@ const NAV = [
           { id: "db-stock", label: "Stock", title: "Database stock", Icon: Boxes, perm: "view_services" },
         ],
       },
-      {
+      // App Platform is hidden for now (data/plans.js): its tab only shows when it's on.
+      APP_PLATFORM_ON && {
         id: "app", label: "App Platform", Icon: Rocket,
         items: [
           { id: "apps", label: "Apps", title: "App Platform apps", Icon: Rocket, perm: "view_services" },
@@ -90,7 +92,7 @@ const NAV = [
         ],
       },
       { id: "domain", label: "Domains", Icon: Globe, items: [{ id: "domains", label: "Domains", Icon: Globe, perm: "view_services" }] },
-    ],
+    ].filter(Boolean),
   },
   {
     id: "billing", label: "Billing", Icon: Wallet,
