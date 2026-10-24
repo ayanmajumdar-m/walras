@@ -111,11 +111,14 @@ const IDENT = /^[A-Za-z0-9_$.-]{1,64}$/;
 module.exports = {
     // GET /api/plans/database — public
     publicPlans: handle(async (req, res) => {
-        const plans = (await dbStock.getPlans()).map(({ id, active, sortOrder, ...p }) => p);
+        const [all, locations] = await Promise.all([dbStock.getPlans(), productLocations.catalogLocations('database')]);
+        const plans = all.map(({ id, active, sortOrder, ...p }) => p);
         res.json({
             plans,
             engines: Object.entries(dbStock.ENGINES).map(([id, label]) => ({ id, label })),
             fromPrice: plans.length ? Math.min(...plans.map((p) => p.monthly)) : null,
+            // Active locations, comingSoon where Managed Database isn't offered yet (the homepage shows them).
+            locations: locations.map(({ name, country, comingSoon }) => ({ name, country, comingSoon })),
         });
     }),
 

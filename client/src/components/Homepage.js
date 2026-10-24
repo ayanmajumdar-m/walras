@@ -1,294 +1,407 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import {
+  ArrowRight, ArrowUpRight, Check, Database, DatabaseBackup, ShieldCheck, Zap, MapPin, Wallet, Headphones,
+  ChevronDown, LayoutGrid, SquarePlus, BadgePercent, Boxes, Server, CreditCard, LifeBuoy, CircleUser, LogOut,
+  Plus, RefreshCw, Layers, Globe, Copy, Eye, Trash2,
+} from "lucide-react";
+import WalrasScene from "./Landing/WalrasScene";
+import { DEDICATED_URL } from "../data/site";
+import { formatRam, formatStorage } from "../data/plans";
+// The previous homepage's stylesheet still styles shared classes other public
+// pages use (.cta, .cta-inner, .hero-title, .support-grid…), so it stays loaded.
 import "./Homepage.css";
-import { useLocations } from "../data/locations";
-import { APP_PLATFORM_ON } from "../data/plans";
-import { Zap, Clock, Gauge, Globe, Cpu, Check, Database, Rocket } from "lucide-react";
+import "./Landing/Landing.css";
 
 /*
-  The homepage as a specification sheet.
-
-  Two ideas carry it. First, the hero is a claim beside a plate of figures —
-  the numbers a CTO comparing providers actually wants, on the screen before
-  any scrolling. Second, everything below is a grid whose structure is
-  visible: hairline rules, equal cells, registration marks. No cards floating
-  on gradients, no emoji standing in for icons.
-
-  The scroll-reveal IntersectionObserver that used to wrap every section is
-  gone. It delayed first paint of real content to buy an effect, and on a
-  wireframe page the effect reads as breakage.
+  The homepage: Managed Database first, with the rest of the line-up beside it.
+  Plans, prices, stock, backup retention and locations come from the same
+  public endpoints as the Pricing page (/api/plans/database, /api/settings/public),
+  so it never shows a plan or price that isn't real. The 3D illustrations are
+  Landing/WalrasScene.js.
 */
 
-const COMMITMENTS = [
-  {
-    ref: "C-01",
-    Icon: Zap,
-    value: "99.9%",
-    title: "High Uptime",
-    desc: "We back our network and hardware with a 99.9% uptime SLA, so your apps stay live."
-  },
-  {
-    ref: "C-02",
-    Icon: Clock,
-    value: "24/7",
-    title: "Fastest Resolution",
-    desc: "We're available 24/7 with a 60-minute response time, so you never have to worry about a thing."
-  },
-  {
-    ref: "C-03",
-    Icon: Gauge,
-    value: "24 Hours",
-    title: "Free Trial",
-    desc: "Enjoy a 24-hour free trial on our Virtual Machines, experience worry-free performance!"
-  }
+const LOGO = "https://pub-21f943ee53a546c68c971a0df44cd3e0.r2.dev/logo/logo.png";
+const CREATE_DB = "/dashboard/create?type=database";
+
+const money = (n) => `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+const unitSplit = (s) => { const m = String(s).match(/^([\d.,]+)\s*(.*)$/); return m ? [m[1], m[2]] : [s, ""]; };
+
+const FEATURES = [
+  { Icon: DatabaseBackup, title: "Daily backups", text: "Taken every day and kept for the retention shown on your plan." },
+  { Icon: ShieldCheck, title: "Set up and looked after for you", text: "We set your database up and keep it running. You get the connection details." },
+  { Icon: Zap, title: "99.9% uptime", text: "We back our network and hardware with a 99.9% uptime SLA, so your apps stay live." },
+  { Icon: MapPin, title: "Hosted in India", text: "Our home region, close to customers across India." },
+  { Icon: Wallet, title: "Paid from your account balance", text: "Top up with UPI, cards or net banking. Monthly invoices with GST, as PDF." },
+  { Icon: Headphones, title: "24/7 support", text: "Email and ticket support around the clock, with a 60-minute response time." },
 ];
 
-const SERVICES = [
-  {
-    ref: "S-01",
-    Icon: Globe,
-    title: "Domains",
-    description: "Comprehensive domain registration, transfer, and management with competitive pricing.",
-    features: ["500+ TLDs Available", "Free WHOIS Protection", "Easy Domain Transfer", "Bulk Management"],
-    action: { label: "Search Domain", href: "/pricing#domains" }
+const CONSOLE_POINTS = [
+  { title: "Connection details, one click to copy", text: "Host, port, database and user, with the password on request." },
+  { title: "Know when it's ready", text: "A new database shows as provisioning until we've set it up, and we email you when it's ready." },
+  { title: "Cancel or undo", text: "Cancelling ends it at the end of the paid month, and you can undo until then." },
+  { title: "Work as a team", text: "Give teammates access to servers, billing or support." },
+];
+
+const ENGINES = {
+  mysql: {
+    label: "MySQL", port: 3306, uri: "mysql://app_user:••••••@<host>:3306/app",
+    text: "The widely used open-source relational database behind many websites, online stores and content management systems.",
   },
-  {
-    ref: "S-02",
-    Icon: Cpu,
-    title: "Virtual Machine",
-    description: "General purpose virtual machines on Intel or AMD, with NVMe SSD storage, prepaid monthly with the first month pro rata.",
-    features: ["Intel or AMD CPUs", "NVMe SSD Storage", "Instant Deployment", "99.9% Uptime"],
-    action: { label: "View plans", href: "/pricing#virtual-machine" }
+  postgresql: {
+    label: "PostgreSQL", port: 5432, uri: "postgresql://app_user:••••••@<host>:5432/app",
+    text: "The open-source relational database known for standards compliance, rich data types and extensions.",
   },
-  {
-    ref: "S-03",
-    Icon: Database,
-    title: "Managed Database",
-    description: "MySQL or PostgreSQL, set up and looked after for you, with daily backups and monthly billing.",
-    features: ["MySQL or PostgreSQL", "Daily Backups", "Same Locations as VMs", "From ₹199/month"],
-    action: { label: "View plans", href: "/pricing#managed-database" }
-  },
-  {
-    ref: "S-04",
-    Icon: Rocket,
-    title: "App Platform",
-    description: "Deploy your app on your own domain: choose a plan and your domain, pay, and it's active.",
-    features: ["Your Own Domain", "NVMe SSD Storage", "Shared IP", "From ₹349/month"],
-    action: { label: "View plans", href: "/pricing#app-platform" }
-  }
-].filter((s) => s.title !== "App Platform" || APP_PLATFORM_ON); // App Platform hidden for now (data/plans.js)
+};
 
-/* Every figure here is a commitment made elsewhere on the site — uptime from
-   the commitments band, response and trial from support, regions and entry
-   price from the pricing page. Nothing is invented for the plate. */
-const SPEC_ROWS = [
-  { k: "Uptime", v: "99.9%" },
-  { k: "Support response", v: "60 min" },
-  { k: "Free trial", v: "24 hrs" },
-  { k: "Regions", v: null }, // from Admin → Locations
-  { k: "Entry plan", v: "₹350/mo" }
-];
+const Check20 = () => <span className="lp-tick"><Check size={13} strokeWidth={2.5} aria-hidden="true" /></span>;
 
-const UPCOMING = [
-  { ref: "G-01", title: "NVIDIA GPU Servers", desc: "High-performance computing with latest NVIDIA GPUs" },
-  { ref: "G-02", title: "AI/ML Optimized", desc: "Perfect for training and inference workloads" },
-  { ref: "G-03", title: "Research Ready", desc: "Built for scientific computing and research" }
-];
-
-const SUPPORT_STATS = [
-  { number: "24/7", label: "Support Availability" },
-  { number: "20min", label: "Avg Response Time" },
-  { number: "99.9%", label: "Customer Satisfaction" }
-];
-
-const SUPPORT_FEATURES = [
-  "Chat & Email Support",
-  "Technical Experts",
-  "Documentation & Tutorials"
-];
-
-const Corners = () => (
-  <>
-    <i className="corner tl" /><i className="corner tr" />
-    <i className="corner bl" /><i className="corner br" />
-  </>
+// A still picture of the console's Resources → Databases tab.
+const ConsolePreview = () => (
+  <div className="lp-console-frame" aria-hidden="true">
+    <div className="lp-console">
+      <aside className="lp-console-side">
+        <span className="lp-console-brand"><img src={LOGO} alt="" />Walras Cloud</span>
+        <span className="lp-console-kicker">Console</span>
+        <nav>
+          {[[LayoutGrid, "Overview"], [SquarePlus, "Create"], [BadgePercent, "Reserve & Save"], [Boxes, "Resources", true], [Server, "Dedicated"], [CreditCard, "Billing"]].map(([I, t, on]) => (
+            <span key={t} className={on ? "is-on" : ""}><I size={18} />{t}</span>
+          ))}
+          <i />
+          {[[LifeBuoy, "Support"], [CircleUser, "Account"]].map(([I, t]) => <span key={t}><I size={18} />{t}</span>)}
+        </nav>
+        <div className="lp-console-user"><b>AS</b><span><strong>Aarav Shah</strong><small>aarav@example.in</small></span><LogOut size={17} /></div>
+      </aside>
+      <div className="lp-console-main">
+        <div className="lp-console-top">
+          <span>Resources</span>
+          <span className="lp-console-bal"><Wallet size={16} />₹2,450.00</span>
+          <span className="lp-console-create"><Plus size={16} />Create</span>
+        </div>
+        <div className="lp-console-body">
+          <div className="lp-console-head">
+            <div><div className="lp-console-h">Resources</div><div className="lp-muted">Everything running on your account.</div></div>
+            <span className="lp-console-btn"><RefreshCw size={15} />Refresh</span>
+          </div>
+          <div className="lp-console-tabs">
+            <span><Layers size={16} />Virtual Machines<em>0</em></span>
+            <span className="is-on"><Database size={16} />Databases<em>2</em></span>
+            <span><Globe size={16} />Domains<em>0</em></span>
+          </div>
+          <div className="lp-console-db">
+            <div className="lp-console-row">
+              <span className="lp-console-ico"><Database size={18} /></span>
+              <div><strong>orders-db</strong><small>PostgreSQL · General Purpose · Mumbai</small></div>
+              <span className="lp-pill is-active"><i />Active</span>
+              <span className="lp-console-icon"><Trash2 size={15} /></span>
+            </div>
+            <div className="lp-console-conn">
+              {[["Host", "203.0.113.24", Copy], ["Port", "5432", Copy], ["Database", "orders", Copy], ["User", "orders_app", Copy], ["Password", "••••••••••", Eye]].map(([k, v, I]) => (
+                <div key={k}><div className="lp-console-k">{k}</div><div className="lp-console-v"><code>{v}</code><span><I size={13} /></span></div></div>
+              ))}
+            </div>
+          </div>
+          <div className="lp-console-db">
+            <div className="lp-console-row">
+              <span className="lp-console-ico"><Database size={18} /></span>
+              <div><strong>analytics-db</strong><small>MySQL · General Purpose · Mumbai</small></div>
+              <span className="lp-pill is-pending"><i />Provisioning</span>
+              <span className="lp-console-icon"><Trash2 size={15} /></span>
+            </div>
+            <p className="lp-muted">We're setting this database up. Its connection details will appear here, and we'll email you when it's ready.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 );
 
 const Homepage = () => {
-  const locations = useLocations();
-  const regions = String(locations.length); // how many, not their names
-  return (
-  <div className="homepage">
-    <section className="section hero">
-      <div className="container hero-grid">
-        <div className="hero-text">
-          <div className="hero-kicker">
-            <span className="kicker">Sheet 01 / Introducing India's Own Cloud</span>
-            <span className="rule" />
-          </div>
-          <h1 className="hero-title">The Straightforward Cloud</h1>
-          <p className="hero-subtitle">
-            Cloud infrastructure, without the complexity.
-            <br />
-            Simple, powerful, and built for everyone.
-          </p>
-          <div className="hero-actions">
-            <a href="/login" className="btn btn-primary btn-lg blueprint">
-              Get Started
-              <Corners />
-            </a>
-            <a href="/contact" className="btn btn-secondary btn-lg">Contact Sales</a>
-          </div>
-        </div>
+  const [db, setDb] = useState(null); // { plans, locations, fromPrice }; false if it couldn't load
+  const [stock, setStock] = useState({});
+  const [engine, setEngine] = useState("mysql");
+  const [faqOpen, setFaqOpen] = useState(0);
 
-        <div className="hero-plate-wrap">
-          <figure className="hero-plate blueprint">
-            <Corners />
-            <div className="plate-head">
-              <span className="kicker plate-head-label">Service specification</span>
-              <span className="plate-rev">REV. 2026.08</span>
-            </div>
-            {SPEC_ROWS.map((row) => (
-              <div className="plate-row" key={row.k}>
-                <span className="plate-key">{row.k}</span>
-                <span className="plate-value">{row.k === "Regions" ? regions : row.v}</span>
+  useEffect(() => {
+    fetch("/api/plans/database")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => setDb({ plans: d.plans || [], locations: d.locations || [], fromPrice: d.fromPrice }))
+      .catch(() => setDb(false));
+    fetch("/api/settings/public")
+      .then((r) => r.json())
+      .then((d) => setStock(d?.planAvailability?.database || {}))
+      .catch(() => {});
+  }, []);
+
+  const plans = db ? db.plans : [];
+  const offered = db ? db.locations.filter((l) => !l.comingSoon) : [];
+  const soon = db ? db.locations.filter((l) => l.comingSoon) : [];
+  const region = offered.length ? offered.map((l) => l.name).join(" · ") : "India";
+  const backupDays = plans.map((p) => p.backupDays).filter((n) => n > 0);
+  const backups = backupDays.length
+    ? (Math.min(...backupDays) === Math.max(...backupDays) ? `Daily · ${backupDays[0]} days` : `Daily · ${Math.min(...backupDays)}–${Math.max(...backupDays)} days`)
+    : "Daily";
+  const from = db && db.fromPrice ? money(db.fromPrice) : null;
+
+  const faqs = [
+    ["Which engines can I choose?", "MySQL or PostgreSQL. You pick the engine for each database, and the price is the same for both."],
+    ["How are backups handled?", "Every plan includes daily backups, kept for the number of days shown in the plan table."],
+    ["Where is my database hosted?", offered.length ? `In ${offered.map((l) => l.name).join(" and ")}${offered.length === 1 ? " to start" : ""}: close to customers across India.` : "In India, close to customers across the country."],
+    ["How does billing work?", "Databases are paid from your account balance. When you order, you pay for the rest of the month; after that, billing runs on the 1st. Prices exclude GST, and the final amount is shown at checkout."],
+    ["Can I cancel?", "Yes. Your database keeps running until the end of the month you've paid for, then it's deleted with its data. You can undo the cancellation until then."],
+    ["How fast is support?", "We're available 24/7 with a 60-minute response time, by email and ticket."],
+  ];
+
+  return (
+    <div className="lp">
+      {/* ── Hero ── */}
+      <header className="lp-hero">
+        <span className="lp-hero-grid" aria-hidden="true" />
+        <div className="lp-wrap">
+          <div className="lp-hero-row">
+            <div className="lp-hero-copy">
+              <span className="lp-kicker-dark">Managed Database</span>
+              <h1>Your database, looked after.</h1>
+              <p>MySQL or PostgreSQL, set up and looked after for you, with daily backups and monthly billing. Pick a location, an engine and a plan; the price is the same for both engines.</p>
+              <div className="lp-hero-cta">
+                <a href={CREATE_DB} className="lp-btn lp-btn-mint">Create a database<ArrowRight size={16} /></a>
+                <a href="#plans" className="lp-btn lp-btn-outline-dark">View plans</a>
+                {from && <span className="lp-hero-from">From<strong>{from}</strong>/mo, excl. GST</span>}
               </div>
-            ))}
-            <figcaption className="plate-caption">
-              Figures guaranteed by Walras Cloud. Tax not included; final amount shown at checkout.
-            </figcaption>
+            </div>
+            <div className="lp-hero-art">
+              <WalrasScene variant="hero" follow className="lp-hero-scene" />
+            </div>
+          </div>
+          <figure className="lp-figures">
+            <div className="lp-figures-grid">
+              {[["Engines", "MySQL · PostgreSQL"], ["Backups", backups], ["Storage", "NVMe SSD"], ["Region", region], ["Support response", "60 min"], ["Entry plan", from ? `${from}/mo` : "—", true]].map(([k, v, accent]) => (
+                <div key={k}><div className="lp-figures-k">{k}</div><div className={`lp-figures-v${accent ? " is-accent" : ""}`}>{v}</div></div>
+              ))}
+            </div>
+            <figcaption>Figures guaranteed by Walras Cloud. Tax not included; final amount shown at checkout.</figcaption>
           </figure>
         </div>
-      </div>
-    </section>
- 
-    <section className="section section-pad">
-      <div className="container">
-        <div className="rule-head">
-          <h2>Our Commitments!</h2>
-          <span className="rule" />
-          <span className="note">Three promises that power every product we ship.</span>
-        </div>
-        <div className="commitments-grid">
-          {COMMITMENTS.map(({ ref, Icon, value, title, desc }) => (
-            <div className="commitment-card blueprint" key={ref}>
-              <Corners />
-              <div className="commitment-head">
-                <span className="ref">{ref}</span>
-                <Icon size={20} strokeWidth={1.5} />
-              </div>
-              <div className="figure-lg">{value}</div>
-              <div className="commitment-title">{title}</div>
-              <p className="commitment-desc">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      </header>
 
-    <section className="section section-pad">
-      <div className="container">
-        <div className="rule-head">
-          <h2>Our Core Services</h2>
-          <span className="rule" />
-          <span className="note">Complete infrastructure solutions for businesses of all sizes</span>
-        </div>
-        <div className="services-grid" style={{ "--services-cols": SERVICES.length }}>
-          {SERVICES.map(({ ref, Icon, title, description, features, action }) => (
-            <div className="service-card blueprint" key={ref}>
-              <Corners />
-              <div className="service-head">
-                <Icon size={24} strokeWidth={1.5} />
-                <h3>{title}</h3>
-                <span className="ref">{ref}</span>
+      {/* ── Product line-up ── */}
+      <section className="lp-section lp-section-first">
+        <div className="lp-wrap">
+          <div className="lp-head">
+            <span className="lp-kicker">Product line-up</span>
+            <h2>Run it all from one console</h2>
+            <p>Managed Database and Dedicated servers are available now. Domains and VPS Servers are on the way.</p>
+          </div>
+          <div className="lp-lineup">
+            <article className="lp-card lp-card-feature">
+              <div className="lp-card-art">
+                <WalrasScene variant="database" className="lp-fill" />
+                <span className="lp-badge">Available now</span>
               </div>
-              <div className="service-body">
-                <p className="service-description">{description}</p>
-                <div className="service-features">
-                  {features.map((f) => (
-                    <div className="service-feature" key={f}>
-                      <span className="feature-dot" />
-                      {f}
-                    </div>
-                  ))}
+              <h3>Managed Database</h3>
+              <p>MySQL or PostgreSQL, set up and looked after for you, with daily backups and monthly billing.</p>
+              <ul className="lp-ticks">
+                {["MySQL or PostgreSQL", "Daily backups", "Set up and looked after for you", "NVMe SSD storage"].map((t) => <li key={t}><Check20 />{t}</li>)}
+              </ul>
+              <div className="lp-card-foot">
+                {from ? <span className="lp-from">From<strong>{from}</strong>/mo</span> : <span />}
+                <a href="#plans" className="lp-btn lp-btn-mint lp-btn-sm">View plans<ArrowRight size={16} /></a>
+              </div>
+            </article>
+            <article className="lp-card">
+              <div className="lp-card-art">
+                <WalrasScene variant="server" className="lp-fill" />
+                <span className="lp-badge">Available now</span>
+              </div>
+              <h3>Dedicated Server</h3>
+              <p>The whole machine. Yours. Single-tenant servers with dedicated cores, memory and storage, full root access and no neighbours. Priced monthly, in rupees.</p>
+              <div className="lp-card-foot">
+                <span className="lp-muted-sm">metal.walras.net</span>
+                <a href={DEDICATED_URL} className="lp-btn lp-btn-ghost lp-btn-sm">Browse servers<ArrowUpRight size={16} /></a>
+              </div>
+            </article>
+            <div className="lp-soon-col">
+              <article className="lp-card lp-card-soon">
+                <div className="lp-soon-top">
+                  <WalrasScene variant="globe" tone="muted" className="lp-soon-scene" />
+                  <span className="lp-badge-grey">Coming soon</span>
                 </div>
-                <a href={action.href} className="btn btn-secondary">{action.label}</a>
-              </div>
+                <h3>Domains</h3>
+                <p>Register your name alongside your servers and manage it all from one dashboard.</p>
+              </article>
+              <article className="lp-card lp-card-soon">
+                <div className="lp-soon-top">
+                  <WalrasScene variant="layers" tone="muted" className="lp-soon-scene" />
+                  <span className="lp-badge-grey">Coming soon</span>
+                </div>
+                <h3>VPS Servers</h3>
+                <p>General purpose virtual machines on Intel or AMD, with NVMe SSD storage.</p>
+              </article>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section className="section field-dark section-pad">
-      <div className="container coming-soon-grid">
-        <div>
-          <span className="kicker">Coming Soon</span>
-          <h2 className="coming-soon-title">GPU Servers</h2>
-          <p className="coming-soon-desc">
-            Get ready for GPU-accelerated servers built for AI, ML, and high-performance workloads.
-          </p>
-          <form className="notify-form" onSubmit={(e) => e.preventDefault()}>
-            <input type="email" placeholder="Enter your email for early access" className="input" />
-            <button type="submit" className="btn btn-primary">Notify Me</button>
-          </form>
+      {/* ── Engines ── */}
+      <section className="lp-section">
+        <div className="lp-wrap">
+          <div className="lp-head">
+            <span className="lp-kicker">Engines</span>
+            <h2>MySQL or PostgreSQL. Same price.</h2>
+            <p>Pick the engine for each database. Plans, backups and prices are the same for both.</p>
+          </div>
+          <div className="lp-engines">
+            {Object.entries(ENGINES).map(([id, e]) => (
+              <article key={id} className={`lp-card lp-engine${engine === id ? " is-on" : ""}`}>
+                <div className="lp-engine-head">
+                  <div className="lp-engine-name"><span className="lp-icon-box"><Database size={24} /></span><h3>{e.label}</h3></div>
+                  <span className="lp-badge-grey lp-badge-plain">Port {e.port}</span>
+                </div>
+                <p>{e.text}</p>
+                <code className="lp-code">{e.uri}</code>
+                <div className="lp-engine-foot">
+                  <span className="lp-muted-sm">Daily backups · Same plans and prices</span>
+                  <button type="button" className="lp-btn lp-btn-ghost lp-btn-xs" onClick={() => setEngine(id)}>
+                    {engine === id ? "Showing its prices" : "Show its prices"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
-        <div className="upcoming-list">
-          {UPCOMING.map(({ ref, title, desc }) => (
-            <div className="upcoming-row" key={ref}>
-              <span className="upcoming-ref">{ref}</span>
-              <div>
-                <h4 className="upcoming-title">{title}</h4>
-                <p className="upcoming-desc">{desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section className="section section-pad">
-      <div className="container support-grid">
-        <div>
-          <h2 className="support-title">24×7 Expert Support</h2>
-          <p className="support-desc">
-            Our certified experts are available 24×7. Get instant support via chat or email.
-          </p>
-          <div className="support-features">
-            {SUPPORT_FEATURES.map((f) => (
-              <div className="support-feature" key={f}>
-                <Check size={16} strokeWidth={1.5} />
-                {f}
+      {/* ── Features ── */}
+      <section className="lp-section">
+        <div className="lp-wrap">
+          <div className="lp-head">
+            <span className="lp-kicker">Features</span>
+            <h2>Features tailored for you</h2>
+            <p>Included with every Managed Database, whichever plan and engine you pick.</p>
+          </div>
+          <div className="lp-features">
+            {FEATURES.map(({ Icon, title, text }) => (
+              <div key={title} className="lp-card lp-feature">
+                <span className="lp-feature-icon"><Icon size={26} /></span>
+                <h3>{title === "Hosted in India" && offered.length ? `Hosted in ${offered[0].name}` : title}</h3>
+                <p>{text}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className="cells cells-3 support-stats">
-          {SUPPORT_STATS.map(({ number, label }) => (
-            <div key={label}>
-              <div className="figure-md">{number}</div>
-              <div className="figure-label">{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section className="section cta">
-      <div className="container cta-inner">
-        <div>
-          <h2 className="cta-title">Ready to Get Started?</h2>
-          <p className="cta-subtitle">Join thousands of developers and businesses who trust Walras Cloud.</p>
+      {/* ── Console ── */}
+      <section className="lp-section">
+        <div className="lp-wrap lp-console-row-wrap">
+          <div className="lp-console-copy">
+            <span className="lp-kicker">Console</span>
+            <h2>Manage it from the console</h2>
+            <p>Your databases sit next to the rest of your account: status, connection details and billing in one place.</p>
+            <ul className="lp-points">
+              {CONSOLE_POINTS.map((pt) => (
+                <li key={pt.title}><Check20 /><span><strong>{pt.title}</strong><span>{pt.text}</span></span></li>
+              ))}
+            </ul>
+            <a href="/dashboard" className="lp-btn lp-btn-ghost lp-btn-sm">Open the console<ArrowRight size={16} /></a>
+          </div>
+          <ConsolePreview />
         </div>
-        <div className="cta-actions">
-          <a href="/login" className="btn btn-primary btn-lg blueprint">
-            Get Started
-            <Corners />
-          </a>
-          <a href="https://docs.walras.net" className="btn btn-secondary btn-lg">View Documentation</a>
+      </section>
+
+      {/* ── Plans ── */}
+      <section className="lp-section" id="plans">
+        <div className="lp-wrap">
+          <div className="lp-head">
+            <span className="lp-kicker">Plans</span>
+            <h2>Pick a plan</h2>
+            <p>Every price in rupees. Pick a location, an engine and a plan; the engine doesn't change the price.</p>
+          </div>
+          <div className="lp-plans-bar">
+            <h3>General Purpose</h3>
+            <div className="lp-plans-segs">
+              {db && db.locations.length > 0 && (
+                <div className="lp-seg">
+                  <span className="lp-seg-label">Location</span>
+                  {offered.map((l) => <span key={l.name} className="lp-seg-item is-on"><MapPin size={14} />{l.name}</span>)}
+                  {soon.map((l) => <span key={l.name} className="lp-seg-item is-soon">{l.name}<em>SOON</em></span>)}
+                </div>
+              )}
+              <div className="lp-seg" role="group" aria-label="Engine">
+                <span className="lp-seg-label">Engine</span>
+                {Object.entries(ENGINES).map(([id, e]) => (
+                  <button key={id} type="button" className={`lp-seg-item${engine === id ? " is-on" : ""}`} aria-pressed={engine === id} onClick={() => setEngine(id)}>{e.label}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="lp-plans">
+            {db === null ? (
+              <p className="lp-plans-msg">Loading plans…</p>
+            ) : db === false ? (
+              <p className="lp-plans-msg">Plans couldn't be loaded right now. Please refresh the page in a moment.</p>
+            ) : plans.length === 0 ? (
+              <p className="lp-plans-msg">Managed Database plans are coming soon.</p>
+            ) : (
+              <div className="lp-plans-table">
+                <div className="lp-plans-row lp-plans-th"><span>Plan</span><span>vCPU</span><span>Memory</span><span>Storage</span><span>Backups</span><span>Monthly</span><span>Availability</span></div>
+                {plans.map((p) => {
+                  const [ram, ramU] = unitSplit(formatRam(p.ram));
+                  const [disk, diskU] = unitSplit(formatStorage(p.storage));
+                  return (
+                    <div key={p.name} className="lp-plans-row">
+                      <span className="lp-plan-name">{p.name}</span>
+                      <span><strong>{p.vcpu}</strong> <em>vCPU</em></span>
+                      <span><strong>{ram}</strong> <em>{ramU}</em></span>
+                      <span><strong>{disk}</strong> <em>{diskU}</em></span>
+                      <span><strong>Daily</strong> <em>{p.backupDays}-day retention</em></span>
+                      <span><strong>{money(p.monthly)}</strong> <em>/mo</em></span>
+                      <span>{stock[p.name] ? <a href={CREATE_DB} className="lp-pill is-active">Available</a> : <span className="lp-pill">Out of stock</span>}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <p className="lp-note">Showing {ENGINES[engine].label} prices; both engines cost the same. Prices exclude tax; the final amount is shown at checkout. Billed monthly: the rest of the month when you order, then on the 1st.</p>
         </div>
-      </div>
-    </section>
-  </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="lp-section lp-section-last">
+        <div className="lp-wrap lp-faq-wrap">
+          <div className="lp-faq-intro">
+            <span className="lp-kicker">FAQ</span>
+            <h2>Questions, answered</h2>
+            <p>Anything else about Managed Database? We're available 24/7.</p>
+            <a href="/contact" className="lp-btn lp-btn-ghost lp-btn-sm"><Headphones size={16} />Talk to us</a>
+          </div>
+          <div className="lp-card lp-faq">
+            {faqs.map(([q, a], i) => (
+              <div key={q} className="lp-faq-item">
+                <button type="button" aria-expanded={faqOpen === i} onClick={() => setFaqOpen(faqOpen === i ? -1 : i)}>
+                  {q}<ChevronDown size={20} className={faqOpen === i ? "is-open" : ""} />
+                </button>
+                {faqOpen === i && <p>{a}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="lp-cta">
+        <div className="lp-wrap lp-cta-row">
+          <div>
+            <h2>Not sure which plan fits?</h2>
+            <p>Tell us about your workload and we'll point you to the right setup.</p>
+          </div>
+          <div className="lp-cta-btns">
+            <a href={CREATE_DB} className="lp-btn lp-btn-outline-dark">Create a database</a>
+            <a href="/contact" className="lp-btn lp-btn-mint">Talk to our team<ArrowRight size={16} /></a>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };
 

@@ -49,6 +49,14 @@ const COLUMNS = [
   },
 ];
 
+// The homepage's product line-up (Homepage.js): what's available and what's coming.
+const LINEUP_PRODUCTS = [
+  { label: 'Managed Database', to: '/#plans' },
+  { label: 'Dedicated', url: DEDICATED_URL },
+  { label: 'Domains', to: '/pricing#domains', soon: true },
+  { label: 'VPS Servers', to: '/pricing#virtual-machine', soon: true },
+];
+
 const Corners = () => (
   <>
     <i className="corner tl" /><i className="corner tr" />
@@ -58,19 +66,20 @@ const Corners = () => (
 
 // `url` is a link to another of our sites (metal.walras.net); `to` a page here,
 // which on metal.walras.net means the main site.
-const FooterLink = ({ label, to, href, url }) => (href ? (
+const FooterLink = ({ label, to, href, url, soon }) => (href ? (
   <a href={href} target="_blank" rel="noopener noreferrer">
     {label} <ArrowUpRight size={13} aria-hidden="true" />
   </a>
 ) : url ? (
   <a href={url}>{label}</a>
 ) : isMetalHost ? (
-  <a href={siteHref(to)}>{label}</a>
+  <a href={siteHref(to)}>{label}{soon && <span className="footer-soon">Soon</span>}</a>
 ) : (
-  <Link to={to}>{label}</Link>
+  <Link to={to}>{label}{soon && <span className="footer-soon">Soon</span>}</Link>
 ));
 
-const Footer = () => (
+// `lineup`: the homepage lists its product line-up under Products.
+const Footer = ({ lineup = false }) => (
   <footer className="footer field-dark">
     <div className="container">
       <div className="footer-head">
@@ -94,7 +103,7 @@ const Footer = () => (
           </div>
         </div>
 
-        {COLUMNS.map(({ ref, title, links }) => (
+        {COLUMNS.map((col) => (lineup && col.ref === 'F-01' ? { ...col, links: LINEUP_PRODUCTS } : col)).map(({ ref, title, links }) => (
           <nav className="footer-col" key={ref} aria-label={title}>
             <div className="footer-col-head">
               <span className="footer-ref">{ref}</span>

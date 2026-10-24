@@ -83,3 +83,6 @@
   .footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
   .footer-plate { grid-column: 1 / -1; }
 }
+
+/* "Soon" tag on a product that isn't available yet (homepage line-up). */
+.footer-soon { margin-left: 6px; padding: 1px 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, #f2f2f3 60%, transparent); border: 1px solid color-mix(in srgb, #f2f2f3 22%, transparent); }

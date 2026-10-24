@@ -64,13 +64,13 @@ function MetalGuard() {
   return null;
 }
 
-function PublicLayout({ children }) {
+function PublicLayout({ children, lineup = false }) {
   return (
     <>
       <ScrollManager />
       <Navbar />
       {children}
-      <Footer />
+      <Footer lineup={lineup} />
     </>
   );
 }
@@ -82,7 +82,7 @@ function App() {
       <Routes>
         {/* Public routes with Navbar */}
         {/* metal.walras.net opens on the Dedicated catalog (data/site.js). */}
-        <Route path="/" element={<PublicLayout>{isMetalHost ? <DedicatedServers /> : <Homepage />}</PublicLayout>} />
+        <Route path="/" element={<PublicLayout lineup={!isMetalHost}>{isMetalHost ? <DedicatedServers /> : <Homepage />}</PublicLayout>} />
         <Route path="/dedicated" element={<PublicLayout><DedicatedServers /></PublicLayout>} />
         <Route path="/dedicated-servers" element={<Navigate to="/dedicated" replace />} />
         <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
